@@ -28,12 +28,19 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     public void putEntandoApp(EntandoApp entandoApp) {
-        this.getNamespace(entandoApp).getCustomResources(EntandoApp.class).put(entandoApp.getMetadata().getName(), entandoApp);
+        putEntandoCustomResource(entandoApp);
+    }
+
+    public void putEntandoPlugin(EntandoPlugin entandoPlugin) {
+        putEntandoCustomResource(entandoPlugin);
+    }
+
+    public <T extends EntandoCustomResource> void putEntandoCustomResource(T r) {
+        this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
     }
 
     public void putExternalDatabase(ExternalDatabase externalDatabase) {
-        this.getNamespace(externalDatabase).getCustomResources(ExternalDatabase.class).put(externalDatabase.getMetadata().getName(),
-                externalDatabase);
+        putEntandoCustomResource(externalDatabase);
     }
 
     @Override
@@ -42,14 +49,8 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public EntandoApp loadEntandoApp(String namespace, String name) {
-        Map<String, EntandoApp> customResources = getNamespace(namespace).getCustomResources(EntandoApp.class);
-        return customResources.get(name);
-    }
-
-    @Override
-    public EntandoPlugin loadEntandoPlugin(String namespace, String name) {
-        Map<String, EntandoPlugin> customResources = getNamespace(namespace).getCustomResources(EntandoPlugin.class);
+    public <T extends EntandoCustomResource> T load(Class<T> clzz, String namespace, String name) {
+        Map<String, T> customResources = getNamespace(namespace).getCustomResources(clzz);
         return customResources.get(name);
     }
 
@@ -94,7 +95,4 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         return new ServiceDeploymentResult(service, ingress);
     }
 
-    public void putEntandoPlugin(EntandoPlugin entandoPlugin) {
-        getNamespace(entandoPlugin).getCustomResources(EntandoPlugin.class).put(entandoPlugin.getMetadata().getName(), entandoPlugin);
-    }
 }

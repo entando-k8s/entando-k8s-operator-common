@@ -12,6 +12,7 @@ import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
@@ -30,22 +31,27 @@ import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresKeycloak;
-import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 @K8SLogger
 @Dependent
 public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     private final DefaultKubernetesClient client;
-    private final Instance<CustomResourceOperationsImpl<? extends EntandoCustomResource, ? extends
+    private final Iterable<CustomResourceOperationsImpl<? extends EntandoCustomResource, ? extends
             KubernetesResourceList,
             ? extends DoneableEntandoCustomResource>> customResourceOperations;
 
     @Inject
     public DefaultEntandoResourceClient(DefaultKubernetesClient client,
             @Any Instance<CustomResourceOperationsImpl<? extends EntandoCustomResource, ? extends KubernetesResourceList,
+                    ? extends DoneableEntandoCustomResource>> customResourceOperations) {
+        this.client = client;
+        this.customResourceOperations = customResourceOperations;
+    }
+
+    public DefaultEntandoResourceClient(DefaultKubernetesClient client,
+            List<CustomResourceOperationsImpl<? extends EntandoCustomResource, ? extends KubernetesResourceList,
                     ? extends DoneableEntandoCustomResource>> customResourceOperations) {
         this.client = client;
         this.customResourceOperations = customResourceOperations;
@@ -108,21 +114,15 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
     }
 
     @Override
-    public EntandoApp loadEntandoApp(String namespace, String name) {
-        return ofNullable(getOperations(EntandoApp.class).inNamespace(namespace)
-                .withName(name).get()).orElseThrow(() -> notFound("EntandoApp", namespace, name).get());
-    }
-
-    @Override
-    public EntandoPlugin loadEntandoPlugin(String namespace, String name) {
-        return ofNullable(getOperations(EntandoPlugin.class).inNamespace(namespace)
-                .withName(name).get()).orElseThrow(() -> notFound("EntandoPlugin", namespace, name).get());
+    public <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName) {
+        return ofNullable(getOperations(clzz).inNamespace(resourceNamespace)
+                .withName(resourceName).get()).orElseThrow(() -> notFound(clzz.getSimpleName(), resourceNamespace, resourceName).get());
     }
 
     private <T extends EntandoCustomResource> CustomResourceOperationsImpl<T, KubernetesResourceList<T>,
             DoneableEntandoCustomResource<?, T>> getOperations(Class<T> c) {
         return (CustomResourceOperationsImpl<T, KubernetesResourceList<T>, DoneableEntandoCustomResource<?, T>>)
-                customResourceOperations.stream().filter(cro -> cro.getType() == c).findFirst()
+                StreamSupport.stream(customResourceOperations.spliterator(), false).filter(cro -> cro.getType() == c).findFirst()
                         .orElseThrow(IllegalStateException::new);
     }
 

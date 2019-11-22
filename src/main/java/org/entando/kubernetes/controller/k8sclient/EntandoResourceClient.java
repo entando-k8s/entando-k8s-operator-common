@@ -15,9 +15,7 @@ public interface EntandoResourceClient {
 
     void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status);
 
-    EntandoApp loadEntandoApp(String namespace, String name);
-
-    EntandoPlugin loadEntandoPlugin(String namespace, String name);
+    <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
     void updatePhase(EntandoCustomResource entandoCustomResource, EntandoDeploymentPhase phase);
 
@@ -30,4 +28,13 @@ public interface EntandoResourceClient {
     InfrastructureConfig findInfrastructureConfig(EntandoCustomResource resource);
 
     ServiceDeploymentResult loadServiceResult(EntandoCustomResource resource);
+
+    default EntandoApp loadEntandoApp(String namespace, String name) {
+        return load(EntandoApp.class, namespace, name);
+    }
+
+    default EntandoPlugin loadEntandoPlugin(String namespace, String name) {
+        return load(EntandoPlugin.class, namespace, name);
+    }
+
 }

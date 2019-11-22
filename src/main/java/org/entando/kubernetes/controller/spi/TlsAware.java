@@ -6,6 +6,7 @@ import org.entando.kubernetes.controller.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.impl.TlsHelper;
 
 public interface TlsAware {
+
     @SuppressWarnings("squid:S2068")//Because it is not a hardcoded password
     default void addTlsVariables(List<EnvVar> vars) {
         vars.add(new EnvVar("JAVA_TOOL_OPTIONS",

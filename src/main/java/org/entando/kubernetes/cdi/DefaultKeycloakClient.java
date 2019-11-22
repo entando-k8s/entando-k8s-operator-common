@@ -43,9 +43,9 @@ import org.keycloak.representations.idm.UserRepresentation;
 @K8SLogger
 public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
+    public static final String MASTER_REALM = "master";
     private static final Logger LOGGER = Logger.getLogger(DefaultKeycloakClient.class.getName());
     private static final int MAX_RETRY_COUNT = 60;
-    public static final String MASTER_REALM = "master";
     private Keycloak keycloak;
     private boolean isHttps = false;
 

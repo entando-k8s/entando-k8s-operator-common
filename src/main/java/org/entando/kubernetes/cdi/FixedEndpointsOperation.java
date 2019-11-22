@@ -13,7 +13,6 @@ import okhttp3.OkHttpClient;
 /**
  * Fabric8's client classes are generated. Their generation algorithm is faulty when it comes to the Endpoints object which is already
  * plural. It incorrectly points to 'endpointss' instead of 'endpoints'. This class fixes this bug.
- *
  */
 public class FixedEndpointsOperation extends
         HasMetadataOperation<Endpoints, EndpointsList, DoneableEndpoints, Resource<Endpoints, DoneableEndpoints>> {
