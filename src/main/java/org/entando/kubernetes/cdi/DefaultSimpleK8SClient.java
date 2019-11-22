@@ -3,6 +3,7 @@ package org.entando.kubernetes.cdi;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.ArrayList;
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
@@ -18,15 +19,30 @@ import org.entando.kubernetes.controller.k8sclient.ServiceClient;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
+import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseOperationFactory;
+import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureOperationFactory;
+import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServerOperationFactory;
+import org.entando.kubernetes.model.link.EntandoAppPluginLink;
 import org.entando.kubernetes.model.link.EntandoAppPluginLinkOperationFactory;
+import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginOperationFactory;
 
 @ApplicationScoped
 public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceClient> {
+
+    static {
+        KubernetesDeserializer.registerCustomKind("entando.org/v1alpha1#EntandoApp", EntandoApp.class);
+        KubernetesDeserializer.registerCustomKind("entando.org/v1alpha1#EntandoPlugin", EntandoPlugin.class);
+        KubernetesDeserializer.registerCustomKind("entando.org/v1alpha1#EntandoClusterInfrastructure", EntandoClusterInfrastructure.class);
+        KubernetesDeserializer.registerCustomKind("entando.org/v1alpha1#ExternalDatabase", ExternalDatabase.class);
+        KubernetesDeserializer.registerCustomKind("entando.org/v1alpha1#EntandoKeycloakServer", KeycloakServer.class);
+        KubernetesDeserializer.registerCustomKind("entando.org/v1alpha1#EntandoAppPluginLink", EntandoAppPluginLink.class);
+    }
 
     private final DefaultKubernetesClient kubernetesClient;
     private ServiceClient serviceClient;
