@@ -94,6 +94,11 @@
                 <artifactId>resteasy-jackson2-provider</artifactId>
                 <version>3.9.3.Final</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>24.1.1-jre</version>
+            </dependency>
             <!-- </required-by> -->
 
 
@@ -200,7 +205,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-admin-client</artifactId>
-            <version>7.0.1</version>
+            <version>8.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
@@ -252,12 +257,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.8</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -397,7 +396,7 @@
                 <executions>
                     <execution>
                         <goals>
-                            <goal>aggregate</goal>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -476,26 +475,4 @@
             </build>
         </profile>
     </profiles>
-    <reporting>
-        <plugins>
-            <plugin>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.1.1</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>javadoc-no-fork</report>
-                            <report>test-javadoc-no-fork</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>5.2.4</version>
-            </plugin>
-        </plugins>
-    </reporting>
-
 </project>
