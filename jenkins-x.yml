@@ -1,5 +1,9 @@
 buildPack: maven-java11
+
 pipelineConfig:
+  timeout:
+    time: 20
+    unit: minutes
   agent:
     image: maven-java11
   env:
