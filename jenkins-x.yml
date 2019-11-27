@@ -69,11 +69,6 @@ pipelineConfig:
                -DdatabasePassword=${OWASPDB_PASSWORD} \
                -DdatabaseUser=${OWASPDB_USERNAME}
             name: mvn-verify
-      pipeline:
-        options:
-          timeout:
-            time: 15
-            unit: minutes
     release:
       build:
         replace: true
@@ -92,8 +87,3 @@ pipelineConfig:
                 -Dgpg.keyname=${GPG_KEYNAME} \
                 -Dgpg.passphrase=${GPG_PASSPHRASE}
             name: mvn-deploy
-      pipeline:
-        options:
-          timeout:
-            time: 15
-            unit: minutes
