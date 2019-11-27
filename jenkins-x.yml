@@ -64,7 +64,6 @@ pipelineConfig:
                -Dsonar.pullrequest.provider=github \
                -Dsonar.pullrequest.vsts.token.secured=${SONAR_GITHUB_TOKEN} \
                -Dsonar.pullrequest.github.repository=${REPO_OWNER}/${REPO_NAME} \
-               -DautoUpdate=false \
                -DconnectionString=${OWASPDB_URL} \
                -DdatabasePassword=${OWASPDB_PASSWORD} \
                -DdatabaseUser=${OWASPDB_USERNAME} \
@@ -81,7 +80,6 @@ pipelineConfig:
               mvn clean deploy sonar:sonar \
                 -Pprepare-for-central \
                 -Dsonar.login=${SONAR_TOKEN} \
-                -DautoUpdate=false \
                 -DconnectionString=${OWASPDB_URL} \
                 -DdatabasePassword=${OWASPDB_PASSWORD} \
                 -DdatabaseUser=${OWASPDB_USERNAME} \
