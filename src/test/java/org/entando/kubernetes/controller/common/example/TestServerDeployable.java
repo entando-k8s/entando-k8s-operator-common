@@ -10,6 +10,7 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
@@ -18,19 +19,19 @@ import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 
-public class KeycloakDeployable implements IngressingDeployable<KeycloakDeploymentResult>, DbAwareDeployable, Secretive {
+public class TestServerDeployable implements IngressingDeployable<ServiceDeploymentResult>, DbAwareDeployable, Secretive {
 
     private final KeycloakServer keycloakServer;
     private final List<DeployableContainer> containers;
     private final DatabaseServiceResult databaseServiceResult;
     private final Secret keycloakAdminSecret;
 
-    public KeycloakDeployable(KeycloakServer keycloakServer,
+    public TestServerDeployable(KeycloakServer keycloakServer,
             DatabaseServiceResult databaseServiceResult) {
         this.keycloakServer = keycloakServer;
         this.databaseServiceResult = databaseServiceResult;
-        containers = Arrays.asList(new KeycloakDeployableContainer(keycloakServer));
-        keycloakAdminSecret = generateSecret(this.keycloakServer, KeycloakDeployableContainer.secretName(this.keycloakServer),
+        containers = Arrays.asList(new TestServerDeployableContainer(keycloakServer));
+        keycloakAdminSecret = generateSecret(this.keycloakServer, TestServerDeployableContainer.secretName(this.keycloakServer),
                 "entando_keycloak_admin");
     }
 
@@ -55,8 +56,8 @@ public class KeycloakDeployable implements IngressingDeployable<KeycloakDeployme
     }
 
     @Override
-    public KeycloakDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new KeycloakDeploymentResult(service, ingress, keycloakServer, keycloakAdminSecret);
+    public ServiceDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+        return new ServiceDeploymentResult(service, ingress);
     }
 
     @Override

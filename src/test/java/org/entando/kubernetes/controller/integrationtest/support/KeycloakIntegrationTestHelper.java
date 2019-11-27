@@ -5,14 +5,13 @@ import static org.entando.kubernetes.controller.Wait.waitFor;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.ClientErrorException;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.common.example.KeycloakConnectionSecret;
+import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.model.DbmsImageVendor;
@@ -32,19 +31,18 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
-public class KeycloakIntegrationTestHelper extends AbstractIntegrationTestHelper {
+public class KeycloakIntegrationTestHelper extends
+        AbstractIntegrationTestHelper<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> {
 
     public static final String KEYCLOAK_NAME = "test-keycloak";
-    public static final String KEYCLOAK_NAMESPACE = "keycloak-namespace";
-    private CustomResourceOperationsImpl<KeycloakServer, KeycloakServerList,
-            DoneableKeycloakServer> keycloakServerOperations;
+    public static final String KEYCLOAK_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride().orElse("keycloak-namespace");
 
     public KeycloakIntegrationTestHelper(DefaultKubernetesClient client) {
-        super(client);
+        super(client, KeycloakServerOperationFactory::produceAllKeycloakServers);
     }
 
     public boolean ensureKeycloak() {
-        KeycloakServer keycloakServer = getKeycloakServerOperations()
+        KeycloakServer keycloakServer = getOperations()
                 .inNamespace(KEYCLOAK_NAMESPACE)
                 .withName(KEYCLOAK_NAME).get();
         if (keycloakServer == null || keycloakServer.getStatus().getEntandoDeploymentPhase() != EntandoDeploymentPhase.SUCCESSFUL) {
@@ -68,7 +66,7 @@ public class KeycloakIntegrationTestHelper extends AbstractIntegrationTestHelper
     }
 
     public void createAndWaitForKeycloak(KeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
-        getKeycloakServerOperations().inNamespace(KEYCLOAK_NAMESPACE)
+        getOperations().inNamespace(KEYCLOAK_NAMESPACE)
                 .create(keycloakServer);
         if (deployingDbContainers) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
@@ -78,9 +76,9 @@ public class KeycloakIntegrationTestHelper extends AbstractIntegrationTestHelper
                 KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db-preparation-job");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(270 + waitOffset)),
                 KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server");
-        waitFor(90).seconds().orUntil(
+        waitFor(90).seconds().until(
                 () -> {
-                    EntandoCustomResourceStatus status = getKeycloakServerOperations()
+                    EntandoCustomResourceStatus status = getOperations()
                             .inNamespace(KEYCLOAK_NAMESPACE)
                             .withName(KEYCLOAK_NAME)
                             .fromServer().get().getStatus();
@@ -91,7 +89,7 @@ public class KeycloakIntegrationTestHelper extends AbstractIntegrationTestHelper
 
     private Optional<Keycloak> getKeycloak() {
         Optional<Secret> adminSecret = Optional.ofNullable(client.secrets()
-                .inNamespace(AbstractIntegrationTestHelper.ENTANDO_CONTROLLERS)
+                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS)
                 .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName())
                 .fromServer().get());
         return adminSecret
@@ -106,14 +104,6 @@ public class KeycloakIntegrationTestHelper extends AbstractIntegrationTestHelper
                         .build());
     }
 
-    public CustomResourceOperationsImpl<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> getKeycloakServerOperations() {
-        if (keycloakServerOperations == null) {
-            this.keycloakServerOperations = KeycloakServerOperationFactory.produceAllKeycloakServers(client);
-        }
-        return keycloakServerOperations;
-    }
-
-    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     //Because we don't know the state of the Keycloak Client
     public void deleteKeycloakClients(String... clientid) {
         try {

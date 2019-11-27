@@ -3,7 +3,6 @@ package org.entando.kubernetes.controller;
 import static java.util.Optional.empty;
 
 import java.util.Optional;
-import javax.inject.Inject;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
@@ -15,7 +14,6 @@ import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseSpec;
 
 public class AbstractDbAwareController {
 
-    @Inject
     protected SimpleK8SClient<EntandoResourceClient> k8sClient;
 
     protected DatabaseServiceResult prepareDatabaseService(EntandoCustomResource entandoCustomResource,

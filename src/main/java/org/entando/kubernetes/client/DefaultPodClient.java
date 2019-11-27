@@ -1,4 +1,4 @@
-package org.entando.kubernetes.cdi;
+package org.entando.kubernetes.client;
 
 import static java.lang.String.format;
 
@@ -9,21 +9,16 @@ import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import java.util.function.Predicate;
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.PodResult;
 import org.entando.kubernetes.controller.PodResult.State;
 import org.entando.kubernetes.controller.k8sclient.PodClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
-@K8SLogger
-@Dependent
 public class DefaultPodClient implements PodClient {
 
     private final DefaultKubernetesClient client;
 
-    @Inject
     public DefaultPodClient(DefaultKubernetesClient client) {
         this.client = client;
     }

@@ -1,4 +1,4 @@
-package org.entando.kubernetes.cdi;
+package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.DoneableEndpoints;
 import io.fabric8.kubernetes.api.model.Endpoints;

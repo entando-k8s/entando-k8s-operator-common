@@ -1,20 +1,15 @@
-package org.entando.kubernetes.cdi;
+package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
-@K8SLogger
-@Dependent
 public class DefaultSecretClient implements SecretClient {
 
     private final DefaultKubernetesClient client;
 
-    @Inject
     public DefaultSecretClient(DefaultKubernetesClient client) {
         this.client = client;
     }

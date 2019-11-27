@@ -1,4 +1,4 @@
-package org.entando.kubernetes.cdi;
+package org.entando.kubernetes.client;
 
 import static java.lang.Thread.sleep;
 import static java.util.Optional.ofNullable;
@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import javax.enterprise.context.Dependent;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
@@ -39,8 +38,6 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
-@Dependent
-@K8SLogger
 public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
     public static final String MASTER_REALM = "master";

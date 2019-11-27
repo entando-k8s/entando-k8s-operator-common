@@ -144,7 +144,8 @@ public class IngressCreator extends AbstractK8SResourceCreator {
     private String determineIngressHost(IngressClient ingressClient) {
         //TODO Should we not encapsulate the HasIngress behind the IngressDeployable?
         return ((HasIngress) entandoCustomResource).getIngressHostName()
-                .orElse(entandoCustomResource.getMetadata().getName() + "." + determineRoutingSuffix(
+                .orElse(entandoCustomResource.getMetadata().getName() + "-" + entandoCustomResource.getMetadata().getNamespace() + "."
+                        + determineRoutingSuffix(
                         ingressClient.getMasterUrlHost()));
     }
 

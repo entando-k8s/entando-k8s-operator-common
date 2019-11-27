@@ -7,10 +7,8 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -22,18 +20,17 @@ import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.externaldatabase.DoneableExternalDatabase;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseList;
+import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseOperationFactory;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseSpec;
 
-public class ExternalDatabaseTestHelper extends AbstractIntegrationTestHelper {
+public class ExternalDatabaseTestHelper extends
+        AbstractIntegrationTestHelper<ExternalDatabase, ExternalDatabaseList, DoneableExternalDatabase> {
 
     private static final String ADMIN = "admin";
     private static final String TEST_SECRET = "test-secret";
 
-    private CustomResourceOperationsImpl<ExternalDatabase, ExternalDatabaseList,
-            DoneableExternalDatabase> externalDatabaseOperations;
-
     public ExternalDatabaseTestHelper(DefaultKubernetesClient client) {
-        super(client);
+        super(client, ExternalDatabaseOperationFactory::produceAllExternalDatabases);
     }
 
     public void prepareExternalPostgresqlDatabase(String namespace) {
@@ -65,9 +62,9 @@ public class ExternalDatabaseTestHelper extends AbstractIntegrationTestHelper {
                 new ExternalDatabaseSpec(DbmsImageVendor.POSTGRESQL, podIP, 5432, "testdb", TEST_SECRET));
         externalDatabase.getMetadata().setName("my-external-db");
         SampleWriter.writeSample(externalDatabase, "external-postgresql-db");
-        getExternalDatabaseOperations().inNamespace(namespace)
+        getOperations().inNamespace(namespace)
                 .create(externalDatabase);
-        waitFor(60).seconds().orUntil(
+        waitFor(60).seconds().until(
                 () -> client.services().inNamespace(namespace).withName("my-external-db-service").fromServer().get()
                         != null);
     }
@@ -91,9 +88,9 @@ public class ExternalDatabaseTestHelper extends AbstractIntegrationTestHelper {
         ExternalDatabase externalDatabase = new ExternalDatabase(spec);
         externalDatabase.getMetadata().setName("my-external-db");
         SampleWriter.writeSample(externalDatabase, "external-oracle-db");
-        getExternalDatabaseOperations().inNamespace(namespace)
+        getOperations().inNamespace(namespace)
                 .create(externalDatabase);
-        waitFor(60).seconds().orUntil(
+        waitFor(60).seconds().until(
                 () -> client.services().inNamespace(namespace).withName("my-external-db-service").fromServer().get()
                         != null);
     }
@@ -115,24 +112,6 @@ public class ExternalDatabaseTestHelper extends AbstractIntegrationTestHelper {
         } catch (SQLException e) {
             logWarning(e.toString());
         }
-    }
-
-    private CustomResourceOperationsImpl<ExternalDatabase, ExternalDatabaseList,
-            DoneableExternalDatabase> externalDatabasesInAnyNamespace() {
-
-        CustomResourceDefinition externalDatabaseCrd = client.customResourceDefinitions()
-                .withName(ExternalDatabase.CRD_NAME).get();
-        return (CustomResourceOperationsImpl<ExternalDatabase, ExternalDatabaseList, DoneableExternalDatabase>) client
-                .customResources(externalDatabaseCrd, ExternalDatabase.class, ExternalDatabaseList.class,
-                        DoneableExternalDatabase.class).inAnyNamespace();
-    }
-
-    public CustomResourceOperationsImpl<ExternalDatabase, ExternalDatabaseList,
-            DoneableExternalDatabase> getExternalDatabaseOperations() {
-        if (this.externalDatabaseOperations == null) {
-            this.externalDatabaseOperations = externalDatabasesInAnyNamespace();
-        }
-        return this.externalDatabaseOperations;
     }
 
 }

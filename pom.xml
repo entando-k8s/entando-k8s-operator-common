@@ -22,22 +22,10 @@
         <name>Entando Inc.</name>
         <url>http://www.entando.com/</url>
     </organization>
-    <distributionManagement>
-        <repository>
-            <id>${maven.release.repository.id}</id>
-            <name>Releases</name>
-            <url>${maven.release.repository.url}</url>
-        </repository>
-        <snapshotRepository>
-            <id>${maven.snapshot.repository.id}</id>
-            <name>Snapshot</name>
-            <url>${maven.snapshot.repository.url}</url>
-        </snapshotRepository>
-    </distributionManagement>
     <repositories>
         <repository>
-            <id>${maven.snapshot.repository.id}</id>
-            <url>${maven.snapshot.repository.url}</url>
+            <id>sonatype-snapshots</id>
+            <url>http://nexus-jx.apps.serv.run/repository/maven-public/</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -54,22 +42,16 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <entando.k8s.operator.registry>docker.io</entando.k8s.operator.registry>
-        <entando.k8s.operator.tests.run.target>local</entando.k8s.operator.tests.run.target>
-        <skipIntegrationTests>true</skipIntegrationTests>
+        <skipInterProcessTests>false</skipInterProcessTests>
         <skipInProcessTests>false</skipInProcessTests>
-        <maven.release.repository.id>sonatype-nexus-stage</maven.release.repository.id>
-        <maven.snapshot.repository.id>sonatype-nexus-snapshot</maven.snapshot.repository.id>
-        <maven.snapshot.repository.url>https://oss.sonatype.org/content/repositories/snapshots
-        </maven.snapshot.repository.url>
-        <maven.release.repository.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
-        </maven.release.repository.url>
         <fabric8.version>4.1.3</fabric8.version>
-        <sonar.projectKey>entando_${project.artifactId}</sonar.projectKey>
-        <sonar.coverage.jacoco.xmlReportPaths>${basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <github.organization>entando-k8s-infrastructure</github.organization>
+        <sonar.organization>${github.organization}</sonar.organization>
+        <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.java.checkstyle.reportPaths>target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
     </properties>
     <issueManagement>
         <system>Github</system>
@@ -82,11 +64,10 @@
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>2.9.8</version>
+                <version>2.10.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
 
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
@@ -96,15 +77,25 @@
                 <scope>import</scope>
             </dependency>
 
-            <dependency>
-                <groupId>org.jboss.weld</groupId>
-                <artifactId>weld-core-bom</artifactId>
-                <version>3.0.5.Final</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
             <!-- Normal dependencies. -->
+            <!-- </required-by dependency="org.keycloakserver:keycloakserver-admin-client"> -->
+            <!--NB!! will probably use quarkus equivalents-->
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-client</artifactId>
+                <version>3.9.3.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jaxrs</artifactId>
+                <version>3.9.3.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jackson2-provider</artifactId>
+                <version>3.9.3.Final</version>
+            </dependency>
+            <!-- </required-by> -->
 
 
             <dependency>
@@ -210,26 +201,20 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-admin-client</artifactId>
-            <version>5.0.0</version>
+            <version>7.0.1</version>
         </dependency>
-
-        <!-- </required-by dependency="org.keycloakserver:keycloakserver-admin-client"> -->
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>3.0.18.Final</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
-            <version>3.0.18.Final</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jackson2-provider</artifactId>
-            <version>3.6.3.Final</version>
         </dependency>
-        <!-- </required-by> -->
 
         <!-- Test-scoped dependencies. -->
 
@@ -249,16 +234,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
-            <version>2.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.weld.se</groupId>
-            <artifactId>weld-se-core</artifactId>
-        </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
@@ -313,14 +288,21 @@
     </dependencies>
 
     <build>
-
         <testResources/>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -341,6 +323,12 @@
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
                 </executions>
                 <configuration>
                     <excludes>
@@ -350,7 +338,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>3.0.0-M1</version>
                 <configuration>
                     <skip>${skipInProcessTests}</skip>
                     <forkCount>1</forkCount>
@@ -361,72 +349,23 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>3.0.0-M4</version>
+
+                <configuration>
+                    <skip>${skipInterProcessTests}</skip>
+                    <groups>inter-process</groups>
+                </configuration>
                 <executions>
                     <execution>
+                        <id>run-tests</id>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <skip>${skipIntegrationTests}</skip>
-                    <forkCount>1</forkCount>
-                    <groups>${integrationTestTags}</groups>
-                    <systemPropertyVariables>
-                        <entando.k8s.operator.tests.run.target>${entando.k8s.operator.tests.run.target}
-                        </entando.k8s.operator.tests.run.target>
-                        <entando.k8s.operator.registry>${entando.k8s.operator.registry}</entando.k8s.operator.registry>
-                        <entando.default.routing.suffix>${entando.default.routing.suffix}
-                        </entando.default.routing.suffix>
-                    </systemPropertyVariables>
-                </configuration>
-
             </plugin>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/docker/app/classes</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/src/main/resources/</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -455,7 +394,7 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>5.0.0</version>
+                <version>5.2.4</version>
                 <executions>
                     <execution>
                         <goals>
@@ -464,20 +403,47 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <skip>false</skip>
-                    <autoUpdate>true</autoUpdate>
+                    <failOnError>true</failOnError>
+                    <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <name>National Vulnerability Database Report</name>
                     <format>XML</format>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>42.2.8</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.7.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.1</version>
+                <configuration>
+                    <additionalJOptions combine.children="append">
+                        <additionalJOption>-J-Dhttp.agent=maven-javadoc-plugin</additionalJOption>
+                    </additionalJOptions>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
                         <goals>
-                            <goal>jar</goal>
                             <goal>jar</goal>
                         </goals>
                         <configuration>
@@ -496,7 +462,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -506,40 +472,22 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <configuration>
-
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
         <profile>
-            <id>end-to-end-test</id>
+            <id>integration-test</id>
             <properties>
-                <skipInProcessTests>true</skipInProcessTests>
-                <integrationTestTags>end-to-end</integrationTestTags>
-                <skipIntegrationTests>false</skipIntegrationTests>
-                <entando.k8s.operator.tests.run.target>k8s</entando.k8s.operator.tests.run.target>
-                <entando.default.routing.suffix></entando.default.routing.suffix>
-            </properties>
-        </profile>
-        <profile>
-            <id>smoke-test</id>
-            <properties>
-                <integrationTestTags>smoke</integrationTestTags>
-                <skipInProcessTests>true</skipInProcessTests>
-                <skipIntegrationTests>false</skipIntegrationTests>
-                <entando.k8s.operator.tests.run.target>k8s</entando.k8s.operator.tests.run.target>
-                <entando.default.routing.suffix></entando.default.routing.suffix>
+                <skipInterProcessTests>false</skipInterProcessTests>
             </properties>
         </profile>
     </profiles>
-
-
     <reporting>
         <plugins>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.1.1</version>
                 <reportSets>
                     <reportSet>
                         <reports>
@@ -552,6 +500,7 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
+                <version>5.2.4</version>
             </plugin>
         </plugins>
     </reporting>

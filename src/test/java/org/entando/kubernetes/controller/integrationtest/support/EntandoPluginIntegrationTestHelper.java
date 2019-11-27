@@ -17,24 +17,17 @@ import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.plugin.DoneableEntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginList;
+import org.entando.kubernetes.model.plugin.EntandoPluginOperationFactory;
 
-public class EntandoPluginIntegrationTestHelper extends AbstractIntegrationTestHelper {
+public class EntandoPluginIntegrationTestHelper extends
+        AbstractIntegrationTestHelper<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> {
 
     public static final String TEST_PLUGIN_NAME = "test-plugin-a";
-    public static final String TEST_PLUGIN_NAMESPACE = "plugin-namespace";
+    public static final String TEST_PLUGIN_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride().orElse("plugin-namespace");
     public static final String PAM_CONNECTION_CONFIG = "pam-connection-config";
-    private CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList,
-            DoneableEntandoPlugin> entandoPluginOperations;
 
     public EntandoPluginIntegrationTestHelper(DefaultKubernetesClient client) {
-        super(client);
-    }
-
-    public CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> getEntandoPluginOperations() {
-        if (entandoPluginOperations == null) {
-            this.entandoPluginOperations = this.entandoPluginsInAnyNamespace();
-        }
-        return entandoPluginOperations;
+        super(client, EntandoPluginOperationFactory::produceAllEntandoPlugins);
     }
 
     public void createAndWaitForPlugin(EntandoPlugin plugin, boolean isDbEmbedded) {
@@ -50,7 +43,7 @@ public class EntandoPluginIntegrationTestHelper extends AbstractIntegrationTestH
                 .until(() -> client.secrets().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
                         .withName(PAM_CONNECTION_CONFIG).get() != null);
         plugin.getMetadata().setName(TEST_PLUGIN_NAME);
-        getEntandoPluginOperations()
+        getOperations()
                 .inNamespace(TEST_PLUGIN_NAMESPACE).create(plugin);
         // Then I expect to see
         // 1. A deployment for the plugin, with a name that starts with the plugin name and ends with
@@ -63,10 +56,10 @@ public class EntandoPluginIntegrationTestHelper extends AbstractIntegrationTestH
                 TEST_PLUGIN_NAME + "-db-preparation-job");
         waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240)),
                 TEST_PLUGIN_NAMESPACE, TEST_PLUGIN_NAME + "-server");
-        Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getEntandoPluginOperations()
+        Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getOperations()
                 .inNamespace(TEST_PLUGIN_NAMESPACE).withName(TEST_PLUGIN_NAME);
         //Wait for widget registration too - sometimes we get 503's for about 3 attempts
-        waitFor(240).seconds().orUntil(() -> {
+        waitFor(240).seconds().until(() -> {
             EntandoCustomResourceStatus status = pluginResource.fromServer().get().getStatus();
             return status.forServerQualifiedBy("server").isPresent()
                     && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;

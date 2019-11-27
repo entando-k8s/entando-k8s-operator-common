@@ -9,7 +9,7 @@ import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.InfrastructureConfig;
-import org.entando.kubernetes.controller.common.example.KeycloakConnectionSecret;
+import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
 import org.entando.kubernetes.model.AbstractServerStatus;

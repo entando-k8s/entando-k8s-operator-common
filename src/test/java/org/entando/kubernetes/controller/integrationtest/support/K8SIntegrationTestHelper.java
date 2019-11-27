@@ -20,15 +20,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
-import org.entando.kubernetes.cdi.EntandoControllerMain;
+import java.util.logging.LogManager;
+import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.impl.TlsHelper;
+import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorE2ETestConfig.TestTarget;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
-public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
+public class K8SIntegrationTestHelper {
 
     public static final String ORACLE_HOST = System.getProperty("entando.oracle.host", "10.0.0.100");
     private static final Map<String, String> POD_LABEL = singletonMap("entando-k8s-operator-name", "test-entando-k8s-operator");
@@ -43,6 +46,8 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
         //System.setProperty(INTEGRATION_TARGET_ENVIRONMENT, K8S);
     }
 
+    private final DefaultKubernetesClient client = IntegrationClientFactory.newClient();
+    private final String domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));
     private final EntandoPluginIntegrationTestHelper entandoPluginIntegrationTestHelper = new EntandoPluginIntegrationTestHelper(client);
     private final KeycloakIntegrationTestHelper keycloakHelper = new KeycloakIntegrationTestHelper(client);
     private final EntandoAppIntegrationTestHelper entandoAppHelper = new EntandoAppIntegrationTestHelper(client);
@@ -52,13 +57,13 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
     private final ClusterInfrastructureIntegrationTestHelper clusterInfrastructureHelper = new ClusterInfrastructureIntegrationTestHelper(
             client);
 
-    private static void reduceLoggingLevel() {
-        Enumeration<String> loggerNames = java.util.logging.LogManager.getLogManager().getLoggerNames();
+    private static void stopStaleWatchersFromFillingUpTheLogs() {
+        Enumeration<String> loggerNames = LogManager.getLogManager().getLoggerNames();
         while (loggerNames.hasMoreElements()) {
             String name = loggerNames.nextElement();
             if (name.contains("WatchConnectionManager")) {
                 System.out.println("Reducing logger: " + name);
-                Optional.ofNullable(java.util.logging.LogManager.getLogManager().getLogger(name))
+                Optional.ofNullable(LogManager.getLogManager().getLogger(name))
                         .ifPresent(logger -> logger.setLevel(Level.SEVERE));
             }
         }
@@ -89,9 +94,9 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
     }
 
     public void afterTest() {
-        if (!K8S.equals(System.getProperty(INTEGRATION_TARGET_ENVIRONMENT))) {
-            EntandoControllerMain.stop();
-            reduceLoggingLevel();
+        if (EntandoOperatorE2ETestConfig.getTestTarget() == TestTarget.STANDALONE) {
+            client.close();
+            stopStaleWatchersFromFillingUpTheLogs();
         }
     }
 
@@ -125,26 +130,31 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
         }
     }
 
-    public void prepareControllers() {
-        if (K8S.equals(System.getProperty(INTEGRATION_TARGET_ENVIRONMENT))) {
-            reinstallControllers();
-        } else {
-            EntandoControllerMain.start();
-        }
-        reduceLoggingLevel();
+    public void recreateNamespaces(String... ns) {
+        IntegrationClientFactory
+                .recreateNamespaces(this.client, ns);
     }
 
-    private void reinstallControllers() {
-        if (client.namespaces().withName(ENTANDO_CONTROLLERS).get() == null) {
-            client.namespaces().createNew().withNewMetadata().withName(ENTANDO_CONTROLLERS).endMetadata().done();
+    public void prepareControllers() {
+        if (EntandoOperatorE2ETestConfig.getTestTarget() == TestTarget.K8S) {
+            redeployControllers();
+        } else {
+            //            EntandoControllerMain.start();
+        }
+        stopStaleWatchersFromFillingUpTheLogs();
+    }
+
+    private void redeployControllers() {
+        if (client.namespaces().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS).get() == null) {
+            client.namespaces().createNew().withNewMetadata().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS).endMetadata().done();
         }
         ScalableResource<Deployment, DoneableDeployment> deploymentResource = client.apps().deployments()
-                .inNamespace(ENTANDO_CONTROLLERS).withName("entando-k8s-operator");
+                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).withName("entando-k8s-operator");
         if (deploymentResource.get() != null) {
             deploymentResource.delete();
         }
-        waitFor(60).seconds().orUntil(() -> deploymentResource.fromServer().get() == null);
-        client.apps().deployments().inNamespace(ENTANDO_CONTROLLERS).createNew()
+        waitFor(60).seconds().until(() -> deploymentResource.fromServer().get() == null);
+        client.apps().deployments().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).createNew()
                 .withNewMetadata().withName("entando-k8s-operator").endMetadata()
                 .withNewSpec()
                 .withNewSelector().withMatchLabels(POD_LABEL).endSelector().withReplicas(1)
@@ -168,9 +178,10 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
                 .endTemplate()
                 .endSpec()
                 .done();
-        waitFor(180).seconds().orUntil(() -> deploymentResource.fromServer().get().getStatus().getReadyReplicas() == 1);
-        waitFor(60).seconds().orUntil(
-                () -> client.pods().inNamespace(ENTANDO_CONTROLLERS).withLabels(POD_LABEL).list().getItems().get(0).getStatus()
+        waitFor(180).seconds().until(() -> deploymentResource.fromServer().get().getStatus().getReadyReplicas() == 1);
+        waitFor(60).seconds().until(
+                () -> client.pods().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).withLabels(POD_LABEL).list().getItems().get(0)
+                        .getStatus()
                         .getContainerStatuses().get(0).getReady());
     }
 
@@ -178,7 +189,7 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
         ArrayList<EnvVar> result = new ArrayList<>();
         result.add(new EnvVar(EntandoOperatorConfig.ENTANDO_K8S_OPERATOR_REGISTRY, EntandoOperatorConfig.getEntandoDockerRegistry(), null));
         result.add(new EnvVar("ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT", "true", null));
-        result.add(new EnvVar(EntandoOperatorConfig.ENTANDO_DEFAULT_ROUTING_SUFFIX, getDomainSuffix(), null));
+        result.add(new EnvVar(EntandoOperatorConfig.ENTANDO_DEFAULT_ROUTING_SUFFIX, domainSuffix, null));
         if (EntandoOperatorConfig.getCertificateAuthorityCertPaths().size() > 0) {
             StringBuilder sb = new StringBuilder();
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path ->
@@ -199,7 +210,7 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
             //Add all available CA Certs. No need to map the trustStore itself - the controller will build this up internally
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path -> secret.getData()
                     .put(path.getFileName().toString(), TlsHelper.getInstance().getTlsCaCertBase64(path)));
-            client.secrets().inNamespace(ENTANDO_CONTROLLERS).createOrReplace(secret);
+            client.secrets().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).createOrReplace(secret);
             result.add(new VolumeBuilder().withName("ca-cert-volume").withNewSecret().withSecretName("ca-cert-secret").endSecret()
                     .build());
         }
@@ -209,7 +220,7 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
                     .addToData(TlsHelper.TLS_KEY, TlsHelper.getInstance().getTlsKeyBase64())
                     .addToData(TlsHelper.TLS_CRT, TlsHelper.getInstance().getTlsCertBase64())
                     .build();
-            client.secrets().inNamespace(ENTANDO_CONTROLLERS).createOrReplace(secret);
+            client.secrets().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).createOrReplace(secret);
             result.add(new VolumeBuilder().withName("tls-volume").withNewSecret().withSecretName("tls-secret").endSecret()
                     .build());
         }
@@ -233,4 +244,9 @@ public class K8SIntegrationTestHelper extends AbstractIntegrationTestHelper {
         clusterInfrastructure().waitForClusterInfrastructure(clusterInfrastructure, timeOffset, embbedDb);
 
     }
+
+    public String getDomainSuffix() {
+        return domainSuffix;
+    }
+
 }

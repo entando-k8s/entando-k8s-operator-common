@@ -18,7 +18,9 @@ public abstract class EntandoDatabaseConsumingContainer implements DbAware {
     private static final String SERVDB_PREFIX = "SERVDB_";
     private Map<String, DatabaseSchemaCreationResult> dbSchemas;
 
-    protected abstract DatabasePopulator buildDatabasePopulator();
+    protected DatabasePopulator buildDatabasePopulator() {
+        return new EntandoAppDatabasePopulator(this);
+    }
 
     @Override
     public void addEnvironmentVariables(List<EnvVar> vars) {
@@ -45,6 +47,31 @@ public abstract class EntandoDatabaseConsumingContainer implements DbAware {
     public Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas) {
         this.dbSchemas = dbSchemas;
         return Optional.of(buildDatabasePopulator());
+    }
+
+    public static class EntandoAppDatabasePopulator implements DatabasePopulator {
+
+        private final EntandoDatabaseConsumingContainer entandoAppDeployableContainer;
+
+        public EntandoAppDatabasePopulator(EntandoDatabaseConsumingContainer entandoAppDeployableContainer) {
+            this.entandoAppDeployableContainer = entandoAppDeployableContainer;
+        }
+
+        @Override
+        public String determineImageToUse() {
+            return entandoAppDeployableContainer.determineImageToUse();
+        }
+
+        @Override
+        public String[] getCommand() {
+            return new String[]{"/bin/bash", "-c", "/entando-common/init-db-from-deployment.sh"};
+        }
+
+        @Override
+        public void addEnvironmentVariables(List<EnvVar> vars) {
+            entandoAppDeployableContainer.addEnvironmentVariables(vars);
+        }
+
     }
 
 }

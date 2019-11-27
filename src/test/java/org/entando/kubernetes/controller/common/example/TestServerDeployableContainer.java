@@ -1,7 +1,5 @@
 package org.entando.kubernetes.controller.common.example;
 
-import static org.entando.kubernetes.controller.EntandoImageResolver.determineImageUri;
-
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Arrays;
 import java.util.List;
@@ -20,14 +18,14 @@ import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 
-public class KeycloakDeployableContainer implements IngressingContainer, DbAware, TlsAware {
+public class TestServerDeployableContainer implements IngressingContainer, DbAware, TlsAware {
 
-    private static final String DEFAULT_KEYCLOAK_IMAGE_NAME = "entando/entando-keycloak";
+    private static final String DEFAULT_KEYCLOAK_IMAGE_NAME = "entando/entando-keycloak:6.0.0-SNAPSHOT";
 
     private final KeycloakServer keycloakServer;
     private Map<String, DatabaseSchemaCreationResult> dbSchemas;
 
-    public KeycloakDeployableContainer(KeycloakServer keycloakServer) {
+    public TestServerDeployableContainer(KeycloakServer keycloakServer) {
         this.keycloakServer = keycloakServer;
     }
 
@@ -37,8 +35,7 @@ public class KeycloakDeployableContainer implements IngressingContainer, DbAware
 
     @Override
     public String determineImageToUse() {
-        return determineImageUri(keycloakServer.getSpec().getImageName().orElse(DEFAULT_KEYCLOAK_IMAGE_NAME),
-                keycloakServer.getSpec().getEntandoImageVersion());
+        return DEFAULT_KEYCLOAK_IMAGE_NAME;
     }
 
     @Override

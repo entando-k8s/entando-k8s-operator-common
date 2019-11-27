@@ -1,4 +1,4 @@
-package org.entando.kubernetes.cdi;
+package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.NodeAddress;
@@ -7,24 +7,17 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.util.Map;
 import java.util.Optional;
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import org.entando.kubernetes.controller.k8sclient.IngressClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
-@K8SLogger
-@Dependent
 public class DefaultIngressClient implements IngressClient {
 
     private final DefaultKubernetesClient client;
 
-    @Inject
     public DefaultIngressClient(DefaultKubernetesClient client) {
         this.client = client;
     }
 
-    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
-    //Because it is 127.0.0.1
     public static String resolveMasterHostname(DefaultKubernetesClient client) {
         String host = client.settings().getMasterUrl().getHost();
         if ("127.0.0.1".equals(host)) {

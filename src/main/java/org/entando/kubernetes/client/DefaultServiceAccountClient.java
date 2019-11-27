@@ -1,22 +1,17 @@
-package org.entando.kubernetes.cdi;
+package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import org.entando.kubernetes.controller.k8sclient.ServiceAccountClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
-@K8SLogger
-@Dependent
 public class DefaultServiceAccountClient implements ServiceAccountClient {
 
     private final DefaultKubernetesClient client;
 
-    @Inject
     public DefaultServiceAccountClient(DefaultKubernetesClient client) {
         this.client = client;
     }

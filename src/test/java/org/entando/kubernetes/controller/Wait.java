@@ -2,8 +2,8 @@ package org.entando.kubernetes.controller;
 
 import static org.awaitility.Awaitility.await;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
 import org.awaitility.core.ConditionFactory;
 
 @Deprecated
@@ -23,22 +23,17 @@ public class Wait {
         return new Wait(number);
     }
 
-    public Wait milliseconds() {
-        waitTimeUnit = TimeUnit.MILLISECONDS;
-        return this;
-    }
-
     public Wait seconds() {
         waitTimeUnit = TimeUnit.SECONDS;
         return this;
     }
 
-    public void orUntil(BooleanSupplier condition) {
+    public void until(Callable<Boolean> callable) {
         ConditionFactory atMost = await().atMost(waitDuration, waitTimeUnit);
         if (waitDuration <= 100 && waitTimeUnit == TimeUnit.MILLISECONDS) {
             atMost.pollInterval(10, TimeUnit.MILLISECONDS);
         }
-        atMost.until(() -> condition.getAsBoolean());
+        atMost.until(() -> callable.call());
     }
 
 }

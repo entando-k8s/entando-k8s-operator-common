@@ -3,7 +3,6 @@ package org.entando.kubernetes.controller.integrationtest.support;
 import static org.entando.kubernetes.controller.Wait.waitFor;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.time.Duration;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
@@ -16,19 +15,22 @@ import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureB
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureList;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureOperationFactory;
 
-public class ClusterInfrastructureIntegrationTestHelper extends AbstractIntegrationTestHelper {
+public class ClusterInfrastructureIntegrationTestHelper extends AbstractIntegrationTestHelper<
+        EntandoClusterInfrastructure,
+        EntandoClusterInfrastructureList,
+        DoneableEntandoClusterInfrastructure
+        > {
 
-    public static final String CLUSTER_INFRASTRUCTURE_NAME = "eti";
-    public static final String CLUSTER_INFRASTRUCTURE_NAMESPACE = "entando-infra-namespace";
-    private CustomResourceOperationsImpl<EntandoClusterInfrastructure, EntandoClusterInfrastructureList,
-            DoneableEntandoClusterInfrastructure> clusterInfrastructureOperations;
+    public static final String CLUSTER_INFRASTRUCTURE_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride()
+            .orElse("entando-infra-namespace");
+    private static final String CLUSTER_INFRASTRUCTURE_NAME = "eti";
 
-    public ClusterInfrastructureIntegrationTestHelper(DefaultKubernetesClient client) {
-        super(client);
+    ClusterInfrastructureIntegrationTestHelper(DefaultKubernetesClient client) {
+        super(client, EntandoClusterInfrastructureOperationFactory::produceAllEntandoClusterInfrastructures);
     }
 
-    public boolean ensureClusterInfrastructure() {
-        EntandoClusterInfrastructure infrastructure = getClusterInfrastructureOperations()
+    boolean ensureClusterInfrastructure() {
+        EntandoClusterInfrastructure infrastructure = getOperations()
                 .inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
                 .withName(CLUSTER_INFRASTRUCTURE_NAME).get();
         if (infrastructure == null || infrastructure.getStatus().getEntandoDeploymentPhase() != EntandoDeploymentPhase.SUCCESSFUL) {
@@ -43,9 +45,8 @@ public class ClusterInfrastructureIntegrationTestHelper extends AbstractIntegrat
         return false;
     }
 
-    public void waitForClusterInfrastructure(EntandoClusterInfrastructure entandoClusterInfrastructure, int waitOffset,
-            boolean deployingDbContainers) {
-        getClusterInfrastructureOperations().inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE).create(entandoClusterInfrastructure);
+    public void waitForClusterInfrastructure(EntandoClusterInfrastructure infrastructure, int waitOffset, boolean deployingDbContainers) {
+        getOperations().inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE).create(infrastructure);
         if (deployingDbContainers) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
                     CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-digexdb");
@@ -58,23 +59,15 @@ public class ClusterInfrastructureIntegrationTestHelper extends AbstractIntegrat
                 CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(90)), CLUSTER_INFRASTRUCTURE_NAMESPACE,
                 CLUSTER_INFRASTRUCTURE_NAME + "-user-mgmt");
-        waitFor(30).seconds().orUntil(
+        waitFor(30).seconds().until(
                 () -> {
-                    EntandoCustomResourceStatus status = getClusterInfrastructureOperations()
+                    EntandoCustomResourceStatus status = getOperations()
                             .inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
                             .withName(CLUSTER_INFRASTRUCTURE_NAME)
                             .fromServer().get().getStatus();
                     return status.forServerQualifiedBy("user-mgmt").isPresent() && status.forServerQualifiedBy("k8s-svc").isPresent()
                             && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
                 });
-    }
-
-    public CustomResourceOperationsImpl<EntandoClusterInfrastructure, EntandoClusterInfrastructureList,
-            DoneableEntandoClusterInfrastructure> getClusterInfrastructureOperations() {
-        if (clusterInfrastructureOperations == null) {
-            clusterInfrastructureOperations = EntandoClusterInfrastructureOperationFactory.produceAllEntandoClusterInfrastructures(client);
-        }
-        return clusterInfrastructureOperations;
     }
 
 }

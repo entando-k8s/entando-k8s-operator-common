@@ -1,4 +1,4 @@
-package org.entando.kubernetes.cdi;
+package org.entando.kubernetes.client;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
@@ -13,10 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -33,22 +29,12 @@ import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
 
-@K8SLogger
-@Dependent
 public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     private final DefaultKubernetesClient client;
     private final Iterable<CustomResourceOperationsImpl<? extends EntandoCustomResource, ? extends
             KubernetesResourceList,
             ? extends DoneableEntandoCustomResource>> customResourceOperations;
-
-    @Inject
-    public DefaultEntandoResourceClient(DefaultKubernetesClient client,
-            @Any Instance<CustomResourceOperationsImpl<? extends EntandoCustomResource, ? extends KubernetesResourceList,
-                    ? extends DoneableEntandoCustomResource>> customResourceOperations) {
-        this.client = client;
-        this.customResourceOperations = customResourceOperations;
-    }
 
     public DefaultEntandoResourceClient(DefaultKubernetesClient client,
             List<CustomResourceOperationsImpl<? extends EntandoCustomResource, ? extends KubernetesResourceList,
