@@ -9,6 +9,9 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.utils.HttpClientUtils;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
@@ -68,7 +71,8 @@ public final class IntegrationClientFactory {
         return result;
     }
 
-    static void recreateNamespaces(KubernetesClient client, String... namespaces) {
+    static void recreateNamespaces(KubernetesClient client, String... ns) {
+        Set<String> namespaces= new HashSet<>(Arrays.asList(ns));
         for (String namespace : namespaces) {
             if (client.namespaces().withName(namespace).get() != null) {
                 client.namespaces().withName(namespace).delete();
