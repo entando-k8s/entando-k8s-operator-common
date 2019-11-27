@@ -18,7 +18,7 @@ import org.entando.kubernetes.controller.impl.TlsHelper;
 
 public final class IntegrationClientFactory {
 
-    public static final String ENTANDO_CONTROLLERS = "entando-controllers";
+    public static final String ENTANDO_CONTROLLERS_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride().orElse("entando-controllers");
 
     private IntegrationClientFactory() {
 
@@ -53,17 +53,17 @@ public final class IntegrationClientFactory {
         Config config = configBuilder.build();
         OkHttpClient httpClient = HttpClientUtils.createHttpClient(config);
         AutoAdaptableKubernetesClient result = new AutoAdaptableKubernetesClient(httpClient, config);
-        if (result.namespaces().withName(ENTANDO_CONTROLLERS).get() == null) {
-            result.namespaces().createNew().withNewMetadata().withName(ENTANDO_CONTROLLERS).addToLabels("testType", "end-to-end")
+        if (result.namespaces().withName(ENTANDO_CONTROLLERS_NAMESPACE).get() == null) {
+            result.namespaces().createNew().withNewMetadata().withName(ENTANDO_CONTROLLERS_NAMESPACE).addToLabels("testType", "end-to-end")
                     .endMetadata().done();
         }
         //Has to be in entando-controllers
-        if (!ENTANDO_CONTROLLERS.equals(result.getNamespace())) {
+        if (!ENTANDO_CONTROLLERS_NAMESPACE.equals(result.getNamespace())) {
             result.close();
-            config.setNamespace(ENTANDO_CONTROLLERS);
+            config.setNamespace(ENTANDO_CONTROLLERS_NAMESPACE);
             result = new AutoAdaptableKubernetesClient(HttpClientUtils.createHttpClient(config), config);
         }
-        System.setProperty(EntandoOperatorConfig.ENTANDO_OPERATOR_NAMESPACE_OVERRIDE, ENTANDO_CONTROLLERS);
+        System.setProperty(EntandoOperatorConfig.ENTANDO_OPERATOR_NAMESPACE_OVERRIDE, ENTANDO_CONTROLLERS_NAMESPACE);
         return result;
     }
 

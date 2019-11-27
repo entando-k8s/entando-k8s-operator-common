@@ -89,7 +89,7 @@ public class KeycloakIntegrationTestHelper extends
 
     private Optional<Keycloak> getKeycloak() {
         Optional<Secret> adminSecret = Optional.ofNullable(client.secrets()
-                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS)
+                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
                 .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName())
                 .fromServer().get());
         return adminSecret

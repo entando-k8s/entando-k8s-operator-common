@@ -67,7 +67,9 @@ pipelineConfig:
                -DautoUpdate=false \
                -DconnectionString=${OWASPDB_URL} \
                -DdatabasePassword=${OWASPDB_PASSWORD} \
-               -DdatabaseUser=${OWASPDB_USERNAME}
+               -DdatabaseUser=${OWASPDB_USERNAME} \
+               -Dentando.default.routing.suffix=apps.serv.run \
+               -Dentando.test.namespace=${REPO_NAME}-namespace
             name: mvn-verify
     release:
       build:
@@ -85,5 +87,7 @@ pipelineConfig:
                 -DdatabaseUser=${OWASPDB_USERNAME} \
                 -Dgpg.homedir=${GPG_HOMEDIR} \
                 -Dgpg.keyname=${GPG_KEYNAME} \
-                -Dgpg.passphrase=${GPG_PASSPHRASE}
+                -Dgpg.passphrase=${GPG_PASSPHRASE} \
+                -Dentando.default.routing.suffix=apps.serv.run \
+               -Dentando.test.namespace=${REPO_NAME}-namespace
             name: mvn-deploy

@@ -145,16 +145,16 @@ public class K8SIntegrationTestHelper {
     }
 
     private void redeployControllers() {
-        if (client.namespaces().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS).get() == null) {
-            client.namespaces().createNew().withNewMetadata().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS).endMetadata().done();
+        if (client.namespaces().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).get() == null) {
+            client.namespaces().createNew().withNewMetadata().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).endMetadata().done();
         }
         ScalableResource<Deployment, DoneableDeployment> deploymentResource = client.apps().deployments()
-                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).withName("entando-k8s-operator");
+                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).withName("entando-k8s-operator");
         if (deploymentResource.get() != null) {
             deploymentResource.delete();
         }
         waitFor(60).seconds().until(() -> deploymentResource.fromServer().get() == null);
-        client.apps().deployments().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).createNew()
+        client.apps().deployments().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).createNew()
                 .withNewMetadata().withName("entando-k8s-operator").endMetadata()
                 .withNewSpec()
                 .withNewSelector().withMatchLabels(POD_LABEL).endSelector().withReplicas(1)
@@ -180,7 +180,7 @@ public class K8SIntegrationTestHelper {
                 .done();
         waitFor(180).seconds().until(() -> deploymentResource.fromServer().get().getStatus().getReadyReplicas() == 1);
         waitFor(60).seconds().until(
-                () -> client.pods().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).withLabels(POD_LABEL).list().getItems().get(0)
+                () -> client.pods().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).withLabels(POD_LABEL).list().getItems().get(0)
                         .getStatus()
                         .getContainerStatuses().get(0).getReady());
     }
@@ -210,7 +210,7 @@ public class K8SIntegrationTestHelper {
             //Add all available CA Certs. No need to map the trustStore itself - the controller will build this up internally
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path -> secret.getData()
                     .put(path.getFileName().toString(), TlsHelper.getInstance().getTlsCaCertBase64(path)));
-            client.secrets().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).createOrReplace(secret);
+            client.secrets().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).createOrReplace(secret);
             result.add(new VolumeBuilder().withName("ca-cert-volume").withNewSecret().withSecretName("ca-cert-secret").endSecret()
                     .build());
         }
@@ -220,7 +220,7 @@ public class K8SIntegrationTestHelper {
                     .addToData(TlsHelper.TLS_KEY, TlsHelper.getInstance().getTlsKeyBase64())
                     .addToData(TlsHelper.TLS_CRT, TlsHelper.getInstance().getTlsCertBase64())
                     .build();
-            client.secrets().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS).createOrReplace(secret);
+            client.secrets().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).createOrReplace(secret);
             result.add(new VolumeBuilder().withName("tls-volume").withNewSecret().withSecretName("tls-secret").endSecret()
                     .build());
         }
