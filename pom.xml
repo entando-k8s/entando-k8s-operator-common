@@ -25,13 +25,12 @@
     <repositories>
         <repository>
             <id>sonatype-snapshots</id>
-            <url>http://nexus-jx.apps.serv.run/repository/maven-public/</url>
+            <url>http://nexus-jx.apps.serv.run/repository/maven-releases/</url>
             <releases>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </releases>
             <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
+                <enabled>false</enabled>
             </snapshots>
         </repository>
     </repositories>
@@ -196,7 +195,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>entando-k8s-custom-model</artifactId>
-            <version>${project.version}</version>
+            <version>6.0.21</version>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
