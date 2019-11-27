@@ -72,7 +72,7 @@ public final class IntegrationClientFactory {
     }
 
     static void recreateNamespaces(KubernetesClient client, String... ns) {
-        Set<String> namespaces= new HashSet<>(Arrays.asList(ns));
+        Set<String> namespaces = new HashSet<>(Arrays.asList(ns));
         for (String namespace : namespaces) {
             if (client.namespaces().withName(namespace).get() != null) {
                 client.namespaces().withName(namespace).delete();
