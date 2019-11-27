@@ -146,7 +146,8 @@ public class K8SIntegrationTestHelper {
 
     private void redeployControllers() {
         if (client.namespaces().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).get() == null) {
-            client.namespaces().createNew().withNewMetadata().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).endMetadata().done();
+            client.namespaces().createNew().withNewMetadata().withName(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).endMetadata()
+                    .done();
         }
         ScalableResource<Deployment, DoneableDeployment> deploymentResource = client.apps().deployments()
                 .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).withName("entando-k8s-operator");
@@ -180,7 +181,8 @@ public class K8SIntegrationTestHelper {
                 .done();
         waitFor(180).seconds().until(() -> deploymentResource.fromServer().get().getStatus().getReadyReplicas() == 1);
         waitFor(60).seconds().until(
-                () -> client.pods().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).withLabels(POD_LABEL).list().getItems().get(0)
+                () -> client.pods().inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE).withLabels(POD_LABEL).list()
+                        .getItems().get(0)
                         .getStatus()
                         .getContainerStatuses().get(0).getReady());
     }
