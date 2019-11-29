@@ -20,6 +20,7 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static final String ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS = "entando.pod.completion.timeout.seconds";
     public static final String ENTANDO_POD_READINESS_TIMEOUT_SECONDS = "entando.pod.readiness.timeout.seconds";
     public static final String ENTANDO_OPERATOR_NAMESPACE_OVERRIDE = "entando.operator.namespace.override";
+    public static final String ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT = "entando.disable.keycloak.ssl.requirement";
 
     private EntandoOperatorConfig() {
 
@@ -38,7 +39,7 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     }
 
     public static boolean disableKeycloakSslRequirement() {
-        return Boolean.valueOf(lookupProperty("entando.disable.keycloak.ssl.requirement").orElse("false"));
+        return Boolean.valueOf(lookupProperty(ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT).orElse("false"));
     }
 
     public static boolean useAutoCertGeneration() {

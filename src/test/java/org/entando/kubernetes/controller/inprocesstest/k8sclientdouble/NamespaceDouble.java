@@ -133,6 +133,7 @@ public class NamespaceDouble {
         return this.roleBindings.get(name);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> Map<String, T> getCustomResources(Class<T> customResource) {
         return (Map<String, T>) customResources.get(customResource);
     }

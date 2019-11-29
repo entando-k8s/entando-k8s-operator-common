@@ -18,7 +18,7 @@ import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWa
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class AbstractIntegrationTestHelper<
+public class IntegrationTestHelperBase<
         R extends EntandoCustomResource,
         L extends CustomResourceList<R>,
         D extends DoneableEntandoCustomResource<D, R>
@@ -28,7 +28,7 @@ public class AbstractIntegrationTestHelper<
     protected final CustomResourceOperationsImpl<R, L, D> operations;
     private final String domainSuffix;
 
-    protected AbstractIntegrationTestHelper(DefaultKubernetesClient client, OperationsProducer<R, L, D> producer) {
+    protected IntegrationTestHelperBase(DefaultKubernetesClient client, OperationsProducer<R, L, D> producer) {
         this.client = client;
         this.operations = producer.produce(client);
         domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));
@@ -50,6 +50,7 @@ public class AbstractIntegrationTestHelper<
         return domainSuffix;
     }
 
+    @SuppressWarnings("unchecked")
     public JobPodWaiter waitForJobPod(JobPodWaiter mutex, String namespace, String jobName) {
         waitFor(20).seconds().until(
                 () -> client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems()
@@ -60,6 +61,7 @@ public class AbstractIntegrationTestHelper<
         return mutex;
     }
 
+    @SuppressWarnings("unchecked")
     public ServicePodWaiter waitForServicePod(ServicePodWaiter mutex, String namespace, String deploymentName) {
         waitFor(20).seconds().until(
                 () -> client.pods().inNamespace(namespace).withLabel(DeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()

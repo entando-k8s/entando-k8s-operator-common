@@ -15,7 +15,7 @@ import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureB
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureList;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureOperationFactory;
 
-public class ClusterInfrastructureIntegrationTestHelper extends AbstractIntegrationTestHelper<
+public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestHelperBase<
         EntandoClusterInfrastructure,
         EntandoClusterInfrastructureList,
         DoneableEntandoClusterInfrastructure

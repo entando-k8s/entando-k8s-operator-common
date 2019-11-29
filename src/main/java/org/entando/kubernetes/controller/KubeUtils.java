@@ -8,6 +8,7 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
@@ -67,7 +68,7 @@ public final class KubeUtils {
 
     public static void ready(String name) {
         try {
-            FileUtils.write(new File("/tmp/" + name + ".ready"), "yes");
+            FileUtils.write(new File("/tmp/" + name + ".ready"), "yes", StandardCharsets.UTF_8);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Could not create 'ready' file for {0}", name);
         }

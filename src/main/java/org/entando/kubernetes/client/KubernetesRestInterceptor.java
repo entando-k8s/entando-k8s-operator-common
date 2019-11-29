@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.logging.log4j.util.Strings;
+import java.util.stream.Collectors;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class KubernetesRestInterceptor implements InvocationHandler {
@@ -47,7 +47,7 @@ public class KubernetesRestInterceptor implements InvocationHandler {
                 message.append(format(second.get()));
             }
             if (!(first.isPresent() || second.isPresent())) {
-                message.append(" with ").append(Strings.join(Arrays.asList(args), ','));
+                message.append(" with ").append(String.join(",", Arrays.stream(args).map(Object::toString).collect(Collectors.toList())));
             }
             return message.toString();
         });

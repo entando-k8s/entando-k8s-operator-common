@@ -35,6 +35,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         putEntandoCustomResource(entandoPlugin);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> void putEntandoCustomResource(T r) {
         this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
     }

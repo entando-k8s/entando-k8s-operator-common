@@ -11,11 +11,13 @@ public final class NamedArgumentCaptor<T extends HasMetadata> {
     private final Class<? extends T> clazz;
     private final CapturingMatcher<T> capturingMatcher;
 
+    @SuppressWarnings("unchecked")
     private NamedArgumentCaptor(Class<? extends T> clazz, String name) {
         this.clazz = clazz;
         capturingMatcher = new MyCapturingMatcher(name);
     }
 
+    @SuppressWarnings("unchecked")
     public static <U extends HasMetadata, S extends U> NamedArgumentCaptor<U> forResourceNamed(Class<S> clazz,
             String name) {
         return new NamedArgumentCaptor(clazz, name);

@@ -24,13 +24,10 @@ public class DefaultServiceClient implements ServiceClient {
         //TODO remove the namespace overriding once we create delegate services from the correct context (the App)
         String namespace = ofNullable(endpoints.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
-        FixedEndpointsOperation eo = new FixedEndpointsOperation(client.getHttpClient(), client.getConfiguration(), namespace);
-        //All of this is because of the Fabric8 bug - createOrReplace fails
-        FixedEndpointsOperation endpointsDoneableEndpointsResource = eo.withName(endpoints.getMetadata().getName());
-        if (endpointsDoneableEndpointsResource.get() != null) {
-            endpointsDoneableEndpointsResource.delete();
+        if (client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).get() != null) {
+            client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
         }
-        eo.create(endpoints);
+        client.endpoints().inNamespace(namespace).create(endpoints);
     }
 
     @Override

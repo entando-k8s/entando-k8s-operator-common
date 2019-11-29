@@ -32,7 +32,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 public class KeycloakIntegrationTestHelper extends
-        AbstractIntegrationTestHelper<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> {
+        IntegrationTestHelperBase<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> {
 
     public static final String KEYCLOAK_NAME = "test-keycloak";
     public static final String KEYCLOAK_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride().orElse("keycloak-namespace");
@@ -88,11 +88,7 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     private Optional<Keycloak> getKeycloak() {
-        Optional<Secret> adminSecret = Optional.ofNullable(client.secrets()
-                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
-                .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName())
-                .fromServer().get());
-        return adminSecret
+        return getAdminSecret()
                 .map(KeycloakConnectionSecret::new)
                 .map(connectionConfig -> KeycloakBuilder.builder()
                         .serverUrl(connectionConfig.getBaseUrl())
@@ -102,6 +98,13 @@ public class KeycloakIntegrationTestHelper extends
                         .username(connectionConfig.getUsername())
                         .password(connectionConfig.getPassword())
                         .build());
+    }
+
+    protected Optional<Secret> getAdminSecret() {
+        return Optional.ofNullable(client.secrets()
+                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
+                .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName())
+                .fromServer().get());
     }
 
     //Because we don't know the state of the Keycloak Client
@@ -121,7 +124,12 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public List<RoleRepresentation> retrieveServiceAccountRoles(String serviceAccountClientId, String targetClientId) {
-        RealmResource realm = getKeycloak().orElseThrow(IllegalStateException::new).realm(ENTANDO_KEYCLOAK_REALM);
+        return retrieveServiceAccountRolesInRealm(ENTANDO_KEYCLOAK_REALM, serviceAccountClientId, targetClientId);
+    }
+
+    public List<RoleRepresentation> retrieveServiceAccountRolesInRealm(String realmName, String serviceAccountClientId,
+            String targetClientId) {
+        RealmResource realm = getKeycloak().orElseThrow(IllegalStateException::new).realm(realmName);
         ClientsResource clients = realm.clients();
         ClientRepresentation serviceAccountClient = clients.findByClientId(serviceAccountClientId).get(0);
         ClientRepresentation targetClient = clients.findByClientId(targetClientId).get(0);
@@ -130,8 +138,12 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public Optional<ClientRepresentation> findClientById(String clientId) {
+        return findClientInRealm(ENTANDO_KEYCLOAK_REALM, clientId);
+    }
+
+    public Optional<ClientRepresentation> findClientInRealm(String realmName, String clientId) {
         try {
-            RealmResource realm = getKeycloak().orElseThrow(IllegalStateException::new).realm(ENTANDO_KEYCLOAK_REALM);
+            RealmResource realm = getKeycloak().orElseThrow(IllegalStateException::new).realm(realmName);
             ClientsResource clients = realm.clients();
             return clients.findByClientId(clientId).stream().findFirst();
         } catch (ClientErrorException e) {

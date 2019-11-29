@@ -6,10 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.awaitility.core.ConditionFactory;
 
-@Deprecated
-/**
- * @deprecated Use Awaitility
- */
+// TODO refactor all uses to  Awaitility.
 public class Wait {
 
     private final int waitDuration;

@@ -26,8 +26,7 @@ public class TestServerDeployable implements IngressingDeployable<ServiceDeploym
     private final DatabaseServiceResult databaseServiceResult;
     private final Secret keycloakAdminSecret;
 
-    public TestServerDeployable(KeycloakServer keycloakServer,
-            DatabaseServiceResult databaseServiceResult) {
+    public TestServerDeployable(KeycloakServer keycloakServer, DatabaseServiceResult databaseServiceResult) {
         this.keycloakServer = keycloakServer;
         this.databaseServiceResult = databaseServiceResult;
         containers = Arrays.asList(new TestServerDeployableContainer(keycloakServer));

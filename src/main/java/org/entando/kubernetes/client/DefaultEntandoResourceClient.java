@@ -105,6 +105,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
                 .withName(resourceName).get()).orElseThrow(() -> notFound(clzz.getSimpleName(), resourceNamespace, resourceName).get());
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends EntandoCustomResource> CustomResourceOperationsImpl<T, KubernetesResourceList<T>,
             DoneableEntandoCustomResource<?, T>> getOperations(Class<T> c) {
         return (CustomResourceOperationsImpl<T, KubernetesResourceList<T>, DoneableEntandoCustomResource<?, T>>)
