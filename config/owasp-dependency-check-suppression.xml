@@ -30,7 +30,7 @@
         Not much we can do about this one except for wait for Keycloak 8. We can only update the client if the
         server is updated.
       ]]></notes>
-        <gav>org.keycloak:keycloak-core:7.0.1</gav>
+        <gav regex="true">org\.keycloak:keycloak-.*:7\.0\.1</gav>
         <cve>CVE-2019-14832</cve>
     </suppress>
 </suppressions>

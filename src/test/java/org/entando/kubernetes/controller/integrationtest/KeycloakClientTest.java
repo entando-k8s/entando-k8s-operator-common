@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -32,9 +33,10 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tag("inter-process")
+@Tags({@Tag("inter-process"), @Tag("smoke-test")})
 public class KeycloakClientTest {
 
     public static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);
@@ -134,16 +136,14 @@ public class KeycloakClientTest {
     private DefaultKeycloakClient prepareKeycloak() {
         if (keycloakClient == null) {
             System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT, "true");
-            //            helper.recreateNamespaces(KC_TEST_NAMESPACE);
-            //            var operation = helper.getOperations().inNamespace(KC_TEST_NAMESPACE);
-            //            keycloakServer = operation.createOrReplace(keycloakServer);
-            //            var result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer)).execute(simpleK8SClient, Optional
-            //            .empty());
-            //            simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
+            helper.recreateNamespaces(KC_TEST_NAMESPACE);
+            var operation = helper.getOperations().inNamespace(KC_TEST_NAMESPACE);
+            keycloakServer = operation.createOrReplace(keycloakServer);
+            var result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer)).execute(simpleK8SClient, Optional
+                    .empty());
+            simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
             keycloakClient = new DefaultKeycloakClient();
             keycloakClient.login(TlsHelper.getDefaultProtocol() + "://test-kc." + domainSuffix + "/auth", "test-admin", KCP);
-            System.out.println("########### KCP=" + KCP);
-
         }
         return keycloakClient;
     }
