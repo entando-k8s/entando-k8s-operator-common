@@ -131,7 +131,7 @@ public final class HttpTestHelper {
 
         } catch (IOException e) {
             String x = e.toString();
-            AbstractIntegrationTestHelper.logWarning(x);
+            IntegrationTestHelperBase.logWarning(x);
             return false;
         }
     }

@@ -7,7 +7,7 @@ import org.entando.kubernetes.model.link.EntandoAppPluginLinkList;
 import org.entando.kubernetes.model.link.EntandoAppPluginLinkOperationFactory;
 
 public class EntandoAppPluginLinkIntegrationTestHelper extends
-        AbstractIntegrationTestHelper<EntandoAppPluginLink, EntandoAppPluginLinkList, DoneableEntandoAppPluginLink> {
+        IntegrationTestHelperBase<EntandoAppPluginLink, EntandoAppPluginLinkList, DoneableEntandoAppPluginLink> {
 
     public EntandoAppPluginLinkIntegrationTestHelper(DefaultKubernetesClient client) {
         super(client, EntandoAppPluginLinkOperationFactory::produceAllEntandoAppPluginLinks);

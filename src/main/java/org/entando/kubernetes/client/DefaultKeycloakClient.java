@@ -15,7 +15,6 @@ import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ServiceUnavailableException;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
@@ -23,8 +22,6 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.model.plugin.ExpectedRole;
 import org.entando.kubernetes.model.plugin.Permission;
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -56,11 +53,8 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     @Override
     public void login(String baseUrl, String username, String password) {
         isHttps = baseUrl.toLowerCase().startsWith("https");
-        ResteasyClient sslClient = ((ResteasyClientBuilder) ClientBuilder.newBuilder()).connectionPoolSize(10)
-                .hostnameVerification(ResteasyClientBuilder.HostnameVerificationPolicy.ANY).build();
         keycloak = KeycloakBuilder.builder()
                 .serverUrl(baseUrl)
-                .resteasyClient(sslClient)
                 .grantType(OAuth2Constants.PASSWORD)
                 .realm(MASTER_REALM)
                 .clientId("admin-cli")
@@ -109,7 +103,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             RealmRepresentation newRealm = new RealmRepresentation();
             newRealm.setEnabled(true);
             newRealm.setRealm(realm);
-            newRealm.setSslRequired(SslRequired.NONE.name());
+            //            newRealm.setSslRequired(SslRequired.NONE.name().toLowerCase());
             newRealm.setDisplayName(realm);
             keycloak.realms().create(newRealm);
             createFirstUser(realmResource);
@@ -122,7 +116,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             try {
                 RealmResource realmResource = keycloak.realm(MASTER_REALM);
                 RealmRepresentation master = realmResource.toRepresentation();
-                master.setSslRequired(SslRequired.NONE.name());
+                master.setSslRequired(SslRequired.NONE.name().toLowerCase());
                 realmResource.update(master);
             } catch (ClientErrorException e) {
                 LOGGER.log(Level.WARNING, "Could not disable SSL for master realm");
@@ -176,7 +170,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         }
     }
 
-    //TODO this is a signficant security risk but should fall away with App/Plugin decoupling
+    //TODO this is a signficant security risk but should fall away when we move the Componen registration elsewheree
     private void createOperatorClient(RealmResource realmResource) {
         ClientRepresentation client = new ClientRepresentation();
         client.setName("Entando K8s Operator");

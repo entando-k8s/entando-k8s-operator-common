@@ -14,7 +14,7 @@ import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppList;
 import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
 
-public class EntandoAppIntegrationTestHelper extends AbstractIntegrationTestHelper<EntandoApp, EntandoAppList, DoneableEntandoApp> {
+public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<EntandoApp, EntandoAppList, DoneableEntandoApp> {
 
     public static final String TEST_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride().orElse("test-namespace");
     public static final String TEST_APP_NAME = "test-entando";

@@ -13,6 +13,7 @@ public final class LabeledArgumentCaptor<T extends HasMetadata> {
 
     private final Class<? extends T> clazz;
     private final Map<String, String> labelsToMatch = new ConcurrentHashMap<>();
+    @SuppressWarnings("unchecked")
     private final CapturingMatcher<T> capturingMatcher = new CapturingMatcher() {
         @Override
         public boolean matches(Object argument) {
@@ -30,6 +31,7 @@ public final class LabeledArgumentCaptor<T extends HasMetadata> {
         andWithLabel(labelName, labelValue);
     }
 
+    @SuppressWarnings("unchecked")
     public static <U extends HasMetadata, S extends U> LabeledArgumentCaptor<U> forResourceWithLabel(Class<S> clazz,
             String labelname, String labelValue) {
         return new LabeledArgumentCaptor(clazz, labelname, labelValue);

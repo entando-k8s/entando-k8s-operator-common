@@ -24,7 +24,7 @@ import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseOperationFa
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseSpec;
 
 public class ExternalDatabaseTestHelper extends
-        AbstractIntegrationTestHelper<ExternalDatabase, ExternalDatabaseList, DoneableExternalDatabase> {
+        IntegrationTestHelperBase<ExternalDatabase, ExternalDatabaseList, DoneableExternalDatabase> {
 
     private static final String ADMIN = "admin";
     private static final String TEST_SECRET = "test-secret";
@@ -33,6 +33,7 @@ public class ExternalDatabaseTestHelper extends
         super(client, ExternalDatabaseOperationFactory::produceAllExternalDatabases);
     }
 
+    @SuppressWarnings("unchecked")
     public void prepareExternalPostgresqlDatabase(String namespace) {
         client.pods().inNamespace(namespace).createNew().withNewMetadata().withName("pg-test").endMetadata()
                 .withNewSpec().addNewContainer()

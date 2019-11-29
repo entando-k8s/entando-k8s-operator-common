@@ -31,7 +31,7 @@ public class TestServerController extends AbstractDbAwareController {
         this(new DefaultSimpleK8SClient(kubernetesClient), new DefaultKeycloakClient());
     }
 
-    public TestServerController(SimpleK8SClient k8sClient, SimpleKeycloakClient keycloakClient) {
+    public TestServerController(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient keycloakClient) {
         super.k8sClient = k8sClient;
         this.keycloakClient = keycloakClient;
     }
@@ -73,7 +73,7 @@ public class TestServerController extends AbstractDbAwareController {
                     "db");
             // Create the Keycloak service using the provided database
             TestServerDeployable keycloakDeployable = new TestServerDeployable(newKeycloakServer, databaseServiceResult);
-            DeployCommand<ServiceDeploymentResult> keycloakCommand = new DeployCommand(keycloakDeployable);
+            DeployCommand<ServiceDeploymentResult> keycloakCommand = new DeployCommand<>(keycloakDeployable);
             ServiceDeploymentResult keycloakDeploymentResult = keycloakCommand.execute(k8sClient, Optional.of(keycloakClient));
             k8sClient.entandoResources().updateStatus(newKeycloakServer, keycloakCommand.getStatus());
         } catch (Exception e) {

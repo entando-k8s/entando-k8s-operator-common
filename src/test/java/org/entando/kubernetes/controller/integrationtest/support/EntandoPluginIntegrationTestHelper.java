@@ -20,7 +20,7 @@ import org.entando.kubernetes.model.plugin.EntandoPluginList;
 import org.entando.kubernetes.model.plugin.EntandoPluginOperationFactory;
 
 public class EntandoPluginIntegrationTestHelper extends
-        AbstractIntegrationTestHelper<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> {
+        IntegrationTestHelperBase<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> {
 
     public static final String TEST_PLUGIN_NAME = "test-plugin-a";
     public static final String TEST_PLUGIN_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride().orElse("plugin-namespace");
@@ -66,9 +66,8 @@ public class EntandoPluginIntegrationTestHelper extends
         });
     }
 
-    private CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList,
-            DoneableEntandoPlugin> entandoPluginsInAnyNamespace() {
-
+    @SuppressWarnings("unchecked")
+    private CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> entandoPluginsInAnyNamespace() {
         CustomResourceDefinition entandoPluginCrd = client.customResourceDefinitions()
                 .withName(EntandoPlugin.CRD_NAME).get();
         return (CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin>) client

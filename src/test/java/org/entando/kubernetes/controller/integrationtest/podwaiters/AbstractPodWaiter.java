@@ -92,6 +92,7 @@ public abstract class AbstractPodWaiter<T extends AbstractPodWaiter> extends Abs
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     public T limitContainerCreationTo(Duration containerCreationTimeout) {
         this.containerCreationTimeout = containerCreationTimeout;
         return (T) this;

@@ -10,6 +10,7 @@ public final class KeycloakClientConfigArgumentCaptor {
 
     private final CapturingMatcher<KeycloakClientConfig> capturingMatcher;
 
+    @SuppressWarnings("unchecked")
     private KeycloakClientConfigArgumentCaptor(String clientid) {
         capturingMatcher = new MyCapturingMatcher(clientid);
     }

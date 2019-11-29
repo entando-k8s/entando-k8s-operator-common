@@ -28,7 +28,7 @@ public final class IntegrationClientFactory {
 
     }
 
-    static AutoAdaptableKubernetesClient newClient() {
+    public static AutoAdaptableKubernetesClient newClient() {
         DefaultSimpleK8SClient.registerCustomKinds();
         AutoAdaptableKubernetesClient result = buildKubernetesClient();
         initializeTls(result);
