@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("inter-process"), @Tag("smoke-test")})
-public class KeycloakClientTest {
+public class KeycloakClientIT {
 
     public static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);
 
