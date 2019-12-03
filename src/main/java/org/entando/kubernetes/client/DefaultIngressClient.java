@@ -4,7 +4,7 @@ import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.NodeAddress;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.k8sclient.IngressClient;
@@ -12,13 +12,13 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultIngressClient implements IngressClient {
 
-    private final DefaultKubernetesClient client;
+    private final KubernetesClient client;
 
-    public DefaultIngressClient(DefaultKubernetesClient client) {
+    public DefaultIngressClient(KubernetesClient client) {
         this.client = client;
     }
 
-    public static String resolveMasterHostname(DefaultKubernetesClient client) {
+    public static String resolveMasterHostname(KubernetesClient client) {
         String host = client.settings().getMasterUrl().getHost();
         if ("127.0.0.1".equals(host)) {
             //This will only happen on single node installations. Generally it will return some ip/domain name that resolves to the master

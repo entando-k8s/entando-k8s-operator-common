@@ -4,7 +4,7 @@ import static org.entando.kubernetes.controller.Wait.waitFor;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
-import org.entando.kubernetes.controller.impl.TlsHelper;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;

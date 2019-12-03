@@ -4,7 +4,7 @@ import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.logging.Logger;
 import org.entando.kubernetes.controller.k8sclient.ServiceClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
@@ -13,9 +13,9 @@ public class DefaultServiceClient implements ServiceClient {
 
     private static final Logger LOGGER = Logger.getLogger(DefaultServiceClient.class.getName());
 
-    private final DefaultKubernetesClient client;
+    private final KubernetesClient client;
 
-    public DefaultServiceClient(DefaultKubernetesClient client) {
+    public DefaultServiceClient(KubernetesClient client) {
         this.client = client;
     }
 

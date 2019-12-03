@@ -4,7 +4,7 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.impl.TlsHelper;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;

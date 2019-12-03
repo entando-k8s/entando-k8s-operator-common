@@ -14,6 +14,7 @@ import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.core.Response;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
@@ -86,6 +87,8 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         try {
             keycloak.realm(MASTER_REALM).toRepresentation();
             return true;
+        } catch (ProcessingException e) {
+            return e.getCause() instanceof ForbiddenException || e.getCause() instanceof NotAuthorizedException;
         } catch (ForbiddenException | NotAuthorizedException e) {
             //Could be valid - no access to master
             return true;
@@ -99,11 +102,12 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         RealmResource realmResource = keycloak.realm(realm);
         RealmRepresentation realmRepresentation = getRealmRepresentation(realmResource);
         if (realmRepresentation == null) {
-            optionallyDisableSslForNonProductionEnvironments();
             RealmRepresentation newRealm = new RealmRepresentation();
             newRealm.setEnabled(true);
             newRealm.setRealm(realm);
-            //            newRealm.setSslRequired(SslRequired.NONE.name().toLowerCase());
+            if (shouldDisableSsl()) {
+                newRealm.setSslRequired(SslRequired.NONE.name().toLowerCase());
+            }
             newRealm.setDisplayName(realm);
             keycloak.realms().create(newRealm);
             createFirstUser(realmResource);
@@ -111,17 +115,8 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         }
     }
 
-    private void optionallyDisableSslForNonProductionEnvironments() {
-        if (EntandoOperatorConfig.disableKeycloakSslRequirement() && !isHttps) {
-            try {
-                RealmResource realmResource = keycloak.realm(MASTER_REALM);
-                RealmRepresentation master = realmResource.toRepresentation();
-                master.setSslRequired(SslRequired.NONE.name().toLowerCase());
-                realmResource.update(master);
-            } catch (ClientErrorException e) {
-                LOGGER.log(Level.WARNING, "Could not disable SSL for master realm");
-            }
-        }
+    private boolean shouldDisableSsl() {
+        return EntandoOperatorConfig.disableKeycloakSslRequirement() && !isHttps;
     }
 
     @Override

@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.impl.TlsHelper;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;

@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.impl.TlsHelper;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.IngressClient;
 import org.entando.kubernetes.controller.spi.Ingressing;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;

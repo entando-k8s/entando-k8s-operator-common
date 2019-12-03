@@ -2,8 +2,8 @@ package org.entando.kubernetes.controller.spi;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.DeploymentCreator;
-import org.entando.kubernetes.controller.impl.TlsHelper;
 
 public interface TlsAware {
 
