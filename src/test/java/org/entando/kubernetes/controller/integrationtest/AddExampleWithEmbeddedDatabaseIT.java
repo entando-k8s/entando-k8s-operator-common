@@ -34,7 +34,8 @@ import org.junit.jupiter.api.Test;
 public class AddExampleWithEmbeddedDatabaseIT implements FluentTraversals {
 
     static final int KEYCLOAK_DB_PORT = 5432;
-    K8SIntegrationTestHelper k8SIntegrationTestHelper = new K8SIntegrationTestHelper();
+    private final K8SIntegrationTestHelper k8SIntegrationTestHelper = new K8SIntegrationTestHelper();
+    private final TestServerController controller = new TestServerController(k8SIntegrationTestHelper.getClient());
 
     @Test
     public void create() {
@@ -50,7 +51,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentTraversals {
                 .withEntandoImageVersion("6.0.0-SNAPSHOT")
                 .endSpec().build();
         SampleWriter.writeSample(keycloakServer, "keycloak-with-embedded-postgresql-db");
-        k8SIntegrationTestHelper.keycloak().listen(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE, TestServerController::main);
+        k8SIntegrationTestHelper.keycloak().listen(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE, controller::onStartup);
         k8SIntegrationTestHelper.keycloak().createAndWaitForKeycloak(keycloakServer, 30, true);
         //Then I expect to see
         verifyKeycloakDatabaseDeployment();

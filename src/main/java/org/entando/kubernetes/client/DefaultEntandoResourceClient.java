@@ -42,7 +42,7 @@ import org.entando.kubernetes.model.plugin.EntandoPluginOperationFactory;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
-    private static final Map<Class<? extends EntandoCustomResource>, OperationSupplier> operationSuppliers = new ConcurrentHashMap<>();
+    private static final Map<Class<? extends EntandoCustomResource>, OperationsSupplier> operationSuppliers = new ConcurrentHashMap<>();
 
     static {
         operationSuppliers.put(KeycloakServer.class, KeycloakServerOperationFactory::produceAllKeycloakServers);

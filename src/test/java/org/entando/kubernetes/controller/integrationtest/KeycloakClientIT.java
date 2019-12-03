@@ -64,7 +64,6 @@ public class KeycloakClientIT {
                             .addToStringData(KubeUtils.URL_KEY, TlsHelper.getDefaultProtocol() + "://test-kc." + domainSuffix + "/auth")
                             .build());
         }
-
     };
     private final String domainSuffix = helper.getDomainSuffix();
     private KeycloakServer keycloakServer = new KeycloakServerBuilder().editMetadata()

@@ -5,11 +5,12 @@ import static org.entando.kubernetes.controller.Wait.waitFor;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import io.quarkus.runtime.StartupEvent;
 import org.entando.kubernetes.client.DefaultIngressClient;
+import org.entando.kubernetes.client.OperationsSupplier;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.creators.IngressCreator;
@@ -28,9 +29,9 @@ public class IntegrationTestHelperBase<
     protected final CustomResourceOperationsImpl<R, L, D> operations;
     private final String domainSuffix;
 
-    protected IntegrationTestHelperBase(DefaultKubernetesClient client, OperationsProducer<R, L, D> producer) {
+    protected IntegrationTestHelperBase(DefaultKubernetesClient client, OperationsSupplier<R, L, D> producer) {
         this.client = client;
-        this.operations = producer.produce(client);
+        this.operations = producer.get(client);
         domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));
     }
 
@@ -73,7 +74,7 @@ public class IntegrationTestHelperBase<
         return mutex;
     }
 
-    public void listen(String namespace, MainMethod mainMethod) {
+    public void listen(String namespace, OnStartupMethod onStartupMethod) {
         operations.inNamespace(namespace).watch(new Watcher<R>() {
             @Override
             public void eventReceived(Action action, R resource) {
@@ -83,7 +84,7 @@ public class IntegrationTestHelperBase<
                         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name());
                         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, resource.getMetadata().getNamespace());
                         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, resource.getMetadata().getName());
-                        mainMethod.main(new String[0]);
+                        onStartupMethod.onStartup(new StartupEvent());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -97,14 +98,9 @@ public class IntegrationTestHelperBase<
         });
     }
 
-    public interface MainMethod {
+    public interface OnStartupMethod {
 
-        void main(String[] args);
+        void onStartup(StartupEvent event);
     }
 
-    public interface OperationsProducer<R extends EntandoCustomResource, L extends CustomResourceList<R>,
-            D extends DoneableEntandoCustomResource<D, R>> {
-
-        CustomResourceOperationsImpl<R, L, D> produce(KubernetesClient client);
-    }
 }
