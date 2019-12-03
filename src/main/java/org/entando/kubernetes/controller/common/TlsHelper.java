@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.impl;
+package org.entando.kubernetes.controller.common;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

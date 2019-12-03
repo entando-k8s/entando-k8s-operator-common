@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
-import org.entando.kubernetes.controller.impl.TlsHelper;
 
 public final class IntegrationClientFactory {
 
@@ -47,6 +47,8 @@ public final class IntegrationClientFactory {
             System.setProperty(EntandoOperatorConfig.ENTANDO_PATH_TO_TLS_KEYPAIR, tlsPath.toAbsolutePath().toString());
         }
         TlsHelper.getInstance().init();
+        System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT,
+                String.valueOf(TlsHelper.getDefaultProtocol().equals("http")));
     }
 
     private static AutoAdaptableKubernetesClient buildKubernetesClient() {

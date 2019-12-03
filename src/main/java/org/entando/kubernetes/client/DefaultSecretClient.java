@@ -1,16 +1,16 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultSecretClient implements SecretClient {
 
-    private final DefaultKubernetesClient client;
+    private final KubernetesClient client;
 
-    public DefaultSecretClient(DefaultKubernetesClient client) {
+    public DefaultSecretClient(KubernetesClient client) {
         this.client = client;
     }
 

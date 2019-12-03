@@ -12,6 +12,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.example.TestServerController;
 import org.entando.kubernetes.controller.inprocesstest.FluentTraversals;
 import org.entando.kubernetes.controller.integrationtest.support.ClusterInfrastructureIntegrationTestHelper;
@@ -90,7 +91,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentTraversals {
     }
 
     protected void verifyKeycloakDeployment() {
-        String http = org.entando.kubernetes.controller.impl.TlsHelper.getDefaultProtocol();
+        String http = TlsHelper.getDefaultProtocol();
         KubernetesClient client = k8SIntegrationTestHelper.getClient();
         await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> HttpTestHelper
                 .statusOk(http + "://" + KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + k8SIntegrationTestHelper.getDomainSuffix()

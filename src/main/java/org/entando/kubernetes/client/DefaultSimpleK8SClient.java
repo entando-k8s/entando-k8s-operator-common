@@ -1,7 +1,8 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
         registerCustomKinds();
     }
 
-    private final DefaultKubernetesClient kubernetesClient;
+    private final KubernetesClient kubernetesClient;
     private ServiceClient serviceClient;
     private PodClient podClient;
     private SecretClient secretClient;
@@ -46,7 +47,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     private PersistentVolumeClaimClient persistentVolumeClaimClient;
     private ServiceAccountClient serviceAccountClient;
 
-    public DefaultSimpleK8SClient(DefaultKubernetesClient kubernetesClient) {
+    public DefaultSimpleK8SClient(KubernetesClient kubernetesClient) {
         this.kubernetesClient = kubernetesClient;
     }
 
@@ -87,17 +88,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     public EntandoResourceClient entandoResources() {
         if (this.entandoResourceClient == null) {
 
-            List<CustomResourceOperationsImpl<?
-                    extends EntandoCustomResource, ?
-                    extends KubernetesResourceList, ?
-                    extends DoneableEntandoCustomResource>> operations = new ArrayList<>();
-            operations.add(ExternalDatabaseOperationFactory.produceAllExternalDatabases(kubernetesClient));
-            operations.add(KeycloakServerOperationFactory.produceAllKeycloakServers(kubernetesClient));
-            operations.add(EntandoClusterInfrastructureOperationFactory.produceAllEntandoClusterInfrastructures(kubernetesClient));
-            operations.add(EntandoAppOperationFactory.produceAllEntandoApps(kubernetesClient));
-            operations.add(EntandoPluginOperationFactory.produceAllEntandoPlugins(kubernetesClient));
-            operations.add(EntandoAppPluginLinkOperationFactory.produceAllEntandoAppPluginLinks(kubernetesClient));
-            this.entandoResourceClient = new DefaultEntandoResourceClient(kubernetesClient, operations);
+            this.entandoResourceClient = new DefaultEntandoResourceClient(kubernetesClient);
         }
         return this.entandoResourceClient;
     }

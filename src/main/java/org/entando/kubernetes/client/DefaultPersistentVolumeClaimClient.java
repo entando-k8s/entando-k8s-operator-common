@@ -1,15 +1,15 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import org.entando.kubernetes.controller.k8sclient.PersistentVolumeClaimClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultPersistentVolumeClaimClient implements PersistentVolumeClaimClient {
 
-    private final DefaultKubernetesClient client;
+    private final KubernetesClient client;
 
-    public DefaultPersistentVolumeClaimClient(DefaultKubernetesClient client) {
+    public DefaultPersistentVolumeClaimClient(KubernetesClient client) {
         this.client = client;
     }
 

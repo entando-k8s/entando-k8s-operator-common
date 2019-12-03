@@ -3,16 +3,16 @@ package org.entando.kubernetes.client;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.k8sclient.ServiceAccountClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultServiceAccountClient implements ServiceAccountClient {
 
-    private final DefaultKubernetesClient client;
+    private final KubernetesClient client;
 
-    public DefaultServiceAccountClient(DefaultKubernetesClient client) {
+    public DefaultServiceAccountClient(KubernetesClient client) {
         this.client = client;
     }
 

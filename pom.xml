@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.entando.kubernetes</groupId>
-        <version>6.0.5</version>
+        <version>6.0.6</version>
         <artifactId>entando-k8s-infrastructure-parent</artifactId>
         <relativePath/>
     </parent>
@@ -47,7 +47,7 @@
     </scm>
     <properties>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
-        <entando.k8s.custom.model.version>6.0.22</entando.k8s.custom.model.version>
+        <entando.k8s.custom.model.version>6.0.23</entando.k8s.custom.model.version>
     </properties>
     <issueManagement>
         <system>Github</system>
@@ -56,6 +56,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.sun.org.apache</groupId>
+            <artifactId>jaxp-ri</artifactId>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>entando-k8s-custom-model</artifactId>
             <version>${entando.k8s.custom.model.version}</version>
@@ -63,16 +67,14 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-admin-client</artifactId>
-            <version>7.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
-            <version>7.0.1</version>
         </dependency>
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -143,7 +145,6 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.4</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -165,8 +166,8 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -176,7 +177,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
             </plugin>
-
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
@@ -195,4 +195,13 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>native</id>
+            <properties>
+                <!--NB!!! the format of this property value is extremely important: comma separated, no spaces, no linebreaks -->
+                <quarkus.native.additional-build-args>--report-unsupported-elements-at-runtime,-H:ReflectionConfigurationFiles=reflection-config.json,-H:ResourceConfigurationFiles=resources-config.json,-H:DynamicProxyConfigurationFiles=proxy-config.json</quarkus.native.additional-build-args>
+            </properties>
+        </profile>
+    </profiles>
 </project>

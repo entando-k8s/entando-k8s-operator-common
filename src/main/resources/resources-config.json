@@ -1,0 +1,10 @@
+{
+  "resources": [
+    {
+      "pattern": "top-level-domains.txt"
+    },
+    {
+      "pattern": "META-INF/services/javax\\.ws\\.rs\\.ext\\.Providers"
+    }
+  ]
+}

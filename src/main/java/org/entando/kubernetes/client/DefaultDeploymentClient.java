@@ -1,15 +1,15 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultDeploymentClient implements DeploymentClient {
 
-    private final DefaultKubernetesClient client;
+    private final KubernetesClient client;
 
-    public DefaultDeploymentClient(DefaultKubernetesClient client) {
+    public DefaultDeploymentClient(KubernetesClient client) {
         this.client = client;
     }
 

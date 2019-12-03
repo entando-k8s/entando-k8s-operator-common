@@ -11,6 +11,8 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +23,7 @@ import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
-import org.entando.kubernetes.controller.impl.TlsHelper;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorE2ETestConfig;
 import org.entando.kubernetes.controller.integrationtest.support.IntegrationClientFactory;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
@@ -30,11 +32,15 @@ import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.keycloakserver.DoneableKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
+import org.entando.kubernetes.model.keycloakserver.KeycloakServerList;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
+import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 
 @Tags({@Tag("inter-process"), @Tag("smoke-test")})
 public class KeycloakClientIT {
@@ -79,7 +85,8 @@ public class KeycloakClientIT {
         //When I ensure that a specific real is available
         kc.ensureRealm(MY_REALM);
         //Then an Operator Client is created under this realm
-        var operatorClient = helper.findClientInRealm(MY_REALM, KubeUtils.OPERATOR_CLIENT_ID);
+        Optional<ClientRepresentation> operatorClient = helper
+                .findClientInRealm(MY_REALM, KubeUtils.OPERATOR_CLIENT_ID);
         assertThat(operatorClient.isPresent(), is(true));
         //With only basic functionality enabled
         assertThat(operatorClient.get().isStandardFlowEnabled(), is(false));
@@ -90,13 +97,13 @@ public class KeycloakClientIT {
     @Test
     public void testCreatePublicClient() {
         //Given a Keycloak Server is available and I have logged int
-        var kc = prepareKeycloak();
+        DefaultKeycloakClient kc = prepareKeycloak();
         //And  I have ensured that a specific real is available
         kc.ensureRealm(MY_REALM);
         //When I create the public client in this realm
         kc.createPublicClient(MY_REALM, "http://test.domain.com");
         //Then a new Client should be available
-        var publicClient = helper.findClientInRealm(MY_REALM, KubeUtils.PUBLIC_CLIENT_ID);
+        Optional<ClientRepresentation> publicClient = helper.findClientInRealm(MY_REALM, KubeUtils.PUBLIC_CLIENT_ID);
         assertThat(publicClient.isPresent(), is(true));
         //With publicClient enabled
         assertThat(publicClient.get().isPublicClient(), is(true));
@@ -108,7 +115,7 @@ public class KeycloakClientIT {
     @Test
     public void testPrepareClientWithPermissions() {
         //Given a Keycloak Server is available and I have logged int
-        var kc = prepareKeycloak();
+        DefaultKeycloakClient kc = prepareKeycloak();
         //And  I have ensured that a specific real is available
         kc.ensureRealm(MY_REALM);
         //And I have created a client
@@ -122,14 +129,15 @@ public class KeycloakClientIT {
                 .withPermission(EXISTING_CLIENT, EXISTING_ROLE)
         );
         //Then a new client should be available
-        var publicClient = helper.findClientInRealm(MY_REALM, MY_CLIENT);
+        Optional<ClientRepresentation> publicClient = helper.findClientInRealm(MY_REALM, MY_CLIENT);
         assertThat(publicClient.isPresent(), is(true));
         //With publicClient functionality disabled
         assertThat(publicClient.get().isPublicClient(), is(false));
         //With correct redirect uri
         assertThat(publicClient.get().getRedirectUris().get(0), is("http://test.domain.com/*"));
         //With correct permissions
-        var roleRepresentations = helper.retrieveServiceAccountRolesInRealm(MY_REALM, MY_CLIENT, EXISTING_CLIENT);
+        List<RoleRepresentation> roleRepresentations = helper
+                .retrieveServiceAccountRolesInRealm(MY_REALM, MY_CLIENT, EXISTING_CLIENT);
         assertThat(roleRepresentations.get(0).getName(), is(EXISTING_ROLE));
     }
 
@@ -137,10 +145,16 @@ public class KeycloakClientIT {
         if (keycloakClient == null) {
             System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT, "true");
             helper.recreateNamespaces(KC_TEST_NAMESPACE);
-            var operation = helper.getOperations().inNamespace(KC_TEST_NAMESPACE);
+            NonNamespaceOperation<KeycloakServer,
+                    KeycloakServerList,
+                    DoneableKeycloakServer,
+                    Resource<KeycloakServer,
+                            DoneableKeycloakServer>> operation = helper
+                    .getOperations().inNamespace(KC_TEST_NAMESPACE);
             keycloakServer = operation.createOrReplace(keycloakServer);
-            var result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer)).execute(simpleK8SClient, Optional
-                    .empty());
+            ServiceDeploymentResult result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer))
+                    .execute(simpleK8SClient, Optional
+                            .empty());
             simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
             keycloakClient = new DefaultKeycloakClient();
             keycloakClient.login(TlsHelper.getDefaultProtocol() + "://test-kc." + domainSuffix + "/auth", "test-admin", KCP);
