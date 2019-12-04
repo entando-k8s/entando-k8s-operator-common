@@ -16,7 +16,6 @@ public class AutoExit implements Runnable {
     }
 
     public void withCode(int code) {
-
         this.code = code;
     }
 }

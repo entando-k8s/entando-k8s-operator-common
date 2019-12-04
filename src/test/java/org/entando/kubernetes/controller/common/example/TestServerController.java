@@ -15,7 +15,7 @@ import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 public class TestServerController extends AbstractDbAwareController<KeycloakServer> {
 
     public TestServerController(DefaultKubernetesClient kubernetesClient) {
-        super(kubernetesClient);
+        super(kubernetesClient, false);
     }
 
     public TestServerController(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient keycloakClient) {

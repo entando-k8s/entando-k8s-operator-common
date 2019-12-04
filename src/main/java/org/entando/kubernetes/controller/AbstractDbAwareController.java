@@ -3,6 +3,7 @@ package org.entando.kubernetes.controller;
 import static java.lang.String.format;
 import static java.util.Optional.empty;
 
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.lang.reflect.ParameterizedType;
@@ -30,7 +31,8 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     protected Logger logger;
 
     /**
-     * Constructor where the KubernetesClient is injected.
+     * Constructor for runtime environments where the KubernetesClient is injected, and the controller is assumed to exit automatically to
+     * emulate the behavior of a normal CLI.
      */
 
     protected AbstractDbAwareController(KubernetesClient kubernetesClient) {
@@ -38,11 +40,19 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     }
 
     /**
-     * Constructor for tests where we may want to mock the clients out and would not want to exit.
+     * Constructor for in process tests where we may want to mock the clients out and would not want to exit.
      */
 
     protected AbstractDbAwareController(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient keycloakClient) {
         this(k8sClient, keycloakClient, new AutoExit(false));
+    }
+
+    /**
+     * Constructor for integration tests where we would need to override the auto exit behaviour.
+     */
+    public AbstractDbAwareController(DefaultKubernetesClient kubernetesClient, boolean exitAutomatically) {
+        this(new DefaultSimpleK8SClient(kubernetesClient), new DefaultKeycloakClient(), new AutoExit(exitAutomatically));
+
     }
 
     private AbstractDbAwareController(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient keycloakClient, AutoExit autoExit) {

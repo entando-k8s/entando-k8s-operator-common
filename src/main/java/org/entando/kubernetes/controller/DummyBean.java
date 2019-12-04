@@ -216,6 +216,7 @@ public class DummyBean {
     }
 
     private void loadproviders() {
+        //This method is just intended to make RestEasy fail earlier to save time
         ResteasyProviderFactory instance = ResteasyProviderFactory.newInstance();
         instance
                 .registerProviderInstance(new org.jboss.resteasy.client.jaxrs.internal.CompletionStageRxInvokerProvider());
