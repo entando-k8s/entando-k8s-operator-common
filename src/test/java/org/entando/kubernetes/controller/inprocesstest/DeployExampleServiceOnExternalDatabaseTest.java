@@ -13,6 +13,8 @@ import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.client.Watcher.Action;
+import io.quarkus.runtime.StartupEvent;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
@@ -55,6 +57,9 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     @BeforeEach
     public void setExternalDatabaseNamespace() {
         externalDatabase.getMetadata().setNamespace(keycloakServer.getMetadata().getNamespace());
+        System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
+        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
+        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
         client.entandoResources().putExternalDatabase(externalDatabase);
         client.entandoResources().putEntandoCustomResource(keycloakServer);
     }
@@ -64,7 +69,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         //Given I have created an ExternalDatabase custom resource
         new CreateExternalServiceCommand(externalDatabase).execute(client);
         //When I deploy a KeycloakServer
-        testServerController.onKeycloakServerAddition(keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName());
+        testServerController.onStartup(new StartupEvent());
         //Then a K8S Secret was created with a name that reflects the EntandoApp and the fact that it is a secret
         NamedArgumentCaptor<Secret> keycloakSecretCaptor = forResourceNamed(Secret.class, MY_KEYCLOAK_DB_SECRET);
         verify(client.secrets()).createSecretIfAbsent(eq(keycloakServer), keycloakSecretCaptor.capture());
@@ -80,7 +85,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         //And Keycloak is receiving requests
         lenient().when(keycloakClient.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn(KEYCLOAK_SECRET);
         //When I deploy a KeycloakServer
-        testServerController.onKeycloakServerAddition(keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName());
+        testServerController.onStartup(new StartupEvent());
 
         //Then a K8S deployment is created
         NamedArgumentCaptor<Deployment> keyclaokDeploymentCaptor = forResourceNamed(Deployment.class,

@@ -61,19 +61,18 @@ public class KeycloakClientIT {
                     new SecretBuilder()
                             .addToStringData(KubeUtils.USERNAME_KEY, "test-admin")
                             .addToStringData(KubeUtils.PASSSWORD_KEY, KCP)
-                            .addToStringData(KubeUtils.URL_KEY, TlsHelper.getDefaultProtocol() + "://test-kc." + domainSuffix + "/auth")
+                            .addToStringData(KubeUtils.URL_KEY,
+                                    TlsHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth")
                             .build());
         }
-
     };
-    private final String domainSuffix = helper.getDomainSuffix();
     private KeycloakServer keycloakServer = new KeycloakServerBuilder().editMetadata()
             .withName("test-kc")
             .withNamespace(KC_TEST_NAMESPACE)
             .endMetadata()
             .withNewSpec()
             .withDbms(DbmsImageVendor.NONE)
-            .withIngressHostName("test-kc." + domainSuffix)
+            .withIngressHostName("test-kc." + helper.getDomainSuffix())
             .withReplicas(1)
             .endSpec()
             .build();
@@ -157,7 +156,7 @@ public class KeycloakClientIT {
                             .empty());
             simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
             keycloakClient = new DefaultKeycloakClient();
-            keycloakClient.login(TlsHelper.getDefaultProtocol() + "://test-kc." + domainSuffix + "/auth", "test-admin", KCP);
+            keycloakClient.login(TlsHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin", KCP);
         }
         return keycloakClient;
     }
