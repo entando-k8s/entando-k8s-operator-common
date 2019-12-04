@@ -3,7 +3,6 @@ package org.entando.kubernetes.controller;
 import static java.lang.String.format;
 import static java.util.Optional.empty;
 
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.lang.reflect.ParameterizedType;
@@ -50,7 +49,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     /**
      * Constructor for integration tests where we would need to override the auto exit behaviour.
      */
-    public AbstractDbAwareController(DefaultKubernetesClient kubernetesClient, boolean exitAutomatically) {
+    public AbstractDbAwareController(KubernetesClient kubernetesClient, boolean exitAutomatically) {
         this(new DefaultSimpleK8SClient(kubernetesClient), new DefaultKeycloakClient(), new AutoExit(exitAutomatically));
 
     }
