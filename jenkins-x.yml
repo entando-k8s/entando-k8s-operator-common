@@ -65,6 +65,7 @@ pipelineConfig:
                 -Dsonar.pullrequest.provider=github \
                 -Dsonar.pullrequest.vsts.token.secured=${SONAR_GITHUB_TOKEN} \
                 -Dsonar.pullrequest.github.repository=${REPO_OWNER}/${REPO_NAME} \
+                -DautoUpdate=false \
                 -DconnectionString=${OWASPDB_URL} \
                 -DdatabasePassword=${OWASPDB_PASSWORD} \
                 -DdatabaseUser=${OWASPDB_USERNAME} \
@@ -72,6 +73,16 @@ pipelineConfig:
                 -Dentando.test.namespace.override=${REPO_NAME} \
                 -Dentando.test.name.suffix=${PULL_NUMBER}
             name: mvn-verify
+      postBuild:
+        replace: true
+        steps:
+          - sh: echo 'No postbuild action'
+            name: post-build
+      promote:
+        replace: true
+        steps:
+          - sh: echo 'No promote action'
+            name: post-build
     release:
       build:
         replace: true
@@ -83,6 +94,7 @@ pipelineConfig:
                 -Pverify \
                 -Pprepare-for-nexus \
                 -Dsonar.login=${SONAR_TOKEN} \
+                -DautoUpdate=false \
                 -DconnectionString=${OWASPDB_URL} \
                 -DdatabasePassword=${OWASPDB_PASSWORD} \
                 -DdatabaseUser=${OWASPDB_USERNAME} \
@@ -93,3 +105,8 @@ pipelineConfig:
                 -Dentando.test.namespace.override=${REPO_NAME} \
                 -Dentando.test.name.suffix=master
             name: mvn-deploy
+      promote:
+        replace: true
+        steps:
+          - sh: echo 'No promote action'
+            name: post-build
