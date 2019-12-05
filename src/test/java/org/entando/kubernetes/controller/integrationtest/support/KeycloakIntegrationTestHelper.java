@@ -34,8 +34,8 @@ import org.keycloak.representations.idm.UserRepresentation;
 public class KeycloakIntegrationTestHelper extends
         IntegrationTestHelperBase<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> {
 
-    public static final String KEYCLOAK_NAME = "test-keycloak";
-    public static final String KEYCLOAK_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride().orElse("keycloak-namespace");
+    public static final String KEYCLOAK_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("keycloak-namespace");
+    public static final String KEYCLOAK_NAME = EntandoOperatorE2ETestConfig.calculateName("test-keycloak");
 
     public KeycloakIntegrationTestHelper(DefaultKubernetesClient client) {
         super(client, KeycloakServerOperationFactory::produceAllKeycloakServers);

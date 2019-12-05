@@ -57,19 +57,32 @@ pipelineConfig:
             name: fetch-full-repo
           - sh: >-
               mvn clean verify sonar:sonar \
-               -Dsonar.login=${SONAR_TOKEN} \
-               -Dsonar.pullrequest.key=${PULL_NUMBER} \
-               -Dsonar.pullrequest.base=master \
-               -Dsonar.pullrequest.branch=${BRANCH_NAME} \
-               -Dsonar.pullrequest.provider=github \
-               -Dsonar.pullrequest.vsts.token.secured=${SONAR_GITHUB_TOKEN} \
-               -Dsonar.pullrequest.github.repository=${REPO_OWNER}/${REPO_NAME} \
-               -DconnectionString=${OWASPDB_URL} \
-               -DdatabasePassword=${OWASPDB_PASSWORD} \
-               -DdatabaseUser=${OWASPDB_USERNAME} \
-               -Dentando.default.routing.suffix=apps.serv.run \
-               -Dentando.test.namespace=${REPO_NAME}-namespace
+                -Pverify \
+                -Dsonar.login=${SONAR_TOKEN} \
+                -Dsonar.pullrequest.key=${PULL_NUMBER} \
+                -Dsonar.pullrequest.base=master \
+                -Dsonar.pullrequest.branch=${BRANCH_NAME} \
+                -Dsonar.pullrequest.provider=github \
+                -Dsonar.pullrequest.vsts.token.secured=${SONAR_GITHUB_TOKEN} \
+                -Dsonar.pullrequest.github.repository=${REPO_OWNER}/${REPO_NAME} \
+                -DautoUpdate=false \
+                -DconnectionString=${OWASPDB_URL} \
+                -DdatabasePassword=${OWASPDB_PASSWORD} \
+                -DdatabaseUser=${OWASPDB_USERNAME} \
+                -Dentando.default.routing.suffix=apps.serv.run \
+                -Dentando.test.namespace.override=${REPO_NAME} \
+                -Dentando.test.name.suffix=${PULL_NUMBER}
             name: mvn-verify
+      postBuild:
+        replace: true
+        steps:
+          - sh: echo 'No postbuild action'
+            name: post-build
+      promote:
+        replace: true
+        steps:
+          - sh: echo 'No promote action'
+            name: post-build
     release:
       build:
         replace: true
@@ -78,8 +91,10 @@ pipelineConfig:
             name: fetch-full-repo
           - sh: >-
               mvn clean deploy sonar:sonar \
-                -Pprepare-for-central \
+                -Pverify \
+                -Pprepare-for-nexus \
                 -Dsonar.login=${SONAR_TOKEN} \
+                -DautoUpdate=false \
                 -DconnectionString=${OWASPDB_URL} \
                 -DdatabasePassword=${OWASPDB_PASSWORD} \
                 -DdatabaseUser=${OWASPDB_USERNAME} \
@@ -87,5 +102,11 @@ pipelineConfig:
                 -Dgpg.keyname=${GPG_KEYNAME} \
                 -Dgpg.passphrase=${GPG_PASSPHRASE} \
                 -Dentando.default.routing.suffix=apps.serv.run \
-               -Dentando.test.namespace=${REPO_NAME}-namespace
+                -Dentando.test.namespace.override=${REPO_NAME} \
+                -Dentando.test.name.suffix=master
             name: mvn-deploy
+      promote:
+        replace: true
+        steps:
+          - sh: echo 'No promote action'
+            name: post-build

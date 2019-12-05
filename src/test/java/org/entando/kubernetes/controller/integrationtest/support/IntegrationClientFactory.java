@@ -21,8 +21,7 @@ import org.entando.kubernetes.controller.creators.IngressCreator;
 
 public final class IntegrationClientFactory {
 
-    public static final String ENTANDO_CONTROLLERS_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride()
-            .orElse("entando-controllers");
+    public static final String ENTANDO_CONTROLLERS_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("entando-controllers");
 
     private IntegrationClientFactory() {
 
