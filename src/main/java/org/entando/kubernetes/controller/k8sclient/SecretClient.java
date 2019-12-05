@@ -1,5 +1,6 @@
 package org.entando.kubernetes.controller.k8sclient;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -22,4 +23,6 @@ public interface SecretClient {
     void createSecretIfAbsent(EntandoCustomResource peerInNamespace, Secret secret);
 
     Secret loadSecret(EntandoCustomResource peerInNamespace, String secretName);
+
+    ConfigMap loadControllerConfigMap(String configMapName);
 }

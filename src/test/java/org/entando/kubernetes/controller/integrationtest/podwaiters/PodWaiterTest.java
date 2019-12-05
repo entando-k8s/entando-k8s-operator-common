@@ -91,6 +91,7 @@ public class PodWaiterTest {
         await().atMost(50, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.RUNNING);
         assertFalse(mutex.timedOut);
         mutex.eventReceived(Watcher.Action.MODIFIED, podWithCondition("Succeeded", READY_CONDITION, CONTAINERS_READY_CONDITION));
+        //TODO analyse why this one fails every now and then
         await().atMost(50, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.COMPLETED);
         assertFalse(mutex.timedOut);
         assertTrue(mutex.wasSuccessful());

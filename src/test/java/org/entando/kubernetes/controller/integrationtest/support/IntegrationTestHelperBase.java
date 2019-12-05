@@ -10,7 +10,6 @@ import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.OperationsSupplier;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
@@ -79,7 +78,7 @@ public class IntegrationTestHelperBase<
 
     public void listenAndRespondWithPod(String namespace) {
         new ControllerContainerStartingListener<>(getOperations())
-                .listen(namespace, new ControllerExecutor(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE, client));
+                .listen(namespace, new TestControllerExecutor(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE, client));
     }
 
 }

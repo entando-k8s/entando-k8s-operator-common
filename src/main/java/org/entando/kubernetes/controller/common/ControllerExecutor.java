@@ -14,6 +14,7 @@ import io.fabric8.kubernetes.client.Watcher.Action;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
@@ -64,8 +65,9 @@ public class ControllerExecutor {
                 + resourceKindToImageNames.get(resource.getKind()) + ":" + resolveImageVersion(resource);
     }
 
-    private String resolveImageVersion(EntandoCustomResource resource) {
-        return "6.0.0-dev";
+    protected String resolveImageVersion(EntandoCustomResource resource) {
+        return Optional.ofNullable(client.secrets().loadControllerConfigMap(resource.getKind().toLowerCase() + "-controller-versions")).
+                map(configMap -> configMap.getData().get(resource.getApiVersion().substring("entando.org/".length()))).orElse("6.0.0");
     }
 
     private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {

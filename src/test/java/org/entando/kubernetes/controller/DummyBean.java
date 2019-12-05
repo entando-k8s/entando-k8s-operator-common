@@ -40,6 +40,10 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
+/**
+ * This class is used only to build a native app with the goal of testing if all the dependencies are building correctly. It can be moved to
+ * /src/main/java and then mvn clean package -Pnative will build a sample app.
+ */
 public class DummyBean {
 
     private static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);
