@@ -9,6 +9,7 @@ public final class EntandoOperatorE2ETestConfig extends EntandoOperatorConfigBas
     private static final String ENTANDO_TEST_NAME_SUFFIX = "entando.test.name.suffix";
     private static final String ENTANDO_INTEGRATION_TARGET_ENVIRONMENT = "entando.k8s.operator.tests.run.target";
     private static final String ENTANDO_TESTS_CERT_ROOT = "entando.k8s.operator.tests.cert.root";
+    private static final String ENTANDO_TEST_IMAGE_VERSION = "entando.test.image.version";
 
     private EntandoOperatorE2ETestConfig() {
     }
@@ -48,6 +49,10 @@ public final class EntandoOperatorE2ETestConfig extends EntandoOperatorConfigBas
 
     public static Optional<String> getTestNameSuffix() {
         return lookupProperty(ENTANDO_TEST_NAME_SUFFIX);
+    }
+
+    public static Optional<String> getVersionOfImageUnderTest() {
+        return lookupProperty(ENTANDO_TEST_IMAGE_VERSION);
     }
 
     public enum TestTarget {

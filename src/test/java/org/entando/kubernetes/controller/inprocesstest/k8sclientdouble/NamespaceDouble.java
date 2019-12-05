@@ -1,5 +1,6 @@
 package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -28,6 +29,7 @@ public class NamespaceDouble {
     private final Map<String, PersistentVolumeClaim> persistentVolumeClaims = new ConcurrentHashMap<>();
     private final Map<String, Endpoints> endpointsMap = new ConcurrentHashMap<>();
     private final Map<String, Secret> secrets = new ConcurrentHashMap<>();
+    private final Map<String, ConfigMap> configMaps = new ConcurrentHashMap<>();
     private final Map<String, ServiceAccount> serviceAccounts = new ConcurrentHashMap<>();
     private final Map<String, Role> roles = new ConcurrentHashMap<>();
     private final Map<String, RoleBinding> roleBindings = new ConcurrentHashMap<>();
@@ -129,12 +131,20 @@ public class NamespaceDouble {
         this.roleBindings.put(roleBinding.getMetadata().getName(), roleBinding);
     }
 
-    public RoleBinding getRoleBidning(String name) {
+    public RoleBinding getRoleBinding(String name) {
         return this.roleBindings.get(name);
     }
 
     @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> Map<String, T> getCustomResources(Class<T> customResource) {
         return (Map<String, T>) customResources.get(customResource);
+    }
+
+    public ConfigMap getConfigMap(String configMapName) {
+        return configMaps.get(configMapName);
+    }
+
+    public void putConfigMap(ConfigMap configMap) {
+        this.configMaps.put(configMap.getMetadata().getName(), configMap);
     }
 }

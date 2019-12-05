@@ -47,7 +47,7 @@ public class KeycloakClientIT {
 
     public static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);
 
-    public static final String KC_TEST_NAMESPACE = EntandoOperatorE2ETestConfig.getTestNamespaceOverride().orElse("kc-test-namespace");
+    public static final String KC_TEST_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("kc-test-namespace");
     public static final String MY_REALM = "my-realm";
     public static final String MY_CLIENT = "my-client";
     public static final String EXISTING_CLIENT = "existing-client";
