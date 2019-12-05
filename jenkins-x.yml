@@ -57,7 +57,7 @@ pipelineConfig:
             name: fetch-full-repo
           - sh: >-
               mvn clean verify sonar:sonar \
-                -Pverify
+                -Pverify \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
                 -Dsonar.pullrequest.base=master \
