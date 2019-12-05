@@ -131,8 +131,7 @@ public class K8SIntegrationTestHelper {
     }
 
     public void recreateNamespaces(String... ns) {
-        IntegrationClientFactory
-                .recreateNamespaces(this.client, ns);
+        IntegrationClientFactory.recreateNamespaces(this.client, ns);
     }
 
     public void prepareControllers() {
