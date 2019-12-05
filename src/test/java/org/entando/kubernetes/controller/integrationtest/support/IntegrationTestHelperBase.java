@@ -6,10 +6,12 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import java.util.Optional;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.OperationsSupplier;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
@@ -26,11 +28,15 @@ public class IntegrationTestHelperBase<
     protected final DefaultKubernetesClient client;
     protected final CustomResourceOperationsImpl<R, L, D> operations;
     private final String domainSuffix;
+    private final ControllerStartupEventFiringListener<R, L, D> startupEventFiringListener;
+    private ControllerContainerStartingListener<R, L, D> containerStartingListener;
 
     protected IntegrationTestHelperBase(DefaultKubernetesClient client, OperationsSupplier<R, L, D> producer) {
         this.client = client;
         this.operations = producer.get(client);
         domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));
+        containerStartingListener = new ControllerContainerStartingListener<>(this.operations);
+        startupEventFiringListener = new ControllerStartupEventFiringListener<>(getOperations());
     }
 
     protected static void logWarning(String x) {
@@ -73,12 +79,13 @@ public class IntegrationTestHelperBase<
     }
 
     public void listenAndRespondWithStartupEvent(String namespace, OnStartupMethod onStartupMethod) {
-        new ControllerStartupEventFiringListener<>(getOperations()).listen(namespace, onStartupMethod);
+        startupEventFiringListener.listen(namespace, onStartupMethod);
     }
 
-    public void listenAndRespondWithPod(String namespace) {
-        new ControllerContainerStartingListener<>(getOperations())
-                .listen(namespace, new TestControllerExecutor(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE, client));
+    public void listenAndRespondWithPod(String namespace, Optional<String> imageVersion) {
+        String versionToUse = imageVersion.orElse(EntandoOperatorE2ETestConfig.getVersionOfImageUnderTest().orElse("6.0.0-dev"));
+        ControllerExecutor executor = new ControllerExecutor(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE, client, versionToUse);
+        containerStartingListener.listen(namespace, executor);
     }
 
 }

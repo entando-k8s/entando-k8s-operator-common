@@ -27,6 +27,7 @@ public class ControllerExecutor {
     public static final String ETC_ENTANDO_CA = "/etc/entando/ca";
     private static final Map<String, String> resourceKindToImageNames = new ConcurrentHashMap<>();
     private final DefaultSimpleK8SClient client;
+    private String imageVersion;
     private String controllerNamespace;
 
     {
@@ -34,9 +35,10 @@ public class ControllerExecutor {
         resourceKindToImageNames.put("EntandoClusterInfrastructure", "entando-k8s-cluster-infrastructure-controller");
     }
 
-    public ControllerExecutor(String controllerNamespace, KubernetesClient client) {
+    public ControllerExecutor(String controllerNamespace, KubernetesClient client, String imageVersion) {
         this.controllerNamespace = controllerNamespace;
         this.client = new DefaultSimpleK8SClient(client);
+        this.imageVersion = imageVersion;
     }
 
     public void startControllerFor(Action action, EntandoCustomResource resource) {
@@ -62,10 +64,11 @@ public class ControllerExecutor {
 
     private String determineControllerImage(EntandoCustomResource resource) {
         return EntandoOperatorConfig.getEntandoDockerRegistry() + "/" + EntandoOperatorConfig.getEntandoImageNamespace() + "/"
-                + resourceKindToImageNames.get(resource.getKind()) + ":" + resolveImageVersion(resource);
+                + resourceKindToImageNames.get(resource.getKind()) + ":" + imageVersion;
     }
 
-    protected String resolveImageVersion(EntandoCustomResource resource) {
+    //TODO move to the FrontController
+    public String resolveImageVersion(EntandoCustomResource resource) {
         return Optional.ofNullable(client.secrets().loadControllerConfigMap(resource.getKind().toLowerCase() + "-controller-versions"))
                 .map(configMap -> configMap.getData().get(resource.getApiVersion().substring("entando.org/".length()))).orElse("6.0.0");
     }
