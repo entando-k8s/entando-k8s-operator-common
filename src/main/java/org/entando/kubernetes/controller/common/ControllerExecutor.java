@@ -66,8 +66,8 @@ public class ControllerExecutor {
     }
 
     protected String resolveImageVersion(EntandoCustomResource resource) {
-        return Optional.ofNullable(client.secrets().loadControllerConfigMap(resource.getKind().toLowerCase() + "-controller-versions")).
-                map(configMap -> configMap.getData().get(resource.getApiVersion().substring("entando.org/".length()))).orElse("6.0.0");
+        return Optional.ofNullable(client.secrets().loadControllerConfigMap(resource.getKind().toLowerCase() + "-controller-versions"))
+                .map(configMap -> configMap.getData().get(resource.getApiVersion().substring("entando.org/".length()))).orElse("6.0.0");
     }
 
     private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {
