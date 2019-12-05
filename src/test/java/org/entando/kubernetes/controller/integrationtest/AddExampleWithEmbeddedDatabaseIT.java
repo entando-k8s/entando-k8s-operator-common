@@ -51,7 +51,8 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentTraversals {
                 .withEntandoImageVersion("6.0.0-SNAPSHOT")
                 .endSpec().build();
         SampleWriter.writeSample(keycloakServer, "keycloak-with-embedded-postgresql-db");
-        k8SIntegrationTestHelper.keycloak().listen(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE, controller::onStartup);
+        k8SIntegrationTestHelper.keycloak()
+                .listenAndRespondWithStartupEvent(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE, controller::onStartup);
         k8SIntegrationTestHelper.keycloak().createAndWaitForKeycloak(keycloakServer, 30, true);
         //Then I expect to see
         verifyKeycloakDatabaseDeployment();

@@ -54,6 +54,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
 
     }
 
+    @SuppressWarnings("unchecked")
     private AbstractDbAwareController(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient keycloakClient, AutoExit autoExit) {
         this.k8sClient = k8sClient;
         this.keycloakClient = keycloakClient;

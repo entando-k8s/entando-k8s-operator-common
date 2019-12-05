@@ -34,6 +34,11 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
+    public Pod start(Pod pod) {
+        return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
+    }
+
+    @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
         Watchable<Watch, Watcher<Pod>> watchable = client
                 .pods().inNamespace(namespace).withLabel(labelName, labelValue);
