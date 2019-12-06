@@ -139,4 +139,16 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .addToStringData("userManagementExternalUrl", "http://som.com/asdf")
                 .build();
     }
+    @SuppressWarnings("squid:S2068")
+    default Secret buildKeycloakSecret() {
+        return new SecretBuilder()
+                .withNewMetadata()
+                .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName())
+                .endMetadata()
+                .addToStringData(KubeUtils.URL_KEY, MY_KEYCLOAK_BASE_URL)
+                .addToStringData(KubeUtils.PASSSWORD_KEY, MY_KEYCLOAK_ADMIN_PASSWORD)
+                .addToStringData(KubeUtils.USERNAME_KEY,MY_KEYCLOAK_ADMIN_USERNAME)
+                .build();
+    }
+
 }

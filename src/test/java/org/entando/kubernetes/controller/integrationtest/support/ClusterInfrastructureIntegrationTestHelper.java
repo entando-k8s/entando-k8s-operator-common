@@ -2,8 +2,10 @@ package org.entando.kubernetes.controller.integrationtest.support;
 
 import static org.entando.kubernetes.controller.Wait.waitFor;
 
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.model.DbmsImageVendor;
@@ -27,6 +29,32 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
 
     ClusterInfrastructureIntegrationTestHelper(DefaultKubernetesClient client) {
         super(client, EntandoClusterInfrastructureOperationFactory::produceAllEntandoClusterInfrastructures);
+    }
+
+    public void ensureInfrastructureSecret() {
+        Secret infrastructureSecret = client.secrets()
+                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
+                .withName(EntandoOperatorConfig.getEntandoInfrastructureSecretName())
+                .fromServer().get();
+        if (infrastructureSecret != null) {
+            client.secrets()
+                    .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
+                    .withName(EntandoOperatorConfig.getEntandoInfrastructureSecretName()).delete();
+        }
+        String hostName = "http://" + CLUSTER_INFRASTRUCTURE_NAME + "." + getDomainSuffix();
+        client.secrets()
+                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
+                .createNew()
+                .withNewMetadata()
+                .withName(EntandoOperatorConfig.getEntandoInfrastructureSecretName())
+                .endMetadata()
+                .addToStringData("entandoK8SServiceClientId", CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc")
+                .addToStringData("entandoK8SServiceInternalUrl", hostName + "/k8s")
+                .addToStringData("entandoK8SServiceExternalUrl", hostName + "/k8s")
+                .addToStringData("entandoUserManagementClientId", CLUSTER_INFRASTRUCTURE_NAME + "-user-mgmt")
+                .addToStringData("userManagementInternalUrl", hostName + "/user-mgmt")
+                .addToStringData("userManagementExternalUrl", "/user-mgmt")
+                .done();
     }
 
     boolean ensureClusterInfrastructure() {

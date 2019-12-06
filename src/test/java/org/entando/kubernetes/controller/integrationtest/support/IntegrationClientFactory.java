@@ -16,6 +16,7 @@ import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.Gettable;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext.Builder;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
 import io.fabric8.kubernetes.client.utils.HttpClientUtils;
@@ -37,6 +38,7 @@ import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 public final class IntegrationClientFactory {
 
     public static final String ENTANDO_CONTROLLERS_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("entando-controllers");
+    public static final String CURRENT_ENTANDO_RESOURCE_VERSION = "v1alpha1";
 
     private IntegrationClientFactory() {
 
@@ -95,10 +97,30 @@ public final class IntegrationClientFactory {
                     deleteResourcesBySecret(client, entry.getKey(), type);
                     deleteResourcesByPersistentVolumeClaim(client, entry.getKey(), type);
                     deleteResourcesByService(client, entry.getKey(), type);
+                    deleteRemainingInstances(client, entry, type);
                 }
             } else {
                 createNamespace(client, entry.getKey());
             }
+        }
+    }
+
+    protected static void deleteRemainingInstances(KubernetesClient client,
+            Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry, Class<? extends EntandoBaseCustomResource> type) {
+        CustomResourceDefinitionContext context = new Builder()
+                .withScope("Namespaced")
+                .withGroup("entando.org")
+                .withVersion(CURRENT_ENTANDO_RESOURCE_VERSION)
+                .withPlural(getPluralFrom(type))
+                .build();
+        client.customResource(context).delete(entry.getKey());
+    }
+
+    protected static String getPluralFrom(Class<? extends EntandoBaseCustomResource> type) {
+        try {
+            return type.getConstructor().newInstance().getDefinitionName().split("\\.")[0];
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new IllegalStateException(e);
         }
     }
 

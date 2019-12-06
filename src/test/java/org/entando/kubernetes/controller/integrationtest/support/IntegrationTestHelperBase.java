@@ -63,7 +63,7 @@ public class IntegrationTestHelperBase<
 
     @SuppressWarnings("unchecked")
     public JobPodWaiter waitForJobPod(JobPodWaiter mutex, String namespace, String jobName) {
-        waitFor(20).seconds().until(
+        waitFor(30).seconds().until(
                 () -> client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems()
                         .size() > 0);
         Pod pod = client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems().get(0);
@@ -74,7 +74,7 @@ public class IntegrationTestHelperBase<
 
     @SuppressWarnings("unchecked")
     public ServicePodWaiter waitForServicePod(ServicePodWaiter mutex, String namespace, String deploymentName) {
-        waitFor(20).seconds().until(
+        waitFor(30).seconds().until(
                 () -> client.pods().inNamespace(namespace).withLabel(DeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
                         .getItems().size() > 0);
         Pod pod = client.pods().inNamespace(namespace).withLabel(DeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
