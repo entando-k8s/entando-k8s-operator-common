@@ -46,7 +46,7 @@ public class KeycloakIntegrationTestHelper extends
                 .inNamespace(KEYCLOAK_NAMESPACE)
                 .withName(KEYCLOAK_NAME).get();
         if (keycloakServer == null || keycloakServer.getStatus().getEntandoDeploymentPhase() != EntandoDeploymentPhase.SUCCESSFUL) {
-            recreateNamespaces(KEYCLOAK_NAMESPACE);
+            setTestFixture(deleteAll(KeycloakServer.class).fromNamespace(KEYCLOAK_NAMESPACE));
             createAndWaitForKeycloak(new KeycloakServerBuilder()
                     .withNewMetadata().withNamespace(KEYCLOAK_NAMESPACE).withName(KEYCLOAK_NAME).endMetadata()
                     .withNewSpec().withDefault(true).withEntandoImageVersion("6.0.0-SNAPSHOT")

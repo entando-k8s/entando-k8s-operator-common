@@ -25,6 +25,7 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorE2ETestConfig;
+import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.integrationtest.support.IntegrationClientFactory;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
@@ -43,7 +44,7 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 
 @Tags({@Tag("inter-process"), @Tag("smoke-test")})
-public class KeycloakClientIT {
+public class KeycloakClientIT implements FluentIntegrationTesting {
 
     public static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);
 
@@ -143,7 +144,7 @@ public class KeycloakClientIT {
     private DefaultKeycloakClient prepareKeycloak() {
         if (keycloakClient == null) {
             System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT, "true");
-            helper.recreateNamespaces(KC_TEST_NAMESPACE);
+            IntegrationClientFactory.setTextFixture(this.client, deleteAll(KeycloakServer.class).fromNamespace(KC_TEST_NAMESPACE));
             NonNamespaceOperation<KeycloakServer,
                     KeycloakServerList,
                     DoneableKeycloakServer,

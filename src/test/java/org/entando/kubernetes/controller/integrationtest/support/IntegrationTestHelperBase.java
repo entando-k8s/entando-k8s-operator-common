@@ -16,8 +16,10 @@ import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
+import org.entando.kubernetes.controller.integrationtest.support.TestFixtureRequest.DeletionRequestBuilder;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public class IntegrationTestHelperBase<
         R extends EntandoCustomResource,
@@ -43,12 +45,16 @@ public class IntegrationTestHelperBase<
         System.out.println(x);
     }
 
+    public static DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource>... types) {
+        return new TestFixtureRequest().deleteAll(types);
+    }
+
     public CustomResourceOperationsImpl<R, L, D> getOperations() {
         return operations;
     }
 
-    public void recreateNamespaces(String... namespaces) {
-        IntegrationClientFactory.recreateNamespaces(this.client, namespaces);
+    public void setTestFixture(TestFixtureRequest request) {
+        IntegrationClientFactory.setTextFixture(this.client, request);
     }
 
     public String getDomainSuffix() {

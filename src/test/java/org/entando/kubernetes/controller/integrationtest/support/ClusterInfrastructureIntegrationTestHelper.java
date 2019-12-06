@@ -34,7 +34,7 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
                 .inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
                 .withName(CLUSTER_INFRASTRUCTURE_NAME).get();
         if (infrastructure == null || infrastructure.getStatus().getEntandoDeploymentPhase() != EntandoDeploymentPhase.SUCCESSFUL) {
-            recreateNamespaces(CLUSTER_INFRASTRUCTURE_NAMESPACE);
+            setTestFixture(deleteAll(EntandoClusterInfrastructure.class).fromNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE));
             waitForClusterInfrastructure(
                     new EntandoClusterInfrastructureBuilder().withNewMetadata().withNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
                             .withName(CLUSTER_INFRASTRUCTURE_NAME).endMetadata()

@@ -14,16 +14,19 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.example.TestServerController;
-import org.entando.kubernetes.controller.inprocesstest.FluentTraversals;
 import org.entando.kubernetes.controller.integrationtest.support.ClusterInfrastructureIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoAppIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoPluginIntegrationTestHelper;
+import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.K8SIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.SampleWriter;
+import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
+import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -31,7 +34,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("inter-process"), @Tag("smoke-test")})
-public class AddExampleWithEmbeddedDatabaseIT implements FluentTraversals {
+public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTesting {
 
     static final int KEYCLOAK_DB_PORT = 5432;
     private final K8SIntegrationTestHelper k8SIntegrationTestHelper = new K8SIntegrationTestHelper();
@@ -51,6 +54,9 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentTraversals {
                 .withEntandoImageVersion("6.0.0-SNAPSHOT")
                 .endSpec().build();
         SampleWriter.writeSample(keycloakServer, "keycloak-with-embedded-postgresql-db");
+        k8SIntegrationTestHelper.setTextFixture(
+                deleteAll(KeycloakServer.class, EntandoClusterInfrastructure.class, EntandoApp.class, EntandoPlugin.class)
+                        .fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE));
         k8SIntegrationTestHelper.keycloak()
                 .listenAndRespondWithStartupEvent(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE, controller::onStartup);
         k8SIntegrationTestHelper.keycloak().createAndWaitForKeycloak(keycloakServer, 30, true);
@@ -78,12 +84,14 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentTraversals {
 
     @BeforeEach
     public void cleanup() {
+
         //Recreate all namespaces as they depend on previously created Keycloak clients that are now invalid
-        k8SIntegrationTestHelper.recreateNamespaces(
-                KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE,
-                ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE,
-                EntandoAppIntegrationTestHelper.TEST_NAMESPACE,
-                EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE
+        k8SIntegrationTestHelper.setTextFixture(
+                deleteAll(KeycloakServer.class).fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
+                        .deleteAll(EntandoClusterInfrastructure.class)
+                        .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
+                        .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
+                        .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
         );
     }
 

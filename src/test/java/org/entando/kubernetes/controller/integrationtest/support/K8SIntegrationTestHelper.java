@@ -125,13 +125,17 @@ public class K8SIntegrationTestHelper {
 
     public void ensureKeycloak() {
         if (keycloak().ensureKeycloak()) {
-            recreateNamespaces(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE, EntandoAppIntegrationTestHelper.TEST_NAMESPACE,
-                    ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
+            TestFixtureRequest testFixtureRequest = new TestFixtureRequest()
+                    .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
+                    .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
+                    .deleteAll(EntandoClusterInfrastructure.class)
+                    .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
+            setTextFixture(testFixtureRequest);
         }
     }
 
-    public void recreateNamespaces(String... ns) {
-        IntegrationClientFactory.recreateNamespaces(this.client, ns);
+    public void setTextFixture(TestFixtureRequest request) {
+        IntegrationClientFactory.setTextFixture(this.client, request);
     }
 
     public void prepareControllers() {

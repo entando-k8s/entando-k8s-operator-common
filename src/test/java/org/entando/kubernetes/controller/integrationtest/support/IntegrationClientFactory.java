@@ -19,19 +19,20 @@ import io.fabric8.kubernetes.client.dsl.Gettable;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext.Builder;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
 import io.fabric8.kubernetes.client.utils.HttpClientUtils;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
+import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public final class IntegrationClientFactory {
 
@@ -85,65 +86,76 @@ public final class IntegrationClientFactory {
         return result;
     }
 
-    static void recreateNamespaces(KubernetesClient client, String... nss) {
-        Set<String> namespaces = new HashSet<>(Arrays.asList(nss));
-        for (String namespace : namespaces) {
-            if (client.namespaces().withName(namespace).get() != null) {
-                deleteResourcesByDeployment(client, namespace);
-                deleteResourcesByPod(client, namespace);
-                deleteResourcesBySecret(client, namespace);
-                deleteResourcesByPersistentVolumeClaim(client, namespace);
-                deleteResourcesByService(client, namespace);
+    public static void setTextFixture(KubernetesClient client, TestFixtureRequest testFixtureRequest) {
+        for (Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry : testFixtureRequest.getRequiredDeletions().entrySet()) {
+            if (client.namespaces().withName(entry.getKey()).get() != null) {
+                for (Class<? extends EntandoBaseCustomResource> type : entry.getValue()) {
+                    deleteResourcesByDeployment(client, entry.getKey(), type);
+                    deleteResourcesByPod(client, entry.getKey(), type);
+                    deleteResourcesBySecret(client, entry.getKey(), type);
+                    deleteResourcesByPersistentVolumeClaim(client, entry.getKey(), type);
+                    deleteResourcesByService(client, entry.getKey(), type);
+                }
             } else {
-                createNamespace(client, namespace);
+                createNamespace(client, entry.getKey());
             }
         }
     }
 
-    private static void deleteResourcesByDeployment(KubernetesClient client, String namespace) {
+    private static void deleteResourcesByDeployment(KubernetesClient client, String namespace,
+            Class<? extends EntandoBaseCustomResource> type) {
         Lister<Deployment> lister = (c, ns) -> c.apps().deployments().inNamespace(ns).list();
         Getter<Deployment> getter = (c, ns, n) -> c.apps().deployments().inNamespace(ns).withName(n).fromServer();
-        deleteOwnersOf(client, namespace, lister, getter);
+        deleteOwnersOf(client, namespace, lister, getter, type);
     }
 
-    private static void deleteResourcesByService(KubernetesClient client, String namespace) {
+    private static void deleteResourcesByService(KubernetesClient client, String namespace,
+            Class<? extends EntandoBaseCustomResource> type) {
         Lister<Service> lister = (c, ns) -> c.services().inNamespace(ns).list();
         Getter<Service> getter = (c, ns, n) -> c.services().inNamespace(ns).withName(n).fromServer();
-        deleteOwnersOf(client, namespace, lister, getter);
+        deleteOwnersOf(client, namespace, lister, getter, type);
     }
 
-    private static void deleteResourcesByPod(KubernetesClient client, String namespace) {
+    private static void deleteResourcesByPod(KubernetesClient client, String namespace, Class<? extends EntandoBaseCustomResource> type) {
         Lister<Pod> lister = (c, ns) -> c.pods().inNamespace(ns).list();
         Getter<Pod> getter = (c, ns, n) -> c.pods().inNamespace(ns).withName(n).fromServer();
-        deleteOwnersOf(client, namespace, lister, getter);
+        deleteOwnersOf(client, namespace, lister, getter, type);
     }
 
-    private static void deleteResourcesBySecret(KubernetesClient client, String namespace) {
+    private static void deleteResourcesBySecret(KubernetesClient client, String namespace,
+            Class<? extends EntandoBaseCustomResource> type) {
         Lister<Secret> lister = (c, ns) -> c.secrets().inNamespace(ns).list();
         Getter<Secret> getter = (c, ns, n) -> c.secrets().inNamespace(ns).withName(n).fromServer();
-        deleteOwnersOf(client, namespace, lister, getter);
+        deleteOwnersOf(client, namespace, lister, getter, type);
     }
 
-    private static void deleteResourcesByPersistentVolumeClaim(KubernetesClient client, String namespace) {
+    private static void deleteResourcesByPersistentVolumeClaim(KubernetesClient client, String namespace,
+            Class<? extends EntandoBaseCustomResource> type) {
         Lister<PersistentVolumeClaim> lister = (c, ns) -> c.persistentVolumeClaims().inNamespace(ns).list();
         Getter<PersistentVolumeClaim> getter = (c, ns, n) -> c.persistentVolumeClaims().inNamespace(ns).withName(n).fromServer();
-        deleteOwnersOf(client, namespace, lister, getter);
+        deleteOwnersOf(client, namespace, lister, getter, type);
     }
 
     private static <T extends HasMetadata> void deleteOwnersOf(KubernetesClient client, String namespace, Lister<T> lister,
-            Getter<T> getter) {
+            Getter<T> getter, Class<? extends EntandoBaseCustomResource> type) {
         Optional<T> childResource;
         do {
-            childResource = lister.list(client, namespace).getItems().stream().filter(IntegrationClientFactory::isOwnedByEntandoResource)
+            childResource = lister.list(client, namespace).getItems().stream().filter(t -> isOwnedByEntandoResource(t, type))
                     .findFirst();
             childResource.ifPresent(d -> deleteOwnerAndWait(client, d, getter.get(client, namespace, d.getMetadata().getName())));
 
         } while (childResource.isPresent());
     }
 
-    private static boolean isOwnedByEntandoResource(HasMetadata d) {
-        return d.getMetadata().getOwnerReferences().size() == 1 && d.getMetadata().getOwnerReferences().get(0)
-                .getApiVersion().startsWith("entando.org");
+    private static boolean isOwnedByEntandoResource(HasMetadata d, Class<? extends EntandoBaseCustomResource> type) {
+        try {
+            return d.getMetadata().getOwnerReferences().size() == 1
+                    && d.getMetadata().getOwnerReferences().get(0).getApiVersion().startsWith("entando.org")
+                    && type.getConstructor().newInstance().getDefinitionName()
+                    .startsWith(d.getMetadata().getOwnerReferences().get(0).getKind().toLowerCase());
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static <T extends HasMetadata> void deleteOwnerAndWait(KubernetesClient client, T d, Gettable<T> gettable) {
