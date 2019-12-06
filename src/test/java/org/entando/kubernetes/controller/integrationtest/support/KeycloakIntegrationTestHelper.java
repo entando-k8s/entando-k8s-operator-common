@@ -50,7 +50,7 @@ public class KeycloakIntegrationTestHelper extends
             createAndWaitForKeycloak(new KeycloakServerBuilder()
                     .withNewMetadata().withNamespace(KEYCLOAK_NAMESPACE).withName(KEYCLOAK_NAME).endMetadata()
                     .withNewSpec().withDefault(true).withEntandoImageVersion("6.0.0-SNAPSHOT")
-                    .withDbms(DbmsImageVendor.POSTGRESQL)
+                    .withDbms(DbmsImageVendor.NONE)
                     .withIngressHostName(KEYCLOAK_NAME + "." + getDomainSuffix())
                     .withImageName("entando/entando-keycloak").endSpec()
                     .build(), 30, true);
@@ -67,12 +67,14 @@ public class KeycloakIntegrationTestHelper extends
 
     public void createAndWaitForKeycloak(KeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
         getOperations().inNamespace(KEYCLOAK_NAMESPACE).create(keycloakServer);
-        if (deployingDbContainers) {
-            waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
-                    KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db");
+        if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsImageVendor.NONE).orElse(false)) {
+            if (deployingDbContainers) {
+                waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
+                        KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db");
+            }
+            this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
+                    KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db-preparation-job");
         }
-        this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
-                KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db-preparation-job");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(270 + waitOffset)),
                 KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server");
         waitFor(90).seconds().until(

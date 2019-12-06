@@ -37,8 +37,8 @@ import org.junit.jupiter.api.Test;
 public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTesting {
 
     static final int KEYCLOAK_DB_PORT = 5432;
-    private final K8SIntegrationTestHelper k8SIntegrationTestHelper = new K8SIntegrationTestHelper();
-    private final TestServerController controller = new TestServerController(k8SIntegrationTestHelper.getClient());
+    private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
+    private final TestServerController controller = new TestServerController(helper.getClient());
 
     @Test
     public void create() {
@@ -48,25 +48,25 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                 .withNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                 .endMetadata().withNewSpec()
                 .withImageName("entando/entando-keycloak")
-                .withIngressHostName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + k8SIntegrationTestHelper.getDomainSuffix())
+                .withIngressHostName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + helper.getDomainSuffix())
                 .withDbms(POSTGRESQL)
                 .withDefault(true)
                 .withEntandoImageVersion("6.0.0-SNAPSHOT")
                 .endSpec().build();
         SampleWriter.writeSample(keycloakServer, "keycloak-with-embedded-postgresql-db");
-        k8SIntegrationTestHelper.setTextFixture(
+        helper.setTextFixture(
                 deleteAll(KeycloakServer.class, EntandoClusterInfrastructure.class, EntandoApp.class, EntandoPlugin.class)
                         .fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE));
-        k8SIntegrationTestHelper.keycloak()
+        helper.keycloak()
                 .listenAndRespondWithStartupEvent(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE, controller::onStartup);
-        k8SIntegrationTestHelper.keycloak().createAndWaitForKeycloak(keycloakServer, 30, true);
+        helper.keycloak().createAndWaitForKeycloak(keycloakServer, 30, true);
         //Then I expect to see
         verifyKeycloakDatabaseDeployment();
         verifyKeycloakDeployment();
     }
 
     private void verifyKeycloakDatabaseDeployment() {
-        KubernetesClient client = k8SIntegrationTestHelper.getClient();
+        KubernetesClient client = helper.getClient();
         Deployment deployment = client.apps().deployments()
                 .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                 .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-db-deployment")
@@ -77,7 +77,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                 KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-db-service").get();
         assertThat(thePortNamed(DB_PORT).on(service).getPort(), equalTo(KEYCLOAK_DB_PORT));
         assertThat(deployment.getStatus().getReadyReplicas(), greaterThanOrEqualTo(1));
-        assertThat("It has a db status", k8SIntegrationTestHelper.keycloak().getOperations()
+        assertThat("It has a db status", helper.keycloak().getOperations()
                 .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
                 .fromServer().get().getStatus().forDbQualifiedBy("db").isPresent());
     }
@@ -86,7 +86,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
     public void cleanup() {
 
         //Recreate all namespaces as they depend on previously created Keycloak clients that are now invalid
-        k8SIntegrationTestHelper.setTextFixture(
+        helper.setTextFixture(
                 deleteAll(KeycloakServer.class).fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                         .deleteAll(EntandoClusterInfrastructure.class)
                         .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
@@ -97,14 +97,14 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
 
     @AfterEach
     public void afterwards() {
-        k8SIntegrationTestHelper.afterTest();
+        helper.afterTest();
     }
 
     protected void verifyKeycloakDeployment() {
         String http = TlsHelper.getDefaultProtocol();
-        KubernetesClient client = k8SIntegrationTestHelper.getClient();
+        KubernetesClient client = helper.getClient();
         await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> HttpTestHelper
-                .statusOk(http + "://" + KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + k8SIntegrationTestHelper.getDomainSuffix()
+                .statusOk(http + "://" + KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + helper.getDomainSuffix()
                         + "/auth"));
         Deployment deployment = client.apps().deployments().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                 .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-deployment").get();
@@ -116,7 +116,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                 KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-service").get();
         assertThat(thePortNamed("server-port").on(service).getPort(), is(8080));
         assertTrue(deployment.getStatus().getReadyReplicas() >= 1);
-        assertTrue(k8SIntegrationTestHelper.keycloak().getOperations()
+        assertTrue(helper.keycloak().getOperations()
                 .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
                 .fromServer().get().getStatus().forServerQualifiedBy("server").isPresent());
     }
