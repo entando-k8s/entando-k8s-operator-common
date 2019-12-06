@@ -10,6 +10,10 @@ public interface DbAwareDeployable {
 
     List<DeployableContainer> getContainers();
 
+    default boolean hasContainersExpectingSchemas() {
+        return getDbAwareContainers().size() > 0;
+    }
+
     default List<DbAware> getDbAwareContainers() {
         return getContainers().stream().filter(DbAware.class::isInstance)
                 .map(DbAware.class::cast).collect(Collectors.toList());

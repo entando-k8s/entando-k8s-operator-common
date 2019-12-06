@@ -691,6 +691,15 @@
     "allPublicFields": true
   },
   {
+    "name": "org.entando.kubernetes.model.EntandoControllerFailure",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
     "name": "org.entando.kubernetes.model.keycloakserver.KeycloakServer",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,

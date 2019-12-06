@@ -66,7 +66,7 @@ public class DeployCommand<T extends ServiceResult> {
     }
 
     public T execute(SimpleK8SClient k8sClient, Optional<SimpleKeycloakClient> keycloakClient) {
-        if (deployable instanceof DbAwareDeployable) {
+        if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable) deployable).hasContainersExpectingSchemas()) {
             prepareDbSchemas(k8sClient, (DbAwareDeployable) deployable);
         }
         if (persistentVolumeClaimCreator.needsPersistentVolumeClaaims(deployable)) {
