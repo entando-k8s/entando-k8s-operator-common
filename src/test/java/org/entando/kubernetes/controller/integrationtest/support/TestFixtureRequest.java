@@ -12,6 +12,7 @@ public class TestFixtureRequest {
     private Map<String, List<Class<? extends EntandoBaseCustomResource>>> requiredDeletions = new ConcurrentHashMap<>();
 
     private Map<String, List<EntandoBaseCustomResource>> requiredAdditions = new ConcurrentHashMap<>();
+
     public DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource>... types) {
         return new DeletionRequestBuilder(Arrays.asList(types), this);
     }
