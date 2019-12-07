@@ -33,6 +33,9 @@ public class ControllerExecutor {
     {
         resourceKindToImageNames.put("EntandoKeycloakServer", "entando-k8s-keycloak-controller");
         resourceKindToImageNames.put("EntandoClusterInfrastructure", "entando-k8s-cluster-infrastructure-controller");
+        resourceKindToImageNames.put("EntandoPlugin", "entando-k8s-plugin-controller");
+        resourceKindToImageNames.put("EntandoApp", "entando-k8s-app-controller");
+        resourceKindToImageNames.put("EntandoAppPluginLink", "entando-k8s-app-plugin-link-controller");
     }
 
     public ControllerExecutor(String controllerNamespace, KubernetesClient client, String imageVersion) {
