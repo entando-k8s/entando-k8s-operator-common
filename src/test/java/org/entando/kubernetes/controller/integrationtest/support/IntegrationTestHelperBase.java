@@ -1,12 +1,13 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.entando.kubernetes.controller.Wait.waitFor;
+import static org.awaitility.Awaitility.await;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.OperationsSupplier;
 import org.entando.kubernetes.controller.DeployCommand;
@@ -49,6 +50,11 @@ public class IntegrationTestHelperBase<
         return new TestFixtureRequest().deleteAll(types);
     }
 
+    public void afterTest() {
+        startupEventFiringListener.stopListening();
+        containerStartingListener.stopListening();
+    }
+
     public CustomResourceOperationsImpl<R, L, D> getOperations() {
         return operations;
     }
@@ -63,7 +69,7 @@ public class IntegrationTestHelperBase<
 
     @SuppressWarnings("unchecked")
     public JobPodWaiter waitForJobPod(JobPodWaiter mutex, String namespace, String jobName) {
-        waitFor(30).seconds().until(
+        await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
                 () -> client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems()
                         .size() > 0);
         Pod pod = client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems().get(0);
@@ -74,7 +80,7 @@ public class IntegrationTestHelperBase<
 
     @SuppressWarnings("unchecked")
     public ServicePodWaiter waitForServicePod(ServicePodWaiter mutex, String namespace, String deploymentName) {
-        waitFor(30).seconds().until(
+        await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
                 () -> client.pods().inNamespace(namespace).withLabel(DeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
                         .getItems().size() > 0);
         Pod pod = client.pods().inNamespace(namespace).withLabel(DeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()

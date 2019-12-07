@@ -1,7 +1,7 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
+import static org.awaitility.Awaitility.await;
 import static org.entando.kubernetes.controller.KubeUtils.ENTANDO_KEYCLOAK_REALM;
-import static org.entando.kubernetes.controller.Wait.waitFor;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.ClientErrorException;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
@@ -77,7 +78,7 @@ public class KeycloakIntegrationTestHelper extends
         }
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(270 + waitOffset)),
                 KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server");
-        waitFor(90).seconds().until(
+        await().atMost(90, TimeUnit.SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
                             .inNamespace(KEYCLOAK_NAMESPACE)

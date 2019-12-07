@@ -16,16 +16,21 @@ public class ControllerStartupEventFiringListener<
         > {
 
     private final CustomResourceOperationsImpl<R, L, D> operations;
+    private boolean shouldListen = true;
 
     public ControllerStartupEventFiringListener(CustomResourceOperationsImpl<R, L, D> operations) {
         this.operations = operations;
+    }
+
+    public void stopListening() {
+        shouldListen = false;
     }
 
     public void listen(String namespace, OnStartupMethod onStartupMethod) {
         operations.inNamespace(namespace).watch(new Watcher<R>() {
             @Override
             public void eventReceived(Action action, R resource) {
-                if (action == Action.ADDED) {
+                if (shouldListen && action == Action.ADDED) {
                     try {
                         System.out.println("!!!!!!!On " + resource.getKind() + " add!!!!!!!!!");
                         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name());

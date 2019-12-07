@@ -53,7 +53,7 @@ public class K8SIntegrationTestHelper {
     private final EntandoAppIntegrationTestHelper entandoAppHelper = new EntandoAppIntegrationTestHelper(client);
     private final EntandoAppPluginLinkIntegrationTestHelper entandoAppPluginLinkHelper = new EntandoAppPluginLinkIntegrationTestHelper(
             client);
-    private final ExternalDatabaseTestHelper externalDatabaseHelper = new ExternalDatabaseTestHelper(client);
+    private final ExternalDatabaseIntegrationTestHelper externalDatabaseHelper = new ExternalDatabaseIntegrationTestHelper(client);
     private final ClusterInfrastructureIntegrationTestHelper clusterInfrastructureHelper = new ClusterInfrastructureIntegrationTestHelper(
             client);
 
@@ -73,7 +73,7 @@ public class K8SIntegrationTestHelper {
         return entandoAppPluginLinkHelper;
     }
 
-    public ExternalDatabaseTestHelper externalDatabases() {
+    public ExternalDatabaseIntegrationTestHelper externalDatabases() {
         return externalDatabaseHelper;
     }
 
@@ -94,10 +94,17 @@ public class K8SIntegrationTestHelper {
     }
 
     public void afterTest() {
+        keycloak().afterTest();
+        clusterInfrastructure().afterTest();
+        externalDatabases().afterTest();
+        entandoPlugins().afterTest();
+        entandoApps().afterTest();
+        appPluginLinks().afterTest();
         if (EntandoOperatorE2ETestConfig.getTestTarget() == TestTarget.STANDALONE) {
             client.close();
             stopStaleWatchersFromFillingUpTheLogs();
         }
+
     }
 
     public DefaultKubernetesClient getClient() {
