@@ -26,8 +26,8 @@ import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorE2ETestConfig;
 import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrationTesting;
-import org.entando.kubernetes.controller.integrationtest.support.IntegrationClientFactory;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
+import org.entando.kubernetes.controller.integrationtest.support.TestFixturePreparation;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
@@ -54,7 +54,7 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
     public static final String EXISTING_CLIENT = "existing-client";
     public static final String EXISTING_ROLE = "existing-role";
     private static DefaultKeycloakClient keycloakClient = null;
-    private final DefaultKubernetesClient client = IntegrationClientFactory.newClient();
+    private final DefaultKubernetesClient client = TestFixturePreparation.newClient();
     private final DefaultSimpleK8SClient simpleK8SClient = new DefaultSimpleK8SClient(client);
     private final KeycloakIntegrationTestHelper helper = new KeycloakIntegrationTestHelper(client) {
         protected Optional<Secret> getAdminSecret() {
@@ -144,7 +144,7 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
     private DefaultKeycloakClient prepareKeycloak() {
         if (keycloakClient == null) {
             System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT, "true");
-            IntegrationClientFactory.setTextFixture(this.client, deleteAll(KeycloakServer.class).fromNamespace(KC_TEST_NAMESPACE));
+            TestFixturePreparation.prepareTestFixture(this.client, deleteAll(KeycloakServer.class).fromNamespace(KC_TEST_NAMESPACE));
             NonNamespaceOperation<KeycloakServer,
                     KeycloakServerList,
                     DoneableKeycloakServer,

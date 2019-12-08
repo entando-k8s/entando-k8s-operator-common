@@ -43,6 +43,13 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     private Keycloak keycloak;
     private boolean isHttps = false;
 
+    public DefaultKeycloakClient() {
+    }
+
+    public DefaultKeycloakClient(Keycloak keycloak) {
+        this.keycloak = keycloak;
+    }
+
     private static RoleRepresentation toRoleRepresentation(ExpectedRole expectedRole) {
         RoleRepresentation roleRepresentation = new RoleRepresentation();
         roleRepresentation.setName(expectedRole.getCode());

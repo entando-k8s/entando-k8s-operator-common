@@ -1,7 +1,5 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.awaitility.Awaitility.await;
-
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -17,16 +15,14 @@ import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
-import org.entando.kubernetes.controller.integrationtest.support.TestFixtureRequest.DeletionRequestBuilder;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public class IntegrationTestHelperBase<
         R extends EntandoCustomResource,
         L extends CustomResourceList<R>,
         D extends DoneableEntandoCustomResource<D, R>
-        > {
+        > implements FluentIntegrationTesting {
 
     protected final DefaultKubernetesClient client;
     protected final CustomResourceOperationsImpl<R, L, D> operations;
@@ -46,10 +42,6 @@ public class IntegrationTestHelperBase<
         System.out.println(x);
     }
 
-    public static DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource>... types) {
-        return new TestFixtureRequest().deleteAll(types);
-    }
-
     public void afterTest() {
         startupEventFiringListener.stopListening();
         containerStartingListener.stopListening();
@@ -60,7 +52,7 @@ public class IntegrationTestHelperBase<
     }
 
     public void setTestFixture(TestFixtureRequest request) {
-        IntegrationClientFactory.setTextFixture(this.client, request);
+        TestFixturePreparation.prepareTestFixture(this.client, request);
     }
 
     public String getDomainSuffix() {
@@ -96,7 +88,7 @@ public class IntegrationTestHelperBase<
 
     public void listenAndRespondWithPod(String namespace, Optional<String> imageVersion) {
         String versionToUse = imageVersion.orElse(EntandoOperatorE2ETestConfig.getVersionOfImageUnderTest().orElse("6.0.0-dev"));
-        ControllerExecutor executor = new ControllerExecutor(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE, client, versionToUse);
+        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client, versionToUse);
         containerStartingListener.listen(namespace, executor);
     }
 

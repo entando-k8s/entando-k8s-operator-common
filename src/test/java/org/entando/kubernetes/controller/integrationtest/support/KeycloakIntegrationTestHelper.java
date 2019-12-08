@@ -1,6 +1,5 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.awaitility.Awaitility.await;
 import static org.entando.kubernetes.controller.KubeUtils.ENTANDO_KEYCLOAK_REALM;
 
 import io.fabric8.kubernetes.api.model.Secret;
@@ -11,7 +10,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.ClientErrorException;
+import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
@@ -33,7 +34,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 public class KeycloakIntegrationTestHelper extends
-        IntegrationTestHelperBase<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> {
+        IntegrationTestHelperBase<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> implements FluentIntegrationTesting {
 
     public static final String KEYCLOAK_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("keycloak-namespace");
     public static final String KEYCLOAK_NAME = EntandoOperatorE2ETestConfig.calculateName("test-keycloak");
@@ -89,6 +90,18 @@ public class KeycloakIntegrationTestHelper extends
                 });
     }
 
+    public void ensureKeycloakClient(String clientId, List<String> roles) {
+        KeycloakClientConfig config = new KeycloakClientConfig(ENTANDO_KEYCLOAK_REALM, clientId, clientId);
+        for (String role : roles) {
+            config = config.withRole(role);
+        }
+        getDefaultKeycloakClient().orElseThrow(IllegalStateException::new).prepareClientAndReturnSecret(config);
+    }
+
+    protected Optional<DefaultKeycloakClient> getDefaultKeycloakClient() {
+        return getKeycloak().map(DefaultKeycloakClient::new);
+    }
+
     private Optional<Keycloak> getKeycloak() {
         return getAdminSecret()
                 .map(KeycloakConnectionSecret::new)
@@ -104,7 +117,7 @@ public class KeycloakIntegrationTestHelper extends
 
     protected Optional<Secret> getAdminSecret() {
         return Optional.ofNullable(client.secrets()
-                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
+                .inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE)
                 .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName())
                 .fromServer().get());
     }

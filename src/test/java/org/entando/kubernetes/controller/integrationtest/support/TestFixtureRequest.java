@@ -13,8 +13,8 @@ public class TestFixtureRequest {
 
     private Map<String, List<EntandoBaseCustomResource>> requiredAdditions = new ConcurrentHashMap<>();
 
-    public DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource>... types) {
-        return new DeletionRequestBuilder(Arrays.asList(types), this);
+    public DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource> type) {
+        return new DeletionRequestBuilder(type, this);
     }
 
     public AdditionRequestBuilder addAll(EntandoBaseCustomResource... objects) {
@@ -31,20 +31,21 @@ public class TestFixtureRequest {
 
     public class DeletionRequestBuilder {
 
-        private List<Class<? extends EntandoBaseCustomResource>> typesToDelete;
+        private Class<? extends EntandoBaseCustomResource> typesToDelete;
         private TestFixtureRequest request;
 
-        private DeletionRequestBuilder(List<Class<? extends EntandoBaseCustomResource>> typesToDelete, TestFixtureRequest request) {
-            this.typesToDelete = new ArrayList<>(typesToDelete);
+        private DeletionRequestBuilder(Class<? extends EntandoBaseCustomResource> typesToDelete, TestFixtureRequest request) {
+            this.typesToDelete = typesToDelete;
             this.request = request;
         }
 
         public TestFixtureRequest fromNamespace(String namespace) {
-            if (request.requiredDeletions.containsKey(namespace)) {
-                request.requiredDeletions.get(namespace).addAll(typesToDelete);
-            } else {
-                request.requiredDeletions.put(namespace, typesToDelete);
+            List<Class<? extends EntandoBaseCustomResource>> types = request.requiredDeletions.get(namespace);
+            if (types == null) {
+                types = new ArrayList<>();
+                request.requiredDeletions.put(namespace, types);
             }
+            types.add(typesToDelete);
             return request;
         }
     }

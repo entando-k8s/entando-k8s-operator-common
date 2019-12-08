@@ -1,8 +1,5 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.awaitility.Awaitility.await;
-import static org.entando.kubernetes.controller.Wait.waitFor;
-
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -15,7 +12,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
@@ -40,11 +36,8 @@ public class ExternalDatabaseIntegrationTestHelper extends
 
     @SuppressWarnings("unchecked")
     public void prepareExternalPostgresqlDatabase(String namespace) {
-        if (client.pods().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE).withName("pg-test").fromServer()
-                .get() != null) {
-            deletePreviousState();
-
-        }
+        delete(client.pods()).named("pg-test").fromNamespace(namespace).waitingAtMost(60, SECONDS);
+        deleteCommonPreviousState(namespace);
         client.pods().inNamespace(namespace).createNew().withNewMetadata().withName("pg-test").endMetadata()
                 .withNewSpec().addNewContainer()
                 .withName("pg-container")
@@ -76,34 +69,13 @@ public class ExternalDatabaseIntegrationTestHelper extends
         createAndWaitForDbService(namespace, externalDatabase);
     }
 
-    protected void deletePreviousState() {
-        client.pods().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE).withName("pg-test").delete();
-        deleteCommonPreviousState();
-        await().atMost(60, TimeUnit.SECONDS).ignoreExceptions().until(() ->
-                client.pods().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE).withName("pg-test")
-                        .fromServer()
-                        .get() == null);
-    }
-
-    private void deleteCommonPreviousState() {
-        try {
-            getOperations().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
-                    .withName(MY_EXTERNAL_DB).delete();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        try {
-            getOperations().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
-                    .withName(MY_EXTERNAL_DB).delete();
-            client.secrets().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE).withName("test-secret")
-                    .delete();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void deleteCommonPreviousState(String namespace) {
+        delete(getOperations()).named(MY_EXTERNAL_DB).fromNamespace(namespace).waitingAtMost(15, SECONDS);
+        delete(client.secrets()).named(TEST_SECRET).fromNamespace(namespace).waitingAtMost(15, SECONDS);
     }
 
     public void prepareExternalOracleDatabase(String namespace, String... usersToDrop) {
-        deleteCommonPreviousState();
+        deleteCommonPreviousState(namespace);
         Secret secret = new SecretBuilder().withNewMetadata().withName(TEST_SECRET).endMetadata()
                 .addToStringData(KubeUtils.USERNAME_KEY, ADMIN)
                 .addToStringData(KubeUtils.PASSSWORD_KEY, ADMIN)
@@ -132,7 +104,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
         new CreateExternalServiceCommand(getOperations().inNamespace(externalDatabase.getMetadata().getNamespace())
                 .withName(externalDatabase.getMetadata().getName()).get())
                 .execute(new DefaultSimpleK8SClient(client));
-        waitFor(60).seconds().until(
+        await().atMost(60, SECONDS).until(
                 () -> client.services().inNamespace(namespace).withName(MY_EXTERNAL_DB + "-service").fromServer().get()
                         != null);
     }

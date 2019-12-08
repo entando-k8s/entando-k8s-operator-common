@@ -1,7 +1,5 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.entando.kubernetes.controller.Wait.waitFor;
-
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
 import org.entando.kubernetes.controller.common.TlsHelper;
@@ -35,7 +33,7 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
         //300 because there are 3 containers
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
                 TEST_NAMESPACE, TEST_APP_NAME + "-server");
-        waitFor(30).seconds().until(
+        await().atMost(60, SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
                             .inNamespace(TEST_NAMESPACE)
@@ -45,7 +43,7 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
                             && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
                 });
 
-        waitFor(30).seconds().until(() -> HttpTestHelper.read(
+        await().atMost(60, SECONDS).until(() -> HttpTestHelper.read(
                 TlsHelper.getDefaultProtocol() + "://" + entandoApp.getSpec().getIngressHostName()
                         .orElseThrow(() -> new IllegalStateException())
                         + "/entando-de-app/index.jsp").contains("Entando - Welcome"));

@@ -1,15 +1,10 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.awaitility.Awaitility.await;
-
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext.Builder;
 import io.fabric8.kubernetes.client.utils.HttpClientUtils;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -21,13 +16,14 @@ import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 
-public final class IntegrationClientFactory {
+public final class TestFixturePreparation {
 
     public static final String ENTANDO_CONTROLLERS_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("entando-controllers");
     public static final String CURRENT_ENTANDO_RESOURCE_VERSION = "v1alpha1";
 
-    private IntegrationClientFactory() {
+    private TestFixturePreparation() {
 
     }
 
@@ -75,11 +71,15 @@ public final class IntegrationClientFactory {
         return result;
     }
 
-    public static void setTextFixture(KubernetesClient client, TestFixtureRequest testFixtureRequest) {
+    @SuppressWarnings("unchecked")
+    public static void prepareTestFixture(KubernetesClient client, TestFixtureRequest testFixtureRequest) {
         for (Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry : testFixtureRequest.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
                 for (Class<? extends EntandoBaseCustomResource> type : entry.getValue()) {
-                    deleteFromNamespace(client, type, entry.getKey());
+                    new CustomResourceDeletionWaiter(client, determineKind(type)).fromNamespace(entry.getKey())
+                            .waitingAtMost(120, TimeUnit.SECONDS);
+                    new DeletionWaiter<>(client.pods()).fromNamespace(entry.getKey()).withLabel("Kind", determineKind(type))
+                            .waitingAtMost(60, TimeUnit.SECONDS);
                 }
             } else {
                 createNamespace(client, entry.getKey());
@@ -87,27 +87,12 @@ public final class IntegrationClientFactory {
         }
     }
 
-    private static void deleteFromNamespace(KubernetesClient client, Class<? extends EntandoBaseCustomResource> type, String namespace) {
-        CustomResourceDefinitionContext context = new Builder()
-                .withScope("Namespaced")
-                .withGroup("entando.org")
-                .withVersion(CURRENT_ENTANDO_RESOURCE_VERSION)
-                .withPlural(getPluralFrom(type))
-                .build();
-        client.customResource(context).delete(namespace);
-        await().ignoreExceptions().atMost(60, TimeUnit.SECONDS)
-                .until(() -> {
-                    List items = (List) client.customResource(context).list(namespace).get("items");
-                    return items.size() == 0;
-                });
-    }
-
-    protected static String getPluralFrom(Class<? extends EntandoBaseCustomResource> type) {
-        try {
-            return type.getConstructor().newInstance().getDefinitionName().split("\\.")[0];
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new IllegalStateException(e);
+    private static String determineKind(Class<? extends EntandoBaseCustomResource> type) {
+        //TODO this is problematic even for Fabric8. We need to change KeycloakServer to EntandoKeycloakServer
+        if (type == KeycloakServer.class) {
+            return "EntandoKeycloakServer";
         }
+        return type.getSimpleName();
     }
 
     private static void createNamespace(KubernetesClient client, String namespace) {

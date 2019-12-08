@@ -29,6 +29,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseOperationFactory;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
@@ -48,7 +49,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
         operationSuppliers.put(KeycloakServer.class, KeycloakServerOperationFactory::produceAllKeycloakServers);
         operationSuppliers.put(EntandoClusterInfrastructure.class,
                 EntandoClusterInfrastructureOperationFactory::produceAllEntandoClusterInfrastructures);
-        operationSuppliers.put(EntandoApp.class, EntandoAppPluginLinkOperationFactory::produceAllEntandoAppPluginLinks);
+        operationSuppliers.put(EntandoApp.class, EntandoAppOperationFactory::produceAllEntandoApps);
         operationSuppliers.put(EntandoPlugin.class, EntandoPluginOperationFactory::produceAllEntandoPlugins);
         operationSuppliers.put(EntandoAppPluginLink.class, EntandoAppPluginLinkOperationFactory::produceAllEntandoAppPluginLinks);
         operationSuppliers.put(ExternalDatabase.class, ExternalDatabaseOperationFactory::produceAllExternalDatabases);
@@ -60,6 +61,10 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     public DefaultEntandoResourceClient(KubernetesClient client) {
         this.client = client;
+    }
+
+    public static <T extends EntandoCustomResource> CustomResourceOperationsImpl getOperationsFor(KubernetesClient client, Class<T> c) {
+        return operationSuppliers.get(c).get(client);
     }
 
     @Override
@@ -127,9 +132,10 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
     @SuppressWarnings("unchecked")
     private <T extends EntandoCustomResource> CustomResourceOperationsImpl<T, KubernetesResourceList<T>,
             DoneableEntandoCustomResource<?, T>> getOperations(Class<T> c) {
+        KubernetesClient client = this.client;
         CustomResourceOperationsImpl result = this.customResourceOperations.get(c);
         if (result == null) {
-            result = operationSuppliers.get(c).get(client);
+            result = getOperationsFor(client, c);
             this.customResourceOperations.put(c, result);
         }
         return result;

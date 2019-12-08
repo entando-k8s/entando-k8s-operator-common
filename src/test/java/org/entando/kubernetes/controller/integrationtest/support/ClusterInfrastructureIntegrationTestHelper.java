@@ -1,8 +1,5 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.entando.kubernetes.controller.Wait.waitFor;
-
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
@@ -32,18 +29,13 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
     }
 
     public void ensureInfrastructureSecret() {
-        Secret infrastructureSecret = client.secrets()
-                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
-                .withName(EntandoOperatorConfig.getEntandoInfrastructureSecretName())
-                .fromServer().get();
-        if (infrastructureSecret != null) {
-            client.secrets()
-                    .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
-                    .withName(EntandoOperatorConfig.getEntandoInfrastructureSecretName()).delete();
-        }
+        delete(client.secrets())
+                .named(EntandoOperatorConfig.getEntandoInfrastructureSecretName())
+                .fromNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE)
+                .waitingAtMost(20, SECONDS);
         String hostName = "http://" + CLUSTER_INFRASTRUCTURE_NAME + "." + getDomainSuffix();
         client.secrets()
-                .inNamespace(IntegrationClientFactory.ENTANDO_CONTROLLERS_NAMESPACE)
+                .inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE)
                 .createNew()
                 .withNewMetadata()
                 .withName(EntandoOperatorConfig.getEntandoInfrastructureSecretName())
@@ -87,7 +79,7 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
                 CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(90)), CLUSTER_INFRASTRUCTURE_NAMESPACE,
                 CLUSTER_INFRASTRUCTURE_NAME + "-user-mgmt");
-        waitFor(30).seconds().until(
+        await().atMost(30, SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
                             .inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)

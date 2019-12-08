@@ -1,6 +1,5 @@
 package org.entando.kubernetes.controller.integrationtest;
 
-import static org.awaitility.Awaitility.await;
 import static org.entando.kubernetes.model.DbmsImageVendor.POSTGRESQL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -26,6 +25,7 @@ import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
+import org.entando.kubernetes.model.link.EntandoAppPluginLink;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,8 +55,14 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                 .endSpec().build();
         SampleWriter.writeSample(keycloakServer, "keycloak-with-embedded-postgresql-db");
         helper.setTextFixture(
-                deleteAll(KeycloakServer.class, EntandoClusterInfrastructure.class, EntandoApp.class, EntandoPlugin.class)
-                        .fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE));
+                deleteAll(KeycloakServer.class)
+                        .fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
+                        .deleteAll(EntandoClusterInfrastructure.class)
+                        .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
+                        .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
+                        .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
+                        .deleteAll(EntandoAppPluginLink.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
+        );
         helper.keycloak()
                 .listenAndRespondWithStartupEvent(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE, controller::onStartup);
         helper.keycloak().createAndWaitForKeycloak(keycloakServer, 30, true);

@@ -1,8 +1,5 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.awaitility.Awaitility.await;
-import static org.entando.kubernetes.controller.Wait.waitFor;
-
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -39,7 +36,7 @@ public class EntandoPluginIntegrationTestHelper extends
                 .withType("Opaque")
                 .addToStringData("config.yaml", "thisis: nothing")
                 .build());
-        await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
+        await().atMost(30, TimeUnit.SECONDS)
                 .until(() -> client.secrets().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
                         .withName(PAM_CONNECTION_CONFIG).get() != null);
         plugin.getMetadata().setName(TEST_PLUGIN_NAME);
@@ -59,7 +56,7 @@ public class EntandoPluginIntegrationTestHelper extends
         Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getOperations()
                 .inNamespace(TEST_PLUGIN_NAMESPACE).withName(TEST_PLUGIN_NAME);
         //Wait for widget registration too - sometimes we get 503's for about 3 attempts
-        waitFor(240).seconds().until(() -> {
+        await().atMost(240, SECONDS).until(() -> {
             EntandoCustomResourceStatus status = pluginResource.fromServer().get().getStatus();
             return status.forServerQualifiedBy("server").isPresent()
                     && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
