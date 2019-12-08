@@ -16,34 +16,34 @@ public class DeletionWaiter<
         R extends HasMetadata,
         L extends KubernetesResourceList<R>,
         D extends Doneable<R>,
-        RS extends Resource<R, D>> {
+        O extends Resource<R, D>> {
 
-    private MixedOperation<R, L, D, RS> operation;
+    private MixedOperation<R, L, D, O> operation;
     private String name;
     private String namespace;
     private Map<String, String> labels = new HashMap<>();
     private boolean deleteIndividually;
 
-    public DeletionWaiter(MixedOperation<R, L, D, RS> operation) {
+    public DeletionWaiter(MixedOperation<R, L, D, O> operation) {
         this.operation = operation;
     }
 
-    public DeletionWaiter<R, L, D, RS> named(String name) {
+    public DeletionWaiter<R, L, D, O> named(String name) {
         this.name = name;
         return this;
     }
 
-    public DeletionWaiter<R, L, D, RS> withLabel(String labelName, String labelValue) {
+    public DeletionWaiter<R, L, D, O> withLabel(String labelName, String labelValue) {
         labels.put(labelName, labelValue);
         return this;
     }
 
-    public DeletionWaiter<R, L, D, RS> withLabel(String labelName) {
+    public DeletionWaiter<R, L, D, O> withLabel(String labelName) {
         labels.put(labelName, null);
         return this;
     }
 
-    public DeletionWaiter<R, L, D, RS> fromNamespace(String namespace) {
+    public DeletionWaiter<R, L, D, O> fromNamespace(String namespace) {
         this.namespace = namespace;
         return this;
     }
@@ -83,7 +83,7 @@ public class DeletionWaiter<
         }
     }
 
-    public DeletionWaiter<R, L, D, RS> individually() {
+    public DeletionWaiter<R, L, D, O> individually() {
         this.deleteIndividually = true;
         return this;
     }

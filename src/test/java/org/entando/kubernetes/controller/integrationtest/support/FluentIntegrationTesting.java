@@ -28,8 +28,7 @@ public interface FluentIntegrationTesting extends FluentTraversals {
     default <R extends HasMetadata,
             L extends KubernetesResourceList<R>,
             D extends Doneable<R>,
-            RS extends Resource<R, D>>
-    DeletionWaiter<R, L, D, RS> delete(MixedOperation<R, L, D, RS> operation) {
+            O extends Resource<R, D>> DeletionWaiter<R, L, D, O> delete(MixedOperation<R, L, D, O> operation) {
         return new DeletionWaiter<>(operation);
     }
 }
