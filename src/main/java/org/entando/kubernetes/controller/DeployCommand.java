@@ -31,7 +31,6 @@ import org.entando.kubernetes.model.WebServerStatus;
 public class DeployCommand<T extends ServiceResult> {
 
     public static final String DEPLOYMENT_LABEL_NAME = "deployment";
-    public static final String DEPLOYMENT_LABEL_KIND = "Kind";
     private static final String DEFAULT = "default";
     private final Deployable<T> deployable;
     private final PersistentVolumeClaimCreator persistentVolumeClaimCreator;

@@ -14,6 +14,8 @@ import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 
 public final class KubeUtils {
 
@@ -35,10 +37,19 @@ public final class KubeUtils {
     public static final String PUBLIC_CLIENT_ID = "entando-web";
     public static final String OPERATOR_CLIENT_ID = "entando-k8s-operator";
     public static final String ENTANDO_KEYCLOAK_REALM = "entando";
+    public static final String ENTANDO_RESOURCE_KIND_LABEL_NAME = "EntandoResourceKind";
 
     private static final Logger LOGGER = Logger.getLogger(KubeUtils.class.getName());
 
     private KubeUtils() {
+    }
+
+    public static String getKindOf(Class<? extends EntandoBaseCustomResource> c) {
+        //TODO this is problematic even for Fabric8. We need to change KeycloakServer to EntandoKeycloakServer
+        if (c == KeycloakServer.class) {
+            return "EntandoKeycloakServer";
+        }
+        return c.getSimpleName();
     }
 
     public static EnvVarSource secretKeyRef(String secretName, String key) {

@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 
 public final class TestFixturePreparation {
 
@@ -76,23 +76,16 @@ public final class TestFixturePreparation {
         for (Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry : testFixtureRequest.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
                 for (Class<? extends EntandoBaseCustomResource> type : entry.getValue()) {
-                    new CustomResourceDeletionWaiter(client, determineKind(type)).fromNamespace(entry.getKey())
+                    new CustomResourceDeletionWaiter(client, KubeUtils.getKindOf(type)).fromNamespace(entry.getKey())
                             .waitingAtMost(120, TimeUnit.SECONDS);
-                    new DeletionWaiter<>(client.pods()).fromNamespace(entry.getKey()).withLabel("Kind", determineKind(type))
+                    new DeletionWaiter<>(client.pods()).fromNamespace(entry.getKey())
+                            .withLabel(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, KubeUtils.getKindOf(type))
                             .waitingAtMost(60, TimeUnit.SECONDS);
                 }
             } else {
                 createNamespace(client, entry.getKey());
             }
         }
-    }
-
-    private static String determineKind(Class<? extends EntandoBaseCustomResource> type) {
-        //TODO this is problematic even for Fabric8. We need to change KeycloakServer to EntandoKeycloakServer
-        if (type == KeycloakServer.class) {
-            return "EntandoKeycloakServer";
-        }
-        return type.getSimpleName();
     }
 
     private static void createNamespace(KubernetesClient client, String namespace) {

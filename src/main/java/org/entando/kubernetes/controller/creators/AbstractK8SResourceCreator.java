@@ -57,6 +57,6 @@ public class AbstractK8SResourceCreator {
 
     private void resourceKindLabels(Map<String, String> labels) {
         labels.put(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName());
-        labels.put(DeployCommand.DEPLOYMENT_LABEL_KIND, entandoCustomResource.getKind());
+        labels.put(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, entandoCustomResource.getKind());
     }
 }

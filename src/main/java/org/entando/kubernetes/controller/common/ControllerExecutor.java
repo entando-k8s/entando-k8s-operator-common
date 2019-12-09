@@ -20,26 +20,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 
 public class ControllerExecutor {
 
     public static final String ETC_ENTANDO_TLS = "/etc/entando/tls";
     public static final String ETC_ENTANDO_CA = "/etc/entando/ca";
-    private static final Map<String, String> resourceKindToImageNames = new ConcurrentHashMap<>();
+    private static final Map<String, String> resourceKindToImageNames = buildImageMap();
     private final DefaultSimpleK8SClient client;
     private String imageVersion;
     private String controllerNamespace;
-
-    {
-        resourceKindToImageNames.put("EntandoKeycloakServer", "entando-k8s-keycloak-controller");
-        resourceKindToImageNames.put("EntandoClusterInfrastructure", "entando-k8s-cluster-infrastructure-controller");
-        resourceKindToImageNames.put("EntandoPlugin", "entando-k8s-plugin-controller");
-        resourceKindToImageNames.put("EntandoApp", "entando-k8s-app-controller");
-        resourceKindToImageNames.put("EntandoAppPluginLink", "entando-k8s-app-plugin-link-controller");
-    }
 
     public ControllerExecutor(String controllerNamespace, KubernetesClient client, String imageVersion) {
         this.controllerNamespace = controllerNamespace;
@@ -47,11 +39,18 @@ public class ControllerExecutor {
         this.imageVersion = imageVersion;
     }
 
+    private static Map<String, String> buildImageMap() {
+        Map<String, String> map = new ConcurrentHashMap<>();
+        map.put("EntandoKeycloakServer", "entando-k8s-keycloak-controller");
+        map.put("EntandoClusterInfrastructure", "entando-k8s-cluster-infrastructure-controller");
+        map.put("EntandoPlugin", "entando-k8s-plugin-controller");
+        map.put("EntandoApp", "entando-k8s-app-controller");
+        map.put("EntandoAppPluginLink", "entando-k8s-app-plugin-link-controller");
+        return map;
+    }
+
     public static Optional<String> resolveLatestImageFor(KubernetesClient client, Class<? extends EntandoBaseCustomResource> type) {
-        String kind = type.getSimpleName();
-        if (type == KeycloakServer.class) {
-            kind = "EntandoKeycloakServer";
-        }
+        String kind = KubeUtils.getKindOf(type);
         String imageName = resourceKindToImageNames.get(kind);
         ConfigMap configMap = client.configMaps().inNamespace(EntandoOperatorConfig.getEntandoImageNamespace())
                 .withName(EntandoOperatorConfig.getEntandoK8sImageVersionsConfigmap()).get();
@@ -65,6 +64,7 @@ public class ControllerExecutor {
         Pod pod = new PodBuilder().withNewMetadata()
                 .withName(resource.getMetadata().getName() + "-deployer-" + RandomStringUtils.randomAlphanumeric(10).toLowerCase())
                 .withNamespace(this.controllerNamespace)
+                .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind())
                 .addToLabels(resource.getKind(), resource.getMetadata().getName())
                 .endMetadata()
                 .withNewSpec()
@@ -85,12 +85,6 @@ public class ControllerExecutor {
     private String determineControllerImage(EntandoCustomResource resource) {
         return EntandoOperatorConfig.getEntandoDockerRegistry() + "/" + EntandoOperatorConfig.getEntandoImageNamespace() + "/"
                 + resourceKindToImageNames.get(resource.getKind()) + ":" + imageVersion;
-    }
-
-    //TODO move to the FrontController
-    public String resolveImageVersion(EntandoCustomResource resource) {
-        return Optional.ofNullable(client.secrets().loadControllerConfigMap(resource.getKind().toLowerCase() + "-controller-versions"))
-                .map(configMap -> configMap.getData().get(resource.getApiVersion().substring("entando.org/".length()))).orElse("6.0.0");
     }
 
     private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {
