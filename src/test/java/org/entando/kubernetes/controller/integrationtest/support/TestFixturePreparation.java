@@ -1,5 +1,7 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
+import static org.entando.kubernetes.controller.integrationtest.support.DeletionWaiter.delete;
+
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
@@ -76,11 +78,17 @@ public final class TestFixturePreparation {
         for (Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry : testFixtureRequest.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
                 for (Class<? extends EntandoBaseCustomResource> type : entry.getValue()) {
+                    //This is a bit heavy-handed, but we need  to make absolutely sure the pods are deleted before the test starts
+                    //Pods are considered 'deleted' even if they are still gracefully shutting down and the second or two
+                    // it takes to shut down can interfere with subsequent pod watchers.
+                    delete(client.apps().deployments()).fromNamespace(entry.getKey())
+                            .withLabel(KubeUtils.getKindOf(type))
+                            .waitingAtMost(60, TimeUnit.SECONDS);
+                    delete(client.pods()).fromNamespace(entry.getKey())
+                            .withLabel(KubeUtils.getKindOf(type))
+                            .waitingAtMost(60, TimeUnit.SECONDS);
                     new CustomResourceDeletionWaiter(client, KubeUtils.getKindOf(type)).fromNamespace(entry.getKey())
                             .waitingAtMost(120, TimeUnit.SECONDS);
-                    new DeletionWaiter<>(client.pods()).fromNamespace(entry.getKey())
-                            .withLabel(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, KubeUtils.getKindOf(type))
-                            .waitingAtMost(60, TimeUnit.SECONDS);
                 }
             } else {
                 createNamespace(client, entry.getKey());

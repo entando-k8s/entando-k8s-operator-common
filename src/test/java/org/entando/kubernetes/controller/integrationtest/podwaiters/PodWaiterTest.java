@@ -73,7 +73,7 @@ public class PodWaiterTest {
         await().atMost(50, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.RUNNING);
         assertFalse(mutex.timedOut);
         mutex.eventReceived(Watcher.Action.ERROR, podFailingWithCondition("Failed", "Error", POD_SCHEDULED));
-        await().atMost(10, TimeUnit.MILLISECONDS).pollInterval(1, TimeUnit.MILLISECONDS)
+        await().atMost(15, TimeUnit.MILLISECONDS).pollInterval(1, TimeUnit.MILLISECONDS)
                 .until(() -> mutex.state == State.COMPLETED && "Error".equals(mutex.failReason));
         assertFalse(mutex.timedOut);
         assertFalse(mutex.wasSuccessful());
