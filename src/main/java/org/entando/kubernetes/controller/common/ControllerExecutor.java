@@ -1,5 +1,6 @@
 package org.entando.kubernetes.controller.common;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
@@ -20,6 +21,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 
 public class ControllerExecutor {
 
@@ -42,6 +45,20 @@ public class ControllerExecutor {
         this.controllerNamespace = controllerNamespace;
         this.client = new DefaultSimpleK8SClient(client);
         this.imageVersion = imageVersion;
+    }
+
+    public static Optional<String> resolveLatestImageFor(KubernetesClient client, Class<? extends EntandoBaseCustomResource> type) {
+        String kind = type.getSimpleName();
+        if (type == KeycloakServer.class) {
+            kind = "EntandoKeycloakServer";
+        }
+        String imageName = resourceKindToImageNames.get(kind);
+        ConfigMap configMap = client.configMaps().inNamespace(EntandoOperatorConfig.getEntandoImageNamespace())
+                .withName(EntandoOperatorConfig.getEntandoK8sImageVersionsConfigmap()).get();
+        if (configMap == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(configMap.getData().get(imageName));
     }
 
     public void startControllerFor(Action action, EntandoCustomResource resource) {

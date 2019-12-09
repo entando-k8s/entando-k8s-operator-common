@@ -15,6 +15,7 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static final String ENTANDO_K8S_OPERATOR_REGISTRY = "entando.k8s.operator.registry";
     public static final String ENTANDO_DEFAULT_ROUTING_SUFFIX = "entando.default.routing.suffix";
     public static final String ENTANDO_K8S_OPERATOR_IMAGE_NAMESPACE = "entando.k8s.operator.image.namespace";
+    public static final String ENTANDO_K8S_IMAGE_VERSIONS_CONFIGMAP = "entando.k8s.image.versions.configmap";
     public static final String ENTANDO_K8S_OPERATOR_SCOPE = "entando.k8s.operator.scope";
     public static final String ENTANDO_K8S_OPERATOR_SECURITY_MODE = "entando.k8s.operator.security.mode";
     public static final String ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS = "entando.pod.completion.timeout.seconds";
@@ -60,6 +61,10 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static Optional<Path> getPathToDefaultTlsKeyPair() {
         return lookupProperty(ENTANDO_PATH_TO_TLS_KEYPAIR).filter(s -> Paths.get(s).toFile().exists()).map(Paths::get);
+    }
+
+    public static String getEntandoK8sImageVersionsConfigmap() {
+        return lookupProperty(ENTANDO_K8S_IMAGE_VERSIONS_CONFIGMAP).orElse("image-versions");
     }
 
     public static Optional<String> getDefaultRoutingSuffix() {
