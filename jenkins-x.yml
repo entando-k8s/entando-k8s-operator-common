@@ -4,6 +4,8 @@ pipelineConfig:
   agent:
     image: maven-java11
   env:
+    - name: PIPELINE_CODE
+      value: cm
     - name: _JAVA_OPTIONS
       value: -XX:+UnlockExperimentalVMOptions -Dsun.zip.disableMemoryMapping=true -XX:+UseParallelGC -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Xms10m -Xmx512m
     - name: SONAR_TOKEN
@@ -71,7 +73,7 @@ pipelineConfig:
                 -DdatabaseUser=${OWASPDB_USERNAME} \
                 -Dentando.default.routing.suffix=apps.serv.run \
                 -Dentando.test.namespace.override=${REPO_NAME} \
-                -Dentando.test.name.suffix=${PULL_NUMBER}
+                -Dentando.test.name.suffix=${PIPELINE_CODE}${PULL_NUMBER}
             name: mvn-verify
       postBuild:
         replace: true
@@ -103,7 +105,7 @@ pipelineConfig:
                 -Dgpg.passphrase=${GPG_PASSPHRASE} \
                 -Dentando.default.routing.suffix=apps.serv.run \
                 -Dentando.test.namespace.override=${REPO_NAME} \
-                -Dentando.test.name.suffix=master
+                -Dentando.test.name.suffix=${PIPELINE_CODE}${BUILD_NUMBER}
             name: mvn-deploy
       promote:
         replace: true

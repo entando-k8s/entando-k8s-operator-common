@@ -40,7 +40,7 @@ public final class EntandoOperatorE2ETestConfig extends EntandoOperatorConfigBas
     }
 
     public static String calculateNameSpace(String baseName) {
-        return getTestNamespaceOverride().orElse(baseName) + getTestNameSuffix().map(s -> "-" + s).orElse("");
+        return calculateName(getTestNamespaceOverride().orElse(baseName));
     }
 
     public static Optional<String> getTestNamespaceOverride() {
