@@ -144,16 +144,6 @@ public class DummyBean {
     private DefaultKeycloakClient prepareKeycloak() {
         if (keycloakClient == null) {
             System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT, "true");
-            //            NonNamespaceOperation<KeycloakServer,
-            //                    KeycloakServerList,
-            //                    DoneableKeycloakServer,
-            //                    Resource<KeycloakServer,
-            //                            DoneableKeycloakServer>> operation = operations.inNamespace(KC_TEST_NAMESPACE);
-            //            keycloakServer = operation.createOrReplace(keycloakServer);
-            //            ServiceDeploymentResult result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer))
-            //                    .execute(simpleK8SClient, Optional
-            //                            .empty());
-            //            simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
             keycloakClient = new DefaultKeycloakClient();
             keycloakClient
                     .login(TlsHelper.getDefaultProtocol() + "://test-kc." + domainSuffix + "/auth",

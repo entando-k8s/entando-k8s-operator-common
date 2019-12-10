@@ -104,6 +104,7 @@ public class ControllerExecutor {
         result.add(new EnvVar("ENTANDO_POD_READINESS_TIMEOUT_SECONDS",
                 String.valueOf(EntandoOperatorConfig.getPodReadinessTimeoutSeconds()), null));
         result.add(new EnvVar("ENTANDO_K8S_OPERATOR_REGISTRY", EntandoOperatorConfig.getEntandoDockerRegistry(), null));
+        result.add(new EnvVar("ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT", String.valueOf(EntandoOperatorConfig.disableKeycloakSslRequirement()), null));
         EntandoOperatorConfig.getOperatorNamespaceOverride()
                 .ifPresent(s -> result.add(new EnvVar("ENTANDO_OPERATOR_NAMESPACE_OVERRIDE", s, null)));
         EntandoOperatorConfig.getDefaultRoutingSuffix()
