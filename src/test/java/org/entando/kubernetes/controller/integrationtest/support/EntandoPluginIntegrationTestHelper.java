@@ -20,7 +20,7 @@ public class EntandoPluginIntegrationTestHelper extends
         IntegrationTestHelperBase<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> {
 
     public static final String TEST_PLUGIN_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("plugin-namespace");
-    public static final String TEST_PLUGIN_NAME = EntandoOperatorE2ETestConfig.calculateName("test-plugin-a");
+    public static final String TEST_PLUGIN_NAME = EntandoOperatorE2ETestConfig.calculateName("test-plugin-a", 'p');
     public static final String PAM_CONNECTION_CONFIG = "pam-connection-config";
 
     public EntandoPluginIntegrationTestHelper(DefaultKubernetesClient client) {

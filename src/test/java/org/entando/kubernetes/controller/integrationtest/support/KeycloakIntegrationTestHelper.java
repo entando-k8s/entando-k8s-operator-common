@@ -37,7 +37,7 @@ public class KeycloakIntegrationTestHelper extends
         IntegrationTestHelperBase<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> implements FluentIntegrationTesting {
 
     public static final String KEYCLOAK_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("keycloak-namespace");
-    public static final String KEYCLOAK_NAME = EntandoOperatorE2ETestConfig.calculateName("test-keycloak");
+    public static final String KEYCLOAK_NAME = EntandoOperatorE2ETestConfig.calculateName("test-keycloak", 'k');
 
     public KeycloakIntegrationTestHelper(DefaultKubernetesClient client) {
         super(client, KeycloakServerOperationFactory::produceAllKeycloakServers);

@@ -30,13 +30,11 @@ public class ControllerExecutor {
     public static final String ETC_ENTANDO_CA = "/etc/entando/ca";
     private static final Map<String, String> resourceKindToImageNames = buildImageMap();
     private final DefaultSimpleK8SClient client;
-    private String imageVersion;
     private String controllerNamespace;
 
-    public ControllerExecutor(String controllerNamespace, KubernetesClient client, String imageVersion) {
+    public ControllerExecutor(String controllerNamespace, KubernetesClient client) {
         this.controllerNamespace = controllerNamespace;
         this.client = new DefaultSimpleK8SClient(client);
-        this.imageVersion = imageVersion;
     }
 
     private static Map<String, String> buildImageMap() {
@@ -60,7 +58,7 @@ public class ControllerExecutor {
         return Optional.ofNullable(configMap.getData().get(imageName));
     }
 
-    public void startControllerFor(Action action, EntandoCustomResource resource) {
+    public void startControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
         Pod pod = new PodBuilder().withNewMetadata()
                 .withName(resource.getMetadata().getName() + "-deployer-" + RandomStringUtils.randomAlphanumeric(10).toLowerCase())
                 .withNamespace(this.controllerNamespace)
@@ -71,7 +69,7 @@ public class ControllerExecutor {
                 .withRestartPolicy("Never")
                 .addNewContainer()
                 .withName("deployer")
-                .withImage(determineControllerImage(resource))
+                .withImage(determineControllerImage(resource, imageVersionToUse))
                 .withImagePullPolicy("Always")
                 .withEnv(buildEnvVars(action, resource))
                 .withVolumeMounts(maybeCreateTlsVolumeMounts())
@@ -82,9 +80,9 @@ public class ControllerExecutor {
         client.pods().start(pod);
     }
 
-    private String determineControllerImage(EntandoCustomResource resource) {
+    private String determineControllerImage(EntandoCustomResource resource, String imageVersionToUse) {
         return EntandoOperatorConfig.getEntandoDockerRegistry() + "/" + EntandoOperatorConfig.getEntandoImageNamespace() + "/"
-                + resourceKindToImageNames.get(resource.getKind()) + ":" + imageVersion;
+                + resourceKindToImageNames.get(resource.getKind()) + ":" + imageVersionToUse;
     }
 
     private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {

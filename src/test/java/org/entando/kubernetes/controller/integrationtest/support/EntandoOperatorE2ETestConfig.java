@@ -35,12 +35,12 @@ public final class EntandoOperatorE2ETestConfig extends EntandoOperatorConfigBas
                 .orElse(TestTarget.STANDALONE);
     }
 
-    public static String calculateName(String baseName) {
-        return baseName + getTestNameSuffix().map(s -> "-" + s).orElse("");
+    public static String calculateName(String baseName, char typeMnemonic) {
+        return baseName + getTestNameSuffix().map(s -> "-" + typeMnemonic + s).orElse("");
     }
 
     public static String calculateNameSpace(String baseName) {
-        return calculateName(getTestNamespaceOverride().orElse(baseName));
+        return getTestNamespaceOverride().orElse(baseName) + getTestNameSuffix().map(s -> "-" + s).orElse("");
     }
 
     public static Optional<String> getTestNamespaceOverride() {

@@ -25,14 +25,14 @@ public class ControllerContainerStartingListener<
         shouldListen = false;
     }
 
-    public void listen(String namespace, ControllerExecutor executor) {
+    public void listen(String namespace, ControllerExecutor executor, String imageVersionToUse) {
         operations.inNamespace(namespace).watch(new Watcher<R>() {
             @Override
             public void eventReceived(Action action, R resource) {
                 if (shouldListen && action == Action.ADDED) {
                     try {
                         System.out.println("!!!!!!!On " + resource.getKind() + " add!!!!!!!!!");
-                        executor.startControllerFor(action, resource);
+                        executor.startControllerFor(action, resource, imageVersionToUse);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

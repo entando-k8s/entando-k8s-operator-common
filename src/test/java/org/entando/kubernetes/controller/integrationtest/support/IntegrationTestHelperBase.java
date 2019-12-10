@@ -17,6 +17,7 @@ import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWa
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public class IntegrationTestHelperBase<
         R extends EntandoCustomResource,
@@ -88,8 +89,23 @@ public class IntegrationTestHelperBase<
 
     public void listenAndRespondWithPod(String namespace, Optional<String> imageVersion) {
         String versionToUse = imageVersion.orElse(EntandoOperatorE2ETestConfig.getVersionOfImageUnderTest().orElse("6.0.0-dev"));
-        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client, versionToUse);
-        containerStartingListener.listen(namespace, executor);
+        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
+        containerStartingListener.listen(namespace, executor, versionToUse);
+    }
+
+    public void listenAndRespondWithImageVersionUnderTest(String namespace) {
+        String versionToUse = EntandoOperatorE2ETestConfig.getVersionOfImageUnderTest().orElseThrow(() -> new IllegalStateException(
+                "The property 'entando.test.image.version' has not been set. Please set this property in your Maven command line"));
+        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
+        containerStartingListener.listen(namespace, executor, versionToUse);
+    }
+
+    public void listenAndRespondWithLatestImage(String namespace) {
+        String versionToUse = ControllerExecutor
+                .resolveLatestImageFor(client, (Class<? extends EntandoBaseCustomResource>) operations.getType())
+                .orElseThrow(() -> new IllegalStateException("No K8S Controller Image has been registered for " + operations.getType()));
+        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
+        containerStartingListener.listen(namespace, executor, versionToUse);
     }
 
 }
