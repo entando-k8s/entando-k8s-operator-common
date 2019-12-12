@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.inprocesstest;
+package org.entando.kubernetes.controller.inprocesstest.legacy;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -17,9 +17,11 @@ import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.SampleController;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
-import org.entando.kubernetes.controller.common.example.TestServerController;
+import org.entando.kubernetes.controller.inprocesstest.FluentTraversals;
+import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoResourceClientDouble;
@@ -33,7 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -51,11 +52,14 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    @InjectMocks
-    private TestServerController testServerController;
+    private SampleController sampleController;
 
     @BeforeEach
     public void setExternalDatabaseNamespace() {
+        this.sampleController = new SampleController<KeycloakServer>(client, keycloakClient) {
+        };
+        client.secrets().overwriteControllerSecret(buildKeycloakSecret());
+
         externalDatabase.getMetadata().setNamespace(keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
@@ -69,7 +73,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         //Given I have created an ExternalDatabase custom resource
         new CreateExternalServiceCommand(externalDatabase).execute(client);
         //When I deploy a KeycloakServer
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
         //Then a K8S Secret was created with a name that reflects the EntandoApp and the fact that it is a secret
         NamedArgumentCaptor<Secret> keycloakSecretCaptor = forResourceNamed(Secret.class, MY_KEYCLOAK_DB_SECRET);
         verify(client.secrets()).createSecretIfAbsent(eq(keycloakServer), keycloakSecretCaptor.capture());
@@ -85,7 +89,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         //And Keycloak is receiving requests
         lenient().when(keycloakClient.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn(KEYCLOAK_SECRET);
         //When I deploy a KeycloakServer
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
 
         //Then a K8S deployment is created
         NamedArgumentCaptor<Deployment> keyclaokDeploymentCaptor = forResourceNamed(Deployment.class,

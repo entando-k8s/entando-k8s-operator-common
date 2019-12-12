@@ -11,8 +11,8 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.SampleController;
 import org.entando.kubernetes.controller.common.TlsHelper;
-import org.entando.kubernetes.controller.common.example.TestServerController;
 import org.entando.kubernetes.controller.integrationtest.support.ClusterInfrastructureIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoAppIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoPluginIntegrationTestHelper;
@@ -38,7 +38,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
 
     static final int KEYCLOAK_DB_PORT = 5432;
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
-    private final TestServerController controller = new TestServerController(helper.getClient());
+    private final SampleController controller = new SampleController(helper.getClient());
 
     @Test
     public void create() {

@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.inprocesstest;
+package org.entando.kubernetes.controller.inprocesstest.legacy;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -26,8 +26,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Map;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.SampleController;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.common.example.TestServerController;
+import org.entando.kubernetes.controller.inprocesstest.FluentTraversals;
+import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
@@ -67,11 +69,12 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private TestServerController testServerController;
+    private SampleController<KeycloakServer> sampleController;
 
     @BeforeEach
     public void before() {
-        this.testServerController = new TestServerController(client, keycloakClient);
+        this.sampleController = new SampleController<KeycloakServer>(client, keycloakClient) {
+        };
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
@@ -83,7 +86,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         final KeycloakServer newKeycloakServer = keycloakServer;
         client.entandoResources().putEntandoCustomResource(keycloakServer);
         // When I  deploy the KeycloakServer
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
 
         //Then a K8S Secret was created with a name that reflects the KeycloakServer and the fact that it is an admin secret
         NamedArgumentCaptor<Secret> adminSecretCaptor = forResourceNamed(Secret.class, MY_KEYCLOAK_DB_ADMIN_SECRET);
@@ -114,7 +117,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
                 .then(respondWithServiceStatus(dbServiceStatus));
 
         //When the the KeycloakServerController is notified that a new KeycloakServer has been added
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
         //Then a K8S Service was created with a name that reflects the EntandoApp and the fact that it is a JEE service
         NamedArgumentCaptor<Service> dbServiceCaptor = forResourceNamed(Service.class, MY_KEYCLOAK_DB_SERVICE);
         verify(client.services()).createService(eq(newKeycloakServer), dbServiceCaptor.capture());
@@ -145,7 +148,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         lenient().when(client.deployments().loadDeployment(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT)))
                 .then(respondWithDeploymentStatus(dbDeploymentStatus));
         //When the the KeycloakServerController is notified that a new KeycloakServer has been added
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
 
         //Then two K8S deployments are created with a name that reflects the KeycloakServer name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
@@ -186,7 +189,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         lenient().when(client.deployments().loadDeployment(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT)))
                 .then(respondWithDeploymentStatus(dbDeploymentStatus));
         //When the the KeycloakServerController is notified that a new KeycloakServer has been added
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
 
         //Then two K8S deployments are created with a name that reflects the KeycloakServer name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
@@ -224,7 +227,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
                 .then(respondWithPersistentVolumeClaimStatus(dbPvcStatus));
 
         //When the KeycloakController is notified that a new KeycloakServer has been added
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
 
         //Then K8S was instructed to create a PersistentVolumeClaim for the DB and the JEE Server
         NamedArgumentCaptor<PersistentVolumeClaim> dbPvcCaptor = forResourceNamed(PersistentVolumeClaim.class,

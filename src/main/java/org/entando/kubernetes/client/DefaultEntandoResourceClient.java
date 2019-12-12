@@ -110,12 +110,17 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     @Override
     public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
-        getOperations(customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .edit()
-                .withStatus(status)
-                .done();
+        try {
+            getOperations(customResource.getClass())
+                    .inNamespace(customResource.getMetadata().getNamespace())
+                    .withName(customResource.getMetadata().getName())
+                    .edit()
+                    .withStatus(status)
+                    .done();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
+        }
 
     }
 
@@ -143,10 +148,15 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     @Override
     public void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase) {
-        getOperations(customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .edit().withPhase(phase).done();
+        try {
+            getOperations(customResource.getClass())
+                    .inNamespace(customResource.getMetadata().getNamespace())
+                    .withName(customResource.getMetadata().getName())
+                    .edit().withPhase(phase).done();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
+        }
 
     }
 

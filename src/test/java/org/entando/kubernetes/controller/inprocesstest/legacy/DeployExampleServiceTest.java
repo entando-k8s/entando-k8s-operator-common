@@ -1,10 +1,9 @@
-package org.entando.kubernetes.controller.inprocesstest;
+package org.entando.kubernetes.controller.inprocesstest.legacy;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -40,10 +39,12 @@ import java.util.Base64;
 import java.util.Map;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.SampleController;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
-import org.entando.kubernetes.controller.common.example.TestServerController;
 import org.entando.kubernetes.controller.creators.DeploymentCreator;
+import org.entando.kubernetes.controller.inprocesstest.FluentTraversals;
+import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoResourceClientDouble;
@@ -89,12 +90,14 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private TestServerController testServerController;
+    private SampleController sampleController;
 
     @BeforeEach
     public void prepareKeycloakCustomResource() {
-        this.testServerController = new TestServerController(client, keycloakClient);
+        this.sampleController = new SampleController<KeycloakServer>(client, keycloakClient) {
+        };
         client.entandoResources().putEntandoCustomResource(keycloakServer);
+        client.secrets().overwriteControllerSecret(buildKeycloakSecret());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
@@ -119,7 +122,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
                 Paths.get("src", "test", "resources", "tls", "ampie.dynu.net").normalize().toAbsolutePath().toString());
         TlsHelper.getInstance().init();
         // WHen I have deploya the KeycloakServer
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
 
         //Then a K8S Secret was created with a name that reflects the KeycloakServer and the fact that it is an admin secret
         NamedArgumentCaptor<Secret> adminSecretCaptor = forResourceNamed(Secret.class, MY_KEYCLOAK_DB_ADMIN_SECRET);
@@ -180,7 +183,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
                 .then(respondWithServiceStatus(javaServiceStatus));
 
         //When the the KeycloakServerController is notified that a new KeycloakServer has been added
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
         //Then a K8S Service was created with a name that reflects the EntandoApp and the fact that it is a JEE service
         NamedArgumentCaptor<Service> dbServiceCaptor = forResourceNamed(Service.class, MY_KEYCLOAK_DB_SERVICE);
         verify(client.services()).createService(eq(newKeycloakServer), dbServiceCaptor.capture());
@@ -224,7 +227,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
                 .thenAnswer(respondWithIngressStatusForPath(ingressStatus, AUTH));
 
         //When the the KeycloakServerController is notified that a new KeycloakServer has been added
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
         // Then a K8S Ingress Path was created with a name that reflects the name of the EntandoApp and
         // the fact that it is a the Keycloak path
         NamedArgumentCaptor<Ingress> ingressArgumentCaptor = forResourceNamed(Ingress.class, MY_KEYCLOAK_INGRESS);
@@ -248,7 +251,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         KeycloakServer newKeycloakServer = keycloakServer;
 
         //When the DeployCommand processes the addition request
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
         // A DB preparation Pod is created with labels linking it to the KeycloakServer
         LabeledArgumentCaptor<Pod> podCaptor = forResourceWithLabel(Pod.class, KEYCLOAK_SERVER_LABEL_NAME, MY_KEYCLOAK)
                 //And the fact that it is a DB JOB
@@ -303,7 +306,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
                 .then(respondWithDeploymentStatus(serverDeploymentStatus));
 
         //When the the KeycloakServerController is notified that a new KeycloakServer has been added
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
 
         //Then two K8S deployments are created with a name that reflects the KeycloakServer name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
@@ -369,8 +372,6 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         assertThat(theVariableNamed(DB_VENDOR).on(theServerContainer), is("mysql"));
         assertThat(theVolumeMountNamed(DeploymentCreator.DEFAULT_TRUST_STORE_SECRET_NAME + "-volume").on(theServerContainer).getMountPath(),
                 is("/etc/entando/keystores/entando-default-trust-store-secret"));
-        assertThat(theVariableNamed("X509_CA_BUNDLE").on(theServerContainer),
-                containsString("/etc/entando/keystores/entando-default-trust-store-secret/ca.crt"));
     }
 
     private void verifyTheDbContainer(Container theDbContainer) {
@@ -392,7 +393,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
                 .then(respondWithPersistentVolumeClaimStatus(dbPvcStatus));
 
         //When the KeycloakController is notified that a new KeycloakServer has been added
-        testServerController.onStartup(new StartupEvent());
+        sampleController.onStartup(new StartupEvent());
 
         //Then K8S was instructed to create a PersistentVolumeClaim for the DB and the JEE Server
         NamedArgumentCaptor<PersistentVolumeClaim> dbPvcCaptor = forResourceNamed(PersistentVolumeClaim.class,

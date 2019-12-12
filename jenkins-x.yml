@@ -1,5 +1,4 @@
 buildPack: maven-java11
-
 pipelineConfig:
   agent:
     image: maven-java11
@@ -48,6 +47,11 @@ pipelineConfig:
         secretKeyRef:
           name: entando-jx-common-secret
           key: gpg.homedir
+    - name: ENTANDO_DEFAULT_ROUTING_SUFFIX
+      valueFrom:
+        secretKeyRef:
+          name: entando-jx-common-secret
+          key: default.routing.suffix
   pipelines:
     pullRequest:
       build:
@@ -59,7 +63,7 @@ pipelineConfig:
             name: fetch-full-repo
           - sh: >-
               mvn clean verify sonar:sonar \
-                -Pverify \
+                -Pin-process-verification -Pinter-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
                 -Dsonar.pullrequest.base=master \
@@ -73,7 +77,7 @@ pipelineConfig:
                 -DdatabaseUser=${OWASPDB_USERNAME} \
                 -Dentando.default.routing.suffix=apps.serv.run \
                 -Dentando.test.namespace.override=${REPO_NAME} \
-                -Dentando.test.name.suffix=${PIPELINE_CODE}${PULL_NUMBER}
+                -Dentando.test.name.suffix=${PIPELINE_CODE}pr${PULL_NUMBER}
             name: mvn-verify
       postBuild:
         replace: true
@@ -82,9 +86,7 @@ pipelineConfig:
             name: post-build
       promote:
         replace: true
-        steps:
-          - sh: echo 'No promote action'
-            name: post-build
+        steps: []
     release:
       build:
         replace: true
@@ -93,8 +95,8 @@ pipelineConfig:
             name: fetch-full-repo
           - sh: >-
               mvn clean deploy sonar:sonar \
-                -Pverify \
                 -Pprepare-for-nexus \
+                -Pin-process-verification -Pinter-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -DautoUpdate=false \
                 -DconnectionString=${OWASPDB_URL} \
@@ -105,10 +107,8 @@ pipelineConfig:
                 -Dgpg.passphrase=${GPG_PASSPHRASE} \
                 -Dentando.default.routing.suffix=apps.serv.run \
                 -Dentando.test.namespace.override=${REPO_NAME} \
-                -Dentando.test.name.suffix=${PIPELINE_CODE}${BUILD_NUMBER}
+                -Dentando.test.name.suffix=${PIPELINE_CODE}ms${BUILD_NUMBER}
             name: mvn-deploy
       promote:
         replace: true
-        steps:
-          - sh: echo 'No promote action'
-            name: post-build
+        steps: []

@@ -17,12 +17,18 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultPodClient implements PodClient {
 
+    private static PodWatcherHolder podWatcherHolder = w -> {
+    };
     private final KubernetesClient client;
 
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;
         //HACK for GraalVM
         KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
+    }
+
+    public static void setPodWatcherHolder(PodWatcherHolder podWatcherHolder) {
+        DefaultPodClient.podWatcherHolder = podWatcherHolder;
     }
 
     @Override
@@ -64,6 +70,7 @@ public class DefaultPodClient implements PodClient {
 
             synchronized (mutex) {
                 PodWatcher watcher = new PodWatcher(podPredicate, mutex);
+                podWatcherHolder.current(watcher);
                 podResource.watch(watcher);
                 mutex.wait(timeoutSeconds * 1000);
                 Pod got = watcher.getLastPod();

@@ -6,6 +6,8 @@ import static java.util.Optional.empty;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -54,28 +56,36 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
 
     }
 
-    @SuppressWarnings("unchecked")
     private AbstractDbAwareController(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient keycloakClient, AutoExit autoExit) {
         this.k8sClient = k8sClient;
         this.keycloakClient = keycloakClient;
         this.autoExit = autoExit;
         Class<?> cls = getClass();
-        while (cls.getSuperclass() != AbstractDbAwareController.class) {
+        List<Class<T>> types = new ArrayList<>();
+        while (cls != AbstractDbAwareController.class) {
+            if (isImplementedCorrectly(cls)) {
+                types.add(getFirstTypeArgument(cls));
+            }
             cls = cls.getSuperclass();
         }
-        if (!isImplementedCorrectly(cls)) {
+        if (types.isEmpty()) {
             throw new IllegalStateException(
                     "Please implement " + AbstractDbAwareController.class.getSimpleName() + " directly with the required type argument.");
         }
-        ParameterizedType genericSuperclass = (ParameterizedType) cls.getGenericSuperclass();
-        this.resourceType = (Class) genericSuperclass.getActualTypeArguments()[0];
+        this.resourceType = types.get(types.size() - 1);
         this.logger = Logger.getLogger(resourceType.getName() + "Controller");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Class<T> getFirstTypeArgument(Class<?> cls) {
+        ParameterizedType genericSuperclass = (ParameterizedType) cls.getGenericSuperclass();
+        return (Class<T>) genericSuperclass.getActualTypeArguments()[0];
     }
 
     private boolean isImplementedCorrectly(Class<?> cls) {
         if (cls.getGenericSuperclass() instanceof ParameterizedType) {
             ParameterizedType genericSuperclass = (ParameterizedType) cls.getGenericSuperclass();
-            if (genericSuperclass.getActualTypeArguments().length == 1) {
+            if (genericSuperclass.getActualTypeArguments().length == 1 && genericSuperclass.getActualTypeArguments()[0] instanceof Class) {
                 Class argument = (Class) genericSuperclass.getActualTypeArguments()[0];
                 if (EntandoBaseCustomResource.class.isAssignableFrom(argument)) {
                     return true;

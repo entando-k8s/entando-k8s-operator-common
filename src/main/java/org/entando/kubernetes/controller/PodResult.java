@@ -13,9 +13,10 @@ public class PodResult {
 
     public static final ThreadLocal<SimpleDateFormat> DATE_FORMAT = ThreadLocal
             .withInitial(() -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()));
+    public static final String RUNNING_PHASE = "Running";
+    public static final String SUCCEEDED_PHASE = "Succeeded";
     private static final String FAILED_PHASE = "Failed";
     private static final String PENDING_PHASE = "Pending";
-    private static final String RUNNING_PHASE = "Running";
     private boolean someContainersNotDidNotRun;
 
     private State state;
@@ -47,7 +48,7 @@ public class PodResult {
             } else {
                 setState(State.RUNNING);
             }
-        } else if (pod.getStatus().getPhase().equals("Succeeded")) {
+        } else if (pod.getStatus().getPhase().equals(SUCCEEDED_PHASE)) {
             setState(State.COMPLETED);
         }
         this.someContainersNotDidNotRun = didSomeContainersNotRun(pod);
