@@ -898,7 +898,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.externaldatabase.EntandoExternalDB",
+    "name": "org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -907,7 +907,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.externaldatabase.EntandoExternalDBList",
+    "name": "org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceList",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -916,7 +916,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.externaldatabase.DoneableEntandoExternalDB",
+    "name": "org.entando.kubernetes.model.externaldatabase.DoneableEntandoDatabaseService",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -925,7 +925,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.externaldatabase.EntandoExternalDBSpec",
+    "name": "org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,

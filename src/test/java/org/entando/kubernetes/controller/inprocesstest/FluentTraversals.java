@@ -28,9 +28,6 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.creators.KeycloakClientCreator;
 import org.entando.kubernetes.model.DbmsImageVendor;
 
-//Experimental
-@SuppressWarnings("PMD.ShortMethodName")
-//Because it is more fluent
 public interface FluentTraversals {
 
     String DATABASE_ADMIN_USER = "DATABASE_ADMIN_USER";
@@ -74,6 +71,10 @@ public interface FluentTraversals {
 
     default Container thePrimaryContainerOn(Deployment deployment) {
         return deployment.getSpec().getTemplate().getSpec().getContainers().get(0);
+    }
+
+    default Container thePrimaryContainerOn(Pod pod) {
+        return pod.getSpec().getContainers().get(0);
     }
 
     default VolumeMountFinder theVolumeMountNamed(String name) {

@@ -45,9 +45,9 @@ public final class KubeUtils {
     }
 
     public static String getKindOf(Class<? extends EntandoBaseCustomResource> c) {
-        //TODO this is problematic even for Fabric8. We need to change EntandoKeycloakServer to EntandoEntandoKeycloakServer
+        //TODO this is problematic even for Fabric8. We need to change EntandoKeycloakServer to EntandoKeycloakServer
         if (c == EntandoKeycloakServer.class) {
-            return "EntandoEntandoKeycloakServer";
+            return "EntandoKeycloakServer";
         }
         return c.getSimpleName();
     }

@@ -78,6 +78,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
+        client.secrets().overwriteControllerSecret(buildKeycloakSecret());
     }
 
     @Test

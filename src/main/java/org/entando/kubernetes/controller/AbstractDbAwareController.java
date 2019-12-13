@@ -21,7 +21,7 @@ import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.externaldatabase.EntandoExternalDBSpec;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 
 public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResource> {
 
@@ -142,7 +142,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
                 throw new EntandoControllerException("Database deployment failed");
             }
         } else {
-            EntandoExternalDBSpec spec = externalDatabase.getEntandoExternalDB().getSpec();
+            EntandoDatabaseServiceSpec spec = externalDatabase.getEntandoDatabaseService().getSpec();
             result = new DatabaseServiceResult(externalDatabase.getService(), spec.getDbms(), spec.getDatabaseName(),
                     spec.getSecretName(), empty());
         }

@@ -1,5 +1,7 @@
 package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 
+import static java.lang.String.format;
+
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -21,13 +23,16 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
 
     @Override
     public Pod runToCompletion(EntandoCustomResource resource, Pod pod) {
-        pod.setStatus(new PodStatusBuilder().withPhase("Complete").build());
-        pod.getSpec().getInitContainers().forEach(container -> pod.getStatus().getInitContainerStatuses().add(new ContainerStatusBuilder()
-                .withNewState().withNewTerminated().withReason("Complete").withExitCode(0).endTerminated().endState()
-                .build()));
-        pod.getSpec().getContainers().forEach(container -> pod.getStatus().getContainerStatuses().add(new ContainerStatusBuilder()
-                .withNewState().withNewTerminated().withReason("Complete").withExitCode(0).endTerminated().endState()
-                .build()));
+        if (pod != null) {
+            pod.setStatus(new PodStatusBuilder().withPhase("Complete").build());
+            pod.getSpec().getInitContainers()
+                    .forEach(container -> pod.getStatus().getInitContainerStatuses().add(new ContainerStatusBuilder()
+                            .withNewState().withNewTerminated().withReason("Complete").withExitCode(0).endTerminated().endState()
+                            .build()));
+            pod.getSpec().getContainers().forEach(container -> pod.getStatus().getContainerStatuses().add(new ContainerStatusBuilder()
+                    .withNewState().withNewTerminated().withReason("Complete").withExitCode(0).endTerminated().endState()
+                    .build()));
+        }
         return pod;
     }
 
@@ -39,25 +44,28 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
 
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
-        Pod result = getNamespace(namespace).getPods().values().stream()
-                .filter(pod -> labelValue.equals(pod.getMetadata().getLabels().get(labelName))).findFirst()
-                .orElseThrow(() ->
-                        new IllegalStateException());
-        result.setStatus(new PodStatusBuilder().withPhase("Running").build());
-        if (result.getSpec() == null) {
-            result.setSpec(new PodSpec());
-            result.getSpec().getContainers().add(new Container());
+        if (!getNamespace(namespace).getPods().isEmpty()) {
+            Pod result = getNamespace(namespace).getPods().values().stream()
+                    .filter(pod -> labelValue.equals(pod.getMetadata().getLabels().get(labelName))).findFirst()
+                    .orElseThrow(() ->
+                            new IllegalStateException(format("Could not find pod with label %s=%s", labelName, labelValue)));
+            result.setStatus(new PodStatusBuilder().withPhase("Running").build());
+            if (result.getSpec() == null) {
+                result.setSpec(new PodSpec());
+                result.getSpec().getContainers().add(new Container());
+            }
+            result.getSpec().getInitContainers()
+                    .forEach(container -> result.getStatus().getInitContainerStatuses().add(new ContainerStatusBuilder()
+                            .withNewState().withNewRunning().endRunning().endState()
+                            .build()));
+            result.getSpec().getContainers().forEach(container -> result.getStatus().getContainerStatuses().add(new ContainerStatusBuilder()
+                    .withNewState().withNewRunning().endRunning().endState()
+                    .build()));
+            result.getStatus().getConditions()
+                    .add(new PodConditionBuilder().withType("Ready").withLastTransitionTime(PodResult.DATE_FORMAT.get().format(new Date()))
+                            .build());
+            return result;
         }
-        result.getSpec().getInitContainers()
-                .forEach(container -> result.getStatus().getInitContainerStatuses().add(new ContainerStatusBuilder()
-                        .withNewState().withNewRunning().endRunning().endState()
-                        .build()));
-        result.getSpec().getContainers().forEach(container -> result.getStatus().getContainerStatuses().add(new ContainerStatusBuilder()
-                .withNewState().withNewRunning().endRunning().endState()
-                .build()));
-        result.getStatus().getConditions()
-                .add(new PodConditionBuilder().withType("Ready").withLastTransitionTime(PodResult.DATE_FORMAT.get().format(new Date()))
-                        .build());
-        return result;
+        return null;
     }
 }

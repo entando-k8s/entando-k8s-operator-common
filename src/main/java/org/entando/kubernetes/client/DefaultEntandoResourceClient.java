@@ -30,8 +30,8 @@ import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
-import org.entando.kubernetes.model.externaldatabase.EntandoExternalDB;
-import org.entando.kubernetes.model.externaldatabase.EntandoExternalDBOperationFactory;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceOperationFactory;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureOperationFactory;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -52,7 +52,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
         operationSuppliers.put(EntandoApp.class, EntandoAppOperationFactory::produceAllEntandoApps);
         operationSuppliers.put(EntandoPlugin.class, EntandoPluginOperationFactory::produceAllEntandoPlugins);
         operationSuppliers.put(EntandoAppPluginLink.class, EntandoAppPluginLinkOperationFactory::produceAllEntandoAppPluginLinks);
-        operationSuppliers.put(EntandoExternalDB.class, EntandoExternalDBOperationFactory::produceAllEntandoExternalDBs);
+        operationSuppliers.put(EntandoDatabaseService.class, EntandoDatabaseServiceOperationFactory::produceAllEntandoDatabaseServices);
     }
 
     private final KubernetesClient client;
@@ -96,12 +96,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     @Override
     public ExternalDatabaseDeployment findExternalDatabase(EntandoCustomResource resource) {
-        List<EntandoExternalDB> externalDatabaseList = getOperations(EntandoExternalDB.class)
+        List<EntandoDatabaseService> externalDatabaseList = getOperations(EntandoDatabaseService.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
         if (externalDatabaseList.isEmpty()) {
             return null;
         } else {
-            EntandoExternalDB externalDatabase = externalDatabaseList.get(0);
+            EntandoDatabaseService externalDatabase = externalDatabaseList.get(0);
             return new ExternalDatabaseDeployment(
                     loadService(resource, externalDatabase.getMetadata().getName() + "-service"), null,
                     externalDatabase);
@@ -132,6 +132,14 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
     public <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName) {
         return ofNullable(getOperations(clzz).inNamespace(resourceNamespace)
                 .withName(resourceName).get()).orElseThrow(() -> notFound(clzz.getSimpleName(), resourceNamespace, resourceName).get());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends EntandoCustomResource> T putEntandoCustomResource(T r) {
+        Class<T> type = (Class<T>) r.getClass();
+        return this.getOperations(type).inNamespace(r.getMetadata().getNamespace()).create(r);
+
     }
 
     @SuppressWarnings("unchecked")

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
-import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.TlsHelper;

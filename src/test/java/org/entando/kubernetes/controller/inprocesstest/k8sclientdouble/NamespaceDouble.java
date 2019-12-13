@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.model.externaldatabase.EntandoExternalDB;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.link.EntandoAppPluginLink;
@@ -43,7 +43,7 @@ public class NamespaceDouble {
         customResources.put(EntandoApp.class, new ConcurrentHashMap<>());
         customResources.put(EntandoPlugin.class, new ConcurrentHashMap<>());
         customResources.put(EntandoKeycloakServer.class, new ConcurrentHashMap<>());
-        customResources.put(EntandoExternalDB.class, new ConcurrentHashMap<>());
+        customResources.put(EntandoDatabaseService.class, new ConcurrentHashMap<>());
         customResources.put(EntandoAppPluginLink.class, new ConcurrentHashMap<>());
         customResources.put(EntandoClusterInfrastructure.class, new ConcurrentHashMap<>());
     }

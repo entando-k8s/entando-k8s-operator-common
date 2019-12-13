@@ -18,7 +18,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.model.externaldatabase.EntandoExternalDB;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
@@ -36,11 +36,12 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> void putEntandoCustomResource(T r) {
+    public <T extends EntandoCustomResource> T putEntandoCustomResource(T r) {
         this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
+        return r;
     }
 
-    public void putEntandoExternalDB(EntandoExternalDB externalDatabase) {
+    public void putEntandoDatabaseService(EntandoDatabaseService externalDatabase) {
         putEntandoCustomResource(externalDatabase);
     }
 
@@ -62,14 +63,15 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @Override
     public void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason) {
-        entandoCustomResource.getStatus().findCurrentServerStatus().get()
+        entandoCustomResource.getStatus().findCurrentServerStatus()
+                .orElseThrow(() -> new IllegalStateException("No server status recorded yet!"))
                 .finishWith(new EntandoControllerFailureBuilder().withException(reason).build());
     }
 
     @Override
     public ExternalDatabaseDeployment findExternalDatabase(EntandoCustomResource resource) {
         NamespaceDouble namespace = getNamespace(resource);
-        Optional<EntandoExternalDB> first = namespace.getCustomResources(EntandoExternalDB.class).values().stream().findFirst();
+        Optional<EntandoDatabaseService> first = namespace.getCustomResources(EntandoDatabaseService.class).values().stream().findFirst();
         return first.map(edb -> new ExternalDatabaseDeployment(
                 namespace.getService(edb.getMetadata().getName() + "-" + KubeUtils.DEFAULT_SERVICE_SUFFIX),
                 namespace.getEndpoints(edb.getMetadata().getName() + "-endpoints"), edb)).orElse(null);

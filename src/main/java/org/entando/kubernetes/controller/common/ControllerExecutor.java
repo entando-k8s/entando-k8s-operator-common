@@ -21,6 +21,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
@@ -29,7 +30,7 @@ public class ControllerExecutor {
     public static final String ETC_ENTANDO_TLS = "/etc/entando/tls";
     public static final String ETC_ENTANDO_CA = "/etc/entando/ca";
     private static final Map<String, String> resourceKindToImageNames = buildImageMap();
-    private final DefaultSimpleK8SClient client;
+    private final SimpleK8SClient<?> client;
     private String controllerNamespace;
 
     public ControllerExecutor(String controllerNamespace, KubernetesClient client) {
@@ -37,9 +38,14 @@ public class ControllerExecutor {
         this.client = new DefaultSimpleK8SClient(client);
     }
 
+    public ControllerExecutor(String controllerNamespace, SimpleK8SClient<?> client) {
+        this.controllerNamespace = controllerNamespace;
+        this.client = client;
+    }
+
     private static Map<String, String> buildImageMap() {
         Map<String, String> map = new ConcurrentHashMap<>();
-        map.put("EntandoEntandoKeycloakServer", "entando-k8s-keycloak-controller");
+        map.put("EntandoKeycloakServer", "entando-k8s-keycloak-controller");
         map.put("EntandoClusterInfrastructure", "entando-k8s-cluster-infrastructure-controller");
         map.put("EntandoPlugin", "entando-k8s-plugin-controller");
         map.put("EntandoApp", "entando-k8s-app-controller");

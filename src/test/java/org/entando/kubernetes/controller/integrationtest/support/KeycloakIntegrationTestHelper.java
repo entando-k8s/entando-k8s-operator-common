@@ -34,7 +34,8 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 public class KeycloakIntegrationTestHelper extends
-        IntegrationTestHelperBase<EntandoKeycloakServer, EntandoKeycloakServerList, DoneableEntandoKeycloakServer> implements FluentIntegrationTesting {
+        IntegrationTestHelperBase<EntandoKeycloakServer, EntandoKeycloakServerList, DoneableEntandoKeycloakServer> implements
+        FluentIntegrationTesting {
 
     public static final String KEYCLOAK_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("keycloak-namespace");
     public static final String KEYCLOAK_NAME = EntandoOperatorE2ETestConfig.calculateName("test-keycloak");

@@ -28,8 +28,8 @@ import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoRe
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DbmsImageVendor;
-import org.entando.kubernetes.model.externaldatabase.EntandoExternalDB;
-import org.entando.kubernetes.model.externaldatabase.EntandoExternalDBSpec;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -47,7 +47,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     public static final String MY_KEYCLOAK_SERVER_DEPLOYMENT = MY_KEYCLOAK + "-server-deployment";
     private static final String MY_KEYCLOAK_DB_SECRET = MY_KEYCLOAK + "-db-secret";
     private final EntandoKeycloakServer keycloakServer = newEntandoKeycloakServer();
-    private final EntandoExternalDB externalDatabase = buildEntandoExternalDB();
+    private final EntandoDatabaseService externalDatabase = buildEntandoDatabaseService();
     @Spy
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
@@ -55,22 +55,21 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     private SampleController sampleController;
 
     @BeforeEach
-    public void setEntandoExternalDBNamespace() {
+    public void prepareExternalDB() {
         this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
         };
         client.secrets().overwriteControllerSecret(buildKeycloakSecret());
-
         externalDatabase.getMetadata().setNamespace(keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
-        client.entandoResources().putEntandoExternalDB(externalDatabase);
+        client.entandoResources().putEntandoDatabaseService(externalDatabase);
         client.entandoResources().putEntandoCustomResource(keycloakServer);
     }
 
     @Test
     public void testSecrets() {
-        //Given I have created an EntandoExternalDB custom resource
+        //Given I have created an EntandoDatabaseService custom resource
         new CreateExternalServiceCommand(externalDatabase).execute(client);
         //When I deploy a EntandoKeycloakServer
         sampleController.onStartup(new StartupEvent());
@@ -84,7 +83,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
 
     @Test
     public void testDeployment() {
-        //Given I have created an EntandoExternalDB custom resource
+        //Given I have created an EntandoDatabaseService custom resource
         new CreateExternalServiceCommand(externalDatabase).execute(client);
         //And Keycloak is receiving requests
         lenient().when(keycloakClient.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn(KEYCLOAK_SECRET);
@@ -95,7 +94,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         NamedArgumentCaptor<Deployment> keyclaokDeploymentCaptor = forResourceNamed(Deployment.class,
                 MY_KEYCLOAK_SERVER_DEPLOYMENT);
         verify(client.deployments()).createDeployment(eq(keycloakServer), keyclaokDeploymentCaptor.capture());
-        //Then a pod was created for Keycloak using the credentials and connection settings of the EntandoExternalDB
+        //Then a pod was created for Keycloak using the credentials and connection settings of the EntandoDatabaseService
         LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabel(Pod.class, KEYCLOAK_SERVER_LABEL_NAME, MY_KEYCLOAK)
                 .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_KEYCLOAK + "-db-preparation-job");
         verify(client.pods()).runToCompletion(eq(keycloakServer), keycloakSchemaJobCaptor.capture());
@@ -108,9 +107,9 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         assertThat(theVariableNamed(DATABASE_NAME).on(theInitContainer), is("my_db"));
     }
 
-    private EntandoExternalDB buildEntandoExternalDB() {
-        EntandoExternalDB edb = new EntandoExternalDB(
-                new EntandoExternalDBSpec(DbmsImageVendor.ORACLE, "myoracle.com", 1521, "my_db", "my-secret"));
+    private EntandoDatabaseService buildEntandoDatabaseService() {
+        EntandoDatabaseService edb = new EntandoDatabaseService(
+                new EntandoDatabaseServiceSpec(DbmsImageVendor.ORACLE, "myoracle.com", 1521, "my_db", "my-secret"));
         edb.getMetadata().setName("mydb");
         edb.getMetadata().setNamespace("mynamespace");
         return edb;

@@ -1,5 +1,5 @@
 ---
-kind: "EntandoExternalDB"
+kind: "EntandoDatabaseService"
 apiVersion: "entando.org/v1alpha1"
 metadata:
   name: "my-external-db"

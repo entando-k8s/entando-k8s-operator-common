@@ -1,5 +1,10 @@
 package org.entando.kubernetes.controller.inprocesstest;
 
+import static org.entando.kubernetes.controller.PodResult.RUNNING_PHASE;
+import static org.entando.kubernetes.controller.PodResult.SUCCEEDED_PHASE;
+
+import io.fabric8.kubernetes.api.model.PodStatus;
+import io.fabric8.kubernetes.api.model.PodStatusBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import org.entando.kubernetes.controller.DeployCommand;
@@ -24,7 +29,7 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
     String ENTANDO_PLUGIN_LABEL_NAME = "EntandoPlugin";
     String ENTANDO_APP_LABEL_NAME = "EntandoApp";
     String ENTANDO_CLUSTER_INFRASTRUCTURE_LABEL_NAME = "EntandoClusterInfrastructure";
-    String KEYCLOAK_SERVER_LABEL_NAME = "EntandoEntandoKeycloakServer";
+    String KEYCLOAK_SERVER_LABEL_NAME = "EntandoKeycloakServer";
     String ENTANDO_APP_PLUGIN_LINK_LABEL_NAME = "EntandoAppPluginLink";
     String ENTANDO_KEYCLOAK_REALM = KubeUtils.ENTANDO_KEYCLOAK_REALM;
     String KEYCLOAK_SECRET = "ASDFASDFAS";
@@ -150,6 +155,26 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .addToStringData(KubeUtils.PASSSWORD_KEY, MY_KEYCLOAK_ADMIN_PASSWORD)
                 .addToStringData(KubeUtils.USERNAME_KEY, MY_KEYCLOAK_ADMIN_USERNAME)
                 .build();
+    }
+
+    default PodStatus succeededPodStatus() {
+        return new PodStatusBuilder().withPhase(SUCCEEDED_PHASE)
+                .addNewContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
+                .endState().endContainerStatus()
+                .addNewInitContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
+                .endState().endInitContainerStatus()
+                .addNewCondition().withType("ContainersReady").withStatus("True").endCondition()
+                .addNewCondition().withType("Ready").withStatus("True").endCondition().build();
+    }
+
+    default PodStatus readyPodStatus() {
+        return new PodStatusBuilder().withPhase(RUNNING_PHASE)
+                .addNewContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
+                .endState().endContainerStatus()
+                .addNewInitContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
+                .endState().endInitContainerStatus()
+                .addNewCondition().withType("ContainersReady").withStatus("True").endCondition()
+                .addNewCondition().withType("Ready").withStatus("True").endCondition().build();
     }
 
 }

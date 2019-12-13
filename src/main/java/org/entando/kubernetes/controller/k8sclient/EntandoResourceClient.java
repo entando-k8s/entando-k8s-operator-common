@@ -17,6 +17,8 @@ public interface EntandoResourceClient {
 
     <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
+    <T extends EntandoCustomResource> T putEntandoCustomResource(T r);
+
     void updatePhase(EntandoCustomResource entandoCustomResource, EntandoDeploymentPhase phase);
 
     void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason);
