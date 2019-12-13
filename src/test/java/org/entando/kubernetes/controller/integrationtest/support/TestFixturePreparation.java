@@ -87,6 +87,9 @@ public final class TestFixturePreparation {
                             .waitingAtMost(60, TimeUnit.SECONDS);
                     new CustomResourceDeletionWaiter(client, KubeUtils.getKindOf(type)).fromNamespace(entry.getKey())
                             .waitingAtMost(120, TimeUnit.SECONDS);
+                    delete(client.persistentVolumeClaims()).fromNamespace(entry.getKey())
+                            .withLabel(KubeUtils.getKindOf(type))
+                            .waitingAtMost(60, TimeUnit.SECONDS);
                 }
             } else {
                 createNamespace(client, entry.getKey());

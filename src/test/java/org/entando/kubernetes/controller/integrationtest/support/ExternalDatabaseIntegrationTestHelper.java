@@ -35,10 +35,11 @@ public class ExternalDatabaseIntegrationTestHelper extends
     }
 
     @SuppressWarnings("unchecked")
-    public void prepareExternalPostgresqlDatabase(String namespace) {
+    public void prepareExternalPostgresqlDatabase(String namespace, String resourceKind) {
         delete(client.pods()).named("pg-test").fromNamespace(namespace).waitingAtMost(60, SECONDS);
         deleteCommonPreviousState(namespace);
-        client.pods().inNamespace(namespace).createNew().withNewMetadata().withName("pg-test").endMetadata()
+        client.pods().inNamespace(namespace).createNew().withNewMetadata().withName("pg-test").addToLabels(resourceKind, null)
+                .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resourceKind).endMetadata()
                 .withNewSpec().addNewContainer()
                 .withName("pg-container")
                 .withImage("centos/postgresql-96-centos7:latest")
