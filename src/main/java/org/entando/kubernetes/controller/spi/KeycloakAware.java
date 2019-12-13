@@ -7,6 +7,6 @@ public interface KeycloakAware extends DeployableContainer, HasWebContext {
 
     KeycloakConnectionConfig getKeycloakDeploymentResult();
 
-    KeycloakClientConfig getKeycloakConnectionConfig();
+    KeycloakClientConfig getKeycloakClientConfig();
 
 }

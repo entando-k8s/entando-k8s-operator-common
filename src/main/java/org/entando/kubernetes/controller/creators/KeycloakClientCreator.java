@@ -66,8 +66,8 @@ public class KeycloakClientCreator {
     }
 
     private void createClient(SecretClient secrets, SimpleKeycloakClient client, KeycloakAware container, Optional<Ingress> ingress) {
-        KeycloakClientConfig keycloakConfig = container.getKeycloakConnectionConfig();
-        KeycloakClientConfig keycloakClientConfig = container.getKeycloakConnectionConfig();
+        KeycloakClientConfig keycloakConfig = container.getKeycloakClientConfig();
+        KeycloakClientConfig keycloakClientConfig = container.getKeycloakClientConfig();
         if (ingress.isPresent()) {
             keycloakClientConfig = keycloakClientConfig
                     .withRedirectUri(getIngressServerUrl(ingress.get()) + container.getWebContextPath() + "/*");

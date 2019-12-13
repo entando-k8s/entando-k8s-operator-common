@@ -236,7 +236,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Flu
         }
 
         @Override
-        public KeycloakClientConfig getKeycloakConnectionConfig() {
+        public KeycloakClientConfig getKeycloakClientConfig() {
             return new KeycloakClientConfig(KubeUtils.ENTANDO_KEYCLOAK_REALM, "some-client", "Some Client");
         }
     }
