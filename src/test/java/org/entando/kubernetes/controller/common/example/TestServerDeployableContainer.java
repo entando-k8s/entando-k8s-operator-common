@@ -16,20 +16,20 @@ import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.DbmsImageVendor;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class TestServerDeployableContainer implements IngressingContainer, DbAware, TlsAware {
 
     private static final String DEFAULT_KEYCLOAK_IMAGE_NAME = "entando/entando-keycloak:6.0.0-SNAPSHOT";
 
-    private final KeycloakServer keycloakServer;
+    private final EntandoKeycloakServer keycloakServer;
     private Map<String, DatabaseSchemaCreationResult> dbSchemas;
 
-    public TestServerDeployableContainer(KeycloakServer keycloakServer) {
+    public TestServerDeployableContainer(EntandoKeycloakServer keycloakServer) {
         this.keycloakServer = keycloakServer;
     }
 
-    public static String secretName(KeycloakServer keycloakServer) {
+    public static String secretName(EntandoKeycloakServer keycloakServer) {
         return keycloakServer.getMetadata().getName() + "-admin-secret";
     }
 

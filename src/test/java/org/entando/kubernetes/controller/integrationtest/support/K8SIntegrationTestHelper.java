@@ -169,9 +169,9 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
                 .withImagePullPolicy("Always")
                 .withNewReadinessProbe().withNewExec()
                 .addToCommand("/bin/sh").addToCommand("-c")
-                .addToCommand("cat /tmp/EntandoPluginController.ready /tmp/EntandoAppController.ready /tmp/KeycloakServerController.ready "
+                .addToCommand("cat /tmp/EntandoPluginController.ready /tmp/EntandoAppController.ready /tmp/EntandoKeycloakServerController.ready "
                         + "/tmp/EntandoClusterInfrastructureController.ready /tmp/EntandoAppPluginLinkController.ready "
-                        + "/tmp/ExternalDatabaseController.ready"
+                        + "/tmp/EntandoExternalDBController.ready"
                 )
                 .endExec().endReadinessProbe()
                 .withEnv(

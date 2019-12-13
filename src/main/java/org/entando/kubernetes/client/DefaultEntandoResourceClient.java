@@ -30,12 +30,12 @@ import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
-import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
-import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseOperationFactory;
+import org.entando.kubernetes.model.externaldatabase.EntandoExternalDB;
+import org.entando.kubernetes.model.externaldatabase.EntandoExternalDBOperationFactory;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureOperationFactory;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerOperationFactory;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
 import org.entando.kubernetes.model.link.EntandoAppPluginLink;
 import org.entando.kubernetes.model.link.EntandoAppPluginLinkOperationFactory;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
@@ -46,13 +46,13 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
     private static final Map<Class<? extends EntandoCustomResource>, OperationsSupplier> operationSuppliers = new ConcurrentHashMap<>();
 
     static {
-        operationSuppliers.put(KeycloakServer.class, KeycloakServerOperationFactory::produceAllKeycloakServers);
+        operationSuppliers.put(EntandoKeycloakServer.class, EntandoKeycloakServerOperationFactory::produceAllEntandoKeycloakServers);
         operationSuppliers.put(EntandoClusterInfrastructure.class,
                 EntandoClusterInfrastructureOperationFactory::produceAllEntandoClusterInfrastructures);
         operationSuppliers.put(EntandoApp.class, EntandoAppOperationFactory::produceAllEntandoApps);
         operationSuppliers.put(EntandoPlugin.class, EntandoPluginOperationFactory::produceAllEntandoPlugins);
         operationSuppliers.put(EntandoAppPluginLink.class, EntandoAppPluginLinkOperationFactory::produceAllEntandoAppPluginLinks);
-        operationSuppliers.put(ExternalDatabase.class, ExternalDatabaseOperationFactory::produceAllExternalDatabases);
+        operationSuppliers.put(EntandoExternalDB.class, EntandoExternalDBOperationFactory::produceAllEntandoExternalDBs);
     }
 
     private final KubernetesClient client;
@@ -96,12 +96,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     @Override
     public ExternalDatabaseDeployment findExternalDatabase(EntandoCustomResource resource) {
-        List<ExternalDatabase> externalDatabaseList = getOperations(ExternalDatabase.class)
+        List<EntandoExternalDB> externalDatabaseList = getOperations(EntandoExternalDB.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
         if (externalDatabaseList.isEmpty()) {
             return null;
         } else {
-            ExternalDatabase externalDatabase = externalDatabaseList.get(0);
+            EntandoExternalDB externalDatabase = externalDatabaseList.get(0);
             return new ExternalDatabaseDeployment(
                     loadService(resource, externalDatabase.getMetadata().getName() + "-service"), null,
                     externalDatabase);

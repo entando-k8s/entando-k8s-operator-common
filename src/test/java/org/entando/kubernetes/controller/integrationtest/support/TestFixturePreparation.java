@@ -30,7 +30,6 @@ public final class TestFixturePreparation {
     }
 
     public static AutoAdaptableKubernetesClient newClient() {
-        DefaultSimpleK8SClient.registerCustomKinds();
         AutoAdaptableKubernetesClient result = buildKubernetesClient();
         initializeTls(result);
         return result;

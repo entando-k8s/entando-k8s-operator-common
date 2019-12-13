@@ -39,7 +39,7 @@ public class ControllerExecutor {
 
     private static Map<String, String> buildImageMap() {
         Map<String, String> map = new ConcurrentHashMap<>();
-        map.put("EntandoKeycloakServer", "entando-k8s-keycloak-controller");
+        map.put("EntandoEntandoKeycloakServer", "entando-k8s-keycloak-controller");
         map.put("EntandoClusterInfrastructure", "entando-k8s-cluster-infrastructure-controller");
         map.put("EntandoPlugin", "entando-k8s-plugin-controller");
         map.put("EntandoApp", "entando-k8s-app-controller");

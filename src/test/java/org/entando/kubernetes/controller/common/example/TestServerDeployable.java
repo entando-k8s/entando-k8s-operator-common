@@ -17,16 +17,16 @@ import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class TestServerDeployable implements IngressingDeployable<ServiceDeploymentResult>, DbAwareDeployable, Secretive {
 
-    private final KeycloakServer keycloakServer;
+    private final EntandoKeycloakServer keycloakServer;
     private final List<DeployableContainer> containers;
     private final DatabaseServiceResult databaseServiceResult;
     private final Secret keycloakAdminSecret;
 
-    public TestServerDeployable(KeycloakServer keycloakServer, DatabaseServiceResult databaseServiceResult) {
+    public TestServerDeployable(EntandoKeycloakServer keycloakServer, DatabaseServiceResult databaseServiceResult) {
         this.keycloakServer = keycloakServer;
         this.databaseServiceResult = databaseServiceResult;
         containers = Arrays.asList(new TestServerDeployableContainer(keycloakServer));

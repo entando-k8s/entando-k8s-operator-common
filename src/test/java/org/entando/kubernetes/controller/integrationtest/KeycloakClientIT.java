@@ -33,10 +33,10 @@ import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.keycloakserver.DoneableKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerList;
+import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -67,7 +67,7 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
                             .build());
         }
     };
-    private KeycloakServer keycloakServer = new KeycloakServerBuilder().editMetadata()
+    private EntandoKeycloakServer keycloakServer = new EntandoKeycloakServerBuilder().editMetadata()
             .withName("test-kc")
             .withNamespace(KC_TEST_NAMESPACE)
             .endMetadata()
@@ -144,12 +144,12 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
     private DefaultKeycloakClient prepareKeycloak() {
         if (keycloakClient == null) {
             System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT, "true");
-            TestFixturePreparation.prepareTestFixture(this.client, deleteAll(KeycloakServer.class).fromNamespace(KC_TEST_NAMESPACE));
-            NonNamespaceOperation<KeycloakServer,
-                    KeycloakServerList,
-                    DoneableKeycloakServer,
-                    Resource<KeycloakServer,
-                            DoneableKeycloakServer>> operation = helper
+            TestFixturePreparation.prepareTestFixture(this.client, deleteAll(EntandoKeycloakServer.class).fromNamespace(KC_TEST_NAMESPACE));
+            NonNamespaceOperation<EntandoKeycloakServer,
+                    EntandoKeycloakServerList,
+                    DoneableEntandoKeycloakServer,
+                    Resource<EntandoKeycloakServer,
+                            DoneableEntandoKeycloakServer>> operation = helper
                     .getOperations().inNamespace(KC_TEST_NAMESPACE);
             keycloakServer = operation.createOrReplace(keycloakServer);
             ServiceDeploymentResult result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer))
@@ -165,9 +165,9 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
     private static class TestKeycloakDeployable implements IngressingDeployable<ServiceDeploymentResult> {
 
         private final List<DeployableContainer> containers = Arrays.asList(new TestKeycloakContainer());
-        private final KeycloakServer keycloakServer;
+        private final EntandoKeycloakServer keycloakServer;
 
-        private TestKeycloakDeployable(KeycloakServer keycloakServer) {
+        private TestKeycloakDeployable(EntandoKeycloakServer keycloakServer) {
             this.keycloakServer = keycloakServer;
         }
 

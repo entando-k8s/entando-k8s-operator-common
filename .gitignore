@@ -1,4 +1,6 @@
-.idea/
+.idea/libraries
+.idea/sonarlint
+.idea/*.xml
 target/
 *.iml
 .classpath
@@ -6,3 +8,4 @@ target/
 .settings/
 classes/
 /src/test/resources/crd/examples/
+

@@ -100,6 +100,7 @@ public class IntegrationTestHelperBase<
         containerStartingListener.listen(namespace, executor, versionToUse);
     }
 
+    @SuppressWarnings("unchecked")
     public void listenAndRespondWithLatestImage(String namespace) {
         String versionToUse = ControllerExecutor
                 .resolveLatestImageFor(client, (Class<? extends EntandoBaseCustomResource>) operations.getType())

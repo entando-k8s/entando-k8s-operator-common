@@ -25,11 +25,11 @@ import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.keycloakserver.DoneableKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerList;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerOperationFactory;
+import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -56,17 +56,17 @@ public class DummyBean {
     private final KubernetesClient kubernetesClient;
     private final DefaultSimpleK8SClient simpleK8SClient;
     private final String domainSuffix;
-    private final CustomResourceOperationsImpl<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> operations;
+    private final CustomResourceOperationsImpl<EntandoKeycloakServer, EntandoKeycloakServerList, DoneableEntandoKeycloakServer> operations;
     private DefaultKeycloakClient keycloakClient;
-    private KeycloakServer keycloakServer;
+    private EntandoKeycloakServer keycloakServer;
 
     @Inject
     public DummyBean(KubernetesClient kubernetesClient) {
         this.kubernetesClient = kubernetesClient;
         this.simpleK8SClient = new DefaultSimpleK8SClient(kubernetesClient);
         this.domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(kubernetesClient));
-        this.operations = KeycloakServerOperationFactory.produceAllKeycloakServers(kubernetesClient);
-        this.keycloakServer = new KeycloakServerBuilder().editMetadata()
+        this.operations = EntandoKeycloakServerOperationFactory.produceAllEntandoKeycloakServers(kubernetesClient);
+        this.keycloakServer = new EntandoKeycloakServerBuilder().editMetadata()
                 .withName("test-kc")
                 .withNamespace(KC_TEST_NAMESPACE)
                 .endMetadata()
@@ -255,9 +255,9 @@ public class DummyBean {
     private static class TestKeycloakDeployable implements IngressingDeployable<ServiceDeploymentResult> {
 
         private final List<DeployableContainer> containers = Arrays.asList(new TestKeycloakContainer());
-        private final KeycloakServer keycloakServer;
+        private final EntandoKeycloakServer keycloakServer;
 
-        private TestKeycloakDeployable(KeycloakServer keycloakServer) {
+        private TestKeycloakDeployable(EntandoKeycloakServer keycloakServer) {
             this.keycloakServer = keycloakServer;
         }
 

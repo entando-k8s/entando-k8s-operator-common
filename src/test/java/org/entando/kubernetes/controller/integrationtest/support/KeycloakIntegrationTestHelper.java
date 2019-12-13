@@ -19,11 +19,11 @@ import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWa
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.keycloakserver.DoneableKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerList;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerOperationFactory;
+import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -34,22 +34,22 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 public class KeycloakIntegrationTestHelper extends
-        IntegrationTestHelperBase<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> implements FluentIntegrationTesting {
+        IntegrationTestHelperBase<EntandoKeycloakServer, EntandoKeycloakServerList, DoneableEntandoKeycloakServer> implements FluentIntegrationTesting {
 
     public static final String KEYCLOAK_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("keycloak-namespace");
     public static final String KEYCLOAK_NAME = EntandoOperatorE2ETestConfig.calculateName("test-keycloak");
 
     public KeycloakIntegrationTestHelper(DefaultKubernetesClient client) {
-        super(client, KeycloakServerOperationFactory::produceAllKeycloakServers);
+        super(client, EntandoKeycloakServerOperationFactory::produceAllEntandoKeycloakServers);
     }
 
     public boolean ensureKeycloak() {
-        KeycloakServer keycloakServer = getOperations()
+        EntandoKeycloakServer keycloakServer = getOperations()
                 .inNamespace(KEYCLOAK_NAMESPACE)
                 .withName(KEYCLOAK_NAME).get();
         if (keycloakServer == null || keycloakServer.getStatus().getEntandoDeploymentPhase() != EntandoDeploymentPhase.SUCCESSFUL) {
-            setTestFixture(deleteAll(KeycloakServer.class).fromNamespace(KEYCLOAK_NAMESPACE));
-            createAndWaitForKeycloak(new KeycloakServerBuilder()
+            setTestFixture(deleteAll(EntandoKeycloakServer.class).fromNamespace(KEYCLOAK_NAMESPACE));
+            createAndWaitForKeycloak(new EntandoKeycloakServerBuilder()
                     .withNewMetadata().withNamespace(KEYCLOAK_NAMESPACE).withName(KEYCLOAK_NAME).endMetadata()
                     .withNewSpec().withDefault(true).withEntandoImageVersion("6.0.0-SNAPSHOT")
                     .withDbms(DbmsImageVendor.NONE)
@@ -67,7 +67,7 @@ public class KeycloakIntegrationTestHelper extends
         }
     }
 
-    public void createAndWaitForKeycloak(KeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
+    public void createAndWaitForKeycloak(EntandoKeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
         getOperations().inNamespace(KEYCLOAK_NAMESPACE).create(keycloakServer);
         if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsImageVendor.NONE).orElse(false)) {
             if (deployingDbContainers) {

@@ -23,8 +23,8 @@ import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegra
 import org.entando.kubernetes.controller.integrationtest.support.SampleWriter;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.entando.kubernetes.model.link.EntandoAppPluginLink;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.junit.jupiter.api.AfterEach;
@@ -42,8 +42,8 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
 
     @Test
     public void create() {
-        //When I create a KeycloakServer and I specify it to use PostgreSQL
-        KeycloakServer keycloakServer = new KeycloakServerBuilder().withNewMetadata()
+        //When I create a EntandoKeycloakServer and I specify it to use PostgreSQL
+        EntandoKeycloakServer keycloakServer = new EntandoKeycloakServerBuilder().withNewMetadata()
                 .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
                 .withNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                 .endMetadata().withNewSpec()
@@ -55,7 +55,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                 .endSpec().build();
         SampleWriter.writeSample(keycloakServer, "keycloak-with-embedded-postgresql-db");
         helper.setTextFixture(
-                deleteAll(KeycloakServer.class)
+                deleteAll(EntandoKeycloakServer.class)
                         .fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                         .deleteAll(EntandoClusterInfrastructure.class)
                         .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
@@ -93,7 +93,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
 
         //Recreate all namespaces as they depend on previously created Keycloak clients that are now invalid
         helper.setTextFixture(
-                deleteAll(KeycloakServer.class).fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
+                deleteAll(EntandoKeycloakServer.class).fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                         .deleteAll(EntandoClusterInfrastructure.class)
                         .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
                         .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)

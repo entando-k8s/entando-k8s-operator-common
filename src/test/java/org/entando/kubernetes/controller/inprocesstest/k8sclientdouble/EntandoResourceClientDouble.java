@@ -18,7 +18,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
+import org.entando.kubernetes.model.externaldatabase.EntandoExternalDB;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
@@ -40,7 +40,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
     }
 
-    public void putExternalDatabase(ExternalDatabase externalDatabase) {
+    public void putEntandoExternalDB(EntandoExternalDB externalDatabase) {
         putEntandoCustomResource(externalDatabase);
     }
 
@@ -69,7 +69,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     @Override
     public ExternalDatabaseDeployment findExternalDatabase(EntandoCustomResource resource) {
         NamespaceDouble namespace = getNamespace(resource);
-        Optional<ExternalDatabase> first = namespace.getCustomResources(ExternalDatabase.class).values().stream().findFirst();
+        Optional<EntandoExternalDB> first = namespace.getCustomResources(EntandoExternalDB.class).values().stream().findFirst();
         return first.map(edb -> new ExternalDatabaseDeployment(
                 namespace.getService(edb.getMetadata().getName() + "-" + KubeUtils.DEFAULT_SERVICE_SUFFIX),
                 namespace.getEndpoints(edb.getMetadata().getName() + "-endpoints"), edb)).orElse(null);

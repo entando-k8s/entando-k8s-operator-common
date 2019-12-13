@@ -1,5 +1,5 @@
 ---
-kind: "EntandoKeycloakServer"
+kind: "EntandoEntandoKeycloakServer"
 apiVersion: "entando.org/v1alpha1"
 metadata:
   name: "test-keycloak"

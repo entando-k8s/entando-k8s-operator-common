@@ -700,7 +700,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.keycloakserver.KeycloakServer",
+    "name": "org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -709,7 +709,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.keycloakserver.KeycloakServerList",
+    "name": "org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -718,7 +718,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.keycloakserver.DoneableKeycloakServer",
+    "name": "org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -736,7 +736,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.keycloakserver.KeycloakServerSpec",
+    "name": "org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerSpec",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -898,7 +898,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.externaldatabase.ExternalDatabase",
+    "name": "org.entando.kubernetes.model.externaldatabase.EntandoExternalDB",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -907,7 +907,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.externaldatabase.ExternalDatabaseList",
+    "name": "org.entando.kubernetes.model.externaldatabase.EntandoExternalDBList",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -916,7 +916,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.externaldatabase.DoneableExternalDatabase",
+    "name": "org.entando.kubernetes.model.externaldatabase.DoneableEntandoExternalDB",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -925,7 +925,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.externaldatabase.ExternalDatabaseSpec",
+    "name": "org.entando.kubernetes.model.externaldatabase.EntandoExternalDBSpec",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,

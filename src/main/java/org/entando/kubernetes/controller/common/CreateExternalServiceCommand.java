@@ -11,16 +11,16 @@ import org.entando.kubernetes.controller.FluentTernary;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DbServerStatus;
-import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
+import org.entando.kubernetes.model.externaldatabase.EntandoExternalDB;
 
 public class CreateExternalServiceCommand {
 
     private static final int TCP4_NUMBER_OF_BYTES = 4;
     private static final int TCP6_NUMBER_OF_SEGMENTS = 8;
-    private final ExternalDatabase externalDatabase;
+    private final EntandoExternalDB externalDatabase;
     private final DbServerStatus status = new DbServerStatus();
 
-    public CreateExternalServiceCommand(ExternalDatabase externalDatabase) {
+    public CreateExternalServiceCommand(EntandoExternalDB externalDatabase) {
         this.externalDatabase = externalDatabase;
         status.setQualifier("external-db");
     }

@@ -25,18 +25,18 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
         processCommand();
     }
 
-    protected void processAddition(T newKeycloakServer) {
+    protected void processAddition(T newEntandoKeycloakServer) {
         // Create database for Keycloak
-        EntandoDeploymentSpec spec = resolveSpec(newKeycloakServer);
-        DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newKeycloakServer, spec.getDbms(),
+        EntandoDeploymentSpec spec = resolveSpec(newEntandoKeycloakServer);
+        DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newEntandoKeycloakServer, spec.getDbms(),
                 "db");
         // Create the Keycloak service using the provided database
         KeycloakConnectionConfig keycloakConnectionConfig = k8sClient.entandoResources().findKeycloak(() -> Optional.empty());
-        Deployable<ServiceDeploymentResult> keycloakDeployable = createDeployable(newKeycloakServer, databaseServiceResult,
+        Deployable<ServiceDeploymentResult> keycloakDeployable = createDeployable(newEntandoKeycloakServer, databaseServiceResult,
                 keycloakConnectionConfig);
         DeployCommand<ServiceDeploymentResult> keycloakCommand = new DeployCommand<>(keycloakDeployable);
         ServiceDeploymentResult keycloakDeploymentResult = keycloakCommand.execute(k8sClient, Optional.of(keycloakClient));
-        k8sClient.entandoResources().updateStatus(newKeycloakServer, keycloakCommand.getStatus());
+        k8sClient.entandoResources().updateStatus(newEntandoKeycloakServer, keycloakCommand.getStatus());
     }
 
     private EntandoDeploymentSpec resolveSpec(T r) {
@@ -49,10 +49,10 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
         return (EntandoDeploymentSpec) spec;
     }
 
-    protected Deployable<ServiceDeploymentResult> createDeployable(T newKeycloakServer,
+    protected Deployable<ServiceDeploymentResult> createDeployable(T newEntandoKeycloakServer,
             DatabaseServiceResult databaseServiceResult,
             KeycloakConnectionConfig keycloakConnectionConfig) {
-        return new SampleServerDeployable<>(newKeycloakServer, databaseServiceResult, keycloakConnectionConfig);
+        return new SampleServerDeployable<>(newEntandoKeycloakServer, databaseServiceResult, keycloakConnectionConfig);
     }
 
 }

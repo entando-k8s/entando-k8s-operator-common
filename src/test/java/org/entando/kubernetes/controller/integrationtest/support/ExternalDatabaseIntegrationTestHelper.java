@@ -17,21 +17,21 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.model.DbmsImageVendor;
-import org.entando.kubernetes.model.externaldatabase.DoneableExternalDatabase;
-import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
-import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseList;
-import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseOperationFactory;
-import org.entando.kubernetes.model.externaldatabase.ExternalDatabaseSpec;
+import org.entando.kubernetes.model.externaldatabase.DoneableEntandoExternalDB;
+import org.entando.kubernetes.model.externaldatabase.EntandoExternalDB;
+import org.entando.kubernetes.model.externaldatabase.EntandoExternalDBList;
+import org.entando.kubernetes.model.externaldatabase.EntandoExternalDBOperationFactory;
+import org.entando.kubernetes.model.externaldatabase.EntandoExternalDBSpec;
 
 public class ExternalDatabaseIntegrationTestHelper extends
-        IntegrationTestHelperBase<ExternalDatabase, ExternalDatabaseList, DoneableExternalDatabase> {
+        IntegrationTestHelperBase<EntandoExternalDB, EntandoExternalDBList, DoneableEntandoExternalDB> {
 
     public static final String MY_EXTERNAL_DB = EntandoOperatorE2ETestConfig.calculateName("my-external-db");
     private static final String ADMIN = "admin";
     private static final String TEST_SECRET = "test-secret";
 
     public ExternalDatabaseIntegrationTestHelper(DefaultKubernetesClient client) {
-        super(client, ExternalDatabaseOperationFactory::produceAllExternalDatabases);
+        super(client, EntandoExternalDBOperationFactory::produceAllEntandoExternalDBs);
     }
 
     @SuppressWarnings("unchecked")
@@ -62,8 +62,8 @@ public class ExternalDatabaseIntegrationTestHelper extends
                 .build();
         SampleWriter.writeSample(secret, "postgresql-secret");
         client.secrets().inNamespace(namespace).create(secret);
-        ExternalDatabase externalDatabase = new ExternalDatabase(
-                new ExternalDatabaseSpec(DbmsImageVendor.POSTGRESQL, podIP, 5432, "testdb", TEST_SECRET));
+        EntandoExternalDB externalDatabase = new EntandoExternalDB(
+                new EntandoExternalDBSpec(DbmsImageVendor.POSTGRESQL, podIP, 5432, "testdb", TEST_SECRET));
         externalDatabase.getMetadata().setName(MY_EXTERNAL_DB);
         SampleWriter.writeSample(externalDatabase, "external-postgresql-db");
         createAndWaitForDbService(namespace, externalDatabase);
@@ -85,20 +85,20 @@ public class ExternalDatabaseIntegrationTestHelper extends
                 .addToStringData("oracleTablespace", "USERS").build();
         SampleWriter.writeSample(secret, "oracle-secret");
         client.secrets().inNamespace(namespace).create(secret);
-        ExternalDatabaseSpec spec = new ExternalDatabaseSpec(DbmsImageVendor.ORACLE, K8SIntegrationTestHelper.ORACLE_HOST, 1521,
+        EntandoExternalDBSpec spec = new EntandoExternalDBSpec(DbmsImageVendor.ORACLE, K8SIntegrationTestHelper.ORACLE_HOST, 1521,
                 "XEPDB1",
                 TEST_SECRET);
         String jdbcUrl = DbmsImageVendor.ORACLE.getConnectionStringBuilder().toHost(spec.getHost())
                 .onPort(spec.getPort().get().toString()).usingDatabase(spec.getDatabaseName()).usingSchema(null)
                 .buildConnectionString();
         dropUsers(jdbcUrl, usersToDrop);
-        ExternalDatabase externalDatabase = new ExternalDatabase(spec);
+        EntandoExternalDB externalDatabase = new EntandoExternalDB(spec);
         externalDatabase.getMetadata().setName(MY_EXTERNAL_DB);
         SampleWriter.writeSample(externalDatabase, "external-oracle-db");
         createAndWaitForDbService(namespace, externalDatabase);
     }
 
-    protected void createAndWaitForDbService(String namespace, ExternalDatabase externalDatabase) {
+    protected void createAndWaitForDbService(String namespace, EntandoExternalDB externalDatabase) {
         getOperations().inNamespace(namespace)
                 .create(externalDatabase);
         new CreateExternalServiceCommand(getOperations().inNamespace(externalDatabase.getMetadata().getNamespace())

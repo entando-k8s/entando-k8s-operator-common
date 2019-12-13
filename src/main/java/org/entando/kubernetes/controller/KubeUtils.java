@@ -15,7 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public final class KubeUtils {
 
@@ -45,9 +45,9 @@ public final class KubeUtils {
     }
 
     public static String getKindOf(Class<? extends EntandoBaseCustomResource> c) {
-        //TODO this is problematic even for Fabric8. We need to change KeycloakServer to EntandoKeycloakServer
-        if (c == KeycloakServer.class) {
-            return "EntandoKeycloakServer";
+        //TODO this is problematic even for Fabric8. We need to change EntandoKeycloakServer to EntandoEntandoKeycloakServer
+        if (c == EntandoKeycloakServer.class) {
+            return "EntandoEntandoKeycloakServer";
         }
         return c.getSimpleName();
     }

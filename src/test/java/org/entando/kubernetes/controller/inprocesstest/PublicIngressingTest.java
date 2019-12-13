@@ -6,10 +6,12 @@ import static org.entando.kubernetes.controller.PodResult.SUCCEEDED_PHASE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodStatus;
 import io.fabric8.kubernetes.api.model.PodStatusBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
@@ -36,13 +38,14 @@ import org.entando.kubernetes.controller.integrationtest.support.EntandoOperator
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.keycloakserver.DoneableKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerList;
+import org.entando.kubernetes.model.plugin.DoneableEntandoPlugin;
+import org.entando.kubernetes.model.plugin.EntandoPlugin;
+import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
+import org.entando.kubernetes.model.plugin.EntandoPluginList;
 import org.junit.Rule;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -84,23 +87,23 @@ public class PublicIngressingTest implements InProcessTestUtil, FluentTraversals
     };
 
     @Test
-    public void test() {
+    public void testBasicDeployment() {
         DefaultPodClient.setPodWatcherHolder(podWatcherHolder);
-        //Given I have a controller that processes KeycloakServers
+        //Given I have a controller that processes EntandoPlugins
         SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
-        controller = new SampleController<KeycloakServer>(new DefaultSimpleK8SClient(server.getClient()), mock) {
+        controller = new SampleController<EntandoPlugin>(new DefaultSimpleK8SClient(server.getClient()), mock) {
             @Override
-            protected Deployable<ServiceDeploymentResult> createDeployable(KeycloakServer newKeycloakServer,
+            protected Deployable<ServiceDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SampleServerDeployable<KeycloakServer>(newKeycloakServer, databaseServiceResult, keycloakConnectionConfig) {
+                return new SampleServerDeployable<EntandoPlugin>(newEntandoPlugin, databaseServiceResult, keycloakConnectionConfig) {
                     @Override
                     @SuppressWarnings("unchecked")
-                    protected List<DeployableContainer> createContainers(KeycloakServer entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoPlugin entandoResource) {
 
                         return Arrays
                                 .asList(new SampleDeployableContainer<>(entandoResource),
-                                        new SampleDeployableContainer<KeycloakServer>(entandoResource) {
+                                        new SampleDeployableContainer<EntandoPlugin>(entandoResource) {
                                             @Override
                                             public int getPort() {
                                                 return 8081;
@@ -115,24 +118,17 @@ public class PublicIngressingTest implements InProcessTestUtil, FluentTraversals
                 };
             }
         };
-        //When I create a new KeycloakServer
-        KeycloakServer resource = new KeycloakServerBuilder().withNewMetadata()
+        //And I have prepared the Standard KeycloakAdminSecert
+        server.getClient().secrets().create(buildKeycloakSecret());
+        //When I create a new EntandoPlugin
+        EntandoPlugin resource = new EntandoPluginBuilder().withNewMetadata()
                 .withNamespace(SAMPLE_NAMESPACE)
                 .withName(SAMPLE_NAME).endMetadata().withNewSpec()
+                .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
                 .withDbms(DbmsImageVendor.POSTGRESQL).withReplicas(2).withIngressHostName("myhost.name.com")
                 .endSpec().build();
-        server.getClient().secrets().createNew().withNewMetadata()
-                .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName()).withNamespace(server.getClient().getNamespace())
-                .endMetadata().addToStringData(KubeUtils.USERNAME_KEY, "someadmin")
-                .addToStringData(KubeUtils.PASSSWORD_KEY, "some-password").addToStringData(KubeUtils.URL_KEY, "http:/localohast:234/auth")
-                .done();
         onAdd(resource);
-        await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
-        currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithReadyStatus());
-        await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
-        currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithSucceededStatus());
-        await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
-        currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithReadyStatus());
+        emulatePodWatcherBehaviour();
 
         await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
         {
@@ -149,10 +145,19 @@ public class PublicIngressingTest implements InProcessTestUtil, FluentTraversals
         assertThat(dbDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(1));
     }
 
+    protected void emulatePodWatcherBehaviour() {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
+        currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithReadyStatus());
+        await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
+        currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithSucceededStatus());
+        await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
+        currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithReadyStatus());
+    }
+
     @SuppressWarnings("unchecked")
-    protected CustomResourceOperationsImpl<KeycloakServer, KeycloakServerList, DoneableKeycloakServer> getOperations() {
-        return (CustomResourceOperationsImpl<KeycloakServer, KeycloakServerList, DoneableKeycloakServer>) DefaultEntandoResourceClient
-                .getOperationsFor(server.getClient(), KeycloakServer.class);
+    protected CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> getOperations() {
+        return (CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin>) DefaultEntandoResourceClient
+                .getOperationsFor(server.getClient(), EntandoPlugin.class);
     }
 
     protected Pod podWithReadyStatus() {
@@ -192,6 +197,9 @@ public class PublicIngressingTest implements InProcessTestUtil, FluentTraversals
             T createResource = (T) DefaultEntandoResourceClient.getOperationsFor(server.getClient(), resource.getClass())
                     .inNamespace(resource.getMetadata().getNamespace())
                     .create(resource);
+            ((CustomResourceOperationsImpl<T, CustomResourceList <T>, Doneable<T>>)
+            DefaultEntandoResourceClient.getOperationsFor(server.getClient(), resource.getClass())
+                    .inNamespace(resource.getMetadata().getNamespace()).withName(resource.getMetadata().getName())).edit();
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, createResource.getMetadata().getNamespace());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, createResource.getMetadata().getName());

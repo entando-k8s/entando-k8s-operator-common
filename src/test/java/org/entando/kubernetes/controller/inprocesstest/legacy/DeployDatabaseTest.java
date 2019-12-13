@@ -35,8 +35,8 @@ import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoRe
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DbmsImageVendor;
-import org.entando.kubernetes.model.keycloakserver.DoneableKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -64,16 +64,16 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     private static final String DB_PASSWORD = "DB_PASSWORD";
     private static final String MY_KEYCLOAK_DATABASE = "my_keycloak_db";
     private static final String AUTH = "/auth";
-    private final KeycloakServer keycloakServer = newKeycloakServer();
+    private final EntandoKeycloakServer keycloakServer = newEntandoKeycloakServer();
     @Spy
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<KeycloakServer> sampleController;
+    private SampleController<EntandoKeycloakServer> sampleController;
 
     @BeforeEach
     public void before() {
-        this.sampleController = new SampleController<KeycloakServer>(client, keycloakClient) {
+        this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
         };
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
@@ -82,23 +82,23 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     @Test
     public void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
-        //Given I have an KeycloakServer custom resource with MySQL as database
-        final KeycloakServer newKeycloakServer = keycloakServer;
+        //Given I have an EntandoKeycloakServer custom resource with MySQL as database
+        final EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         client.entandoResources().putEntandoCustomResource(keycloakServer);
-        // When I  deploy the KeycloakServer
+        // When I  deploy the EntandoKeycloakServer
         sampleController.onStartup(new StartupEvent());
 
-        //Then a K8S Secret was created with a name that reflects the KeycloakServer and the fact that it is an admin secret
+        //Then a K8S Secret was created with a name that reflects the EntandoKeycloakServer and the fact that it is an admin secret
         NamedArgumentCaptor<Secret> adminSecretCaptor = forResourceNamed(Secret.class, MY_KEYCLOAK_DB_ADMIN_SECRET);
-        verify(client.secrets()).createSecretIfAbsent(eq(newKeycloakServer), adminSecretCaptor.capture());
+        verify(client.secrets()).createSecretIfAbsent(eq(newEntandoKeycloakServer), adminSecretCaptor.capture());
         Secret theDbAdminSecret = adminSecretCaptor.getValue();
         assertThat(theKey(KubeUtils.USERNAME_KEY).on(theDbAdminSecret), is("root"));
         assertThat(theKey(KubeUtils.PASSSWORD_KEY).on(theDbAdminSecret), is(not(emptyOrNullString())));
         assertThat(theLabel(KEYCLOAK_SERVER_LABEL_NAME).on(theDbAdminSecret), is(MY_KEYCLOAK));
 
-        //And a K8S Secret was created with a name that reflects the KeycloakServer and the fact that it is the keycloakd db secret
+        //And a K8S Secret was created with a name that reflects the EntandoKeycloakServer and the fact that it is the keycloakd db secret
         NamedArgumentCaptor<Secret> keycloakDbSecretCaptor = forResourceNamed(Secret.class, MY_KEYCLOAK_DB_SECRET);
-        verify(client.secrets()).createSecretIfAbsent(eq(newKeycloakServer), keycloakDbSecretCaptor.capture());
+        verify(client.secrets()).createSecretIfAbsent(eq(newEntandoKeycloakServer), keycloakDbSecretCaptor.capture());
         Secret keycloakDbSecret = keycloakDbSecretCaptor.getValue();
         assertThat(theKey(KubeUtils.USERNAME_KEY).on(keycloakDbSecret), is(MY_KEYCLOAK_DATABASE));
         assertThat(theKey(KubeUtils.PASSSWORD_KEY).on(keycloakDbSecret), is(not(emptyOrNullString())));
@@ -108,19 +108,19 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     @Test
     public void testService() {
-        //Given I have an KeycloakServer custom resource with MySQL as database
-        KeycloakServer newKeycloakServer = keycloakServer;
+        //Given I have an EntandoKeycloakServer custom resource with MySQL as database
+        EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         client.entandoResources().putEntandoCustomResource(keycloakServer);
         //And that K8S is up and receiving Service requests
         ServiceStatus dbServiceStatus = new ServiceStatus();
-        lenient().when(client.services().loadService(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_SERVICE)))
+        lenient().when(client.services().loadService(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_SERVICE)))
                 .then(respondWithServiceStatus(dbServiceStatus));
 
-        //When the the KeycloakServerController is notified that a new KeycloakServer has been added
+        //When the the EntandoKeycloakServerController is notified that a new EntandoKeycloakServer has been added
         sampleController.onStartup(new StartupEvent());
         //Then a K8S Service was created with a name that reflects the EntandoApp and the fact that it is a JEE service
         NamedArgumentCaptor<Service> dbServiceCaptor = forResourceNamed(Service.class, MY_KEYCLOAK_DB_SERVICE);
-        verify(client.services()).createService(eq(newKeycloakServer), dbServiceCaptor.capture());
+        verify(client.services()).createService(eq(newEntandoKeycloakServer), dbServiceCaptor.capture());
         //And a selector that matches the Keyclaok DB pod
         Service dbService = dbServiceCaptor.getValue();
         Map<String, String> dbSelector = dbService.getSpec().getSelector();
@@ -130,30 +130,30 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         assertThat(thePortNamed(DB_PORT).on(dbService).getPort(), is(3306));
         assertThat(thePortNamed(DB_PORT).on(dbService).getProtocol(), is(TCP));
         //And the state of the two services was reloaded from K8S
-        verify(client.services()).loadService(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_SERVICE));
+        verify(client.services()).loadService(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_SERVICE));
         //And K8S was instructed to update the status of the EntandoApp with the status of the java service
         //And the db service
         verify(client.entandoResources(), atLeastOnce())
-                .updateStatus(eq(newKeycloakServer), argThat(matchesServiceStatus(dbServiceStatus)));
+                .updateStatus(eq(newEntandoKeycloakServer), argThat(matchesServiceStatus(dbServiceStatus)));
     }
 
     @Test
     public void testMysqlDeployment() {
-        //Given I have an KeycloakServer custom resource with MySQL as database
-        KeycloakServer newKeycloakServer = keycloakServer;
+        //Given I have an EntandoKeycloakServer custom resource with MySQL as database
+        EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         client.entandoResources().putEntandoCustomResource(keycloakServer);
         //And K8S is receiving Deployment requests
         DeploymentStatus dbDeploymentStatus = new DeploymentStatus();
         //And K8S is receiving Deployment requests
-        lenient().when(client.deployments().loadDeployment(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT)))
+        lenient().when(client.deployments().loadDeployment(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT)))
                 .then(respondWithDeploymentStatus(dbDeploymentStatus));
-        //When the the KeycloakServerController is notified that a new KeycloakServer has been added
+        //When the the EntandoKeycloakServerController is notified that a new EntandoKeycloakServer has been added
         sampleController.onStartup(new StartupEvent());
 
-        //Then two K8S deployments are created with a name that reflects the KeycloakServer name the
+        //Then two K8S deployments are created with a name that reflects the EntandoKeycloakServer name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
                 MY_KEYCLOAK_DB_DEPLOYMENT);
-        verify(client.deployments()).createDeployment(eq(newKeycloakServer), dbDeploymentCaptor.capture());
+        verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
         Container theDbContainer = theContainerNamed(MY_KEYCLOAK_DB_CONTAINER).on(dbDeployment);
         //Exposing a port 3306
@@ -166,35 +166,35 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         assertThat(theLabel(KEYCLOAK_SERVER_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK));
 
         //And the Deployment state was reloaded from K8S for both deployments
-        verify(client.deployments()).loadDeployment(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT));
+        verify(client.deployments()).loadDeployment(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT));
         //And K8S was instructed to update the status of the EntandoApp with the status of the service
         verify(client.entandoResources(), atLeastOnce())
-                .updateStatus(eq(newKeycloakServer), argThat(matchesDeploymentStatus(dbDeploymentStatus)));
+                .updateStatus(eq(newEntandoKeycloakServer), argThat(matchesDeploymentStatus(dbDeploymentStatus)));
         //And all volumes have been mapped
-        verifyThatAllVolumesAreMapped(newKeycloakServer, client, dbDeployment);
+        verifyThatAllVolumesAreMapped(newEntandoKeycloakServer, client, dbDeployment);
     }
 
     @Test
     public void testPostgresqlDeployment() {
-        //Given I have an KeycloakServer custom resource with MySQL as database
-        KeycloakServer newKeycloakServer = new DoneableKeycloakServer(keycloakServer, s -> s)
+        //Given I have an EntandoKeycloakServer custom resource with MySQL as database
+        EntandoKeycloakServer newEntandoKeycloakServer = new DoneableEntandoKeycloakServer(keycloakServer, s -> s)
                 .editSpec()
                 .withDbms(DbmsImageVendor.POSTGRESQL)
                 .endSpec()
                 .done();
-        client.entandoResources().putEntandoCustomResource(newKeycloakServer);
+        client.entandoResources().putEntandoCustomResource(newEntandoKeycloakServer);
         //And K8S is receiving Deployment requests
         DeploymentStatus dbDeploymentStatus = new DeploymentStatus();
         //And K8S is receiving Deployment requests
-        lenient().when(client.deployments().loadDeployment(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT)))
+        lenient().when(client.deployments().loadDeployment(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT)))
                 .then(respondWithDeploymentStatus(dbDeploymentStatus));
-        //When the the KeycloakServerController is notified that a new KeycloakServer has been added
+        //When the the EntandoKeycloakServerController is notified that a new EntandoKeycloakServer has been added
         sampleController.onStartup(new StartupEvent());
 
-        //Then two K8S deployments are created with a name that reflects the KeycloakServer name the
+        //Then two K8S deployments are created with a name that reflects the EntandoKeycloakServer name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
                 MY_KEYCLOAK_DB_DEPLOYMENT);
-        verify(client.deployments()).createDeployment(eq(newKeycloakServer), dbDeploymentCaptor.capture());
+        verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
         Container theDbContainer = theContainerNamed(MY_KEYCLOAK_DB_CONTAINER).on(dbDeployment);
         //Exposing a port 5432
@@ -207,33 +207,33 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         assertThat(theLabel(KEYCLOAK_SERVER_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK));
 
         //And the Deployment state was reloaded from K8S for both deployments
-        verify(client.deployments()).loadDeployment(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT));
+        verify(client.deployments()).loadDeployment(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT));
         //And K8S was instructed to update the status of the EntandoApp with the status of the service
         verify(client.entandoResources(), atLeastOnce())
-                .updateStatus(eq(newKeycloakServer), argThat(matchesDeploymentStatus(dbDeploymentStatus)));
+                .updateStatus(eq(newEntandoKeycloakServer), argThat(matchesDeploymentStatus(dbDeploymentStatus)));
         //And all volumes have been mapped
-        verifyThatAllVolumesAreMapped(newKeycloakServer, client, dbDeployment);
+        verifyThatAllVolumesAreMapped(newEntandoKeycloakServer, client, dbDeployment);
     }
 
     @Test
     public void testPersistentVolumeClaims() {
         //Given I have  a Keycloak server
-        KeycloakServer newKeycloakServer = this.keycloakServer;
-        client.entandoResources().putEntandoCustomResource(newKeycloakServer);
+        EntandoKeycloakServer newEntandoKeycloakServer = this.keycloakServer;
+        client.entandoResources().putEntandoCustomResource(newEntandoKeycloakServer);
         //And that K8S is up and receiving PVC requests
         PersistentVolumeClaimStatus dbPvcStatus = new PersistentVolumeClaimStatus();
         lenient().when(client.persistentVolumeClaims()
-                .loadPersistentVolumeClaim(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_PVC)))
+                .loadPersistentVolumeClaim(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_PVC)))
                 .then(respondWithPersistentVolumeClaimStatus(dbPvcStatus));
 
-        //When the KeycloakController is notified that a new KeycloakServer has been added
+        //When the KeycloakController is notified that a new EntandoKeycloakServer has been added
         sampleController.onStartup(new StartupEvent());
 
         //Then K8S was instructed to create a PersistentVolumeClaim for the DB and the JEE Server
         NamedArgumentCaptor<PersistentVolumeClaim> dbPvcCaptor = forResourceNamed(PersistentVolumeClaim.class,
                 MY_KEYCLOAK_DB_PVC);
         verify(this.client.persistentVolumeClaims())
-                .createPersistentVolumeClaim(eq(newKeycloakServer), dbPvcCaptor.capture());
+                .createPersistentVolumeClaim(eq(newEntandoKeycloakServer), dbPvcCaptor.capture());
         //With names that reflect the EntandoPlugin and the type of deployment the claim is used for
         PersistentVolumeClaim dbPvc = dbPvcCaptor.getValue();
 
@@ -243,12 +243,12 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
         //And both PersistentVolumeClaims were reloaded from  K8S for its latest state
         verify(this.client.persistentVolumeClaims())
-                .loadPersistentVolumeClaim(eq(newKeycloakServer), eq(MY_KEYCLOAK_DB_PVC));
+                .loadPersistentVolumeClaim(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_PVC));
 
         // And K8S was instructed to update the status of the EntandoPlugin with
         // the status of both PersistentVolumeClaims
         verify(client.entandoResources(), atLeastOnce())
-                .updateStatus(eq(newKeycloakServer), argThat(containsThePersistentVolumeClaimStatus(dbPvcStatus)));
+                .updateStatus(eq(newEntandoKeycloakServer), argThat(containsThePersistentVolumeClaimStatus(dbPvcStatus)));
     }
 
 }

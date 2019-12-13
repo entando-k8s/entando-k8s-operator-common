@@ -80,6 +80,7 @@ public class DeletionWaiter<
         }
     }
 
+    @SuppressWarnings("unchecked")
     protected void deleteSingleItem(long duration, TimeUnit timeUnit) {
         await().atMost(duration, timeUnit)
                 .ignoreExceptions()

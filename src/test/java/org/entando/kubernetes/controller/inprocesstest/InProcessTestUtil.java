@@ -11,8 +11,8 @@ import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureBuilder;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.KeycloakServerBuilder;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
@@ -24,7 +24,7 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
     String ENTANDO_PLUGIN_LABEL_NAME = "EntandoPlugin";
     String ENTANDO_APP_LABEL_NAME = "EntandoApp";
     String ENTANDO_CLUSTER_INFRASTRUCTURE_LABEL_NAME = "EntandoClusterInfrastructure";
-    String KEYCLOAK_SERVER_LABEL_NAME = "EntandoKeycloakServer";
+    String KEYCLOAK_SERVER_LABEL_NAME = "EntandoEntandoKeycloakServer";
     String ENTANDO_APP_PLUGIN_LINK_LABEL_NAME = "EntandoAppPluginLink";
     String ENTANDO_KEYCLOAK_REALM = KubeUtils.ENTANDO_KEYCLOAK_REALM;
     String KEYCLOAK_SECRET = "ASDFASDFAS";
@@ -48,8 +48,8 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
     String MY_KEYCLOAK_HOSTNAME = "access.192.168.0.100.nip.io";
     String MY_KEYCLOAK_BASE_URL = "http://" + MY_KEYCLOAK_HOSTNAME + "/auth";
 
-    default KeycloakServer newKeycloakServer() {
-        return new KeycloakServerBuilder()
+    default EntandoKeycloakServer newEntandoKeycloakServer() {
+        return new EntandoKeycloakServerBuilder()
                 .withNewMetadata()
                 .withName(MY_KEYCLOAK)
                 .withNamespace(MY_KEYCLOAK_NAMESPACE)
