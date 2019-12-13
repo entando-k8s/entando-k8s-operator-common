@@ -52,7 +52,7 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
     protected Deployable<ServiceDeploymentResult> createDeployable(T newEntandoKeycloakServer,
             DatabaseServiceResult databaseServiceResult,
             KeycloakConnectionConfig keycloakConnectionConfig) {
-        return new SampleServerDeployable<>(newEntandoKeycloakServer, databaseServiceResult, keycloakConnectionConfig);
+        return new SamplePublicIngressingDbAwareDeployable<>(newEntandoKeycloakServer, databaseServiceResult, keycloakConnectionConfig);
     }
 
 }

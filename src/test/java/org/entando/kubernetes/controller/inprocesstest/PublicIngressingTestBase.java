@@ -22,7 +22,7 @@ import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SampleController;
 import org.entando.kubernetes.controller.SampleDeployableContainer;
-import org.entando.kubernetes.controller.SampleServerDeployable;
+import org.entando.kubernetes.controller.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
@@ -62,7 +62,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Flu
             protected Deployable<ServiceDeploymentResult> createDeployable(EntandoPlugin plugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SampleServerDeployable<EntandoPlugin>(plugin, databaseServiceResult, keycloakConnectionConfig) {
+                return new SamplePublicIngressingDbAwareDeployable<EntandoPlugin>(plugin, databaseServiceResult, keycloakConnectionConfig) {
                     @Override
                     public String getIngressNamespace() {
                         return SAMPLE_NAMESPACE;
@@ -127,7 +127,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Flu
             protected Deployable<ServiceDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SampleServerDeployable<EntandoPlugin>(newEntandoPlugin, databaseServiceResult, keycloakConnectionConfig) {
+                return new SamplePublicIngressingDbAwareDeployable<EntandoPlugin>(newEntandoPlugin, databaseServiceResult,
+                        keycloakConnectionConfig) {
                     @Override
                     @SuppressWarnings("unchecked")
                     protected List<DeployableContainer> createContainers(EntandoPlugin entandoResource) {

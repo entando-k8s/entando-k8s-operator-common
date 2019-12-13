@@ -10,9 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.SampleController;
+import org.entando.kubernetes.controller.SampleIngressingDbAwareDeployable;
+import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.TlsHelper;
+import org.entando.kubernetes.controller.database.DatabaseServiceResult;
+import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.integrationtest.support.ClusterInfrastructureIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoAppIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoPluginIntegrationTestHelper;
@@ -21,6 +28,8 @@ import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.K8SIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.SampleWriter;
+import org.entando.kubernetes.controller.spi.Deployable;
+import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -34,11 +43,22 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("inter-process"), @Tag("smoke-test")})
-public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTesting {
+public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTesting, InProcessTestUtil {
 
     static final int KEYCLOAK_DB_PORT = 5432;
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
-    private final SampleController controller = new SampleController(helper.getClient());
+    private final SampleController<EntandoKeycloakServer> controller = new SampleController<EntandoKeycloakServer>(helper.getClient()) {
+        @Override
+        protected Deployable<ServiceDeploymentResult> createDeployable(EntandoKeycloakServer newEntandoKeycloakServer,
+                DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
+            return new SampleIngressingDbAwareDeployable<EntandoKeycloakServer>(newEntandoKeycloakServer, databaseServiceResult) {
+                @Override
+                protected List<DeployableContainer> createContainers(EntandoKeycloakServer entandoResource) {
+                    return Arrays.asList(new DbAwareKeycloakContainer());
+                }
+            };
+        }
+    };
 
     @Test
     public void create() {

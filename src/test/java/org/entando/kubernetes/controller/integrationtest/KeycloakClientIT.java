@@ -3,7 +3,6 @@ package org.entando.kubernetes.controller.integrationtest;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -29,7 +28,6 @@ import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrati
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixturePreparation;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
@@ -164,7 +162,7 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
 
     private static class TestKeycloakDeployable implements IngressingDeployable<ServiceDeploymentResult> {
 
-        private final List<DeployableContainer> containers = Arrays.asList(new TestKeycloakContainer());
+        private final List<DeployableContainer> containers = Arrays.asList(new MinimalKeycloakContainer());
         private final EntandoKeycloakServer keycloakServer;
 
         private TestKeycloakDeployable(EntandoKeycloakServer keycloakServer) {
@@ -201,39 +199,6 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
             return new ServiceDeploymentResult(service, ingress);
         }
 
-        private static class TestKeycloakContainer implements IngressingContainer {
-
-            @Override
-            public String determineImageToUse() {
-                return "entando/entando-keycloak:6.0.0-SNAPSHOT";
-            }
-
-            @Override
-            public String getNameQualifier() {
-                return "server";
-            }
-
-            @Override
-            public int getPort() {
-                return 8080;
-            }
-
-            @Override
-            public String getWebContextPath() {
-                return "/auth";
-            }
-
-            @Override
-            public void addEnvironmentVariables(List<EnvVar> vars) {
-                vars.add(new EnvVar("DB_VENDOR", "h2", null));
-                vars.add(new EnvVar("KEYCLOAK_USER", "test-admin", null));
-                vars.add(new EnvVar("KEYCLOAK_PASSWORD", KCP, null));
-            }
-
-            @Override
-            public Optional<String> getHealthCheckPath() {
-                return Optional.of(getWebContextPath());
-            }
-        }
     }
+
 }

@@ -11,7 +11,7 @@
     <option name="MAIN_CLASS_NAME" value="" />
     <option name="METHOD_NAME" value="" />
     <option name="TEST_OBJECT" value="tags" />
-    <option name="VM_PARAMETERS" value="-ea  -Dentando.default.routing.suffix=apps.serv.run -Dentando.test.namespace.override=ek8s-common" />
+    <option name="VM_PARAMETERS" value="-ea -Dentando.default.routing.suffix=apps.serv.run -Dentando.test.namespace.override=ek8s-common" />
     <option name="PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
     <tag value="inter-process" />

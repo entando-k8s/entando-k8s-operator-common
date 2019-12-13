@@ -3,16 +3,14 @@ package org.entando.kubernetes.client;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
-import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
@@ -27,44 +25,18 @@ import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
 import org.entando.kubernetes.model.RequiresKeycloak;
-import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceOperationFactory;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureOperationFactory;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
-import org.entando.kubernetes.model.link.EntandoAppPluginLink;
-import org.entando.kubernetes.model.link.EntandoAppPluginLinkOperationFactory;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
-import org.entando.kubernetes.model.plugin.EntandoPluginOperationFactory;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
-    private static final Map<Class<? extends EntandoCustomResource>, OperationsSupplier> operationSuppliers = new ConcurrentHashMap<>();
-
-    static {
-        operationSuppliers.put(EntandoKeycloakServer.class, EntandoKeycloakServerOperationFactory::produceAllEntandoKeycloakServers);
-        operationSuppliers.put(EntandoClusterInfrastructure.class,
-                EntandoClusterInfrastructureOperationFactory::produceAllEntandoClusterInfrastructures);
-        operationSuppliers.put(EntandoApp.class, EntandoAppOperationFactory::produceAllEntandoApps);
-        operationSuppliers.put(EntandoPlugin.class, EntandoPluginOperationFactory::produceAllEntandoPlugins);
-        operationSuppliers.put(EntandoAppPluginLink.class, EntandoAppPluginLinkOperationFactory::produceAllEntandoAppPluginLinks);
-        operationSuppliers.put(EntandoDatabaseService.class, EntandoDatabaseServiceOperationFactory::produceAllEntandoDatabaseServices);
-    }
-
     private final KubernetesClient client;
-    private final Map<Class<? extends EntandoCustomResource>, CustomResourceOperationsImpl> customResourceOperations =
-            new ConcurrentHashMap<>();
+    private final EntandoResourceOperationsRegistry entandoResourceRegistry;
 
     public DefaultEntandoResourceClient(KubernetesClient client) {
         this.client = client;
-    }
-
-    public static <T extends EntandoCustomResource> CustomResourceOperationsImpl getOperationsFor(KubernetesClient client, Class<T> c) {
-        return operationSuppliers.get(c).get(client);
+        entandoResourceRegistry = new EntandoResourceOperationsRegistry(client);
     }
 
     @Override
@@ -143,15 +115,9 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends EntandoCustomResource> CustomResourceOperationsImpl<T, KubernetesResourceList<T>,
-            DoneableEntandoCustomResource<?, T>> getOperations(Class<T> c) {
-        KubernetesClient client = this.client;
-        CustomResourceOperationsImpl result = this.customResourceOperations.get(c);
-        if (result == null) {
-            result = getOperationsFor(client, c);
-            this.customResourceOperations.put(c, result);
-        }
-        return result;
+    private <T extends EntandoCustomResource, D extends DoneableEntandoCustomResource<D, T>> CustomResourceOperationsImpl<T,
+            CustomResourceList<T>, D> getOperations(Class<T> c) {
+        return entandoResourceRegistry.getOperations(c);
     }
 
     @Override
@@ -162,7 +128,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
                     .withName(customResource.getMetadata().getName())
                     .edit().withPhase(phase).done();
         } catch (RuntimeException e) {
-            e.printStackTrace();
             throw e;
         }
 

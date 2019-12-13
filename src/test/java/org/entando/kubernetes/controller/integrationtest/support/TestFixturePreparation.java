@@ -22,7 +22,7 @@ import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 public final class TestFixturePreparation {
 
     public static final String ENTANDO_CONTROLLERS_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("entando-controllers");
-    public static final String CURRENT_ENTANDO_RESOURCE_VERSION = "v1alpha1";
+    public static final String CURRENT_ENTANDO_RESOURCE_VERSION = "v1";
 
     private TestFixturePreparation() {
 
