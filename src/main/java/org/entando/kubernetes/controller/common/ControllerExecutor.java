@@ -131,25 +131,26 @@ public class ControllerExecutor {
     private List<Volume> maybeCreateTlsVolumes(EntandoCustomResource resource) {
         List<Volume> result = new ArrayList<>();
         if (EntandoOperatorConfig.getCertificateAuthorityCertPaths().size() > 0) {
-            Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-ca-cert-secret")
+            Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-controller-ca-cert-secret")
                     .endMetadata().build();
             //Add all available CA Certs. No need to map the trustStore itself - the controller will build this up internally
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path -> secret.getData()
                     .put(path.getFileName().toString(), TlsHelper.getInstance().getTlsCaCertBase64(path)));
             client.secrets().overwriteControllerSecret(secret);
             result.add(new VolumeBuilder().withName("ca-cert-volume").withNewSecret()
-                    .withSecretName(resource.getMetadata().getName() + "-ca-cert-secret").endSecret()
+                    .withSecretName(resource.getMetadata().getName() + "-controller-ca-cert-secret").endSecret()
                     .build());
         }
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-tls-secret")
+            Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-controller-tls-secret")
                     .endMetadata()
+                    .withType("kubernetes.io/tls")
                     .addToData(TlsHelper.TLS_KEY, TlsHelper.getInstance().getTlsKeyBase64())
                     .addToData(TlsHelper.TLS_CRT, TlsHelper.getInstance().getTlsCertBase64())
                     .build();
             client.secrets().overwriteControllerSecret(secret);
             result.add(new VolumeBuilder().withName("tls-volume").withNewSecret()
-                    .withSecretName(resource.getMetadata().getName() + "-tls-secret").endSecret()
+                    .withSecretName(resource.getMetadata().getName() + "-controller-tls-secret").endSecret()
                     .build());
         }
         return result;

@@ -231,7 +231,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Flu
         }
 
         @Override
-        public KeycloakConnectionConfig getKeycloakDeploymentResult() {
+        public KeycloakConnectionConfig getKeycloakConnectionConfig() {
             return keycloakConnectionConfig;
         }
 

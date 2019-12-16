@@ -5,7 +5,11 @@ import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 
 public interface KeycloakAware extends DeployableContainer, HasWebContext {
 
-    KeycloakConnectionConfig getKeycloakDeploymentResult();
+    @Deprecated
+    default KeycloakConnectionConfig getKeycloakDeploymentResult(){
+        return getKeycloakConnectionConfig();
+    }
+    KeycloakConnectionConfig getKeycloakConnectionConfig();
 
     KeycloakClientConfig getKeycloakClientConfig();
 
