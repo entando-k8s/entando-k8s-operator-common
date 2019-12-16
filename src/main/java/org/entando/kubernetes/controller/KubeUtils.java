@@ -16,7 +16,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.externaldatabase.ExternalDatabase;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.KeycloakServer;
 
 public final class KubeUtils {
