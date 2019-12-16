@@ -8,6 +8,7 @@ import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import org.entando.kubernetes.controller.FluentTernary;
+import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DbServerStatus;
@@ -111,6 +112,7 @@ public class CreateExternalServiceCommand {
         ObjectMetaBuilder metaBuilder = new ObjectMetaBuilder()
                 .withName(externalDatabase.getMetadata().getName() + suffix)
                 .withNamespace(externalDatabase.getMetadata().getNamespace())
+                .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, externalDatabase.getKind())
                 .addToLabels(externalDatabase.getKind(), externalDatabase.getMetadata().getName());
         if (ownedByCustomResource) {
             metaBuilder = metaBuilder.withOwnerReferences(new OwnerReferenceBuilder()
