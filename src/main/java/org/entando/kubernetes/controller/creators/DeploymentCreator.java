@@ -17,7 +17,9 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentStatus;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -34,12 +36,15 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DeploymentCreator extends AbstractK8SResourceCreator {
 
-    public static final String ENTANDO_CONNECTIONS_ROOT_VALUE = "/etc/entando/connectionconfigs";
+    public static final String ENTANDO_SECRET_MOUNTS_ROOT = "/etc/entando/connectionconfigs";
     public static final String TRUST_STORE_FILE = "store.jks";
     public static final String DEFAULT_TRUST_STORE_SECRET_NAME = "entando-default-trust-store-secret";
-    private static final String VOLUME_SUFFIX = "-volume";
+    public static final String VOLUME_SUFFIX = "-volume";
     private static final String KEYSTORES_ROOT = "/etc/entando/keystores";
     public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
+    public static final String DEPLOYMENT_SUFFIX = "-deployment";
+    public static final String CONTAINER_SUFFIX = "-container";
+    public static final String PORT_SUFFIX = "-port";
     private Deployment deployment;
 
     public DeploymentCreator(
@@ -63,7 +68,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
             return null;
         }
         deployment = deployments.loadDeployment(entandoCustomResource, deployment.getMetadata().getName());
-        return deployment.getStatus();
+        return deployment.getStatus() == null ? new DeploymentStatus() : deployment.getStatus();
     }
 
     public Deployment getDeployment() {
@@ -111,7 +116,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                     .withNewPersistentVolumeClaim(resolveName(container.getNameQualifier(), "-pvc"), false)
                     .build());
         }
-        volumes.addAll(container.getConnectionConfigNames().stream()
+        volumes.addAll(container.getNamesOfSecretsToMount().stream()
                 .map(this::newSecretVolume)
                 .collect(Collectors.toList()));
         return volumes;
@@ -132,23 +137,38 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private Container newContainer(DeployableContainer deployableContainer) {
-        return new ContainerBuilder().withName(resolveName(deployableContainer.getNameQualifier(), "-container"))
+        return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + CONTAINER_SUFFIX)
                 .withImage(deployableContainer.determineImageToUse())
                 .withImagePullPolicy("Always")
-                .addNewPort().withName(deployableContainer.getNameQualifier() + "-port")
+                .addNewPort().withName(deployableContainer.getNameQualifier() + PORT_SUFFIX)
                 .withContainerPort(deployableContainer.getPort()).withProtocol("TCP").endPort()
                 .withReadinessProbe(buildReadinessProbe(deployableContainer))
                 .withVolumeMounts(buildVolumeMounts(deployableContainer))
                 .withEnv(determineEnvironmentVariables(deployableContainer))
                 .withNewResources()
-                .addToLimits("memory", new Quantity("2048Mi")).addToRequests("memory", new Quantity("256Mi"))
+                .addToLimits(buildResourceLimits(deployableContainer))
+                .addToRequests(buildResourceRequests(deployableContainer))
                 .endResources()
                 .build();
     }
 
+    private Map<String, Quantity> buildResourceRequests(DeployableContainer deployableContainer) {
+        Map<String, Quantity> result = new ConcurrentHashMap<>();
+        result.put("memory", new Quantity((deployableContainer.getMemoryLimitMebibytes() / 4) + "Mi"));
+        result.put("cpu", new Quantity((deployableContainer.getCpuLimitMillicores() / 4) + "m"));
+        return result;
+    }
+
+    private Map<String, Quantity> buildResourceLimits(DeployableContainer deployableContainer) {
+        Map<String, Quantity> result = new ConcurrentHashMap<>();
+        result.put("memory", new Quantity(deployableContainer.getMemoryLimitMebibytes() + "Mi"));
+        result.put("cpu", new Quantity(deployableContainer.getCpuLimitMillicores() + "m"));
+        return result;
+    }
+
     private List<VolumeMount> buildVolumeMounts(DeployableContainer deployableContainer) {
         List<VolumeMount> volumeMounts = new ArrayList<>(
-                deployableContainer.getConnectionConfigNames().stream()
+                deployableContainer.getNamesOfSecretsToMount().stream()
                         .map(this::newSecretVolumeMount)
                         .collect(Collectors.toList()));
         if (deployableContainer instanceof TlsAware && TlsHelper.getInstance().isTrustStoreAvailable()) {
@@ -171,7 +191,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     private VolumeMount newSecretVolumeMount(String s) {
         return new VolumeMountBuilder()
                 .withName(s + VOLUME_SUFFIX)
-                .withMountPath(ENTANDO_CONNECTIONS_ROOT_VALUE + "/" + s).withReadOnly(true).build();
+                .withMountPath(ENTANDO_SECRET_MOUNTS_ROOT + "/" + s).withReadOnly(true).build();
     }
 
     private Probe buildReadinessProbe(DeployableContainer deployableContainer) {
@@ -224,7 +244,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         if (container instanceof TlsAware && TlsHelper.getInstance().isTrustStoreAvailable()) {
             ((TlsAware) container).addTlsVariables(vars);
         }
-        vars.add(new EnvVar("CONNECTION_CONFIG_ROOT", ENTANDO_CONNECTIONS_ROOT_VALUE, null));
+        vars.add(new EnvVar("CONNECTION_CONFIG_ROOT", ENTANDO_SECRET_MOUNTS_ROOT, null));
         container.addEnvironmentVariables(vars);
         return vars;
     }
@@ -235,7 +255,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     protected Deployment newDeployment(Deployable deployable) {
         return new DeploymentBuilder()
-                .withMetadata(fromCustomResource(true, resolveName(((Deployable<?>) deployable).getNameQualifier(), "-deployment"),
+                .withMetadata(fromCustomResource(true, resolveName(((Deployable<?>) deployable).getNameQualifier(), DEPLOYMENT_SUFFIX),
                         ((Deployable<?>) deployable).getNameQualifier()))
                 .withSpec(buildDeploymentSpec(deployable))
                 .build();

@@ -3,7 +3,7 @@
     <module name="entando-k8s-operator-common" />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="org.entando.kubernetes.controller.*" />
+        <option name="PATTERN" value="org.entando.kubernetes.controller.common.examples.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

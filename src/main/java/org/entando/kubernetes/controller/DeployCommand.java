@@ -19,6 +19,7 @@ import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
+import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.ServiceResult;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.DbServerStatus;
@@ -78,7 +79,9 @@ public class DeployCommand<T extends ServiceResult> {
         if (shouldCreateServiceAccount()) {
             serviceAccountCreator.prepareServiceAccount(k8sClient.serviceAccounts(), deployable);
         }
-        createService(k8sClient);
+        if (shouldCreateService(deployable)) {
+            createService(k8sClient);
+        }
         if (deployable instanceof IngressingDeployable) {
             syncIngress(k8sClient, (IngressingDeployable) this.deployable);
         }
@@ -95,6 +98,10 @@ public class DeployCommand<T extends ServiceResult> {
             throw new EntandoControllerException("Creation of Kubernetes resources has failed");
         }
         return deployable.createResult(getDeployment(), getService(), getIngress(), getPod());
+    }
+
+    private boolean shouldCreateService(Deployable<T> deployable) {
+        return deployable.getContainers().stream().anyMatch(ServiceBackingContainer.class::isInstance);
     }
 
     private boolean shouldCreateServiceAccount() {

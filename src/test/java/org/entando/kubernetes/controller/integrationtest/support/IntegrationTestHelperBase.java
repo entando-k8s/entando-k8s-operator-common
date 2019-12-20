@@ -88,13 +88,13 @@ public class IntegrationTestHelperBase<
     }
 
     public void listenAndRespondWithPod(String namespace, Optional<String> imageVersion) {
-        String versionToUse = imageVersion.orElse(EntandoOperatorE2ETestConfig.getVersionOfImageUnderTest().orElse("6.0.0-dev"));
+        String versionToUse = imageVersion.orElse(EntandoOperatorTestConfig.getVersionOfImageUnderTest().orElse("6.0.0-dev"));
         ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
         containerStartingListener.listen(namespace, executor, versionToUse);
     }
 
     public void listenAndRespondWithImageVersionUnderTest(String namespace) {
-        String versionToUse = EntandoOperatorE2ETestConfig.getVersionOfImageUnderTest().orElseThrow(() -> new IllegalStateException(
+        String versionToUse = EntandoOperatorTestConfig.getVersionOfImageUnderTest().orElseThrow(() -> new IllegalStateException(
                 "The property 'entando.test.image.version' has not been set. Please set this property in your Maven command line"));
         ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
         containerStartingListener.listen(namespace, executor, versionToUse);

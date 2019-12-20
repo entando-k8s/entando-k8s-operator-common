@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.inprocesstest;
+package org.entando.kubernetes.controller.test.support;
 
 import static org.entando.kubernetes.controller.KubeUtils.ENTANDO_KEYCLOAK_REALM;
 import static org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil.MY_KEYCLOAK_BASE_URL;

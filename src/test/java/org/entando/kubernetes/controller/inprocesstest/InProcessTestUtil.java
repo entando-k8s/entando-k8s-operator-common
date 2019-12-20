@@ -10,6 +10,7 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.test.support.VolumeMatchAssertions;
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.JeeServer;
 import org.entando.kubernetes.model.app.EntandoApp;
@@ -22,6 +23,9 @@ import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
 
+/**
+ * Mostly a source of test fixture factories. TODO: These need to refactored to be inter-process friendly
+ */
 public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBasedAnswers, K8SResourceArgumentMatchers,
         StandardArgumentCaptors {
 

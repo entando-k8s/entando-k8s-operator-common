@@ -20,9 +20,9 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
         DoneableEntandoClusterInfrastructure
         > {
 
-    public static final String CLUSTER_INFRASTRUCTURE_NAMESPACE = EntandoOperatorE2ETestConfig
+    public static final String CLUSTER_INFRASTRUCTURE_NAMESPACE = EntandoOperatorTestConfig
             .calculateNameSpace("entando-infra-namespace");
-    public static final String CLUSTER_INFRASTRUCTURE_NAME = EntandoOperatorE2ETestConfig.calculateName("eti");
+    public static final String CLUSTER_INFRASTRUCTURE_NAME = EntandoOperatorTestConfig.calculateName("eti");
 
     ClusterInfrastructureIntegrationTestHelper(DefaultKubernetesClient client) {
         super(client, EntandoClusterInfrastructureOperationFactory::produceAllEntandoClusterInfrastructures);

@@ -1,41 +1,41 @@
-package org.entando.kubernetes.controller.common.example;
+package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.FluentTernary;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
+import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.DbmsImageVendor;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
-public class TestServerDeployableContainer implements IngressingContainer, DbAware, TlsAware {
+public class SampleDeployableContainer<T extends EntandoBaseCustomResource> implements IngressingContainer, DbAware, TlsAware,
+        PersistentVolumeAware {
 
-    private static final String DEFAULT_KEYCLOAK_IMAGE_NAME = "entando/entando-keycloak:6.0.0-SNAPSHOT";
+    public static final String DEFAULT_IMAGE_NAME = "entando/entando-keycloak:6.0.0-SNAPSHOT";
+    public static final String VAR_LIB_MYDATA = "/var/lib/mydata";
 
-    private final EntandoKeycloakServer keycloakServer;
+    private final T entandoResource;
     private Map<String, DatabaseSchemaCreationResult> dbSchemas;
 
-    public TestServerDeployableContainer(EntandoKeycloakServer keycloakServer) {
-        this.keycloakServer = keycloakServer;
+    public SampleDeployableContainer(T entandoResource) {
+        this.entandoResource = entandoResource;
     }
 
-    public static String secretName(EntandoKeycloakServer keycloakServer) {
-        return keycloakServer.getMetadata().getName() + "-admin-secret";
+    public static <T extends EntandoBaseCustomResource> String secretName(T entandoResource) {
+        return entandoResource.getMetadata().getName() + "-admin-secret";
     }
 
     @Override
     public String determineImageToUse() {
-        return DEFAULT_KEYCLOAK_IMAGE_NAME;
+        return DEFAULT_IMAGE_NAME;
     }
 
     @Override
@@ -50,8 +50,8 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
 
     @Override
     public void addEnvironmentVariables(List<EnvVar> vars) {
-        vars.add(new EnvVar("KEYCLOAK_USER", null, KubeUtils.secretKeyRef(secretName(keycloakServer), KubeUtils.USERNAME_KEY)));
-        vars.add(new EnvVar("KEYCLOAK_PASSWORD", null, KubeUtils.secretKeyRef(secretName(keycloakServer), KubeUtils.PASSSWORD_KEY)));
+        vars.add(new EnvVar("KEYCLOAK_USER", null, KubeUtils.secretKeyRef(secretName(entandoResource), KubeUtils.USERNAME_KEY)));
+        vars.add(new EnvVar("KEYCLOAK_PASSWORD", null, KubeUtils.secretKeyRef(secretName(entandoResource), KubeUtils.PASSSWORD_KEY)));
         DatabaseSchemaCreationResult databaseSchemaCreationResult = dbSchemas.get("db");
         vars.add(new EnvVar("DB_ADDR", databaseSchemaCreationResult.getInternalServiceHostname(), null));
         vars.add(new EnvVar("DB_PORT", databaseSchemaCreationResult.getPort(), null));
@@ -62,17 +62,6 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
         vars.add(new EnvVar("DB_SCHEMA", databaseSchemaCreationResult.getSchemaName(), null));
         databaseSchemaCreationResult.addAdditionalConfigFromDatabaseSecret(vars);
         vars.add(new EnvVar("PROXY_ADDRESS_FORWARDING", "true", null));
-    }
-
-    @Override
-    public void addTlsVariables(List<EnvVar> vars) {
-        String certFiles = String.join(" ",
-                EntandoOperatorConfig.getCertificateAuthorityCertPaths().stream()
-                        .map(path -> DeploymentCreator.standardCertPathOf(path.getFileName().toString()))
-                        .collect(Collectors.toList()));
-        vars.add(new EnvVar("X509_CA_BUNDLE",
-                "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt /var/run/secrets/kubernetes.io/serviceaccount/ca.crt "
-                        + certFiles, null));
     }
 
     private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaCreationResult databaseSchemaCreationResult) {
@@ -101,4 +90,8 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
         return Optional.empty();
     }
 
+    @Override
+    public String getVolumeMountPath() {
+        return VAR_LIB_MYDATA;
+    }
 }

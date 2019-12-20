@@ -22,7 +22,7 @@ import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
-import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorE2ETestConfig.TestTarget;
+import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig.TestTarget;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
@@ -96,7 +96,7 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
         entandoPlugins().afterTest();
         entandoApps().afterTest();
         appPluginLinks().afterTest();
-        if (EntandoOperatorE2ETestConfig.getTestTarget() == TestTarget.STANDALONE) {
+        if (EntandoOperatorTestConfig.getTestTarget() == TestTarget.STANDALONE) {
             client.close();
             stopStaleWatchersFromFillingUpTheLogs();
         }
@@ -142,7 +142,7 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
     }
 
     public void prepareControllers() {
-        if (EntandoOperatorE2ETestConfig.getTestTarget() == TestTarget.K8S) {
+        if (EntandoOperatorTestConfig.getTestTarget() == TestTarget.K8S) {
             redeployControllers();
         } else {
             //            EntandoControllerMain.start();

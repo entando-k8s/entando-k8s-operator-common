@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.inprocesstest;
+package org.entando.kubernetes.controller.test.support;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;

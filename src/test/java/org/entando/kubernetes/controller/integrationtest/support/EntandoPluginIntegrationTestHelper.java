@@ -19,8 +19,8 @@ import org.entando.kubernetes.model.plugin.EntandoPluginOperationFactory;
 public class EntandoPluginIntegrationTestHelper extends
         IntegrationTestHelperBase<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> {
 
-    public static final String TEST_PLUGIN_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("plugin-namespace");
-    public static final String TEST_PLUGIN_NAME = EntandoOperatorE2ETestConfig.calculateName("test-plugin-a");
+    public static final String TEST_PLUGIN_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("plugin-namespace");
+    public static final String TEST_PLUGIN_NAME = EntandoOperatorTestConfig.calculateName("test-plugin-a");
     public static final String PAM_CONNECTION_CONFIG = "pam-connection-config";
 
     public EntandoPluginIntegrationTestHelper(DefaultKubernetesClient client) {

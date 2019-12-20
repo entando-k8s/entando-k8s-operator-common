@@ -1,13 +1,12 @@
 package org.entando.kubernetes.client;
 
-import static java.lang.String.format;
-
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.PodResult;
@@ -17,8 +16,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultPodClient implements PodClient {
 
-    private static PodWatcherHolder podWatcherHolder = w -> {
-    };
+    private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
     private final KubernetesClient client;
 
     public DefaultPodClient(KubernetesClient client) {
@@ -27,8 +25,9 @@ public class DefaultPodClient implements PodClient {
         KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
     }
 
-    public static void setPodWatcherHolder(PodWatcherHolder podWatcherHolder) {
-        DefaultPodClient.podWatcherHolder = podWatcherHolder;
+    @Override
+    public AtomicReference<PodWatcher> getPodWatcherHolder() {
+        return podWatcherHolder;
     }
 
     @Override
@@ -46,11 +45,15 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
-        Watchable<Watch, Watcher<Pod>> watchable = client
-                .pods().inNamespace(namespace).withLabel(labelName, labelValue);
+        Watchable<Watch, Watcher<Pod>> watchable = client.pods().inNamespace(namespace).withLabel(labelName, labelValue);
         return watchPod(got -> PodResult.of(got).getState() == State.READY || PodResult.of(got).getState() == State.COMPLETED,
                 EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),
                 watchable);
+    }
+
+    @Override
+    public Pod loadPod(String namespace, String labelName, String labelValue) {
+        return client.pods().inNamespace(namespace).withLabel(labelName, labelValue).list().getItems().stream().findFirst().orElse(null);
     }
 
     /**
@@ -63,29 +66,4 @@ public class DefaultPodClient implements PodClient {
         return watchPod(podPredicate, timeoutSeconds, watchable);
 
     }
-
-    private Pod watchPod(Predicate<Pod> podPredicate, long timeoutSeconds, Watchable<Watch, Watcher<Pod>> podResource) {
-        try {
-            Object mutex = new Object();
-
-            synchronized (mutex) {
-                PodWatcher watcher = new PodWatcher(podPredicate, mutex);
-                podWatcherHolder.current(watcher);
-                podResource.watch(watcher);
-                mutex.wait(timeoutSeconds * 1000);
-                Pod got = watcher.getLastPod();
-                if (podPredicate.test(got)) {
-                    return got;
-                }
-                throw new IllegalStateException(format("Pod %s/%s did not meet the wait condition within %s seconds",
-                        got.getMetadata().getNamespace(),
-                        got.getMetadata().getName(),
-                        String.valueOf(timeoutSeconds)));
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
-    }
-
 }

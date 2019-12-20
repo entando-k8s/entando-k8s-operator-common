@@ -26,7 +26,7 @@ import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 public class ExternalDatabaseIntegrationTestHelper extends
         IntegrationTestHelperBase<EntandoDatabaseService, EntandoDatabaseServiceList, DoneableEntandoDatabaseService> {
 
-    public static final String MY_EXTERNAL_DB = EntandoOperatorE2ETestConfig.calculateName("my-external-db");
+    public static final String MY_EXTERNAL_DB = EntandoOperatorTestConfig.calculateName("my-external-db");
     private static final String ADMIN = "admin";
     private static final String TEST_SECRET = "test-secret";
 

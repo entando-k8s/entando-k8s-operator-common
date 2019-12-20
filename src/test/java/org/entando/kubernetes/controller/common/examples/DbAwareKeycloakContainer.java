@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.integrationtest;
+package org.entando.kubernetes.controller.common.examples;
 
 import java.util.Arrays;
 import java.util.List;

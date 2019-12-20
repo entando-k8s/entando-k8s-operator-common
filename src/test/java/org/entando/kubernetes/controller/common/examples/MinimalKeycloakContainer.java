@@ -1,8 +1,9 @@
-package org.entando.kubernetes.controller.integrationtest;
+package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;
 import java.util.Optional;
+import org.entando.kubernetes.controller.integrationtest.KeycloakClientIT;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 
 public class MinimalKeycloakContainer implements IngressingContainer {

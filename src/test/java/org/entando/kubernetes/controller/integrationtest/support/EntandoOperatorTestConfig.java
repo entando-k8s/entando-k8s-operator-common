@@ -3,7 +3,7 @@ package org.entando.kubernetes.controller.integrationtest.support;
 import java.util.Optional;
 import org.entando.kubernetes.controller.EntandoOperatorConfigBase;
 
-public final class EntandoOperatorE2ETestConfig extends EntandoOperatorConfigBase {
+public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 
     private static final String ENTANDO_TEST_NAMESPACE_OVERRIDE = "entando.test.namespace.override";
     private static final String ENTANDO_TEST_NAME_SUFFIX = "entando.test.name.suffix";
@@ -11,7 +11,7 @@ public final class EntandoOperatorE2ETestConfig extends EntandoOperatorConfigBas
     private static final String ENTANDO_TESTS_CERT_ROOT = "entando.k8s.operator.tests.cert.root";
     private static final String ENTANDO_TEST_IMAGE_VERSION = "entando.test.image.version";
 
-    private EntandoOperatorE2ETestConfig() {
+    private EntandoOperatorTestConfig() {
     }
 
     public static Optional<String> getKubernetesUsername() {

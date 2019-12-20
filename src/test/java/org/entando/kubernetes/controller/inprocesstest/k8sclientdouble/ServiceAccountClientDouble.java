@@ -26,9 +26,23 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
     }
 
     @Override
+    public Role loadRole(EntandoCustomResource peerInNamespace, String name) {
+        return getNamespace(peerInNamespace).getRole(name);
+    }
+
+    @Override
+    public RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name) {
+        return getNamespace(peerInNamespace).getRoleBinding(name);
+    }
+
+    @Override
     public Role createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role) {
         getNamespace(peerInNamespace).putRole(role);
         return role;
     }
 
+    @Override
+    public ServiceAccount loadServiceAccount(EntandoCustomResource peerInNamespace, String name) {
+        return getNamespace(peerInNamespace).getServiceAccount(name);
+    }
 }

@@ -15,8 +15,13 @@ public interface DeployableContainer {
     default void addEnvironmentVariables(List<EnvVar> vars) {
         //to avoid the need for repeated empty implementations
     }
-
-    default List<String> getConnectionConfigNames() {
+    default int getMemoryLimitMebibytes(){
+        return 256;
+    }
+    default int getCpuLimitMillicores(){
+        return 500;
+    }
+    default List<String> getNamesOfSecretsToMount() {
         return Collections.emptyList();
     }
 

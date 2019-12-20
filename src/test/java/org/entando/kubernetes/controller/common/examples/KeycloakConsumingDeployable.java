@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.common.example;
+package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;

@@ -26,6 +26,11 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @Override
+    public ServiceAccount loadServiceAccount(EntandoCustomResource peerInNamespace, String name) {
+        return client.serviceAccounts().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).fromServer().get();
+    }
+
+    @Override
     public RoleBinding createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
         try {
             return client.rbac().roleBindings().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(roleBinding);
@@ -35,11 +40,21 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @Override
+    public RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name) {
+        return client.rbac().roleBindings().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).fromServer().get();
+    }
+
+    @Override
     public Role createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role) {
         try {
             return client.rbac().roles().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(role);
         } catch (KubernetesClientException e) {
             return KubernetesExceptionProcessor.squashDuplicateExceptionOnCreate(peerInNamespace, role, e);
         }
+    }
+
+    @Override
+    public Role loadRole(EntandoCustomResource peerInNamespace, String name) {
+        return client.rbac().roles().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).fromServer().get();
     }
 }

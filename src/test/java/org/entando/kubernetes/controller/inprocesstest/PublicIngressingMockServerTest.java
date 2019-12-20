@@ -1,22 +1,11 @@
 package org.entando.kubernetes.controller.inprocesstest;
 
 import static org.awaitility.Awaitility.await;
-import static org.entando.kubernetes.controller.PodResult.RUNNING_PHASE;
-import static org.entando.kubernetes.controller.PodResult.SUCCEEDED_PHASE;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.PodStatus;
-import io.fabric8.kubernetes.api.model.PodStatusBuilder;
-import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import org.entando.kubernetes.client.DefaultPodClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.client.PodWatcher;
-import org.entando.kubernetes.client.PodWatcherHolder;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.controller.test.PodBehavior;
 import org.junit.Rule;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
@@ -32,63 +21,19 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
  */
 @Tag("in-process")
 @EnableRuleMigrationSupport
-public class PublicIngressingMockServerTest extends PublicIngressingTestBase {
+public class PublicIngressingMockServerTest extends PublicIngressingTestBase implements PodBehavior {
 
     @Rule
     public KubernetesServer server = new KubernetesServer(false, true);
-    private AtomicReference<PodWatcher> currentPodWatcher = new AtomicReference<>();
-    PodWatcherHolder podWatcherHolder = new PodWatcherHolder() {
-        @Override
-        public void current(PodWatcher w) {
-            currentPodWatcher.set(w);
+    private SimpleK8SClient defaultSimpleK8SClient;
+
+    @Override
+    public SimpleK8SClient getClient() {
+        if(defaultSimpleK8SClient==null){
+            defaultSimpleK8SClient=new DefaultSimpleK8SClient(server.getClient());
         }
-    };
-
-    @Override
-    protected SimpleK8SClient getClient() {
-        return new DefaultSimpleK8SClient(server.getClient());
+        return defaultSimpleK8SClient;
     }
 
-    @Override
-    protected void emulatePodWaitingBehaviour() {
-        new Thread(() -> {
-            DefaultPodClient.setPodWatcherHolder(podWatcherHolder);
-            await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
-            currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithReadyStatus());
-            await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
-            currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithSucceededStatus());
-            await().atMost(30, TimeUnit.SECONDS).until(() -> currentPodWatcher.get() != null);
-            currentPodWatcher.getAndSet(null).eventReceived(Action.MODIFIED, podWithReadyStatus());
-        }).start();
-    }
-
-    protected Pod podWithReadyStatus() {
-        return podWithStatus(new PodStatusBuilder().withPhase(RUNNING_PHASE)
-                .addNewContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
-                .endState().endContainerStatus()
-                .addNewInitContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
-                .endState().endInitContainerStatus()
-                .addNewCondition().withType("ContainersReady").withStatus("True").endCondition()
-                .addNewCondition().withType("Ready").withStatus("True").endCondition().build());
-    }
-
-    protected Pod podWithSucceededStatus() {
-        return podWithStatus(new PodStatusBuilder().withPhase(SUCCEEDED_PHASE)
-                .addNewContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
-                .endState().endContainerStatus()
-                .addNewInitContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
-                .endState().endInitContainerStatus()
-                .addNewCondition().withType("ContainersReady").withStatus("True").endCondition()
-                .addNewCondition().withType("Ready").withStatus("True").endCondition().build());
-    }
-
-    private Pod podWithStatus(PodStatus status) {
-        return k8sClient.pods().start(new PodBuilder().withNewMetadata()
-                .withName(SAMPLE_NAME + "123")
-                .withNamespace(SAMPLE_NAMESPACE).addToLabels(DEPLOYMENT_LABEL_NAME, SAMPLE_NAME + "-db").endMetadata()
-                .editOrNewSpec().addNewContainer().endContainer().endSpec()
-                .editOrNewSpec().addNewInitContainer().endInitContainer().endSpec()
-                .withStatus(status).build());
-    }
 
 }

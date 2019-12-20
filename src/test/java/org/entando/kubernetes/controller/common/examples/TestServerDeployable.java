@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.common.example;
+package org.entando.kubernetes.controller.common.examples;
 
 import static org.entando.kubernetes.controller.KubeUtils.generateSecret;
 

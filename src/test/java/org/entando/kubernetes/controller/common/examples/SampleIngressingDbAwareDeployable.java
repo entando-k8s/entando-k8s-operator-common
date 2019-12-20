@@ -1,10 +1,12 @@
-package org.entando.kubernetes.controller;
+package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.List;
+import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;

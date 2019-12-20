@@ -19,6 +19,6 @@ public class KeycloakConnectionSecret implements KeycloakConnectionConfig {
 
     @Override
     public String getBaseUrl() {
-        return KeycloakConnectionConfig.decodeSecretValue(adminSecret, KubeUtils.URL_KEY);
+        return decodeSecretValue(KubeUtils.URL_KEY);
     }
 }

@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller;
+package org.entando.kubernetes.controller.quarkus;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -18,6 +18,10 @@ import javax.ws.rs.ClientErrorException;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.KeycloakClientConfig;
+import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.spi.DeployableContainer;

@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.inprocesstest;
+package org.entando.kubernetes.controller.test.support;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;

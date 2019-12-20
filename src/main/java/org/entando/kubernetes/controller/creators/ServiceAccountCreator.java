@@ -19,6 +19,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ServiceAccountCreator extends AbstractK8SResourceCreator {
 
+    public static final String ROLEBINDING_SUFFIX = "-rolebinding";
     private ServiceAccount serviceAccount;
     private Role role;
 
@@ -51,7 +52,7 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
 
     private RoleBinding newRoleBinding() {
         return new RoleBindingBuilder()
-                .withNewMetadata().withName(serviceAccount.getMetadata().getName() + "-rolebinding")
+                .withNewMetadata().withName(serviceAccount.getMetadata().getName() + ROLEBINDING_SUFFIX)
                 .endMetadata()
                 .withNewRoleRef()
                 //                .withApiGroup("rbac.authorization.k8s.io")

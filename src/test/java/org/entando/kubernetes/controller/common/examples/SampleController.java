@@ -1,10 +1,15 @@
-package org.entando.kubernetes.controller;
+package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.quarkus.runtime.StartupEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import javax.enterprise.event.Observes;
+import org.entando.kubernetes.controller.AbstractDbAwareController;
+import org.entando.kubernetes.controller.DeployCommand;
+import org.entando.kubernetes.controller.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.ServiceDeploymentResult;
+import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.Deployable;

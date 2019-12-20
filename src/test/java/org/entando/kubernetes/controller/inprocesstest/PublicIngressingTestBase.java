@@ -7,9 +7,6 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.PodStatus;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
@@ -20,19 +17,23 @@ import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SampleController;
-import org.entando.kubernetes.controller.SampleDeployableContainer;
-import org.entando.kubernetes.controller.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleDeployableContainer;
+import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
-import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorE2ETestConfig;
+import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.KeycloakAware;
 import org.entando.kubernetes.controller.spi.KubernetesPermission;
+import org.entando.kubernetes.controller.test.PodBehavior;
+import org.entando.kubernetes.controller.test.support.FluentTraversals;
+import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
 import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
@@ -40,12 +41,12 @@ import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public abstract class PublicIngressingTestBase implements InProcessTestUtil, FluentTraversals, VariableReferenceAssertions {
+public abstract class PublicIngressingTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions {
 
-    public static final String SAMPLE_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("sample-namespace");
-    public static final String SAMPLE_NAME = EntandoOperatorE2ETestConfig.calculateName("sample-name");
-    public static final String OTHER_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("other-namespace");
-    public static final String OTHER_NAME = EntandoOperatorE2ETestConfig.calculateName("other-name");
+    public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
+    public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
+    public static final String OTHER_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("other-namespace");
+    public static final String OTHER_NAME = EntandoOperatorTestConfig.calculateName("other-name");
     protected SimpleK8SClient k8sClient;
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
@@ -92,7 +93,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Flu
             }
         };
         //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour();
+        emulatePodWaitingBehaviour(plugin2);
         //When I create a new EntandoPlugin
         onAdd(plugin2);
 
@@ -141,7 +142,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Flu
         //And I have prepared the Standard KeycloakAdminSecert
         k8sClient.secrets().overwriteControllerSecret(buildKeycloakSecret());
         //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour();
+        emulatePodWaitingBehaviour(plugin1);
         //When I create a new EntandoPlugin
         onAdd(plugin1);
 
@@ -173,9 +174,19 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Flu
                 .endSpec().build();
     }
 
-    protected abstract SimpleK8SClient getClient();
-
-    protected abstract void emulatePodWaitingBehaviour();
+    protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource) {
+        new Thread(() -> {
+            await().atMost(30, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+            getClient().pods().getPodWatcherHolder().getAndSet(null)
+                    .eventReceived(Action.MODIFIED, podWithReadyStatus(resource.getMetadata().getNamespace()));
+            await().atMost(30, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+            getClient().pods().getPodWatcherHolder().getAndSet(null)
+                    .eventReceived(Action.MODIFIED, podWithSucceededStatus(resource.getMetadata().getNamespace()));
+            await().atMost(30, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+            getClient().pods().getPodWatcherHolder().getAndSet(null)
+                    .eventReceived(Action.MODIFIED, podWithReadyStatus(resource.getMetadata().getNamespace()));
+        }).start();
+    }
 
     @SuppressWarnings("unchecked")
     public <T extends EntandoBaseCustomResource> void onAdd(T resource) {
@@ -186,23 +197,6 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Flu
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, createResource.getMetadata().getName());
             controller.onStartup(new StartupEvent());
         }).start();
-    }
-
-    protected Pod podWithReadyStatus() {
-        return podWithStatus(readyPodStatus());
-    }
-
-    protected Pod podWithSucceededStatus() {
-        return podWithStatus(succeededPodStatus());
-    }
-
-    private Pod podWithStatus(PodStatus status) {
-        return new PodBuilder().withNewMetadata()
-                .withName(SAMPLE_NAME + "123")
-                .withNamespace(SAMPLE_NAMESPACE).addToLabels(DEPLOYMENT_LABEL_NAME, SAMPLE_NAME + "-db").endMetadata()
-                .editOrNewSpec().addNewContainer().endContainer().endSpec()
-                .editOrNewSpec().addNewInitContainer().endInitContainer().endSpec()
-                .withStatus(status).build();
     }
 
     private static class EntandoPluginSampleDeployableContainer extends SampleDeployableContainer<EntandoPlugin> implements KeycloakAware {

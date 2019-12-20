@@ -23,7 +23,8 @@ import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.TlsHelper;
-import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorE2ETestConfig;
+import org.entando.kubernetes.controller.common.examples.MinimalKeycloakContainer;
+import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixturePreparation;
@@ -46,7 +47,7 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
 
     public static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);
 
-    public static final String KC_TEST_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("kc-test-namespace");
+    public static final String KC_TEST_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("kc-test-namespace");
     public static final String MY_REALM = "my-realm";
     public static final String MY_CLIENT = "my-client";
     public static final String EXISTING_CLIENT = "existing-client";

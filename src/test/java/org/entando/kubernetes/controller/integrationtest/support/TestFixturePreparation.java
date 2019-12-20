@@ -21,7 +21,7 @@ import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public final class TestFixturePreparation {
 
-    public static final String ENTANDO_CONTROLLERS_NAMESPACE = EntandoOperatorE2ETestConfig.calculateNameSpace("entando-controllers");
+    public static final String ENTANDO_CONTROLLERS_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("entando-controllers");
     public static final String CURRENT_ENTANDO_RESOURCE_VERSION = "v1";
 
     private TestFixturePreparation() {
@@ -36,7 +36,7 @@ public final class TestFixturePreparation {
 
     private static void initializeTls(AutoAdaptableKubernetesClient result) {
         String domainSuffix = IngressCreator.determineRoutingSuffix(result.getMasterUrl().getHost());
-        Path certRoot = Paths.get(EntandoOperatorE2ETestConfig.getTestsCertRoot());
+        Path certRoot = Paths.get(EntandoOperatorTestConfig.getTestsCertRoot());
         Path tlsPath = certRoot.resolve(domainSuffix);
         Path caCert = tlsPath.resolve("ca.crt");
         if (caCert.toFile().exists()) {
@@ -52,9 +52,9 @@ public final class TestFixturePreparation {
 
     private static AutoAdaptableKubernetesClient buildKubernetesClient() {
         ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withConnectionTimeout(30000).withRequestTimeout(30000);
-        EntandoOperatorE2ETestConfig.getKubernetesMasterUrl().ifPresent(s -> configBuilder.withMasterUrl(s));
-        EntandoOperatorE2ETestConfig.getKubernetesUsername().ifPresent(s -> configBuilder.withUsername(s));
-        EntandoOperatorE2ETestConfig.getKubernetesPassword().ifPresent(s -> configBuilder.withPassword(s));
+        EntandoOperatorTestConfig.getKubernetesMasterUrl().ifPresent(s -> configBuilder.withMasterUrl(s));
+        EntandoOperatorTestConfig.getKubernetesUsername().ifPresent(s -> configBuilder.withUsername(s));
+        EntandoOperatorTestConfig.getKubernetesPassword().ifPresent(s -> configBuilder.withPassword(s));
         Config config = configBuilder.build();
         OkHttpClient httpClient = HttpClientUtils.createHttpClient(config);
         AutoAdaptableKubernetesClient result = new AutoAdaptableKubernetesClient(httpClient, config);

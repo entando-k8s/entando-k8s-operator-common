@@ -7,13 +7,9 @@ import org.junit.jupiter.api.Tag;
 @Tag("in-process")
 public class ControllerExecutorMockClientTest extends ControllerExecutorTestBase {
 
+    SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
     @Override
-    protected void emulatePodWaitingBehaviour() {
-
-    }
-
-    @Override
-    protected SimpleK8SClient<?> getClient() {
-        return new SimpleK8SClientDouble();
+    public SimpleK8SClient<?> getClient() {
+        return simpleK8SClientDouble;
     }
 }
