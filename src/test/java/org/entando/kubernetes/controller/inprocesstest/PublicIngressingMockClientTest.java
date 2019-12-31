@@ -17,14 +17,14 @@ public class PublicIngressingMockClientTest extends PublicIngressingTestBase {
         PodClientDouble.setEmulatePodWatching(true);
     }
 
-    @Override
-    public SimpleK8SClient getClient() {
-        return simpleK8SClientDouble;
-    }
-
     @AfterAll
     public static void dontEmulatePodWaiting() {
         PodClientDouble.setEmulatePodWatching(false);
+    }
+
+    @Override
+    public SimpleK8SClient getClient() {
+        return simpleK8SClientDouble;
     }
 
 }

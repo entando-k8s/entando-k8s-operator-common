@@ -7,7 +7,6 @@ import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodConditionBuilder;
 import io.fabric8.kubernetes.api.model.PodSpec;
-import io.fabric8.kubernetes.api.model.PodStatus;
 import io.fabric8.kubernetes.api.model.PodStatusBuilder;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
@@ -76,7 +75,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
         if (emulatePodWatching) {
-            Pod result =  watchPod(
+            Pod result = watchPod(
                     got -> PodResult.of(got).getState() == State.READY || PodResult.of(got).getState() == State.COMPLETED,
                     EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),
                     new DummyWatchable());

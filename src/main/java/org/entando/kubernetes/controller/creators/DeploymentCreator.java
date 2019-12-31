@@ -40,11 +40,11 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     public static final String TRUST_STORE_FILE = "store.jks";
     public static final String DEFAULT_TRUST_STORE_SECRET_NAME = "entando-default-trust-store-secret";
     public static final String VOLUME_SUFFIX = "-volume";
-    private static final String KEYSTORES_ROOT = "/etc/entando/keystores";
-    public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
     public static final String DEPLOYMENT_SUFFIX = "-deployment";
     public static final String CONTAINER_SUFFIX = "-container";
     public static final String PORT_SUFFIX = "-port";
+    private static final String KEYSTORES_ROOT = "/etc/entando/keystores";
+    public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
     private Deployment deployment;
 
     public DeploymentCreator(

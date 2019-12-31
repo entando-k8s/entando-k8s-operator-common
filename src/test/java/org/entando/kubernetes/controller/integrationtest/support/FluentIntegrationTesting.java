@@ -3,14 +3,13 @@ package org.entando.kubernetes.controller.integrationtest.support;
 import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
-import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
-import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixtureRequest.DeletionRequestBuilder;
+import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public interface FluentIntegrationTesting extends FluentTraversals {

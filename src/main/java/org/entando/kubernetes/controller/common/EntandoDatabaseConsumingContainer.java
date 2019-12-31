@@ -10,7 +10,6 @@ import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
-import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 
 public abstract class EntandoDatabaseConsumingContainer implements DbAware, IngressingContainer {
 

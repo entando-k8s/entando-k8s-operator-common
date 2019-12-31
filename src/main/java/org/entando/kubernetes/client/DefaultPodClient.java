@@ -16,8 +16,8 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultPodClient implements PodClient {
 
-    private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
     private final KubernetesClient client;
+    private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
 
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;

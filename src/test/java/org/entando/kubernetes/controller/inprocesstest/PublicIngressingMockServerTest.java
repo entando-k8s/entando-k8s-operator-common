@@ -1,7 +1,5 @@
 package org.entando.kubernetes.controller.inprocesstest;
 
-import static org.awaitility.Awaitility.await;
-
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
@@ -29,11 +27,10 @@ public class PublicIngressingMockServerTest extends PublicIngressingTestBase imp
 
     @Override
     public SimpleK8SClient getClient() {
-        if(defaultSimpleK8SClient==null){
-            defaultSimpleK8SClient=new DefaultSimpleK8SClient(server.getClient());
+        if (defaultSimpleK8SClient == null) {
+            defaultSimpleK8SClient = new DefaultSimpleK8SClient(server.getClient());
         }
         return defaultSimpleK8SClient;
     }
-
 
 }
