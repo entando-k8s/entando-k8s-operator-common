@@ -14,8 +14,8 @@ import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
+import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.junit.jupiter.api.Test;
 
