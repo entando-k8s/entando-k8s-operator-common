@@ -8,8 +8,8 @@ import org.entando.kubernetes.controller.common.examples.BareBonesContainer
 import org.entando.kubernetes.controller.common.examples.BareBonesDeployable
 import org.entando.kubernetes.controller.creators.DeploymentCreator
 import org.entando.kubernetes.controller.creators.ServiceAccountCreator
-import org.entando.kubernetes.controller.integrationtest.support.TestFixturePreparation
 import org.entando.kubernetes.controller.test.support.DefaultSecretBasedCredentials
+import org.entando.kubernetes.controller.test.support.PodBehavior
 import org.entando.kubernetes.controller.test.support.TestFixtureFactory
 import org.entando.kubernetes.model.DbmsImageVendor
 import org.entando.kubernetes.model.EntandoCustomResource

@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.test;
+package org.entando.kubernetes.controller.test.support;
 
 import static org.entando.kubernetes.controller.PodResult.RUNNING_PHASE;
 import static org.entando.kubernetes.controller.PodResult.SUCCEEDED_PHASE;
@@ -19,16 +19,6 @@ import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 
 public interface PodBehavior {
 
-    default Pod podWithReadyStatus(String namespace) {
-        return podWithStatus(new PodStatusBuilder().withPhase(RUNNING_PHASE)
-                .addNewContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
-                .endState().endContainerStatus()
-                .addNewInitContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
-                .endState().endInitContainerStatus()
-                .addNewCondition().withType("ContainersReady").withStatus("True").endCondition()
-                .addNewCondition().withType("Ready").withStatus("True").endCondition().build(), namespace);
-    }
-
     default Pod podWithReadyStatus(Deployment deployment) {
         return podWithReadyStatus(podFrom(deployment));
     }
@@ -41,16 +31,6 @@ public interface PodBehavior {
                 .addNewCondition().withType("Ready").withStatus("True").endCondition().build();
         pod.setStatus(status);
         return pod;
-    }
-
-    default Pod podWithSucceededStatus(String namespace) {
-        return podWithStatus(new PodStatusBuilder().withPhase(SUCCEEDED_PHASE)
-                .addNewContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
-                .endState().endContainerStatus()
-                .addNewInitContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
-                .endState().endInitContainerStatus()
-                .addNewCondition().withType("ContainersReady").withStatus("True").endCondition()
-                .addNewCondition().withType("Ready").withStatus("True").endCondition().build(), namespace);
     }
 
     default Pod podWithSucceededStatus(Pod pod) {

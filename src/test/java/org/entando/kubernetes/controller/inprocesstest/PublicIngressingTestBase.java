@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
@@ -29,8 +30,8 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.KeycloakAware;
 import org.entando.kubernetes.controller.spi.KubernetesPermission;
-import org.entando.kubernetes.controller.test.PodBehavior;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
+import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
@@ -176,17 +177,24 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
     protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource, String deploymentName) {
         new Thread(() -> {
-            await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-            Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
-            getClient().pods().getPodWatcherHolder().getAndSet(null)
-                    .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
-            await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-            getClient().pods().getPodWatcherHolder().getAndSet(null)
-                    .eventReceived(Action.MODIFIED, podWithSucceededStatus(resource.getMetadata().getNamespace()));
-            await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-            Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
-            getClient().pods().getPodWatcherHolder().getAndSet(null)
-                    .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+            try {
+                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
+                getClient().pods().getPodWatcherHolder().getAndSet(null)
+                        .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
+                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                String dbJobName = String.format("%s-db-preparation-job", resource.getMetadata().getName());
+                Pod dbPreparationPod = getClient().pods()
+                        .loadPod(resource.getMetadata().getNamespace(), KubeUtils.DB_JOB_LABEL_NAME, dbJobName);
+                getClient().pods().getPodWatcherHolder().getAndSet(null)
+                        .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
+                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
+                getClient().pods().getPodWatcherHolder().getAndSet(null)
+                        .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
         }).start();
     }

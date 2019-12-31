@@ -41,21 +41,23 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
 
     @Override
     public Pod runToCompletion(EntandoCustomResource resource, Pod pod) {
-        if (emulatePodWatching) {
-            if (pod != null) {
+        if (pod != null) {
+            getNamespace(pod).putPod(pod);
+            if (emulatePodWatching) {
                 return watchPod(got -> PodResult.of(got).getState() == State.COMPLETED,
                         EntandoOperatorConfig.getPodCompletionTimeoutSeconds(), new DummyWatchable());
 
+            } else {
+
+                pod.setStatus(new PodStatusBuilder().withPhase("Complete").build());
+                pod.getSpec().getInitContainers()
+                        .forEach(container -> pod.getStatus().getInitContainerStatuses().add(new ContainerStatusBuilder()
+                                .withNewState().withNewTerminated().withReason("Complete").withExitCode(0).endTerminated().endState()
+                                .build()));
+                pod.getSpec().getContainers().forEach(container -> pod.getStatus().getContainerStatuses().add(new ContainerStatusBuilder()
+                        .withNewState().withNewTerminated().withReason("Complete").withExitCode(0).endTerminated().endState()
+                        .build()));
             }
-        } else if (pod != null) {
-            pod.setStatus(new PodStatusBuilder().withPhase("Complete").build());
-            pod.getSpec().getInitContainers()
-                    .forEach(container -> pod.getStatus().getInitContainerStatuses().add(new ContainerStatusBuilder()
-                            .withNewState().withNewTerminated().withReason("Complete").withExitCode(0).endTerminated().endState()
-                            .build()));
-            pod.getSpec().getContainers().forEach(container -> pod.getStatus().getContainerStatuses().add(new ContainerStatusBuilder()
-                    .withNewState().withNewTerminated().withReason("Complete").withExitCode(0).endTerminated().endState()
-                    .build()));
         }
         return pod;
     }
@@ -94,11 +96,13 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
                     .forEach(container -> result.getStatus().getInitContainerStatuses().add(new ContainerStatusBuilder()
                             .withNewState().withNewRunning().endRunning().endState()
                             .build()));
-            result.getSpec().getContainers().forEach(container -> result.getStatus().getContainerStatuses().add(new ContainerStatusBuilder()
-                    .withNewState().withNewRunning().endRunning().endState()
-                    .build()));
+            result.getSpec().getContainers()
+                    .forEach(container -> result.getStatus().getContainerStatuses().add(new ContainerStatusBuilder()
+                            .withNewState().withNewRunning().endRunning().endState()
+                            .build()));
             result.getStatus().getConditions()
-                    .add(new PodConditionBuilder().withType("Ready").withLastTransitionTime(PodResult.DATE_FORMAT.get().format(new Date()))
+                    .add(new PodConditionBuilder().withType("Ready")
+                            .withLastTransitionTime(PodResult.DATE_FORMAT.get().format(new Date()))
                             .build());
             return result;
         }
