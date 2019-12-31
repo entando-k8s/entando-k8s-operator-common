@@ -54,7 +54,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     private SampleController controller;
 
     @Test
-    public void testTwoDeploymnentsSharingAnIngress() {
+    public void testTwoDeploymentsSharingAnIngress() {
         //Given I have a PublicIngressingDeployment in the Sample Namespace
         testBasicDeployment();
         //And I have a plugin in another namespace to share the same Ingress
@@ -93,7 +93,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
             }
         };
         //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour(plugin2);
+        emulatePodWaitingBehaviour(plugin2, plugin2.getMetadata().getName());
         //When I create a new EntandoPlugin
         onAdd(plugin2);
 
@@ -142,7 +142,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //And I have prepared the Standard KeycloakAdminSecert
         k8sClient.secrets().overwriteControllerSecret(buildKeycloakSecret());
         //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour(plugin1);
+        emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
         //When I create a new EntandoPlugin
         onAdd(plugin1);
 
@@ -174,17 +174,20 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 .endSpec().build();
     }
 
-    protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource) {
+    protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource, String deploymentName) {
         new Thread(() -> {
-            await().atMost(30, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+            await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+            Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
             getClient().pods().getPodWatcherHolder().getAndSet(null)
-                    .eventReceived(Action.MODIFIED, podWithReadyStatus(resource.getMetadata().getNamespace()));
-            await().atMost(30, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                    .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
+            await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
             getClient().pods().getPodWatcherHolder().getAndSet(null)
                     .eventReceived(Action.MODIFIED, podWithSucceededStatus(resource.getMetadata().getNamespace()));
-            await().atMost(30, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+            await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+            Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
             getClient().pods().getPodWatcherHolder().getAndSet(null)
-                    .eventReceived(Action.MODIFIED, podWithReadyStatus(resource.getMetadata().getNamespace()));
+                    .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+
         }).start();
     }
 

@@ -57,7 +57,7 @@ public class KeycloakClientCreator {
             keycloakConnectionConfig = deployable.getContainers().stream()
                     .filter(KeycloakAware.class::isInstance)
                     .map(KeycloakAware.class::cast)
-                    .map(KeycloakAware::getKeycloakDeploymentResult)
+                    .map(KeycloakAware::getKeycloakConnectionConfig)
                     .findAny()
                     .orElseThrow(IllegalArgumentException::new);
         }

@@ -152,7 +152,8 @@ public interface FluentTraversals {
         protected <T> T find(List<T> list) {
             return list.stream().filter(this::match)
                     .findFirst()
-                    .orElseThrow(AssertionError::new);
+                    .orElseThrow(
+                            AssertionError::new);
         }
 
         private boolean match(Object namedObject) {

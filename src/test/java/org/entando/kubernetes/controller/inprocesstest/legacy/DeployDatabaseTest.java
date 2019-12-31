@@ -156,7 +156,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
                 MY_KEYCLOAK_DB_DEPLOYMENT);
         verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
-        Container theDbContainer = theContainerNamed(MY_KEYCLOAK_DB_CONTAINER).on(dbDeployment);
+        Container theDbContainer = theContainerNamed("db-container").on(dbDeployment);
         //Exposing a port 3306
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(3306));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));
@@ -197,7 +197,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
                 MY_KEYCLOAK_DB_DEPLOYMENT);
         verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
-        Container theDbContainer = theContainerNamed(MY_KEYCLOAK_DB_CONTAINER).on(dbDeployment);
+        Container theDbContainer = theContainerNamed("db-container").on(dbDeployment);
         //Exposing a port 5432
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(5432));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));

@@ -313,7 +313,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
                 MY_KEYCLOAK_DB_DEPLOYMENT);
         verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
-        verifyTheDbContainer(theContainerNamed(MY_KEYCLOAK_DB_CONTAINER).on(dbDeployment));
+        verifyTheDbContainer(theContainerNamed("db-container").on(dbDeployment));
         //With a Pod Template that has labels linking it to the previously created K8S Database Service
         assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK_DB));
         assertThat(theLabel(KEYCLOAK_SERVER_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()),
@@ -327,7 +327,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         //With a Pod Template that has labels linking it to the previously created K8S  Keycloak Service
         assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(serverDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK_SERVER));
         assertThat(theLabel(KEYCLOAK_SERVER_LABEL_NAME).on(serverDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK));
-        verifyTheServerContainer(theContainerNamed(MY_KEYCLOAK_SERVER_CONTAINER).on(serverDeployment));
+        verifyTheServerContainer(theContainerNamed("server-container").on(serverDeployment));
 
         //And the Deployment state was reloaded from K8S for both deployments
         verify(client.deployments()).loadDeployment(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT));

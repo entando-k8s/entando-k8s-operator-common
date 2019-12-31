@@ -9,8 +9,10 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
+import org.entando.kubernetes.controller.spi.IngressingContainer;
+import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 
-public abstract class EntandoDatabaseConsumingContainer implements DbAware {
+public abstract class EntandoDatabaseConsumingContainer implements DbAware, IngressingContainer {
 
     private static final String PORTDB = "portdb";
     private static final String SERVDB = "servdb";
@@ -20,6 +22,16 @@ public abstract class EntandoDatabaseConsumingContainer implements DbAware {
 
     protected DatabasePopulator buildDatabasePopulator() {
         return new EntandoAppDatabasePopulator(this);
+    }
+
+    @Override
+    public String getWebContextPath() {
+        return "/entando-de-app";
+    }
+
+    @Override
+    public Optional<String> getHealthCheckPath() {
+        return Optional.of(getWebContextPath());
     }
 
     @Override

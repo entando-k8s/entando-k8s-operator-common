@@ -14,11 +14,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.common.examples.SampleController;
-import org.entando.kubernetes.controller.common.examples.SampleIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.examples.DbAwareKeycloakContainer;
+import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.integrationtest.support.ClusterInfrastructureIntegrationTestHelper;
@@ -98,7 +98,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                 .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                 .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-db-deployment")
                 .get();
-        assertThat(thePortNamed(DB_PORT).on(theContainerNamed(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-db-container").on(deployment))
+        assertThat(thePortNamed(DB_PORT).on(theContainerNamed("db-container").on(deployment))
                 .getContainerPort(), equalTo(KEYCLOAK_DB_PORT));
         Service service = client.services().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(
                 KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-db-service").get();
@@ -136,7 +136,7 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
         Deployment deployment = client.apps().deployments().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                 .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-deployment").get();
         assertThat(thePortNamed("server-port")
-                        .on(theContainerNamed(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-container").on(deployment))
+                        .on(theContainerNamed("server-container").on(deployment))
                         .getContainerPort(),
                 is(8080));
         Service service = client.services().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(

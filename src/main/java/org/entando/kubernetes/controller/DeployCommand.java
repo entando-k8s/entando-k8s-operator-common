@@ -83,6 +83,10 @@ public class DeployCommand<T extends ServiceResult> {
             createService(k8sClient);
         }
         if (deployable instanceof IngressingDeployable) {
+            if (((IngressingDeployable) this.deployable).getIngressingContainers().isEmpty()) {
+                throw new IllegalStateException(
+                        deployable.getClass() + " implements IngressingDeployable but has no IngressingContainers.");
+            }
             syncIngress(k8sClient, (IngressingDeployable) this.deployable);
         }
         if (keycloakClientCreator.requiresKeycloakClients(deployable)) {

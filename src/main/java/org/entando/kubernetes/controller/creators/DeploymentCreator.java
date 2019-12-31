@@ -227,7 +227,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         ArrayList<EnvVar> vars = new ArrayList<>();
         if (container instanceof KeycloakAware) {
             KeycloakAware keycloakAware = (KeycloakAware) container;
-            KeycloakConnectionConfig keycloakDeployment = keycloakAware.getKeycloakDeploymentResult();
+            KeycloakConnectionConfig keycloakDeployment = keycloakAware.getKeycloakConnectionConfig();
             vars.add(new EnvVar("KEYCLOAK_ENABLED", "true", null));
             vars.add(new EnvVar("KEYCLOAK_REALM", KubeUtils.ENTANDO_KEYCLOAK_REALM, null));
             vars.add(new EnvVar("KEYCLOAK_PUBLIC_CLIENT_ID", KubeUtils.PUBLIC_CLIENT_ID, null));

@@ -76,17 +76,10 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
         if (emulatePodWatching) {
-            Pod result = getNamespace(namespace).getPods().values().stream()
-                    .filter(pod -> labelValue.equals(pod.getMetadata().getLabels().get(labelName))).findFirst()
-                    .orElseThrow(() ->
-                            new IllegalStateException(format("Could not find pod with label %s=%s", labelName, labelValue)));
-            PodStatus status = watchPod(
+            Pod result =  watchPod(
                     got -> PodResult.of(got).getState() == State.READY || PodResult.of(got).getState() == State.COMPLETED,
                     EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),
-                    new DummyWatchable()).getStatus();
-            if (result != null) {
-                result.setStatus(status);
-            }
+                    new DummyWatchable());
             return result;
         } else if (!getNamespace(namespace).getPods().isEmpty()) {
             Pod result = getNamespace(namespace).getPods().values().stream()

@@ -29,6 +29,20 @@ public interface PodBehavior {
                 .addNewCondition().withType("Ready").withStatus("True").endCondition().build(), namespace);
     }
 
+    default Pod podWithReadyStatus(Deployment deployment) {
+        return podWithReadyStatus(podFrom(deployment));
+    }
+
+    default Pod podWithReadyStatus(Pod pod) {
+        PodStatus status = new PodStatusBuilder().withPhase(SUCCEEDED_PHASE)
+                .withContainerStatuses(statusesFor(pod.getSpec().getContainers()))
+                .withInitContainerStatuses(statusesFor(pod.getSpec().getInitContainers()))
+                .addNewCondition().withType("ContainersReady").withStatus("True").endCondition()
+                .addNewCondition().withType("Ready").withStatus("True").endCondition().build();
+        pod.setStatus(status);
+        return pod;
+    }
+
     default Pod podWithSucceededStatus(String namespace) {
         return podWithStatus(new PodStatusBuilder().withPhase(SUCCEEDED_PHASE)
                 .addNewContainerStatus().withNewState().withNewTerminated().withExitCode(0).endTerminated()
@@ -50,8 +64,12 @@ public interface PodBehavior {
     }
 
     default Pod podWithSucceededStatus(Deployment deployment) {
+        return podWithSucceededStatus(podFrom(deployment));
+    }
+
+    default Pod podFrom(Deployment deployment) {
         PodTemplateSpec template = deployment.getSpec().getTemplate();
-        Pod pod = new PodBuilder()
+        return new PodBuilder()
                 .withNewMetadata()
                 .withLabels(template.getMetadata().getLabels())
                 .withNamespace(deployment.getMetadata().getNamespace())
@@ -62,7 +80,6 @@ public interface PodBehavior {
                 .withInitContainers(template.getSpec().getInitContainers())
                 .endSpec()
                 .build();
-        return podWithSucceededStatus(pod);
     }
 
     default List<ContainerStatus> statusesFor(List<Container> initContainers) {
