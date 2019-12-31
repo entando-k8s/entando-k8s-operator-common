@@ -1,6 +1,5 @@
 package org.entando.kubernetes.controller.test.support;
 
-import static org.entando.kubernetes.controller.PodResult.RUNNING_PHASE;
 import static org.entando.kubernetes.controller.PodResult.SUCCEEDED_PHASE;
 
 import io.fabric8.kubernetes.api.model.Container;
