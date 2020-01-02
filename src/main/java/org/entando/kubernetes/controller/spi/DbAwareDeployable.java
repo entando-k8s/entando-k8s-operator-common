@@ -11,7 +11,7 @@ public interface DbAwareDeployable {
     List<DeployableContainer> getContainers();
 
     default boolean hasContainersExpectingSchemas() {
-        return getDbAwareContainers().size() > 0;
+        return !getDbAwareContainers().isEmpty();
     }
 
     default List<DbAware> getDbAwareContainers() {

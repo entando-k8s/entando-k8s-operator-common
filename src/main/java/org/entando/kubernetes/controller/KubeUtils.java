@@ -18,7 +18,6 @@ import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public final class KubeUtils {
 
-    //TODO these seem a bit lost here
     public static final String PASSSWORD_KEY = "password";//Funny name because a variable named 'PASSWORD' is considered a vulnerability
     public static final String USERNAME_KEY = "username";
     public static final String DB_JOB_LABEL_NAME = "dbJob";

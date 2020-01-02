@@ -82,18 +82,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     @Override
     public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
-        try {
-            getOperations(customResource.getClass())
-                    .inNamespace(customResource.getMetadata().getNamespace())
-                    .withName(customResource.getMetadata().getName())
-                    .edit()
-                    .withStatus(status)
-                    .done();
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            throw e;
-        }
-
+        getOperations(customResource.getClass())
+                .inNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName())
+                .edit()
+                .withStatus(status)
+                .done();
     }
 
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
@@ -122,14 +116,10 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     @Override
     public void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase) {
-        try {
-            getOperations(customResource.getClass())
-                    .inNamespace(customResource.getMetadata().getNamespace())
-                    .withName(customResource.getMetadata().getName())
-                    .edit().withPhase(phase).done();
-        } catch (RuntimeException e) {
-            throw e;
-        }
+        getOperations(customResource.getClass())
+                .inNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName())
+                .edit().withPhase(phase).done();
 
     }
 

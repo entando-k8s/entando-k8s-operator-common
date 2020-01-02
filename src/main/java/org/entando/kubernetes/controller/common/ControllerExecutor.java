@@ -116,7 +116,7 @@ public class ControllerExecutor {
                 .ifPresent(s -> result.add(new EnvVar("ENTANDO_OPERATOR_NAMESPACE_OVERRIDE", s, null)));
         EntandoOperatorConfig.getDefaultRoutingSuffix()
                 .ifPresent(s -> result.add(new EnvVar("ENTANDO_DEFAULT_ROUTING_SUFFIX", s, null)));
-        if (EntandoOperatorConfig.getCertificateAuthorityCertPaths().size() > 0) {
+        if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             StringBuilder sb = new StringBuilder();
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path ->
                     sb.append("/etc/entando/ca/").append(path.getFileName().toString()).append(" "));
@@ -130,7 +130,7 @@ public class ControllerExecutor {
 
     private List<Volume> maybeCreateTlsVolumes(EntandoCustomResource resource) {
         List<Volume> result = new ArrayList<>();
-        if (EntandoOperatorConfig.getCertificateAuthorityCertPaths().size() > 0) {
+        if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-controller-ca-cert-secret")
                     .endMetadata().build();
             //Add all available CA Certs. No need to map the trustStore itself - the controller will build this up internally
@@ -158,7 +158,7 @@ public class ControllerExecutor {
 
     private List<VolumeMount> maybeCreateTlsVolumeMounts() {
         List<VolumeMount> result = new ArrayList<>();
-        if (EntandoOperatorConfig.getCertificateAuthorityCertPaths().size() > 0) {
+        if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             result.add(new VolumeMountBuilder().withName("ca-cert-volume").withMountPath(ETC_ENTANDO_CA).build());
         }
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {

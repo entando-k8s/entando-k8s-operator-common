@@ -8,8 +8,6 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.model.ConfigVariable;
 import org.entando.kubernetes.model.DbmsImageVendor;
 
-//TODO this generalization reduces code but confuses semantics
-
 public class DatabaseSchemaCreationResult extends AbstractServiceResult {
 
     private final DatabaseServiceResult databaseServiceResult;

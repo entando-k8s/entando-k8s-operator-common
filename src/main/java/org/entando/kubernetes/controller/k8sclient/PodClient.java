@@ -28,17 +28,19 @@ public interface PodClient {
             Object mutex = new Object();
 
             synchronized (mutex) {
-                PodWatcher watcher = new PodWatcher(podPredicate, mutex);
+                PodWatcher watcher = new PodWatcher(podPredicate, mutex, timeoutSeconds * 1000);
                 getPodWatcherHolder().set(watcher);
                 podResource.watch(watcher);
-                mutex.wait(timeoutSeconds * 1000);
-                Pod got = watcher.getLastPod();
-                if (podPredicate.test(got)) {
-                    return got;
+                //Sonar seems to believe the JVM may not respect wait() with timeout due to 'Spurious wakeups'
+                while (watcher.shouldStillWait()) {
+                    mutex.wait(timeoutSeconds * 1000);
+                }
+                if (watcher.lastPodFulfillsCondition()) {
+                    return watcher.getLastPod();
                 }
                 throw new IllegalStateException(format("Pod %s/%s did not meet the wait condition within %s seconds",
-                        got.getMetadata().getNamespace(),
-                        got.getMetadata().getName(),
+                        watcher.getLastPod().getMetadata().getNamespace(),
+                        watcher.getLastPod().getMetadata().getName(),
                         String.valueOf(timeoutSeconds)));
             }
         } catch (InterruptedException e) {

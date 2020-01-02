@@ -171,7 +171,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         }
     }
 
-    //TODO this is a signficant security risk but should fall away when we move the Componen registration elsewheree
+    //TODO this is a signficant security risk but should fall away when we move the Component registration elsewhere
     private void createOperatorClient(RealmResource realmResource) {
         ClientRepresentation client = new ClientRepresentation();
         client.setName("Entando K8s Operator");
@@ -245,25 +245,21 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     private void updateClient(KeycloakClientConfig config, String id) {
         RealmResource realmResource = keycloak.realm(config.getRealm());
         ClientResource clientResource = realmResource.clients().get(id);
-        //TODO this will never be null - this could result in accidental updates.
-        ofNullable(config.getRoles()).ifPresent(roles -> {
-            List<RoleRepresentation> list = clientResource.roles().list();
-            Set<String> desiredRoleNames = roles.stream()
-                    .map(ExpectedRole::getName)
-                    .collect(Collectors.toSet());
-            List<String> currentRoleNames = list.stream()
-                    .map(RoleRepresentation::getName)
-                    .collect(Collectors.toList());
-
-            currentRoleNames.stream()
-                    .filter(roleName -> !desiredRoleNames.contains(roleName))
-                    .forEach(clientResource.roles()::deleteRole);
-            roles.stream().filter(role -> !currentRoleNames.contains(role.getName()))
-                    .map(DefaultKeycloakClient::toRoleRepresentation)
-                    .forEach(clientResource.roles()::create);
-        });
-        ofNullable(config.getPermissions())
-                .ifPresent(list -> list.forEach(role -> assignServiceAccountRole(realmResource, clientResource, role)));
+        List<ExpectedRole> desiredRoles = config.getRoles();
+        List<RoleRepresentation> currentRoles = clientResource.roles().list();
+        Set<String> desiredRoleNames = desiredRoles.stream()
+                .map(ExpectedRole::getName)
+                .collect(Collectors.toSet());
+        List<String> currentRoleNames = currentRoles.stream()
+                .map(RoleRepresentation::getName)
+                .collect(Collectors.toList());
+        currentRoleNames.stream()
+                .filter(roleName -> !desiredRoleNames.contains(roleName))
+                .forEach(clientResource.roles()::deleteRole);
+        desiredRoles.stream().filter(role -> !currentRoleNames.contains(role.getName()))
+                .map(DefaultKeycloakClient::toRoleRepresentation)
+                .forEach(clientResource.roles()::create);
+        config.getPermissions().forEach(role -> assignServiceAccountRole(realmResource, clientResource, role));
         List<String> redirectUris = config.getRedirectUris();
         if (redirectUris.size() > 0) {
             ClientRepresentation clientRepresentation = clientResource.toRepresentation();

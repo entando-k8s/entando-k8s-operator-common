@@ -9,9 +9,11 @@ public class PodWatcher implements Watcher<Pod> {
 
     private final Predicate<Pod> podPredicate;
     private final Object mutex;
+    private final long timeout;
+    private final long startTime = System.currentTimeMillis();
     private Pod lastPod;
 
-    public PodWatcher(Predicate<Pod> podPredicate, Object mutex) {
+    public PodWatcher(Predicate<Pod> podPredicate, Object mutex, long timeout) {
         this.podPredicate = pod -> {
             try {
                 return podPredicate.test(pod);
@@ -20,6 +22,7 @@ public class PodWatcher implements Watcher<Pod> {
             }
         };
         this.mutex = mutex;
+        this.timeout = timeout;
     }
 
     @Override
@@ -41,5 +44,17 @@ public class PodWatcher implements Watcher<Pod> {
 
     public Pod getLastPod() {
         return lastPod;
+    }
+
+    public boolean shouldStillWait() {
+        return !(hasTimedOut() || lastPodFulfillsCondition());
+    }
+
+    public boolean lastPodFulfillsCondition() {
+        return lastPod != null && podPredicate.test(lastPod);
+    }
+
+    private boolean hasTimedOut() {
+        return System.currentTimeMillis() > startTime + timeout;
     }
 }
