@@ -60,7 +60,7 @@ pipelineConfig:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
           - sh: >-
-              git fetch origin --unshallow && \
+              git fetch origin master:master && \
               mvn clean verify sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
