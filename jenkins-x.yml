@@ -59,9 +59,11 @@ pipelineConfig:
         steps:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
+          - sh: git fetch --all
+            name: git-deep-fetch
           - sh: >-
               mvn clean verify sonar:sonar \
-                -Pin-process-tests \
+                -Pin-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -Dsonar.verbose=true \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
