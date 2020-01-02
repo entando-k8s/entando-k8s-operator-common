@@ -91,7 +91,7 @@ pipelineConfig:
       build:
         replace: true
         steps:
-          - sh: git fetch origin
+          - sh: git fetch origin master
             name: fetch-full-repo
           - sh: >-
               mvn clean deploy sonar:sonar \
