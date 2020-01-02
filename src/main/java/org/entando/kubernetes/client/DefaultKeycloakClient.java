@@ -1,7 +1,6 @@
 package org.entando.kubernetes.client;
 
 import static java.lang.Thread.sleep;
-import static java.util.Optional.ofNullable;
 
 import java.util.Collections;
 import java.util.List;
