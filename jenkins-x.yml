@@ -80,6 +80,9 @@ pipelineConfig:
                 -Dentando.test.namespace.override=${REPO_NAME} \
                 -Dentando.test.name.suffix=${PIPELINE_CODE}pr${PULL_NUMBER}
             name: mvn-verify
+          - sh: >-
+              sleep 900
+            name: sleep
       postBuild:
         replace: true
         steps:
