@@ -8,6 +8,14 @@ import org.entando.kubernetes.controller.spi.IngressingContainer;
 
 public class MinimalKeycloakContainer implements IngressingContainer {
 
+    public int getMemoryLimitMebibytes() {
+        return 512;
+    }
+
+    public int getCpuLimitMillicores() {
+        return 1000;
+    }
+
     @Override
     public String determineImageToUse() {
         return "entando/entando-keycloak:6.0.0-SNAPSHOT";
