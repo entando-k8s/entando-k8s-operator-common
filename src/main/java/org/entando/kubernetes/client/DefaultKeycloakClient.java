@@ -190,13 +190,14 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         final UserRepresentation user = new UserRepresentation();
         user.setUsername("admin");
         user.setEnabled(true);
-        Response response = realmResource.users().create(user);
-        CredentialRepresentation credentials = new CredentialRepresentation();
-        credentials.setValue("adminadmin");
-        credentials.setTemporary(true);
-        credentials.setType(KubeUtils.PASSSWORD_KEY);
-        String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
-        realmResource.users().get(userId).resetPassword(credentials);
+        try (Response response = realmResource.users().create(user)) {
+            CredentialRepresentation credentials = new CredentialRepresentation();
+            credentials.setValue("adminadmin");
+            credentials.setTemporary(true);
+            credentials.setType(KubeUtils.PASSSWORD_KEY);
+            String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+            realmResource.users().get(userId).resetPassword(credentials);
+        }
     }
 
     @Override
@@ -221,10 +222,11 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             client.setImplicitFlowEnabled(true);
             client.setDirectAccessGrantsEnabled(true);
             client.setAuthorizationServicesEnabled(false);
-            Response response = realmResource.clients().create(client);
-            String id = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
-            realmResource.clients().get(id).generateNewSecret();
-            return id;
+            try (Response response = realmResource.clients().create(client)) {
+                String id = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+                realmResource.clients().get(id).generateNewSecret();
+                return id;
+            }
         }
     }
 
