@@ -59,12 +59,16 @@ pipelineConfig:
         steps:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
-          - sh: git fetch --depth=1000000
+          - sh: >-
+              git fetch --all && \
+              git branch -D master && \
+              git rev-parse origin/master
             name: fetch-full-repo
           - sh: >-
               mvn clean verify sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
+                -Dsonar.verbose=true \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
                 -Dsonar.pullrequest.base=master \
                 -Dsonar.pullrequest.branch=${BRANCH_NAME} \
