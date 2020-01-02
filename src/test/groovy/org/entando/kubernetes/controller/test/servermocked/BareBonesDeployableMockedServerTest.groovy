@@ -16,7 +16,7 @@ class BareBonesDeployableMockedServerTest extends BareBonesDeployableSpecBase im
     private DefaultSimpleK8SClient client
 
     @Before
-    def asdf() {
+    def beforeTest() {
         TestFixturePreparation.prepareTestFixture(mockServer.getClient(), deleteAll(EntandoApp).fromNamespace(TEST_NAMESPACE))
     }
 
