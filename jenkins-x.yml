@@ -91,7 +91,7 @@ pipelineConfig:
       build:
         replace: true
         steps:
-          - sh: git status
+          - sh: sleep 300
             name: fetch-full-repo
       promote:
         replace: true
