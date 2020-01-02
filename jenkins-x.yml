@@ -91,12 +91,11 @@ pipelineConfig:
       build:
         replace: true
         steps:
-          - sh: git fetch origin master
+          - sh: git pull origin master
             name: fetch-full-repo
           - sh: >-
               mvn clean deploy sonar:sonar \
                 -Pprepare-for-nexus \
-                -Pin-process-verification -Pinter-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -DautoUpdate=false \
                 -DconnectionString=${OWASPDB_URL} \
