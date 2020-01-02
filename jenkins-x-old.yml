@@ -91,8 +91,24 @@ pipelineConfig:
       build:
         replace: true
         steps:
-          - sh: git status
+          - sh: git pull origin master
             name: fetch-full-repo
+          - sh: >-
+              mvn clean deploy sonar:sonar \
+                -Pin-process-verification -Pinter-process-verification \
+                -Pprepare-for-nexus \
+                -Dsonar.login=${SONAR_TOKEN} \
+                -DautoUpdate=false \
+                -DconnectionString=${OWASPDB_URL} \
+                -DdatabasePassword=${OWASPDB_PASSWORD} \
+                -DdatabaseUser=${OWASPDB_USERNAME} \
+                -Dgpg.homedir=${GPG_HOMEDIR} \
+                -Dgpg.keyname=${GPG_KEYNAME} \
+                -Dgpg.passphrase=${GPG_PASSPHRASE} \
+                -Dentando.default.routing.suffix=apps.serv.run \
+                -Dentando.test.namespace.override=${REPO_NAME} \
+                -Dentando.test.name.suffix=${PIPELINE_CODE}ms${BUILD_NUMBER}
+            name: mvn-deploy
       promote:
         replace: true
         steps: []
