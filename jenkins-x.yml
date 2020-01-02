@@ -60,11 +60,24 @@ pipelineConfig:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
           - sh: >-
-              echo "BRANCH_NAME=${BRANCH_NAME}"
-            name: fetch-full-repo
-          - sh: >-
-              sleep 900
-            name: sleep
+              mvn clean verify sonar:sonar \
+                -Pin-process-tests \
+                -Dsonar.login=${SONAR_TOKEN} \
+                -Dsonar.verbose=true \
+                -Dsonar.pullrequest.key=${PULL_NUMBER} \
+                -Dsonar.pullrequest.base=${PULL_BASE_SHA} \
+                -Dsonar.pullrequest.branch=${PULL_PULL_SHA} \
+                -Dsonar.pullrequest.provider=github \
+                -Dsonar.pullrequest.vsts.token.secured=${SONAR_GITHUB_TOKEN} \
+                -Dsonar.pullrequest.github.repository=${REPO_OWNER}/${REPO_NAME} \
+                -DautoUpdate=false \
+                -DconnectionString=${OWASPDB_URL} \
+                -DdatabasePassword=${OWASPDB_PASSWORD} \
+                -DdatabaseUser=${OWASPDB_USERNAME} \
+                -Dentando.default.routing.suffix=apps.serv.run \
+                -Dentando.test.namespace.override=${REPO_NAME} \
+                -Dentando.test.name.suffix=${PIPELINE_CODE}pr${PULL_NUMBER}
+            name: mvn-verify
       postBuild:
         replace: true
         steps:
