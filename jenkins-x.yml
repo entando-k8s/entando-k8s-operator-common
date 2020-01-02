@@ -59,7 +59,7 @@ pipelineConfig:
         steps:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
-          - sh: git fetch --all
+          - sh: ./fix-git-for-sonar.sh
             name: git-deep-fetch
           - sh: >-
               mvn clean verify sonar:sonar \
