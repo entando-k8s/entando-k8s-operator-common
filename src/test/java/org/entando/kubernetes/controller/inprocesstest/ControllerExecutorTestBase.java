@@ -12,7 +12,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
+import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PodClientDouble;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
+import org.entando.kubernetes.controller.k8sclient.PodClient;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
@@ -44,6 +46,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     }
 
     protected void emulatePodWaitingBehaviour() {
+        PodClientDouble.setEmulatePodWatching(true);
         new Thread(() -> {
             AtomicReference<PodWatcher> podWatcherHolder = getClient().pods().getPodWatcherHolder();
             await().atMost(30, TimeUnit.SECONDS).until(() -> podWatcherHolder.get() != null);
