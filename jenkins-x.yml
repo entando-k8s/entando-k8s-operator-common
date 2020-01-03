@@ -65,7 +65,7 @@ pipelineConfig:
               git fetch origin master:master;
             name: fix-git-for-sonar
           - sh: >-
-              mvn clean verify sonar:sonar \
+              mvn clean verify site sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
