@@ -60,9 +60,9 @@ pipelineConfig:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
           - sh: >-
-              git checkout -b ${BRANCH_NAME} ${PULL_PULL_SHA}
-              git branch master -D
-              git fetch origin master:master
+              git checkout -b ${BRANCH_NAME} ${PULL_PULL_SHA};
+              git branch master -D;
+              git fetch origin master:master;
             name: fix-git-for-sonar
           - sh: >-
               mvn clean verify sonar:sonar \
