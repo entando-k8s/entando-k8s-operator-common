@@ -59,13 +59,15 @@ pipelineConfig:
         steps:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
-          - sh: ./fix-git-for-sonar.sh
-            name: git-deep-fetch
+          - sh: >-
+              git checkout -b ${BRANCH_NAME} ${PULL_PULL_SHA}
+              git branch master -D
+              git fetch origin master:master
+            name: fix-git-for-sonar
           - sh: >-
               mvn clean verify sonar:sonar \
-                -Pin-process-verification \
+                -Pin-process-verification -Pinter-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
-                -Dsonar.verbose=true \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
                 -Dsonar.pullrequest.base=${PULL_BASE_SHA} \
                 -Dsonar.pullrequest.branch=${PULL_PULL_SHA} \
@@ -82,9 +84,7 @@ pipelineConfig:
             name: mvn-verify
       postBuild:
         replace: true
-        steps:
-          - sh: echo 'No postbuild action'
-            name: post-build
+        steps: []
       promote:
         replace: true
         steps: []
@@ -92,8 +92,8 @@ pipelineConfig:
       build:
         replace: true
         steps:
-          - sh: git fetch --depth=1000000
-            name: fetch-full-repo
+          - sh: git fetch --shallow-since=$(date --date="$(date +%y-%m-%d) - 30 days" +%Y-%m-%d)
+            name: fetch-history-for-sonar
           - sh: >-
               mvn clean deploy sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
