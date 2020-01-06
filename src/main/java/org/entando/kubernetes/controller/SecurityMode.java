@@ -6,6 +6,8 @@ public enum SecurityMode {
     STRICT, LENIENT;
 
     public static SecurityMode caseInsensitiveValueOf(String securityMode) {
-        return valueOf(securityMode.toUpperCase(Locale.getDefault()));
+        return valueOf(securityMode.
+                toUpperCase(Locale.
+                        getDefault()));
     }
 }

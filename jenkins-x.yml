@@ -62,8 +62,8 @@ pipelineConfig:
           - sh: ./fix-git-branches
             name: fix-git-for-sonar
           - sh: >-
-              mvn clean verify site sonar:sonar -e -X\
-                -Pin-process-verification \
+              mvn clean verify site sonar:sonar -\
+                -Pin-process-verification -Pinter-process-verification -Pcicd \
                 -Dmaven.test.failure.ignore=true \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
@@ -80,6 +80,12 @@ pipelineConfig:
                 -Dentando.test.namespace.override=${REPO_NAME} \
                 -Dentando.test.name.suffix=${PIPELINE_CODE}pr${PULL_NUMBER}
             name: mvn-verify-and-site
+            options:
+              containerOptions:
+                resources:
+                  limits:
+                    cpu: 1
+                    memory: 1000Mi
           - sh: ./verify-build "PR-${PULL_NUMBER}"
             name: verify-mvn-build-result
       postBuild:
@@ -96,7 +102,7 @@ pipelineConfig:
             name: fetch-history-for-sonar
           - sh: >-
               mvn clean deploy site sonar:sonar \
-                -Pin-process-verification -Pinter-process-verification \
+                -Pin-process-verification -Pinter-process-verification  -Pcicd \
                 -Pprepare-for-nexus \
                 -Dmaven.test.failure.ignore=true \
                 -Dsonar.login=${SONAR_TOKEN} \
