@@ -62,6 +62,7 @@ pipelineConfig:
           - sh: >-
               mvn clean verify sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
+                -Dmaven.test.failure.ignore=true \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
                 -Dsonar.pullrequest.base=${PULL_BASE_SHA} \
@@ -97,6 +98,7 @@ pipelineConfig:
               mvn clean deploy site sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
                 -Pprepare-for-nexus \
+                -Dmaven.test.failure.ignore=true \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -DautoUpdate=false \
                 -DconnectionString=${OWASPDB_URL} \
