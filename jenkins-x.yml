@@ -62,7 +62,7 @@ pipelineConfig:
           - sh: ./fix-git-branches
             name: fix-git-for-sonar
           - sh: >-
-              mvn clean verify site sonar:sonar -\
+              mvn clean verify site sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification -Pcicd \
                 -Dmaven.test.failure.ignore=true \
                 -Dsonar.login=${SONAR_TOKEN} \
