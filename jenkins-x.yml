@@ -81,7 +81,7 @@ pipelineConfig:
                 -Dentando.test.name.suffix=${PIPELINE_CODE}pr${PULL_NUMBER}
             name: mvn-verify-and-site
             options:
-              containerOptions:
+              containerOptions: >-
                 resources:
                   limits:
                     cpu: 1
