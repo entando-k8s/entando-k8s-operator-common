@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.entando.kubernetes</groupId>
-        <version>6.0.9</version>
+        <version>6.0.0-SNAPSHOT</version>
         <artifactId>entando-k8s-infrastructure-parent</artifactId>
         <relativePath/>
     </parent>
@@ -47,6 +47,7 @@
     </scm>
     <properties>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
+        <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <entando.k8s.custom.model.version>6.0.31</entando.k8s.custom.model.version>
     </properties>
     <issueManagement>
@@ -94,7 +95,6 @@
         </dependency>
 
         <!-- Test-scoped dependencies. -->
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
@@ -124,41 +124,17 @@
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Uncomment this dependency for development against Oracle. We are not allowed to pull this dependency into the image-->
-        <!--<dependency>-->
-        <!--<groupId>com.oracle.jdbc</groupId>-->
-        <!--<artifactId>ojdbc8</artifactId>-->
-        <!--<version>18.3.0.0</version>-->
-        <!--</dependency>-->
-
     </dependencies>
     <profiles>
         <profile>
             <id>native</id>
             <properties>
                 <!--NB!!! the format of this property value is extremely important: comma separated, no spaces, no linebreaks -->
-                <quarkus.native.additional-build-args>--report-unsupported-elements-at-runtime,-H:ReflectionConfigurationFiles=reflection-config.json,-H:ResourceConfigurationFiles=resources-config.json,-H:DynamicProxyConfigurationFiles=proxy-config.json</quarkus.native.additional-build-args>
+                <quarkus.native.additional-build-args>
+                    --report-unsupported-elements-at-runtime,-H:ReflectionConfigurationFiles=reflection-config.json,-H:ResourceConfigurationFiles=resources-config.json,-H:DynamicProxyConfigurationFiles=proxy-config.json
+                </quarkus.native.additional-build-args>
             </properties>
         </profile>
     </profiles>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.8.2</version>
-            </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-            </plugin>
-
-        </plugins>
-    </build>
 </project>

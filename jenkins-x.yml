@@ -1,7 +1,5 @@
 buildPack: maven-java11
 pipelineConfig:
-  agent:
-    image: maven-java11
   env:
     - name: PIPELINE_CODE
       value: cm
@@ -59,13 +57,10 @@ pipelineConfig:
         steps:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
-          - sh: >-
-              git checkout -b ${BRANCH_NAME} ${PULL_PULL_SHA};
-              git branch master -D;
-              git fetch origin master:master;
+          - sh: ./fix-git-branches
             name: fix-git-for-sonar
           - sh: >-
-              mvn clean verify site sonar:sonar \
+              mvn clean verify sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
@@ -74,7 +69,7 @@ pipelineConfig:
                 -Dsonar.pullrequest.provider=github \
                 -Dsonar.pullrequest.vsts.token.secured=${SONAR_GITHUB_TOKEN} \
                 -Dsonar.pullrequest.github.repository=${REPO_OWNER}/${REPO_NAME} \
-                -DautoUpdate=false \
+                -DautoUpdate=true \
                 -DconnectionString=${OWASPDB_URL} \
                 -DdatabasePassword=${OWASPDB_PASSWORD} \
                 -DdatabaseUser=${OWASPDB_USERNAME} \
@@ -82,6 +77,10 @@ pipelineConfig:
                 -Dentando.test.namespace.override=${REPO_NAME} \
                 -Dentando.test.name.suffix=${PIPELINE_CODE}pr${PULL_NUMBER}
             name: mvn-verify
+            agent:
+              image: maven-java11
+          - sh: ./verify-build "PR-${PULL_NUMBER}"
+            name: verify-build
       postBuild:
         replace: true
         steps: []
@@ -92,10 +91,10 @@ pipelineConfig:
       build:
         replace: true
         steps:
-          - sh: git fetch --shallow-since=$(date --date="$(date +%y-%m-%d) - 30 days" +%Y-%m-%d)
+          - sh: ./fetch-history-by-days 30
             name: fetch-history-for-sonar
           - sh: >-
-              mvn clean deploy sonar:sonar \
+              mvn clean deploy site sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
                 -Pprepare-for-nexus \
                 -Dsonar.login=${SONAR_TOKEN} \
@@ -110,6 +109,10 @@ pipelineConfig:
                 -Dentando.test.namespace.override=${REPO_NAME} \
                 -Dentando.test.name.suffix=${PIPELINE_CODE}ms${BUILD_NUMBER}
             name: mvn-deploy
+            agent:
+              image: maven-java11
+          - sh: ./verify-build master
+            name: verify-build
       promote:
         replace: true
         steps: []

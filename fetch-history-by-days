@@ -1,0 +1,2 @@
+#Fetches the git history on master from $1 days onwards
+git fetch origin master --shallow-since=$(date --date="$(date +%y-%m-%d) - $1 days" +%Y-%m-%d)

@@ -56,6 +56,9 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
     @Test
     public void testTwoDeploymentsSharingAnIngress() {
+        if (true) {
+            throw new AssertionError("This did not work");
+        }
         //Given I have a PublicIngressingDeployment in the Sample Namespace
         testBasicDeployment();
         //And I have a plugin in another namespace to share the same Ingress

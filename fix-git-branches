@@ -1,0 +1,5 @@
+#On a typical PR build, this script wouldn't really be fetching anything. It just ensure that correctly named branches are available
+#for sonar to do a PR/Master comparison
+git checkout -b ${BRANCH_NAME} ${PULL_PULL_SHA}
+git branch master -D
+git fetch origin master:master
