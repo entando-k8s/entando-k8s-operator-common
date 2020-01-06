@@ -25,4 +25,14 @@
         <gav>io.quarkus:quarkus-kubernetes-client:1.0.1.Final</gav>
         <cpe>cpe:/a:kubernetes:kubernetes</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Not much we can do about this one except for wait for Keycloak 8. We can only update the client if the
+        server is updated.
+      ]]></notes>
+        <gav regex="true">org\.keycloak:keycloak-.*:7\.0\.1</gav>
+        <cve>CVE-2019-14832</cve>
+        <cve>CVE-2019-14910</cve>
+        <cve>CVE-2019-14909</cve>
+    </suppress>
 </suppressions>

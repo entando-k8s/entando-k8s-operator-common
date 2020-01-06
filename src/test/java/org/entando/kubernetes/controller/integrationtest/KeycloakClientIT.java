@@ -79,9 +79,6 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
 
     @Test
     public void testEnsureRealm() {
-        if (true) {
-            throw new AssertionError("This did not work");
-        }
         //Given a Keycloak Server is available and I have logged int
         DefaultKeycloakClient kc = prepareKeycloak();
         //When I ensure that a specific real is available

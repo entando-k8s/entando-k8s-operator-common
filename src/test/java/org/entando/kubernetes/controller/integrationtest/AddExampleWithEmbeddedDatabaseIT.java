@@ -63,10 +63,6 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
 
     @Test
     public void create() {
-        if (true) {
-            throw new IllegalStateException("This did not work");
-        }
-
         //When I create a EntandoKeycloakServer and I specify it to use PostgreSQL
         EntandoKeycloakServer keycloakServer = new EntandoKeycloakServerBuilder().withNewMetadata()
                 .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)

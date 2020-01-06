@@ -1,57 +1,12 @@
 buildPack: maven-java11
 pipelineConfig:
   agent:
-    image: maven-java11
+    image: entando-jx-maven-java11
   env:
     - name: PIPELINE_CODE
       value: cm
     - name: _JAVA_OPTIONS
       value: -XX:+UnlockExperimentalVMOptions -Dsun.zip.disableMemoryMapping=true -XX:+UseParallelGC -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Xms10m -Xmx512m
-    - name: SONAR_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: sonar.token
-    - name: SONAR_GITHUB_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: sonar.github.token
-    - name: OWASPDB_USERNAME
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: owaspdb.username
-    - name: OWASPDB_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: owaspdb.password
-    - name: OWASPDB_URL
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: owaspdb.url
-    - name: GPG_PASSPHRASE
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: gpg.passphrase
-    - name: GPG_KEYNAME
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: gpg.keyname
-    - name: GPG_HOMEDIR
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: gpg.homedir
-    - name: ENTANDO_DEFAULT_ROUTING_SUFFIX
-      valueFrom:
-        secretKeyRef:
-          name: entando-jx-common-secret
-          key: default.routing.suffix
   pipelines:
     pullRequest:
       build:
@@ -59,34 +14,11 @@ pipelineConfig:
         steps:
           - sh: mvn versions:set -DnewVersion=$PREVIEW_VERSION
             name: set-version
-          - sh: ./fix-git-branches
+          - sh: fix-git-branches
             name: fix-git-for-sonar
-          - sh: >-
-              mvn clean verify site sonar:sonar \
-                -Pin-process-verification -Pinter-process-verification -Pcicd \
-                -Dmaven.test.failure.ignore=true \
-                -Dsonar.login=${SONAR_TOKEN} \
-                -Dsonar.pullrequest.key=${PULL_NUMBER} \
-                -Dsonar.pullrequest.base=${PULL_BASE_SHA} \
-                -Dsonar.pullrequest.branch=${PULL_PULL_SHA} \
-                -Dsonar.pullrequest.provider=github \
-                -Dsonar.pullrequest.vsts.token.secured=${SONAR_GITHUB_TOKEN} \
-                -Dsonar.pullrequest.github.repository=${REPO_OWNER}/${REPO_NAME} \
-                -DautoUpdate=false \
-                -DconnectionString=${OWASPDB_URL} \
-                -DdatabasePassword=${OWASPDB_PASSWORD} \
-                -DdatabaseUser=${OWASPDB_USERNAME} \
-                -Dentando.default.routing.suffix=apps.serv.run \
-                -Dentando.test.namespace.override=${REPO_NAME} \
-                -Dentando.test.name.suffix=${PIPELINE_CODE}pr${PULL_NUMBER}
-            name: mvn-verify-and-site
-            options:
-              containerOptions: >-
-                resources:
-                  limits:
-                    cpu: 2
-                    memory: 2000Mi
-          - sh: ./verify-build "PR-${PULL_NUMBER}"
+          - sh: mvn-verify-pr -Pin-process-verification -Pinter-process-verification
+            name: mvn-verify-pr
+          - sh: verify-build "PR-${PULL_NUMBER}"
             name: verify-mvn-build-result
       postBuild:
         replace: true
@@ -98,28 +30,11 @@ pipelineConfig:
       build:
         replace: true
         steps:
-          - sh: ./fetch-history-by-days 30
+          - sh: fetch-history-by-days 30
             name: fetch-history-for-sonar
-          - sh: >-
-              mvn clean deploy site sonar:sonar \
-                -Pin-process-verification -Pinter-process-verification  -Pcicd \
-                -Pprepare-for-nexus \
-                -Dmaven.test.failure.ignore=true \
-                -Dsonar.login=${SONAR_TOKEN} \
-                -DautoUpdate=false \
-                -DconnectionString=${OWASPDB_URL} \
-                -DdatabasePassword=${OWASPDB_PASSWORD} \
-                -DdatabaseUser=${OWASPDB_USERNAME} \
-                -Dgpg.homedir=${GPG_HOMEDIR} \
-                -Dgpg.keyname=${GPG_KEYNAME} \
-                -Dgpg.passphrase=${GPG_PASSPHRASE} \
-                -Dentando.default.routing.suffix=apps.serv.run \
-                -Dentando.test.namespace.override=${REPO_NAME} \
-                -Dentando.test.name.suffix=${PIPELINE_CODE}ms${BUILD_NUMBER}
-            name: mvn-deploy
-            agent:
-              image: maven-java11
-          - sh: ./verify-build master
+          - sh: mvn-deploy-release -Pin-process-verification -Pinter-process-verification
+            name: mvn-deploy-release
+          - sh: verify-build master
             name: verify-build
       promote:
         replace: true

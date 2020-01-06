@@ -28,9 +28,6 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
 
     @Test
     public void testIt() {
-        if (true) {
-            throw new IllegalStateException();
-        }
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
         resource = newEntandoKeycloakServer();
