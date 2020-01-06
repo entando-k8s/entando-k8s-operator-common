@@ -1,5 +1,7 @@
 buildPack: maven-java11
 pipelineConfig:
+  agent:
+    image: maven-java11
   env:
     - name: PIPELINE_CODE
       value: cm
@@ -61,7 +63,7 @@ pipelineConfig:
             name: fix-git-for-sonar
           - sh: >-
               mvn clean verify site sonar:sonar \
-                -Pin-process-verification -Pinter-process-verification \
+                -Pin-process-verification \
                 -Dmaven.test.failure.ignore=true \
                 -Dsonar.login=${SONAR_TOKEN} \
                 -Dsonar.pullrequest.key=${PULL_NUMBER} \
@@ -77,11 +79,9 @@ pipelineConfig:
                 -Dentando.default.routing.suffix=apps.serv.run \
                 -Dentando.test.namespace.override=${REPO_NAME} \
                 -Dentando.test.name.suffix=${PIPELINE_CODE}pr${PULL_NUMBER}
-            name: mvn-verify
-            agent:
-              image: maven-java11
+            name: mvn-verify-and-site
           - sh: ./verify-build "PR-${PULL_NUMBER}"
-            name: verify-build
+            name: verify-mvn-build-result
       postBuild:
         replace: true
         steps: []
