@@ -2,7 +2,7 @@
 #to our DevOps results storage in Github, and then inspect the build output to fail if our fail fast criteria have
 #not been met.
 #Currently we only check for Failsafe or Surefire failures, but we may want to extend this to fail on other criteria too
-jx step stash --pattern="target/site/*" --to-path=${REPO_NAME}/$1 -c reports --basedir=target/site3
+jx step stash --pattern="target/site/*" --to-path=${REPO_NAME}/$1 -c reports --basedir=target/site
 if grep -rnw target/*-reports/*.xml -e "<failure" || grep -rnw target/*-reports/*.xml -e "<error"; then
   echo >&2 "Tests failed for ${REPO_NAME}-$1"
   exit 1

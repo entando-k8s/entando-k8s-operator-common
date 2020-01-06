@@ -60,7 +60,7 @@ pipelineConfig:
           - sh: ./fix-git-branches
             name: fix-git-for-sonar
           - sh: >-
-              mvn clean verify sonar:sonar \
+              mvn clean verify site sonar:sonar \
                 -Pin-process-verification -Pinter-process-verification \
                 -Dmaven.test.failure.ignore=true \
                 -Dsonar.login=${SONAR_TOKEN} \
@@ -70,7 +70,7 @@ pipelineConfig:
                 -Dsonar.pullrequest.provider=github \
                 -Dsonar.pullrequest.vsts.token.secured=${SONAR_GITHUB_TOKEN} \
                 -Dsonar.pullrequest.github.repository=${REPO_OWNER}/${REPO_NAME} \
-                -DautoUpdate=true \
+                -DautoUpdate=false \
                 -DconnectionString=${OWASPDB_URL} \
                 -DdatabasePassword=${OWASPDB_PASSWORD} \
                 -DdatabaseUser=${OWASPDB_USERNAME} \
