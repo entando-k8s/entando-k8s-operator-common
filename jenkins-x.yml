@@ -84,8 +84,8 @@ pipelineConfig:
               containerOptions: >-
                 resources:
                   limits:
-                    cpu: 1
-                    memory: 1000Mi
+                    cpu: 2
+                    memory: 2000Mi
           - sh: ./verify-build "PR-${PULL_NUMBER}"
             name: verify-mvn-build-result
       postBuild:
