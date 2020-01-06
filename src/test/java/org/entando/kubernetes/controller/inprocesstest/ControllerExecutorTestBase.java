@@ -14,7 +14,6 @@ import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PodClientDouble;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.k8sclient.PodClient;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
@@ -29,7 +28,6 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
 
     @Test
     public void testIt() {
-
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
         resource = newEntandoKeycloakServer();
