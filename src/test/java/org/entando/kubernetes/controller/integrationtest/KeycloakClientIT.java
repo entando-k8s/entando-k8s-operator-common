@@ -95,6 +95,9 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
 
     @Test
     public void testCreatePublicClient() {
+        if (true) {
+            throw new AssertionError("asdf");
+        }
         //Given a Keycloak Server is available and I have logged int
         DefaultKeycloakClient kc = prepareKeycloak();
         //And  I have ensured that a specific real is available
