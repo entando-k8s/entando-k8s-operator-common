@@ -60,20 +60,20 @@ public class ControllerExecutor {
     }
 
     public static String resolveControllerImageName(EntandoCustomResource resource) {
-        return resolveControllerImageName(resource.getKind());
+        return resolveControllerImageNameByKind(resource.getKind());
     }
 
-    public static String resolveControllerImage(Class<? extends EntandoBaseCustomResource> type) {
+    public static String resolveControllerImageName(Class<? extends EntandoBaseCustomResource> type) {
         String kind = KubeUtils.getKindOf(type);
-        return resolveControllerImageName(kind);
+        return resolveControllerImageNameByKind(kind);
     }
 
-    private static String resolveControllerImageName(String kind) {
+    private static String resolveControllerImageNameByKind(String kind) {
         return resourceKindToImageNames.get(kind);
     }
 
     public Optional<String> resolveLatestImageFor(Class<? extends EntandoBaseCustomResource> type) {
-        String imageName = resolveControllerImage(type);
+        String imageName = resolveControllerImageName(type);
         return this.imageResolver.determineLatestVersionOf(imageName);
     }
 
