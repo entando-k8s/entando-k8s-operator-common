@@ -100,9 +100,8 @@ public class ExternalDatabaseIntegrationTestHelper extends
     }
 
     protected void createAndWaitForDbService(String namespace, EntandoDatabaseService externalDatabase) {
-        getOperations().inNamespace(namespace)
-                .create(externalDatabase);
-        new CreateExternalServiceCommand(getOperations().inNamespace(externalDatabase.getMetadata().getNamespace())
+        getOperations().inNamespace(namespace).create(externalDatabase);
+        new CreateExternalServiceCommand(getOperations().inNamespace(namespace)
                 .withName(externalDatabase.getMetadata().getName()).get())
                 .execute(new DefaultSimpleK8SClient(client));
         await().atMost(60, SECONDS).until(

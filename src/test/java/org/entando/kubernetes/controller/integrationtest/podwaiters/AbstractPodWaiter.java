@@ -2,6 +2,7 @@ package org.entando.kubernetes.controller.integrationtest.podwaiters;
 
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.lang.reflect.InvocationTargetException;
@@ -26,9 +27,8 @@ public abstract class AbstractPodWaiter<T extends AbstractPodWaiter> extends Abs
 
     public void waitOn(PodResource<Pod, DoneablePod> pod) {
         synchronized (this) {
-            try {
-                determineState(pod.get());
-                pod.watch(this);
+            determineState(pod.get());
+            try (Watch ignored = pod.watch(this)) {
                 while (this.state == State.CREATING) {
                     logContainerCreationStarted();
                     if (applyContainerCreationTimeout()) {
