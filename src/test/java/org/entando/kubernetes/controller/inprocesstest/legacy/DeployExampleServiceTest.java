@@ -37,7 +37,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.Map;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
@@ -105,8 +105,8 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
 
     @AfterEach
     public void resetSystemProps() {
-        System.getProperties().remove(EntandoOperatorConfig.ENTANDO_CA_CERT_PATHS);
-        System.getProperties().remove(EntandoOperatorConfig.ENTANDO_PATH_TO_TLS_KEYPAIR);
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.getJvmSystemProperty());
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.getJvmSystemProperty());
         TlsHelper.getInstance().init();
     }
 
@@ -115,10 +115,10 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         final EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         //And the trust cert has been configured correctly
-        System.setProperty(EntandoOperatorConfig.ENTANDO_CA_CERT_PATHS,
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.getJvmSystemProperty(),
                 Paths.get("src", "test", "resources", "tls", "ampie.dynu.net", "ca.crt").normalize().toAbsolutePath().toString());
         //And the default TLS Keypair has been configured correctly
-        System.setProperty(EntandoOperatorConfig.ENTANDO_PATH_TO_TLS_KEYPAIR,
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.getJvmSystemProperty(),
                 Paths.get("src", "test", "resources", "tls", "ampie.dynu.net").normalize().toAbsolutePath().toString());
         TlsHelper.getInstance().init();
         // WHen I have deploya the EntandoKeycloakServer
@@ -292,7 +292,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         //And the trust cert has been configured correctly
-        System.setProperty(EntandoOperatorConfig.ENTANDO_CA_CERT_PATHS,
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.getJvmSystemProperty(),
                 Paths.get("src", "test", "resources", "tls", "ampie.dynu.net", "ca.crt").normalize().toAbsolutePath().toString());
         TlsHelper.getInstance().init();
         //And K8S is receiving Deployment requests

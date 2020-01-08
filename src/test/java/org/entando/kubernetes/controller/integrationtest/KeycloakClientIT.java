@@ -18,7 +18,7 @@ import java.util.Optional;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.DeployCommand;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
@@ -95,9 +95,6 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
 
     @Test
     public void testCreatePublicClient() {
-        if (true) {
-            throw new AssertionError("asdf");
-        }
         //Given a Keycloak Server is available and I have logged int
         DefaultKeycloakClient kc = prepareKeycloak();
         //And  I have ensured that a specific real is available
@@ -145,7 +142,7 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
 
     private DefaultKeycloakClient prepareKeycloak() {
         if (keycloakClient == null) {
-            System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT, "true");
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(), "true");
             TestFixturePreparation.prepareTestFixture(this.client, deleteAll(EntandoKeycloakServer.class).fromNamespace(KC_TEST_NAMESPACE));
             NonNamespaceOperation<EntandoKeycloakServer,
                     EntandoKeycloakServerList,

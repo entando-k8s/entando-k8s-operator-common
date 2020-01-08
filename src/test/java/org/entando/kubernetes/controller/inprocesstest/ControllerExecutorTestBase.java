@@ -10,7 +10,7 @@ import io.fabric8.kubernetes.client.Watcher.Action;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.entando.kubernetes.client.PodWatcher;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PodClientDouble;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
@@ -18,6 +18,7 @@ import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 public abstract class ControllerExecutorTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior {
@@ -26,8 +27,14 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     protected EntandoKeycloakServer resource;
     private SimpleK8SClient<?> client;
 
+    @AfterEach
+    public void resetSystemProperty() {
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty());
+    }
+
     @Test
     public void testIt() {
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
         resource = newEntandoKeycloakServer();
@@ -37,8 +44,9 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
         Pod pod = this.client.pods()
                 .waitForPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName());
         assertThat(pod, is(notNullValue()));
-        assertThat(theVariableNamed("ENTANDO_K8S_OPERATOR_REGISTRY").on(thePrimaryContainerOn(pod)),
-                is(EntandoOperatorConfig.getEntandoDockerRegistry()));
+        assertThat(
+                theVariableNamed(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.name()).on(thePrimaryContainerOn(pod)),
+                is("9000000"));
         //TODO check other variables
         //TODO check mounts for certs, etc
     }

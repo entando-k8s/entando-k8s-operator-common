@@ -11,7 +11,7 @@ public class KubernetesClientProducer {
     @Produces
     public KubernetesClient produce() {
         ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withRequestTimeout(30000).withConnectionTimeout(30000);
-        EntandoOperatorConfig.getOperatorNamespaceOverride().ifPresent(configBuilder::withNamespace);
+        EntandoOperatorConfig.getOperatorNamespaceToObserve().ifPresent(configBuilder::withNamespace);
         return new DefaultKubernetesClient(configBuilder.build());
     }
 }

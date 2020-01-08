@@ -1,26 +1,12 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static java.util.Collections.singletonMap;
-
-import io.fabric8.kubernetes.api.model.EnvVar;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
-import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import org.entando.kubernetes.client.DefaultIngressClient;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig.TestTarget;
 import org.entando.kubernetes.model.app.EntandoApp;
@@ -30,17 +16,6 @@ import org.entando.kubernetes.model.plugin.EntandoPlugin;
 public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
 
     public static final String ORACLE_HOST = System.getProperty("entando.oracle.host", "10.0.0.100");
-    private static final Map<String, String> POD_LABEL = singletonMap("entando-k8s-operator-name", "test-entando-k8s-operator");
-
-    static {
-        //For using Openshift's internal registry (Caveat: all the namespaces need image puller access to the entando namespace
-
-        //System.setProperty("entando.k8s.operator.registry", "ampie.dynu.net:32001");
-        //System.setProperty("entando.k8s.operator.registry", "docker-registry.default.svc.cluster.local:5000");
-        //System.setProperty("entando.k8s.operator.registry", "172.30.1.1:5000");
-        //System.setProperty(EntandoOperatorConfig.ENTANDO_USE_AUTO_CERT_GENERATION, "true");
-        //System.setProperty(INTEGRATION_TARGET_ENVIRONMENT, K8S);
-    }
 
     private final DefaultKubernetesClient client = TestFixturePreparation.newClient();
     private final String domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));
@@ -139,112 +114,6 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
 
     public void setTextFixture(TestFixtureRequest request) {
         TestFixturePreparation.prepareTestFixture(this.client, request);
-    }
-
-    public void prepareControllers() {
-        if (EntandoOperatorTestConfig.getTestTarget() == TestTarget.K8S) {
-            redeployControllers();
-        } else {
-            //            EntandoControllerMain.start();
-        }
-        stopStaleWatchersFromFillingUpTheLogs();
-    }
-
-    private void redeployControllers() {
-        if (client.namespaces().withName(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE).get() == null) {
-            client.namespaces().createNew().withNewMetadata().withName(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE).endMetadata()
-                    .done();
-        }
-        delete(client.apps().deployments())
-                .named("entando-k8s-operator")
-                .fromNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE)
-                .waitingAtMost(30, SECONDS);
-        client.apps().deployments().inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE).createNew()
-                .withNewMetadata().withName("entando-k8s-operator").endMetadata()
-                .withNewSpec()
-                .withNewSelector().withMatchLabels(POD_LABEL).endSelector().withReplicas(1)
-                .withNewTemplate().withNewMetadata().withLabels(POD_LABEL).endMetadata().withNewSpec().addNewContainer()
-                .withName("entando-k8s-operator")
-                .withImage(EntandoOperatorConfig.getEntandoDockerRegistry() + "/entando/entando-k8s-operator:6.0.0-SNAPSHOT")
-                .withImagePullPolicy("Always")
-                .withNewReadinessProbe().withNewExec()
-                .addToCommand("/bin/sh").addToCommand("-c")
-                .addToCommand(
-                        "cat /tmp/EntandoPluginController.ready /tmp/EntandoAppController.ready /tmp/EntandoKeycloakServerController.ready "
-                                + "/tmp/EntandoClusterInfrastructureController.ready /tmp/EntandoAppPluginLinkController.ready "
-                                + "/tmp/EntandoDatabaseServiceController.ready"
-                )
-                .endExec().endReadinessProbe()
-                .withEnv(
-                        buildEnvVars())
-                .withVolumeMounts(maybeCreateTlsVolumeMounts())
-                .endContainer()
-                .withVolumes(maybeCreateTlsVolumes())
-                .endSpec()
-                .endTemplate()
-                .endSpec()
-                .done();
-        await().atMost(180, SECONDS).until(() ->
-                client.apps().deployments().inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE)
-                        .withName("entando-k8s-operator").fromServer().get().getStatus().getReadyReplicas() == 1);
-        await().atMost(60, SECONDS).until(
-                () -> client.pods().inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE).withLabels(POD_LABEL).list()
-                        .getItems().get(0)
-                        .getStatus()
-                        .getContainerStatuses().get(0).getReady());
-    }
-
-    private List<EnvVar> buildEnvVars() {
-        ArrayList<EnvVar> result = new ArrayList<>();
-        result.add(new EnvVar(EntandoOperatorConfig.ENTANDO_K8S_OPERATOR_REGISTRY, EntandoOperatorConfig.getEntandoDockerRegistry(), null));
-        result.add(new EnvVar("ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT", "true", null));
-        result.add(new EnvVar(EntandoOperatorConfig.ENTANDO_DEFAULT_ROUTING_SUFFIX, domainSuffix, null));
-        if (EntandoOperatorConfig.getCertificateAuthorityCertPaths().size() > 0) {
-            StringBuilder sb = new StringBuilder();
-            EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path ->
-                    sb.append("/etc/entando/ca/").append(path.getFileName().toString()).append(" "));
-            result.add(new EnvVar(EntandoOperatorConfig.ENTANDO_CA_CERT_PATHS, sb.toString().trim(), null));
-        }
-        if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            result.add(new EnvVar(EntandoOperatorConfig.ENTANDO_PATH_TO_TLS_KEYPAIR, "/etc/entando/tls", null));
-        }
-        return result;
-    }
-
-    private List<Volume> maybeCreateTlsVolumes() {
-        List<Volume> result = new ArrayList<>();
-        if (EntandoOperatorConfig.getCertificateAuthorityCertPaths().size() > 0) {
-            Secret secret = new SecretBuilder().withNewMetadata().withName("ca-cert-secret")
-                    .endMetadata().build();
-            //Add all available CA Certs. No need to map the trustStore itself - the controller will build this up internally
-            EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path -> secret.getData()
-                    .put(path.getFileName().toString(), TlsHelper.getInstance().getTlsCaCertBase64(path)));
-            client.secrets().inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE).createOrReplace(secret);
-            result.add(new VolumeBuilder().withName("ca-cert-volume").withNewSecret().withSecretName("ca-cert-secret").endSecret()
-                    .build());
-        }
-        if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            Secret secret = new SecretBuilder().withNewMetadata().withName("tls-secret")
-                    .endMetadata()
-                    .addToData(TlsHelper.TLS_KEY, TlsHelper.getInstance().getTlsKeyBase64())
-                    .addToData(TlsHelper.TLS_CRT, TlsHelper.getInstance().getTlsCertBase64())
-                    .build();
-            client.secrets().inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE).createOrReplace(secret);
-            result.add(new VolumeBuilder().withName("tls-volume").withNewSecret().withSecretName("tls-secret").endSecret()
-                    .build());
-        }
-        return result;
-    }
-
-    private List<VolumeMount> maybeCreateTlsVolumeMounts() {
-        List<VolumeMount> result = new ArrayList<>();
-        if (EntandoOperatorConfig.getCertificateAuthorityCertPaths().size() > 0) {
-            result.add(new VolumeMountBuilder().withName("ca-cert-volume").withMountPath("/etc/entando/ca").build());
-        }
-        if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            result.add(new VolumeMountBuilder().withName("tls-volume").withMountPath("/etc/entando/tls").build());
-        }
-        return result;
     }
 
     public void createAndWaitForClusterInfrastructure(EntandoClusterInfrastructure clusterInfrastructure, int timeOffset,
