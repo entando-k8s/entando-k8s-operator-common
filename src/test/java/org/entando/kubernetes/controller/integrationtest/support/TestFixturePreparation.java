@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public final class TestFixturePreparation {
 
@@ -40,13 +40,15 @@ public final class TestFixturePreparation {
         Path tlsPath = certRoot.resolve(domainSuffix);
         Path caCert = tlsPath.resolve("ca.crt");
         if (caCert.toFile().exists()) {
-            System.setProperty(EntandoOperatorConfig.ENTANDO_CA_CERT_PATHS, caCert.toAbsolutePath().toString());
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.getJvmSystemProperty(),
+                    caCert.toAbsolutePath().toString());
         }
         if (tlsPath.resolve("tls.crt").toFile().exists() && tlsPath.resolve("tls.key").toFile().exists()) {
-            System.setProperty(EntandoOperatorConfig.ENTANDO_PATH_TO_TLS_KEYPAIR, tlsPath.toAbsolutePath().toString());
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.getJvmSystemProperty(),
+                    tlsPath.toAbsolutePath().toString());
         }
         TlsHelper.getInstance().init();
-        System.setProperty(EntandoOperatorConfig.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT,
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(),
                 String.valueOf(TlsHelper.getDefaultProtocol().equals("http")));
     }
 
@@ -67,7 +69,8 @@ public final class TestFixturePreparation {
             config.setNamespace(ENTANDO_CONTROLLERS_NAMESPACE);
             result = new AutoAdaptableKubernetesClient(HttpClientUtils.createHttpClient(config), config);
         }
-        System.setProperty(EntandoOperatorConfig.ENTANDO_OPERATOR_NAMESPACE_OVERRIDE, ENTANDO_CONTROLLERS_NAMESPACE);
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE.getJvmSystemProperty(),
+                ENTANDO_CONTROLLERS_NAMESPACE);
         return result;
     }
 

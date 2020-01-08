@@ -66,8 +66,10 @@ public class DeployCommand<T extends ServiceResult> {
     }
 
     public T execute(SimpleK8SClient k8sClient, Optional<SimpleKeycloakClient> keycloakClient) {
+        EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
+                k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageVersionsConfigMap()));
         if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable) deployable).hasContainersExpectingSchemas()) {
-            prepareDbSchemas(k8sClient, (DbAwareDeployable) deployable);
+            prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable) deployable);
         }
         if (persistentVolumeClaimCreator.needsPersistentVolumeClaaims(deployable)) {
             //NB!!! it seems there is some confusion in K8S when a patch is done without any changes.
@@ -96,7 +98,7 @@ public class DeployCommand<T extends ServiceResult> {
                     deployable,
                     Optional.ofNullable(getIngress()));
         }
-        createDeployment(k8sClient);
+        createDeployment(k8sClient, entandoImageResolver);
         waitForPod(k8sClient);
         if (status.hasFailed()) {
             throw new EntandoControllerException("Creation of Kubernetes resources has failed");
@@ -124,8 +126,8 @@ public class DeployCommand<T extends ServiceResult> {
         return entandoCustomResource.getMetadata().getName() + "-" + deployable.getNameQualifier();
     }
 
-    private void createDeployment(SimpleK8SClient k8sClient) {
-        deploymentCreator.createDeployment(k8sClient.deployments(), deployable);
+    private void createDeployment(SimpleK8SClient k8sClient, EntandoImageResolver entandoImageResolver) {
+        deploymentCreator.createDeployment(entandoImageResolver, k8sClient.deployments(), deployable);
         status.setDeploymentStatus(deploymentCreator.reloadDeployment(k8sClient.deployments()));
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
@@ -155,8 +157,9 @@ public class DeployCommand<T extends ServiceResult> {
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private void prepareDbSchemas(SimpleK8SClient k8sClient, DbAwareDeployable dbAwareDeployable) {
-        Pod completedPod = databasePreparationJobCreator.runToCompletion(k8sClient, dbAwareDeployable);
+    private void prepareDbSchemas(SimpleK8SClient k8sClient, EntandoImageResolver entandoImageResolver,
+            DbAwareDeployable dbAwareDeployable) {
+        Pod completedPod = databasePreparationJobCreator.runToCompletion(k8sClient, dbAwareDeployable, entandoImageResolver);
         status.setInitPodStatus(completedPod.getStatus());
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
         PodResult podResult = PodResult.of(completedPod);

@@ -16,10 +16,8 @@ pipelineConfig:
             name: set-version
           - sh: fix-git-branches
             name: fix-git-for-sonar
-          - sh: mvn-verify-pr -Pin-process-verification -Pinter-process-verification
+          - sh: mvn-verify-pr -Pinter-process-verification
             name: mvn-verify-pr
-          - sh: verify-build "PR-${PULL_NUMBER}"
-            name: verify-mvn-build-result
       postBuild:
         replace: true
         steps: []
@@ -32,10 +30,8 @@ pipelineConfig:
         steps:
           - sh: fetch-history-by-days 30
             name: fetch-history-for-sonar
-          - sh: mvn-deploy-release -Pin-process-verification -Pinter-process-verification
+          - sh: mvn-deploy-release -Pinter-process-verification
             name: mvn-deploy-release
-          - sh: verify-build master
-            name: verify-build
       promote:
         replace: true
         steps: []

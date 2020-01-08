@@ -18,9 +18,9 @@ import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 
 public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResource> {
@@ -28,6 +28,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     protected final SimpleK8SClient<?> k8sClient;
     protected final SimpleKeycloakClient keycloakClient;
     protected final AutoExit autoExit;
+    protected final EntandoImageResolver entandoImageResolver;
     protected Class<T> resourceType;
     protected Logger logger;
 
@@ -60,6 +61,8 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         this.k8sClient = k8sClient;
         this.keycloakClient = keycloakClient;
         this.autoExit = autoExit;
+        this.entandoImageResolver = new EntandoImageResolver(
+                k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageVersionsConfigMap()));
         Class<?> cls = getClass();
         List<Class<T>> types = new ArrayList<>();
         while (cls != AbstractDbAwareController.class) {

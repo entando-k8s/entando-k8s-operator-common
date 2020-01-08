@@ -30,12 +30,11 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         super(entandoCustomResource);
     }
 
-    public Pod runToCompletion(SimpleK8SClient client, DbAwareDeployable dbAwareDeployable) {
-        return client.pods().runToCompletion(entandoCustomResource, buildJobPod(client.secrets(), dbAwareDeployable));
+    public Pod runToCompletion(SimpleK8SClient client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
+        return client.pods().runToCompletion(entandoCustomResource, buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable));
     }
 
-    private Pod buildJobPod(SecretClient secretClient,
-            DbAwareDeployable dbAwareDeployable) {
+    private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable dbAwareDeployable) {
         String dbJobName = String
                 .format("%s-db-preparation-job", entandoCustomResource.getMetadata().getName());
         return new PodBuilder().withNewMetadata()
@@ -46,7 +45,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
                 .withName(dbJobName + "-" + UUID.randomUUID().toString().substring(0, 10))
                 .endMetadata()
                 .withNewSpec()
-                .withInitContainers(buildContainers(secretClient, dbAwareDeployable))
+                .withInitContainers(buildContainers(entandoImageResolver, secretClient, dbAwareDeployable))
                 .addNewContainer()
                 .withName("dummy")
                 .withImage("busybox")
@@ -56,22 +55,23 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private List<Container> buildContainers(SecretClient secretClient, DbAwareDeployable deployable) {
+    private List<Container> buildContainers(EntandoImageResolver entandoImageResolver, SecretClient secretClient,
+            DbAwareDeployable deployable) {
         List<Container> result = new ArrayList<>();
         for (DbAware dbAware : deployable.getDbAwareContainers()) {
             Optional<DatabasePopulator> databasePopulator = dbAware.useDatabaseSchemas(
-                    prepareContainersToCreateSchemas(secretClient, deployable, dbAware, result));
+                    prepareContainersToCreateSchemas(secretClient, entandoImageResolver, deployable, dbAware, result));
             databasePopulator.ifPresent(dbp -> result.add(prepareContainerToPopulateSchemas(dbp, dbAware.getNameQualifier())));
         }
         return result;
     }
 
     private Map<String, DatabaseSchemaCreationResult> prepareContainersToCreateSchemas(SecretClient secretClient,
-            DbAwareDeployable deployable,
+            EntandoImageResolver entandoImageResolver, DbAwareDeployable deployable,
             DbAware dbAware, List<Container> containerList) {
         Map<String, DatabaseSchemaCreationResult> schemaResults = new ConcurrentHashMap<>();
         for (String dbSchemaQualifier : dbAware.getDbSchemaQualifiers()) {
-            containerList.add(buildContainerToCreateSchema(deployable.getDatabaseServiceResult(), dbSchemaQualifier));
+            containerList.add(buildContainerToCreateSchema(entandoImageResolver, deployable.getDatabaseServiceResult(), dbSchemaQualifier));
             schemaResults.put(dbSchemaQualifier, createSchemaResult(deployable.getDatabaseServiceResult(), dbSchemaQualifier));
             createSchemaSecret(secretClient, dbSchemaQualifier);
         }
@@ -111,11 +111,13 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
                 KubeUtils.generateSecret(entandoCustomResource, getSchemaSecretName(nameQualifier), getSchemaName(nameQualifier)));
     }
 
-    private Container buildContainerToCreateSchema(DatabaseServiceResult databaseDeployment, String nameQualifier) {
+    private Container buildContainerToCreateSchema(EntandoImageResolver entandoImageResolver,
+            DatabaseServiceResult databaseDeployment, String nameQualifier) {
         String dbJobName = entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-schema-creation-job";
+        //TODO lookup the version here once we have a pipeline for dbjob
         return new ContainerBuilder()
-                .withImage(EntandoImageResolver
-                        .determineImageUri("entando/entando-k8s-dbjob", Optional.empty()))
+                .withImage(entandoImageResolver
+                        .determineImageUri("entando/entando-k8s-dbjob", Optional.of("6.0.0")))
                 .withImagePullPolicy("Always")
                 .withName(dbJobName)
                 .withCommand("/bin/bash", "-c", "/process-command.sh")

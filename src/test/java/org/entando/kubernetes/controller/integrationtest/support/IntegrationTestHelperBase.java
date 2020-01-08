@@ -16,8 +16,8 @@ import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public class IntegrationTestHelperBase<
         R extends EntandoCustomResource,
@@ -102,10 +102,9 @@ public class IntegrationTestHelperBase<
 
     @SuppressWarnings("unchecked")
     public void listenAndRespondWithLatestImage(String namespace) {
-        String versionToUse = ControllerExecutor
-                .resolveLatestImageFor(client, (Class<? extends EntandoBaseCustomResource>) operations.getType())
-                .orElseThrow(() -> new IllegalStateException("No K8S Controller Image has been registered for " + operations.getType()));
         ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
+        String versionToUse = executor.resolveLatestImageFor((Class<? extends EntandoBaseCustomResource>) operations.getType())
+                .orElseThrow(() -> new IllegalStateException("No K8S Controller Image has been registered for " + operations.getType()));
         containerStartingListener.listen(namespace, executor, versionToUse);
     }
 

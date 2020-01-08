@@ -9,8 +9,12 @@ public abstract class EntandoOperatorConfigBase {
     protected EntandoOperatorConfigBase() {
     }
 
-    protected static String getProperty(String name, String defaultValue) {
+    protected static String getProperty(EntandoOperatorConfigProperty name, String defaultValue) {
         return lookupProperty(name).orElse(defaultValue);
+    }
+
+    public static Optional<String> lookupProperty(EntandoOperatorConfigProperty property) {
+        return Optional.ofNullable(lookupProperty(property.getJvmSystemProperty()).orElse(lookupProperty(property.name()).orElse(null)));
     }
 
     public static Optional<String> lookupProperty(String name) {

@@ -11,9 +11,7 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
@@ -32,7 +30,8 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
     private final List<DeployableContainer> containers;
     private final String nameQualifier;
 
-    public DatabaseDeployable(DbmsImageVendor dbmsVendor, EntandoCustomResource customResource, String nameQualifier) {
+    public DatabaseDeployable(DbmsImageVendor dbmsVendor,
+            EntandoCustomResource customResource, String nameQualifier) {
         variableInitializers.put(DbmsImageVendor.MYSQL, vars ->
                 //No DB creation. Dbs are created during schema creation
                 vars.add(new EnvVar("MYSQL_ROOT_PASSWORD", null,
@@ -104,9 +103,9 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
         private final DbmsImageVendor dbmsVendor;
         private final String nameQualifier;
 
-        public DatabaseContainer(Map<DbmsImageVendor, VariableInitializer> variableInitializers, DbmsImageVendor dbmsVendor,
+        public DatabaseContainer(Map<DbmsImageVendor, VariableInitializer> variableInitializers,
+                DbmsImageVendor dbmsVendor,
                 String nameQualifier) {
-
             this.variableInitializers = variableInitializers;
             this.dbmsVendor = dbmsVendor;
             this.nameQualifier = nameQualifier;
@@ -114,7 +113,7 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
 
         @Override
         public String determineImageToUse() {
-            return EntandoImageResolver.determineImageUri(dbmsVendor.getImageName(), Optional.empty());
+            return dbmsVendor.getImageName();
         }
 
         @Override

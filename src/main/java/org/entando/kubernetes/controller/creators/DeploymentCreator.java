@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.TlsHelper;
@@ -47,8 +48,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
     private Deployment deployment;
 
-    public DeploymentCreator(
-            EntandoCustomResource entandoCustomResource) {
+    public DeploymentCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
@@ -56,10 +56,9 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return String.format("%s/%s/%s", KEYSTORES_ROOT, DEFAULT_TRUST_STORE_SECRET_NAME, filename);
     }
 
-    public Deployment createDeployment(DeploymentClient deploymentClient,
-            Deployable deployable) {
+    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable deployable) {
         deployment = deploymentClient
-                .createDeployment(entandoCustomResource, newDeployment(deployable));
+                .createDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
         return deployment;
     }
 
@@ -75,7 +74,8 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return deployment;
     }
 
-    private DeploymentSpec buildDeploymentSpec(Deployable<?> deployable) {
+    private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver,
+            Deployable<?> deployable) {
         return new DeploymentBuilder()
                 .withNewSpec()
                 .withNewSelector()
@@ -87,7 +87,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .withLabels(labelsFromResource(deployable.getNameQualifier()))
                 .endMetadata()
                 .withNewSpec()
-                .withContainers(buildContainers(deployable))
+                .withContainers(buildContainers(imageResolver, deployable))
                 .withDnsPolicy("ClusterFirst")
                 .withRestartPolicy("Always")
                 .withServiceAccountName(deployable.getServiceAccountName())
@@ -131,14 +131,15 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private List<Container> buildContainers(Deployable<?> deployable) {
-        return deployable.getContainers().stream().map(this::newContainer)
+    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?> deployable) {
+        return deployable.getContainers().stream().map(deployableContainer -> this.newContainer(imageResolver, deployableContainer))
                 .collect(Collectors.toList());
     }
 
-    private Container newContainer(DeployableContainer deployableContainer) {
+    private Container newContainer(EntandoImageResolver imageResolver,
+            DeployableContainer deployableContainer) {
         return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + CONTAINER_SUFFIX)
-                .withImage(deployableContainer.determineImageToUse())
+                .withImage(imageResolver.determineImageUri(deployableContainer.determineImageToUse(), Optional.empty()))
                 .withImagePullPolicy("Always")
                 .addNewPort().withName(deployableContainer.getNameQualifier() + PORT_SUFFIX)
                 .withContainerPort(deployableContainer.getPort()).withProtocol("TCP").endPort()
@@ -253,11 +254,11 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return resolveName(container.getNameQualifier(), VOLUME_SUFFIX);
     }
 
-    protected Deployment newDeployment(Deployable deployable) {
+    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable deployable) {
         return new DeploymentBuilder()
                 .withMetadata(fromCustomResource(true, resolveName(((Deployable<?>) deployable).getNameQualifier(), DEPLOYMENT_SUFFIX),
                         ((Deployable<?>) deployable).getNameQualifier()))
-                .withSpec(buildDeploymentSpec(deployable))
+                .withSpec(buildDeploymentSpec(imageResolver, deployable))
                 .build();
     }
 

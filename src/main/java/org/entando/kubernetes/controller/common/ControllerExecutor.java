@@ -1,6 +1,5 @@
 package org.entando.kubernetes.controller.common;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
@@ -17,13 +16,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public class ControllerExecutor {
 
@@ -31,16 +35,18 @@ public class ControllerExecutor {
     public static final String ETC_ENTANDO_CA = "/etc/entando/ca";
     private static final Map<String, String> resourceKindToImageNames = buildImageMap();
     private final SimpleK8SClient<?> client;
+    private final EntandoImageResolver imageResolver;
     private String controllerNamespace;
 
     public ControllerExecutor(String controllerNamespace, KubernetesClient client) {
-        this.controllerNamespace = controllerNamespace;
-        this.client = new DefaultSimpleK8SClient(client);
+        this(controllerNamespace, new DefaultSimpleK8SClient(client));
     }
 
     public ControllerExecutor(String controllerNamespace, SimpleK8SClient<?> client) {
         this.controllerNamespace = controllerNamespace;
         this.client = client;
+        this.imageResolver = new EntandoImageResolver(
+                client.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageVersionsConfigMap()));
     }
 
     private static Map<String, String> buildImageMap() {
@@ -53,15 +59,22 @@ public class ControllerExecutor {
         return map;
     }
 
-    public static Optional<String> resolveLatestImageFor(KubernetesClient client, Class<? extends EntandoBaseCustomResource> type) {
+    public static String resolveControllerImageName(EntandoCustomResource resource) {
+        return resolveControllerImageNameByKind(resource.getKind());
+    }
+
+    public static String resolveControllerImageName(Class<? extends EntandoBaseCustomResource> type) {
         String kind = KubeUtils.getKindOf(type);
-        String imageName = resourceKindToImageNames.get(kind);
-        ConfigMap configMap = client.configMaps().inNamespace(EntandoOperatorConfig.getEntandoImageNamespace())
-                .withName(EntandoOperatorConfig.getEntandoK8sImageVersionsConfigmap()).get();
-        if (configMap == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(configMap.getData().get(imageName));
+        return resolveControllerImageNameByKind(kind);
+    }
+
+    private static String resolveControllerImageNameByKind(String kind) {
+        return resourceKindToImageNames.get(kind);
+    }
+
+    public Optional<String> resolveLatestImageFor(Class<? extends EntandoBaseCustomResource> type) {
+        String imageName = resolveControllerImageName(type);
+        return this.imageResolver.determineLatestVersionOf(imageName);
     }
 
     public void startControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
@@ -87,8 +100,7 @@ public class ControllerExecutor {
     }
 
     private String determineControllerImage(EntandoCustomResource resource, String imageVersionToUse) {
-        return EntandoOperatorConfig.getEntandoDockerRegistry() + "/" + EntandoOperatorConfig.getEntandoImageNamespace() + "/"
-                + resourceKindToImageNames.get(resource.getKind()) + ":" + imageVersionToUse;
+        return this.imageResolver.determineImageUri(resolveControllerImageName(resource), Optional.ofNullable(imageVersionToUse));
     }
 
     private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {
@@ -96,34 +108,18 @@ public class ControllerExecutor {
         result.add(new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
         result.add(new EnvVar("ENTANDO_RESOURCE_NAMESPACE", resource.getMetadata().getNamespace(), null));
         result.add(new EnvVar("ENTANDO_RESOURCE_NAME", resource.getMetadata().getName(), null));
-        result.add(new EnvVar("ENTANDO_K8S_OPERATOR_REGISTRY", EntandoOperatorConfig.getEntandoDockerRegistry(), null));
-        result.add(new EnvVar("ENTANDO_USE_AUTO_CERT_GENERATION",
-                String.valueOf(EntandoOperatorConfig.useAutoCertGeneration()), null));
-        result.add(new EnvVar("ENTANDO_K8S_IMAGE_VERSION", EntandoOperatorConfig.getEntandoImageVersion(), null));
-        result.add(new EnvVar("ENTANDO_K8S_OPERATOR_IMAGE_NAMESPACE", EntandoOperatorConfig.getEntandoImageNamespace(),
-                null));
-        result.add(
-                new EnvVar("ENTANDO_K8S_OPERATOR_SECURITY_MODE", EntandoOperatorConfig.getOperatorSecurityMode().name(),
-                        null));
-        result.add(new EnvVar("ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS",
-                String.valueOf(EntandoOperatorConfig.getPodCompletionTimeoutSeconds()), null));
-        result.add(new EnvVar("ENTANDO_POD_READINESS_TIMEOUT_SECONDS",
-                String.valueOf(EntandoOperatorConfig.getPodReadinessTimeoutSeconds()), null));
-        result.add(new EnvVar("ENTANDO_K8S_OPERATOR_REGISTRY", EntandoOperatorConfig.getEntandoDockerRegistry(), null));
-        result.add(new EnvVar("ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT",
-                String.valueOf(EntandoOperatorConfig.disableKeycloakSslRequirement()), null));
-        EntandoOperatorConfig.getOperatorNamespaceOverride()
-                .ifPresent(s -> result.add(new EnvVar("ENTANDO_OPERATOR_NAMESPACE_OVERRIDE", s, null)));
-        EntandoOperatorConfig.getDefaultRoutingSuffix()
-                .ifPresent(s -> result.add(new EnvVar("ENTANDO_DEFAULT_ROUTING_SUFFIX", s, null)));
+        result.addAll(Stream.of(EntandoOperatorConfigProperty.values())
+                .filter(prop -> EntandoOperatorConfigBase.lookupProperty(prop).isPresent())
+                .map(prop -> new EnvVar(prop.name(), EntandoOperatorConfigBase.lookupProperty(prop).get(), null))
+                .collect(Collectors.toList()));
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             StringBuilder sb = new StringBuilder();
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path ->
                     sb.append("/etc/entando/ca/").append(path.getFileName().toString()).append(" "));
-            result.add(new EnvVar("ENTANDO_CA_CERT_PATHS", sb.toString().trim(), null));
+            result.add(new EnvVar(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.name(), sb.toString().trim(), null));
         }
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            result.add(new EnvVar("ENTANDO_PATH_TO_TLS_KEYPAIR", ETC_ENTANDO_TLS, null));
+            result.add(new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), ETC_ENTANDO_TLS, null));
         }
         return result;
     }

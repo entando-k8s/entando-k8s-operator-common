@@ -4,6 +4,7 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -47,6 +48,7 @@ public class DefaultSecretClient implements SecretClient {
 
     @Override
     public ConfigMap loadControllerConfigMap(String configMapName) {
-        return client.configMaps().inNamespace(client.getNamespace()).withName(configMapName).get();
+        return client.configMaps().inNamespace(EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace()))
+                .withName(configMapName).get();
     }
 }
