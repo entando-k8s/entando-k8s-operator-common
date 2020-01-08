@@ -43,9 +43,6 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
                 .addToStringData("entandoK8SServiceClientId", CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc")
                 .addToStringData("entandoK8SServiceInternalUrl", hostName + "/k8s")
                 .addToStringData("entandoK8SServiceExternalUrl", hostName + "/k8s")
-                .addToStringData("entandoUserManagementClientId", CLUSTER_INFRASTRUCTURE_NAME + "-user-mgmt")
-                .addToStringData("userManagementInternalUrl", hostName + "/user-mgmt")
-                .addToStringData("userManagementExternalUrl", "/user-mgmt")
                 .done();
     }
 
@@ -77,15 +74,13 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
                 CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-dig-ex");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
                 CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc");
-        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(90)), CLUSTER_INFRASTRUCTURE_NAMESPACE,
-                CLUSTER_INFRASTRUCTURE_NAME + "-user-mgmt");
         await().atMost(30, SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
                             .inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
                             .withName(CLUSTER_INFRASTRUCTURE_NAME)
                             .fromServer().get().getStatus();
-                    return status.forServerQualifiedBy("user-mgmt").isPresent() && status.forServerQualifiedBy("k8s-svc").isPresent()
+                    return status.forServerQualifiedBy("k8s-svc").isPresent()
                             && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
                 });
     }
