@@ -51,8 +51,8 @@ public class EntandoImageResolver {
                 .withDefaultValue("entando").resolvePropertyValue();
     }
 
-    private Optional<String> determineImageVersion(String imagename) {
-        return Optional.ofNullable(new PropertyResolution(this.imageVersionsConfigMap, imagename)
+    private Optional<String> determineImageVersion(String imagenameSegment) {
+        return Optional.ofNullable(new PropertyResolution(this.imageVersionsConfigMap, imagenameSegment)
                 .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE)
                 .withConfigMapKey("version")
                 .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_DEFAULT)

@@ -100,7 +100,7 @@ public class ControllerExecutor {
     }
 
     private String determineControllerImage(EntandoCustomResource resource, String imageVersionToUse) {
-        return this.imageResolver.determineImageUri(resolveControllerImageName(resource), Optional.ofNullable(imageVersionToUse));
+        return this.imageResolver.determineImageUri("entando/" + resolveControllerImageName(resource), Optional.ofNullable(imageVersionToUse));
     }
 
     private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {
