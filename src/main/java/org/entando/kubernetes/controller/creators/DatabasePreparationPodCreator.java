@@ -61,7 +61,8 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         for (DbAware dbAware : deployable.getDbAwareContainers()) {
             Optional<DatabasePopulator> databasePopulator = dbAware.useDatabaseSchemas(
                     prepareContainersToCreateSchemas(secretClient, entandoImageResolver, deployable, dbAware, result));
-            databasePopulator.ifPresent(dbp -> result.add(prepareContainerToPopulateSchemas(dbp, dbAware.getNameQualifier())));
+            databasePopulator
+                    .ifPresent(dbp -> result.add(prepareContainerToPopulateSchemas(entandoImageResolver, dbp, dbAware.getNameQualifier())));
         }
         return result;
     }
@@ -78,10 +79,11 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         return schemaResults;
     }
 
-    private Container prepareContainerToPopulateSchemas(DatabasePopulator databasePopulator, String nameQualifier) {
+    private Container prepareContainerToPopulateSchemas(EntandoImageResolver entandoImageResolver, DatabasePopulator databasePopulator,
+            String nameQualifier) {
         String dbJobName = entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-db-population-job";
         return new ContainerBuilder()
-                .withImage(databasePopulator.determineImageToUse())
+                .withImage(entandoImageResolver.determineImageUri(databasePopulator.determineImageToUse(), Optional.empty()))
                 .withImagePullPolicy("Always")
                 .withName(dbJobName)
                 .withCommand(databasePopulator.getCommand())
