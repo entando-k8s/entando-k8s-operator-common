@@ -26,8 +26,8 @@ import org.entando.kubernetes.controller.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 
 public class ControllerExecutor {
 

@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class TestFixtureRequest {
 

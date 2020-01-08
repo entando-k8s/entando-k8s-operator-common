@@ -14,7 +14,7 @@ import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class SampleController<T extends EntandoBaseCustomResource> extends AbstractDbAwareController<T> {
 

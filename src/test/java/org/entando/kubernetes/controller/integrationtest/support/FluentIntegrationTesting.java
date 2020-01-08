@@ -10,7 +10,7 @@ import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixtureRequest.DeletionRequestBuilder;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public interface FluentIntegrationTesting extends FluentTraversals {
 

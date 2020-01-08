@@ -12,7 +12,7 @@ import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public abstract class SampleIngressingDbAwareDeployable<T extends EntandoBaseCustomResource> implements
         IngressingDeployable<ServiceDeploymentResult>, DbAwareDeployable {

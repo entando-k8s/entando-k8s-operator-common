@@ -961,7 +961,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.entando.kubernetes.model.app.EntandoBaseCustomResource",
+    "name": "org.entando.kubernetes.model.EntandoBaseCustomResource",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,

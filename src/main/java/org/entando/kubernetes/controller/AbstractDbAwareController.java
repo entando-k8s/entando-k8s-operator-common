@@ -18,9 +18,9 @@ import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 
 public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResource> {

@@ -17,7 +17,7 @@ import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWa
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.app.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class IntegrationTestHelperBase<
         R extends EntandoCustomResource,
