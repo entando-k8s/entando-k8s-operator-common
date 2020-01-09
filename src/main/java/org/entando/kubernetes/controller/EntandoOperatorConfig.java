@@ -26,6 +26,10 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_CONFIGMAP_NAMESPACE);
     }
 
+    public static Optional<String> getOperatorServiceAccount() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SERVICEACCOUNT);
+    }
+
     public static Optional<String> getOperatorNamespaceToObserve() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE);
     }

@@ -19,6 +19,7 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_K8S_OPERATOR_SCOPE("entando.k8s.operator.scope"),
     ENTANDO_K8S_OPERATOR_SECURITY_MODE("entando.k8s.operator.security.mode"),
     ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE("entando.k8s.operator.namespace.to.observe"),
+    ENTANDO_K8S_OPERATOR_SERVICEACCOUNT("entando.k8s.operator.serviceaccount"),
 
     /*
     TLS config

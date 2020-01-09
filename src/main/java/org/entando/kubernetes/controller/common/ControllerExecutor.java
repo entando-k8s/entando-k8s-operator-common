@@ -86,6 +86,7 @@ public class ControllerExecutor {
                 .endMetadata()
                 .withNewSpec()
                 .withRestartPolicy("Never")
+                .withServiceAccountName(determineServiceAccountName())
                 .addNewContainer()
                 .withName("deployer")
                 .withImage(determineControllerImage(resource, imageVersionToUse))
@@ -97,6 +98,10 @@ public class ControllerExecutor {
                 .endSpec()
                 .build();
         client.pods().start(pod);
+    }
+
+    private String determineServiceAccountName() {
+        return EntandoOperatorConfig.getOperatorServiceAccount().orElse("default");
     }
 
     private String determineControllerImage(EntandoCustomResource resource, String imageVersionToUse) {
