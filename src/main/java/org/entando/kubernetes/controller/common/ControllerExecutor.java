@@ -56,6 +56,7 @@ public class ControllerExecutor {
         map.put("EntandoPlugin", "entando-k8s-plugin-controller");
         map.put("EntandoApp", "entando-k8s-app-controller");
         map.put("EntandoAppPluginLink", "entando-k8s-app-plugin-link-controller");
+        map.put("EntandoCompositeApp", "entando-k8s-composite-app-controller");
         return map;
     }
 
