@@ -77,8 +77,18 @@ public class ControllerExecutor {
         return this.imageResolver.determineLatestVersionOf(imageName);
     }
 
-    public void startControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
-        Pod pod = new PodBuilder().withNewMetadata()
+    public Pod startControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
+        Pod pod = buildControllerPod(action, resource, imageVersionToUse);
+        return client.pods().start(pod);
+    }
+
+    public Pod runControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
+        Pod pod = buildControllerPod(action, resource, imageVersionToUse);
+        return client.pods().runToCompletion(pod);
+    }
+
+    private Pod buildControllerPod(Action action, EntandoCustomResource resource, String imageVersionToUse) {
+        return new PodBuilder().withNewMetadata()
                 .withName(resource.getMetadata().getName() + "-deployer-" + RandomStringUtils.randomAlphanumeric(10).toLowerCase())
                 .withNamespace(this.controllerNamespace)
                 .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind())
@@ -97,7 +107,6 @@ public class ControllerExecutor {
                 .withVolumes(maybeCreateTlsVolumes(resource))
                 .endSpec()
                 .build();
-        client.pods().start(pod);
     }
 
     private String determineServiceAccountName() {

@@ -33,7 +33,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     }
 
     @Test
-    public void testIt() {
+    public void testStart() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
@@ -43,6 +43,22 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
 
         Pod pod = this.client.pods()
                 .waitForPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName());
+        assertThat(pod, is(notNullValue()));
+        assertThat(
+                theVariableNamed(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.name()).on(thePrimaryContainerOn(pod)),
+                is("9000000"));
+        //TODO check other variables
+        //TODO check mounts for certs, etc
+    }
+
+    @Test
+    public void testRun() {
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
+        this.client = getClient();
+        ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
+        resource = newEntandoKeycloakServer();
+        emulatePodWaitingBehaviour();
+        Pod pod = controllerExecutor.runControllerFor(Action.ADDED, resource, "6.0.0");
         assertThat(pod, is(notNullValue()));
         assertThat(
                 theVariableNamed(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.name()).on(thePrimaryContainerOn(pod)),

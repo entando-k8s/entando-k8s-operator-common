@@ -19,7 +19,6 @@ import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.PodResult;
 import org.entando.kubernetes.controller.PodResult.State;
 import org.entando.kubernetes.controller.k8sclient.PodClient;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class PodClientDouble extends AbstractK8SClientDouble implements PodClient {
 
@@ -40,7 +39,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
-    public Pod runToCompletion(EntandoCustomResource resource, Pod pod) {
+    public Pod runToCompletion(Pod pod) {
         if (pod != null) {
             getNamespace(pod).putPod(pod);
             if (emulatePodWatching) {

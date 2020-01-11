@@ -2,7 +2,6 @@ package org.entando.kubernetes.controller.inprocesstest.legacy;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import io.fabric8.kubernetes.api.model.Container;
@@ -61,7 +60,7 @@ public class DeployEntandoDbConsumerTest implements InProcessTestUtil, FluentTra
         //Then I need to see
         LabeledArgumentCaptor<Pod> dbJobCaptor = forResourceWithLabel(Pod.class, ENTANDO_APP_LABEL_NAME, MY_APP)
                 .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-db-preparation-job");
-        verify(client.pods()).runToCompletion(eq(app), dbJobCaptor.capture());
+        verify(client.pods()).runToCompletion(dbJobCaptor.capture());
         Pod dbJob = dbJobCaptor.getValue();
         //That the portdb schema was initialized
         Container portdbInitializer = theInitContainerNamed(MY_APP + "-portdb-schema-creation-job").on(dbJob);

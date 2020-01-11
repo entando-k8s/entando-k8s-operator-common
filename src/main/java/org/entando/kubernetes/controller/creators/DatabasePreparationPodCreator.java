@@ -31,7 +31,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     }
 
     public Pod runToCompletion(SimpleK8SClient client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
-        return client.pods().runToCompletion(entandoCustomResource, buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable));
+        return client.pods().runToCompletion(buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable));
     }
 
     private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable dbAwareDeployable) {

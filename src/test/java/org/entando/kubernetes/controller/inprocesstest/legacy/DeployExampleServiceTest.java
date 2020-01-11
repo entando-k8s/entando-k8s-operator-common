@@ -256,7 +256,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         LabeledArgumentCaptor<Pod> podCaptor = forResourceWithLabel(Pod.class, KEYCLOAK_SERVER_LABEL_NAME, MY_KEYCLOAK)
                 //And the fact that it is a DB JOB
                 .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_KEYCLOAK_DB + "-preparation-job");
-        verify(client.pods()).runToCompletion(eq(newEntandoKeycloakServer), podCaptor.capture());
+        verify(client.pods()).runToCompletion(podCaptor.capture());
         Pod theDbJobPod = podCaptor.getValue();
         //With exactly 1 container
         assertThat(theDbJobPod.getSpec().getInitContainers().size(), is(1));

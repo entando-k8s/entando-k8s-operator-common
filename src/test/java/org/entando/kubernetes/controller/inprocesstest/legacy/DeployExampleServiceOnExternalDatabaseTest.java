@@ -18,8 +18,8 @@ import io.quarkus.runtime.StartupEvent;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.database.EntandoDatabaseServiceController;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
@@ -60,17 +60,17 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         };
         client.secrets().overwriteControllerSecret(buildKeycloakSecret());
         externalDatabase.getMetadata().setNamespace(keycloakServer.getMetadata().getNamespace());
+        client.entandoResources().putEntandoDatabaseService(externalDatabase);
+        new EntandoDatabaseServiceController(client).processEvent(Action.ADDED, externalDatabase);
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
-        client.entandoResources().putEntandoDatabaseService(externalDatabase);
         client.entandoResources().putEntandoCustomResource(keycloakServer);
     }
 
     @Test
     public void testSecrets() {
         //Given I have created an EntandoDatabaseService custom resource
-        new CreateExternalServiceCommand(externalDatabase).execute(client);
         //When I deploy a EntandoKeycloakServer
         sampleController.onStartup(new StartupEvent());
         //Then a K8S Secret was created with a name that reflects the EntandoApp and the fact that it is a secret
@@ -84,7 +84,6 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     @Test
     public void testDeployment() {
         //Given I have created an EntandoDatabaseService custom resource
-        new CreateExternalServiceCommand(externalDatabase).execute(client);
         //And Keycloak is receiving requests
         lenient().when(keycloakClient.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn(KEYCLOAK_SECRET);
         //When I deploy a EntandoKeycloakServer
@@ -97,7 +96,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         //Then a pod was created for Keycloak using the credentials and connection settings of the EntandoDatabaseService
         LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabel(Pod.class, KEYCLOAK_SERVER_LABEL_NAME, MY_KEYCLOAK)
                 .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_KEYCLOAK + "-db-preparation-job");
-        verify(client.pods()).runToCompletion(eq(keycloakServer), keycloakSchemaJobCaptor.capture());
+        verify(client.pods()).runToCompletion(keycloakSchemaJobCaptor.capture());
         Pod keycloakDbJob = keycloakSchemaJobCaptor.getValue();
         Container theInitContainer = theInitContainerNamed(MY_KEYCLOAK + "-db-schema-creation-job").on(keycloakDbJob);
         verifyStandardSchemaCreationVariables("my-secret", MY_KEYCLOAK_DB_SECRET, theInitContainer, DbmsImageVendor.ORACLE);

@@ -12,7 +12,6 @@ import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.PodResult;
 import org.entando.kubernetes.controller.PodResult.State;
 import org.entando.kubernetes.controller.k8sclient.PodClient;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultPodClient implements PodClient {
 
@@ -31,9 +30,8 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
-    public Pod runToCompletion(EntandoCustomResource resource, Pod pod) {
-        String namespace = resource.getMetadata().getNamespace();
-        Pod running = this.client.pods().inNamespace(namespace).create(pod);
+    public Pod runToCompletion(Pod pod) {
+        Pod running = this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
         return waitFor(running, got -> PodResult.of(got).getState() == State.COMPLETED,
                 EntandoOperatorConfig.getPodCompletionTimeoutSeconds());
     }

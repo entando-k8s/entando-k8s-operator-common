@@ -9,7 +9,6 @@ import io.fabric8.kubernetes.client.dsl.Watchable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import org.entando.kubernetes.client.PodWatcher;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface PodClient {
 
@@ -19,7 +18,7 @@ public interface PodClient {
 
     Pod loadPod(String namespace, String labelName, String labelValue);
 
-    Pod runToCompletion(EntandoCustomResource resource, Pod pod);
+    Pod runToCompletion(Pod pod);
 
     AtomicReference<PodWatcher> getPodWatcherHolder();
 
