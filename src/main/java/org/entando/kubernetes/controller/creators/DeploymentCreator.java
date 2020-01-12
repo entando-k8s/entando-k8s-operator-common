@@ -39,12 +39,11 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     public static final String ENTANDO_SECRET_MOUNTS_ROOT = "/etc/entando/connectionconfigs";
     public static final String TRUST_STORE_FILE = "store.jks";
-    public static final String DEFAULT_TRUST_STORE_SECRET_NAME = "entando-default-trust-store-secret";
     public static final String VOLUME_SUFFIX = "-volume";
     public static final String DEPLOYMENT_SUFFIX = "-deployment";
     public static final String CONTAINER_SUFFIX = "-container";
     public static final String PORT_SUFFIX = "-port";
-    private static final String KEYSTORES_ROOT = "/etc/entando/keystores";
+    public static final String CERT_SECRET_MOUNT_ROOT = "/etc/entando/certs";
     public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
     private Deployment deployment;
 
@@ -53,7 +52,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     public static String standardCertPathOf(String filename) {
-        return String.format("%s/%s/%s", KEYSTORES_ROOT, DEFAULT_TRUST_STORE_SECRET_NAME, filename);
+        return String.format("%s/%s/%s", CERT_SECRET_MOUNT_ROOT, SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, filename);
     }
 
     public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable deployable) {
@@ -103,7 +102,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .collect(Collectors.toList());
 
         if (deployable.getContainers().stream().anyMatch(TlsAware.class::isInstance) && TlsHelper.getInstance().isTrustStoreAvailable()) {
-            volumeList.add(newSecretVolume(DEFAULT_TRUST_STORE_SECRET_NAME));
+            volumeList.add(newSecretVolume(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
         }
         return volumeList;
     }
@@ -174,8 +173,9 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                         .collect(Collectors.toList()));
         if (deployableContainer instanceof TlsAware && TlsHelper.getInstance().isTrustStoreAvailable()) {
             volumeMounts.add(new VolumeMountBuilder()
-                    .withName(DEFAULT_TRUST_STORE_SECRET_NAME + VOLUME_SUFFIX)
-                    .withMountPath("/etc/entando/keystores/" + DEFAULT_TRUST_STORE_SECRET_NAME).withReadOnly(true).build());
+                    .withName(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + VOLUME_SUFFIX)
+                    .withMountPath(CERT_SECRET_MOUNT_ROOT + "/" + SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME)
+                    .withReadOnly(true).build());
         }
         if (deployableContainer instanceof PersistentVolumeAware) {
             String volumeMountPath = ((PersistentVolumeAware) deployableContainer).getVolumeMountPath();

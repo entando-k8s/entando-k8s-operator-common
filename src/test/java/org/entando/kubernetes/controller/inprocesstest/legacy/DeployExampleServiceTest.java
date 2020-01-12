@@ -43,6 +43,7 @@ import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.creators.DeploymentCreator;
+import org.entando.kubernetes.controller.creators.SecretCreator;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
@@ -158,7 +159,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
 
         //And a K8S Secret was created in the Keycloak deployment's namespace containing the CA keystore
         NamedArgumentCaptor<Secret> trustStoreSecretCaptor = forResourceNamed(Secret.class,
-                DeploymentCreator.DEFAULT_TRUST_STORE_SECRET_NAME);
+                SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME);
         verify(client.secrets(), atLeast(1)).createSecretIfAbsent(eq(newEntandoKeycloakServer), trustStoreSecretCaptor.capture());
         Secret trustStoreSecret = trustStoreSecretCaptor.getValue();
         assertThat(theKey(DeploymentCreator.TRUST_STORE_FILE).on(trustStoreSecret), is(TlsHelper.getInstance().getTrustStoreBase64()));
@@ -337,9 +338,9 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
                 .updateStatus(eq(newEntandoKeycloakServer), argThat(matchesDeploymentStatus(dbDeploymentStatus)));
         verify(client.entandoResources(), atLeastOnce())
                 .updateStatus(eq(newEntandoKeycloakServer), argThat(matchesDeploymentStatus(serverDeploymentStatus)));
-        assertThat(theVolumeNamed(DeploymentCreator.DEFAULT_TRUST_STORE_SECRET_NAME + "-volume").on(serverDeployment).getSecret()
+        assertThat(theVolumeNamed(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + "-volume").on(serverDeployment).getSecret()
                         .getSecretName(),
-                is(DeploymentCreator.DEFAULT_TRUST_STORE_SECRET_NAME));
+                is(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
         //And all volumes have been mapped
         verifyThatAllVolumesAreMapped(newEntandoKeycloakServer, client, dbDeployment);
         verifyThatAllVolumesAreMapped(newEntandoKeycloakServer, client, serverDeployment);
@@ -370,8 +371,9 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         assertThat(theVariableReferenceNamed(DB_PASSWORD).on(theServerContainer).getSecretKeyRef().getKey(),
                 is(KubeUtils.PASSSWORD_KEY));
         assertThat(theVariableNamed(DB_VENDOR).on(theServerContainer), is("mysql"));
-        assertThat(theVolumeMountNamed(DeploymentCreator.DEFAULT_TRUST_STORE_SECRET_NAME + "-volume").on(theServerContainer).getMountPath(),
-                is("/etc/entando/keystores/entando-default-trust-store-secret"));
+        assertThat(theVolumeMountNamed(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + "-volume").on(theServerContainer)
+                        .getMountPath(),
+                is(DeploymentCreator.CERT_SECRET_MOUNT_ROOT + "/" + SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
     }
 
     private void verifyTheDbContainer(Container theDbContainer) {

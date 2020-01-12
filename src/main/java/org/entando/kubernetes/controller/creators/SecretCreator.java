@@ -13,13 +13,15 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class SecretCreator extends AbstractK8SResourceCreator {
 
+    public static final String DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME = "entando-default-ca-secret";
+
     public SecretCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
     public void createSecrets(SecretClient client, Deployable<?> deployable) {
         if (TlsHelper.getInstance().isTrustStoreAvailable()) {
-            client.createSecretIfAbsent(entandoCustomResource, newTrustStoreSecret());
+            client.createSecretIfAbsent(entandoCustomResource, newCertificateAuthoritySecret());
         }
         if (shouldCreateIngressTlsSecret(deployable)) {
             createIngressTlsSecret(client);
@@ -52,10 +54,10 @@ public class SecretCreator extends AbstractK8SResourceCreator {
                 && TlsHelper.canAutoCreateTlsSecret();
     }
 
-    private Secret newTrustStoreSecret() {
+    private Secret newCertificateAuthoritySecret() {
         Secret secret = new SecretBuilder()
                 .withNewMetadata()
-                .withName(DeploymentCreator.DEFAULT_TRUST_STORE_SECRET_NAME)
+                .withName(DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME)
                 .endMetadata()
                 .addToData(DeploymentCreator.TRUST_STORE_FILE, TlsHelper.getInstance().getTrustStoreBase64())
                 .build();

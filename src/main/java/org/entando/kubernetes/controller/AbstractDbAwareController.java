@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
@@ -104,6 +105,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         try {
             Action action = Action.valueOf(
                     EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_ACTION).orElseThrow(IllegalArgumentException::new));
+            TlsHelper.getInstance().init();
             if (resourceExists(action)) {
                 String resourceName = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAME)
                         .orElseThrow(IllegalArgumentException::new);
