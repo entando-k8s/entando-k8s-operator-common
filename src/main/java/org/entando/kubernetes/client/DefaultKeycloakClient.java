@@ -93,11 +93,14 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             keycloak.realm(MASTER_REALM).toRepresentation();
             return true;
         } catch (ProcessingException e) {
+            LOGGER.log(Level.SEVERE, "Exception resolving master realm on Keycloak", e);
             return e.getCause() instanceof ForbiddenException || e.getCause() instanceof NotAuthorizedException;
         } catch (ForbiddenException | NotAuthorizedException e) {
+            LOGGER.log(Level.SEVERE, "Exception resolving master realm on Keycloak", e);
             //Could be valid - no access to master
             return true;
         } catch (ServiceUnavailableException | NotFoundException e) {
+            LOGGER.log(Level.SEVERE, "Exception resolving master realm on Keycloak", e);
             return false;
         }
     }
