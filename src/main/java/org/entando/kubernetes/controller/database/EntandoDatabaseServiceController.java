@@ -25,10 +25,7 @@ public class EntandoDatabaseServiceController extends AbstractDbAwareController<
     }
 
     public void processEvent(Action action, EntandoDatabaseService db) {
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name());
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, db.getMetadata().getNamespace());
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, db.getMetadata().getName());
-        super.processCommand();
+        super.processAction(action, db);
     }
 
     @Override
