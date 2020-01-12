@@ -104,29 +104,39 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         try {
             Action action = Action.valueOf(
                     EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_ACTION).orElseThrow(IllegalArgumentException::new));
-            if (action == Action.ADDED) {
+            if (resourceExists(action)) {
                 String resourceName = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAME)
                         .orElseThrow(IllegalArgumentException::new);
                 String resourceNamespace = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE)
                         .orElseThrow(IllegalArgumentException::new);
                 T newResource = k8sClient.entandoResources().load(resourceType, resourceNamespace, resourceName);
-                try {
-                    k8sClient.entandoResources().updatePhase(newResource, EntandoDeploymentPhase.STARTED);
-                    processAddition(newResource);
-                    k8sClient.entandoResources().updatePhase(newResource, EntandoDeploymentPhase.SUCCESSFUL);
-                } catch (Exception e) {
-                    autoExit.withCode(-1);
-                    logger.log(Level.SEVERE, e, () -> format("Unexpected exception occurred while adding %s %s/%s",
-                            newResource.getKind(),
-                            newResource.getMetadata().getNamespace(),
-                            newResource.getMetadata().getName()));
-                    k8sClient.entandoResources().deploymentFailed(newResource, e);
-                }
+                processAction(action, newResource);
             }
         } finally {
             new Thread(autoExit).start();
         }
 
+    }
+
+    private boolean resourceExists(Action action) {
+        return action == Action.ADDED || action == Action.MODIFIED;
+    }
+
+    protected void processAction(Action action, T newResource) {
+        try {
+            k8sClient.entandoResources().updatePhase(newResource, EntandoDeploymentPhase.STARTED);
+            if(action==Action.ADDED) {
+                processAddition(newResource);
+            }
+            k8sClient.entandoResources().updatePhase(newResource, EntandoDeploymentPhase.SUCCESSFUL);
+        } catch (Exception e) {
+            autoExit.withCode(-1);
+            logger.log(Level.SEVERE, e, () -> format("Unexpected exception occurred while adding %s %s/%s",
+                    newResource.getKind(),
+                    newResource.getMetadata().getNamespace(),
+                    newResource.getMetadata().getName()));
+            k8sClient.entandoResources().deploymentFailed(newResource, e);
+        }
     }
 
     protected DatabaseServiceResult prepareDatabaseService(EntandoCustomResource entandoCustomResource,
