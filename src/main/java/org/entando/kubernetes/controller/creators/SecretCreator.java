@@ -1,5 +1,7 @@
 package org.entando.kubernetes.controller.creators;
 
+import static java.lang.String.format;
+
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -14,13 +16,17 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 public class SecretCreator extends AbstractK8SResourceCreator {
 
     public static final String DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME = "entando-default-ca-secret";
+    public static final String TRUSTSTORE_SETTINGS_KEY = "TRUSTSTORE_SETTINGS";
 
     public SecretCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
     public void createSecrets(SecretClient client, Deployable<?> deployable) {
-        if (TlsHelper.getInstance().isTrustStoreAvailable()) {
+        if (TlsHelper.getInstance().isTrustStoreAvailable()
+                && client.loadSecret(entandoCustomResource, DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME) == null) {
+            //Don't overwrite the secret. And reduce the risk of the password going out of sync
+            //with the truststore
             client.createSecretIfAbsent(entandoCustomResource, newCertificateAuthoritySecret());
         }
         if (shouldCreateIngressTlsSecret(deployable)) {
@@ -54,12 +60,17 @@ public class SecretCreator extends AbstractK8SResourceCreator {
                 && TlsHelper.canAutoCreateTlsSecret();
     }
 
+    @SuppressWarnings("squid:S2068")//Because it is not a hardcoded password
     private Secret newCertificateAuthoritySecret() {
         Secret secret = new SecretBuilder()
                 .withNewMetadata()
                 .withName(DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME)
                 .endMetadata()
                 .addToData(DeploymentCreator.TRUST_STORE_FILE, TlsHelper.getInstance().getTrustStoreBase64())
+                .addToStringData(
+                        TRUSTSTORE_SETTINGS_KEY,
+                        format("-Djavax.net.ssl.trustStore=%s -Djavax.net.ssl.trustStorePassword=%s", DeploymentCreator.TRUST_STORE_PATH,
+                                TlsHelper.getInstance().getTrustStorePassword()))
                 .build();
         EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path -> secret.getData().put(path.getFileName().toString(),
                 TlsHelper.getInstance().getTlsCaCertBase64(path)));
