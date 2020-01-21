@@ -254,10 +254,10 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return resolveName(container.getNameQualifier(), VOLUME_SUFFIX);
     }
 
-    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable deployable) {
+    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable) {
         return new DeploymentBuilder()
-                .withMetadata(fromCustomResource(true, resolveName(((Deployable<?>) deployable).getNameQualifier(), DEPLOYMENT_SUFFIX),
-                        ((Deployable<?>) deployable).getNameQualifier()))
+                .withMetadata(fromCustomResource(true, resolveName(deployable.getNameQualifier(), DEPLOYMENT_SUFFIX),
+                        deployable.getNameQualifier()))
                 .withSpec(buildDeploymentSpec(imageResolver, deployable))
                 .build();
     }

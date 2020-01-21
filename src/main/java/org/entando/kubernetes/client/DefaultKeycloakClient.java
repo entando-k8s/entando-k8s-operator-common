@@ -39,6 +39,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     public static final String MASTER_REALM = "master";
     private static final Logger LOGGER = Logger.getLogger(DefaultKeycloakClient.class.getName());
     private static final int MAX_RETRY_COUNT = 60;
+    public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
     private Keycloak keycloak;
     private boolean isHttps = false;
 
@@ -93,14 +94,14 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             keycloak.realm(MASTER_REALM).toRepresentation();
             return true;
         } catch (ProcessingException e) {
-            LOGGER.log(Level.SEVERE, "Exception resolving master realm on Keycloak", e);
+            LOGGER.log(Level.SEVERE, EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK, e);
             return e.getCause() instanceof ForbiddenException || e.getCause() instanceof NotAuthorizedException;
         } catch (ForbiddenException | NotAuthorizedException e) {
-            LOGGER.log(Level.SEVERE, "Exception resolving master realm on Keycloak", e);
+            LOGGER.log(Level.SEVERE, EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK, e);
             //Could be valid - no access to master
             return true;
         } catch (ServiceUnavailableException | NotFoundException e) {
-            LOGGER.log(Level.SEVERE, "Exception resolving master realm on Keycloak", e);
+            LOGGER.log(Level.SEVERE, EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK, e);
             return false;
         }
     }
