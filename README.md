@@ -86,7 +86,7 @@ Entando looks for default and overriding configuration settings in both the OS E
 to resolve the full image URI. It also inspects a Kubernetes ConfigMap named `entando-image-versions`, which stores 
 a JSON formatted image configuration against known image names. This ConfigMap can be created in the Operator's namespace.
 For images in the `entando` namespace, the registry, namespace and version segments of the image URI can be overridden 
-following a similar pattern.
+following a similar pattern. (The namespace used to resolve this ConfigMap can be overridden by using the `ENTANDO_K8S_OPERATOR_CONFIGMAP_NAMESPACE` environment variable/system property)
 
 The Docker registry segment will be resolved as follows:
  * If a global override, e.g. ENTANDO_DOCKER_REGISTRY_OVERRIDE=docker.io., was configured, it will always be used
