@@ -47,7 +47,7 @@ public class EntandoImageResolver {
         return new PropertyResolution(this.imageVersionsConfigMap, imagename)
                 .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE)
                 .withConfigMapKey("organization")
-                .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_DEFAULT)
+                .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK)
                 .withDefaultValue("entando").resolvePropertyValue();
     }
 

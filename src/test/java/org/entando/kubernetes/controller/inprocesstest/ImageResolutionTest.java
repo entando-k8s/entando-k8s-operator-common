@@ -40,7 +40,7 @@ public class ImageResolutionTest {
     public void testResolutionFromDefaultProperties() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "test.io");
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_DEFAULT.getJvmSystemProperty(), "test-entando");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "test-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "6.1.4");
         //when I resolve an image
         String imageUri = new EntandoImageResolver(null).determineImageUri("entando/test-image", Optional.empty());
@@ -52,7 +52,7 @@ public class ImageResolutionTest {
     public void testResolutionFromDefaultPropertiesThatAreOverridden() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "default.io");
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_DEFAULT.getJvmSystemProperty(), "default-entando");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "default");
         //And I override these properties with their "OVERRIDE" equivalents
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_OVERRIDE.getJvmSystemProperty(), "test.io");
@@ -68,7 +68,7 @@ public class ImageResolutionTest {
     public void testResolutionFromDefaultPropertiesWhenThereIsAConfigMap() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "default.io");
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_DEFAULT.getJvmSystemProperty(), "default-entando");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "default");
         //And I have a configMap
         //when I resolve an image
@@ -84,7 +84,7 @@ public class ImageResolutionTest {
     public void testResolutionFromDefaultPropertiesWhenThereIsAConfigMapButItIsOverridden() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "default.io");
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_DEFAULT.getJvmSystemProperty(), "default-entando");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "default");
         //And I override these properties with their "OVERRIDE" equivalents
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_OVERRIDE.getJvmSystemProperty(), "overridden.io");
@@ -119,7 +119,7 @@ public class ImageResolutionTest {
     public void testResolutionIgnoredForNonEntandoImages() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "test.io");
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_DEFAULT.getJvmSystemProperty(), "test-entando");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "test-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "6.1.4");
         //when I resolve an image
         String imageUri = new EntandoImageResolver(null).determineImageUri("test.io/not-entando/test-image:1", Optional.empty());
