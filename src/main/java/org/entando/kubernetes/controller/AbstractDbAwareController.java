@@ -63,7 +63,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         this.keycloakClient = keycloakClient;
         this.autoExit = autoExit;
         this.entandoImageResolver = new EntandoImageResolver(
-                k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageVersionsConfigMap()));
+                k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
         Class<?> cls = getClass();
         List<Class<T>> types = new ArrayList<>();
         while (cls != AbstractDbAwareController.class) {

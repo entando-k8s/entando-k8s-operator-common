@@ -15,8 +15,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     Config to resolve Entando Docker Images
      */
 
-    public static String getEntandoDockerImageVersionsConfigMap() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSIONS_CONFIGMAP).orElse("entando-image-versions");
+    public static String getEntandoDockerImageInfoConfigMap() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_INFO_CONFIGMAP).orElse("entando-docker-image-info");
     }
 
     /*

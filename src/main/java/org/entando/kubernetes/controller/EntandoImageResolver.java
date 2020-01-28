@@ -19,7 +19,7 @@ public class EntandoImageResolver {
     }
 
     public Optional<String> determineLatestVersionOf(String imagename) {
-        return determineImageVersion(imagename);
+        return determineVersion(imagename);
     }
 
     public String determineImageUri(String imagename, Optional<String> version) {
@@ -27,9 +27,9 @@ public class EntandoImageResolver {
             String imageNameSegment = imagename.substring("entando/".length());
             return format("%s/%s/%s:%s",
                     determineDockerRegistry(imageNameSegment),
-                    determineDockerNamespace(imageNameSegment),
+                    determineOrganization(imageNameSegment),
                     imageNameSegment,
-                    version.orElse(determineImageVersion(imageNameSegment).orElse("latest")));
+                    version.orElse(determineVersion(imageNameSegment).orElse("latest")));
         } else {
             return imagename;
         }
@@ -38,24 +38,24 @@ public class EntandoImageResolver {
     private String determineDockerRegistry(String imagename) {
         return new PropertyResolution(this.imageVersionsConfigMap, imagename)
                 .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_OVERRIDE)
-                .withConfigMapKey("docker-registry")
-                .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_DEFAULT)
+                .withConfigMapKey("registry")
+                .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK)
                 .withDefaultValue("docker.io").resolvePropertyValue();
     }
 
-    private String determineDockerNamespace(String imagename) {
+    private String determineOrganization(String imagename) {
         return new PropertyResolution(this.imageVersionsConfigMap, imagename)
-                .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_NAMESPACE_OVERRIDE)
-                .withConfigMapKey("image-namespace")
-                .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_NAMESPACE_DEFAULT)
+                .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE)
+                .withConfigMapKey("organization")
+                .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK)
                 .withDefaultValue("entando").resolvePropertyValue();
     }
 
-    private Optional<String> determineImageVersion(String imagenameSegment) {
+    private Optional<String> determineVersion(String imagenameSegment) {
         return Optional.ofNullable(new PropertyResolution(this.imageVersionsConfigMap, imagenameSegment)
                 .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE)
                 .withConfigMapKey("version")
-                .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_DEFAULT)
+                .withDefaultPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK)
                 .withDefaultValue(null).resolvePropertyValue());
     }
 
