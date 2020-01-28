@@ -4,13 +4,13 @@ public enum EntandoOperatorConfigProperty {
     /*
     Config to resolve Entando Docker Images
      */
-    ENTANDO_DOCKER_IMAGE_VERSION_DEFAULT("entando.docker.image.version.default"),
+    ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK("entando.docker.image.version.fallback"),
     ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE("entando.docker.image.override"),
-    ENTANDO_DOCKER_REGISTRY_DEFAULT("entando.docker.registry.default"),
+    ENTANDO_DOCKER_REGISTRY_FALLBACK("entando.docker.registry.fallback"),
     ENTANDO_DOCKER_REGISTRY_OVERRIDE("entando.docker.registry.override"),
-    ENTANDO_DOCKER_IMAGE_NAMESPACE_DEFAULT("entando.docker.image.namespace.default"),
-    ENTANDO_DOCKER_IMAGE_NAMESPACE_OVERRIDE("entando.docker.image.namespace.override"),
-    ENTANDO_DOCKER_IMAGE_VERSIONS_CONFIGMAP("entando.docker.image.versions.configmap"),
+    ENTANDO_DOCKER_IMAGE_ORG_DEFAULT("entando.docker.image.org.fallback"),
+    ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE("entando.docker.image.org.override"),
+    ENTANDO_DOCKER_IMAGE_INFO_CONFIGMAP("entando.docker.image.info.configmap"),
 
     /*
     K8S Operator operational config

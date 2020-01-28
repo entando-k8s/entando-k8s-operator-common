@@ -46,7 +46,7 @@ public class ControllerExecutor {
         this.controllerNamespace = controllerNamespace;
         this.client = client;
         this.imageResolver = new EntandoImageResolver(
-                client.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageVersionsConfigMap()));
+                client.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
     }
 
     private static Map<String, String> buildImageMap() {
