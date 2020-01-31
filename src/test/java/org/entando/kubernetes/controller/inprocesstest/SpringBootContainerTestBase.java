@@ -87,30 +87,35 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     protected abstract SimpleKeycloakClient getKeycloakClient();
 
     public void verifySpringOidc(Deployment serverDeployment) {
-        assertThat(theVariableNamed(SpringBootDeployableContainer.SPRING_SECURITY_OAUTH_2_CLIENT_PROVIDER_OIDC_ISSUER_URI)
+        assertThat(theVariableNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name())
                 .on(thePrimaryContainerOn(serverDeployment)), is(MY_KEYCLOAK_BASE_URL + "/realms/entando"));
-        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID)
+        assertThat(theVariableReferenceNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
                         .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(),
                 is(SAMPLE_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-secret"));
-        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID)
+        assertThat(theVariableReferenceNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KeycloakClientCreator.CLIENT_ID_KEY));
-        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET)
+        assertThat(theVariableReferenceNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
                         .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(),
                 is(SAMPLE_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-secret"));
-        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET)
+        assertThat(theVariableReferenceNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KeycloakClientCreator.CLIENT_SECRET_KEY));
     }
 
     public void verifySpringDatasource(Deployment serverDeployment) {
-        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SPRING_DATASOURCE_USERNAME)
+        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KubeUtils.USERNAME_KEY));
-        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SPRING_DATASOURCE_USERNAME)
+        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
-        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SPRING_DATASOURCE_PASSWORD)
+        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_PASSWORD.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KubeUtils.PASSSWORD_KEY));
-        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SPRING_DATASOURCE_PASSWORD)
+        assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_PASSWORD.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
-        assertThat(theVariableNamed(SpringBootDeployableContainer.SPRING_DATASOURCE_URL)
+        assertThat(theVariableNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_URL.name())
                 .on(thePrimaryContainerOn(serverDeployment)), is(
                 "jdbc:postgresql://" + SAMPLE_NAME + "-db-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/" + SAMPLE_NAME_DB));
     }
