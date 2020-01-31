@@ -42,20 +42,20 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
     default void addKeycloakVariables(List<EnvVar> vars) {
         KeycloakAware.super.addKeycloakVariables(vars);//Temporarily for backward compatibility
         KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
-        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
+        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
                 keycloakDeployment.getBaseUrl() + "/realms/entando",
                 null));
         String keycloakSecretName = KeycloakClientCreator.keycloakClientSecret(getKeycloakClientConfig());
-        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name(), null,
+        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name(), null,
                 KubeUtils.secretKeyRef(keycloakSecretName, KeycloakClientCreator.CLIENT_SECRET_KEY)));
-        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name(), null,
+        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name(), null,
                 KubeUtils.secretKeyRef(keycloakSecretName, KeycloakClientCreator.CLIENT_ID_KEY)));
     }
 
     enum SpringProperty {
-        SPRING_SECURITY_OAUTH_2_CLIENT_PROVIDER_OIDC_ISSUER_URI,
-        SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET,
-        SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID,
+        SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI,
+        SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET,
+        SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID,
         SPRING_DATASOURCE_USERNAME,
         SPRING_DATASOURCE_PASSWORD,
         SPRING_DATASOURCE_URL,

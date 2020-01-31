@@ -120,21 +120,21 @@ public interface FluentTraversals {
 
     default void verifySpringSecuritySettings(Container container, String keycloakClientSecret) {
         assertThat(theVariableNamed(
-                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name())
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name())
                 .on(container), Matchers.is(MY_KEYCLOAK_BASE_URL + "/realms/entando"));
         assertThat(theVariableReferenceNamed(
-                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
                         .on(container).getSecretKeyRef().getName(),
                 Matchers.is(keycloakClientSecret));
         assertThat(theVariableReferenceNamed(
-                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
                 .on(container).getSecretKeyRef().getKey(), Matchers.is(KeycloakClientCreator.CLIENT_ID_KEY));
         assertThat(theVariableReferenceNamed(
-                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
                         .on(container).getSecretKeyRef().getName(),
                 Matchers.is(keycloakClientSecret));
         assertThat(theVariableReferenceNamed(
-                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
                         .on(container).getSecretKeyRef().getKey(),
                 Matchers.is(KeycloakClientCreator.CLIENT_SECRET_KEY));
     }
