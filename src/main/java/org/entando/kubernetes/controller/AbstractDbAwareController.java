@@ -99,7 +99,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         return false;
     }
 
-    protected abstract void processAddition(T newResource);
+    protected abstract void synchronizeDeploymentState(T newResource);
 
     protected void processCommand() {
         try {
@@ -126,9 +126,10 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
 
     protected void processAction(Action action, T newResource) {
         try {
+            EntandoDeploymentPhase initialPhase = newResource.getStatus().getEntandoDeploymentPhase();
             k8sClient.entandoResources().updatePhase(newResource, EntandoDeploymentPhase.STARTED);
-            if (action == Action.ADDED) {
-                processAddition(newResource);
+            if (action == Action.ADDED || (action == Action.MODIFIED && initialPhase == EntandoDeploymentPhase.REQUESTED)) {
+                synchronizeDeploymentState(newResource);
             }
             k8sClient.entandoResources().updatePhase(newResource, EntandoDeploymentPhase.SUCCESSFUL);
         } catch (Exception e) {

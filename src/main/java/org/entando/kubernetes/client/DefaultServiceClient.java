@@ -17,13 +17,14 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
-    public void createEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
+    public void createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
         //TODO remove the namespace overriding once we create delegate services from the correct context (the App)
         String namespace = ofNullable(endpoints.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
         if (client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).get() != null) {
             client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
         }
+
         client.endpoints().inNamespace(namespace).create(endpoints);
     }
 
@@ -33,7 +34,7 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
-    public Service createService(EntandoCustomResource peerInNamespace, Service service) {
+    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
         //TODO remove once we create delegate services from the correct context (the App)
         String namespace = ofNullable(service.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());

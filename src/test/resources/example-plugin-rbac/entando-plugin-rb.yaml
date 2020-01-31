@@ -8,6 +8,6 @@ roleRef:
   kind: Role
   name: entando-plugin
 subjects:
-- kind: ServiceAccount
-  name: plugin-namespace
-  namespace: plugin-namespace
+  - kind: ServiceAccount
+    name: plugin-namespace
+    namespace: plugin-namespace

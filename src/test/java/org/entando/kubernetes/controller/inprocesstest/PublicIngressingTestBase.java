@@ -202,7 +202,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     @SuppressWarnings("unchecked")
     public <T extends EntandoBaseCustomResource> void onAdd(T resource) {
         new Thread(() -> {
-            T createResource = k8sClient.entandoResources().putEntandoCustomResource(resource);
+            T createResource = k8sClient.entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, createResource.getMetadata().getNamespace());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, createResource.getMetadata().getName());

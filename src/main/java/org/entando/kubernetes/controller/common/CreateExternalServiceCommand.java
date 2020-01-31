@@ -31,7 +31,7 @@ public class CreateExternalServiceCommand {
     }
 
     public ExternalDatabaseDeployment execute(SimpleK8SClient k8sClient) {
-        Service service = k8sClient.services().createService(externalDatabase, newExternalService());
+        Service service = k8sClient.services().createOrReplaceService(externalDatabase, newExternalService());
         Endpoints endpoints = maybeCreateEndpoints(k8sClient);
         this.status.setServiceStatus(service.getStatus());
         return new ExternalDatabaseDeployment(service, endpoints, externalDatabase);
@@ -41,7 +41,7 @@ public class CreateExternalServiceCommand {
         Endpoints endpoints = null;
         if (isIpAddress()) {
             endpoints = newEndpoints();
-            k8sClient.services().createEndpoints(externalDatabase, endpoints);
+            k8sClient.services().createOrReplaceEndpoints(externalDatabase, endpoints);
         }
         return endpoints;
     }

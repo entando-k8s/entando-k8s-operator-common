@@ -63,7 +63,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
     }
 
     public <T extends ServiceResult> void createService(ServiceClient services, Deployable<T> deployable) {
-        primaryService = services.createService(entandoCustomResource, newService(deployable));
+        primaryService = services.createOrReplaceService(entandoCustomResource, newService(deployable));
     }
 
     public ServiceStatus reloadPrimaryService(ServiceClient services) {
@@ -80,13 +80,13 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
                 .withName(ingressingDeployable.getIngressName() + "-to-" + primaryService.getMetadata().getName())
                 .withNamespace(ingressingDeployable.getIngressNamespace())
                 .withOwnerReferences(KubeUtils.buildOwnerReference(this.entandoCustomResource)).build();
-        Service delegatingService = services.createService(entandoCustomResource, new ServiceBuilder()
+        Service delegatingService = services.createOrReplaceService(entandoCustomResource, new ServiceBuilder()
                 .withMetadata(metaData)
                 .withNewSpec()
                 .withPorts(new ArrayList<>(primaryService.getSpec().getPorts()))
                 .endSpec()
                 .build());
-        services.createEndpoints(entandoCustomResource, new EndpointsBuilder()
+        services.createOrReplaceEndpoints(entandoCustomResource, new EndpointsBuilder()
                 .withMetadata(metaData)
                 .addNewSubset()
                 .addNewAddress().withIp(primaryService.getSpec().getClusterIP()).endAddress()

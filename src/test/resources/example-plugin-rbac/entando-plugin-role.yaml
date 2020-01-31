@@ -4,19 +4,19 @@ metadata:
   name: entando-plugin
   namespace: plugin-namespace
 rules:
-- apiGroups:
-  - entando.org
-  resources:
-  - entandoplugins
-  verbs:
-  - get
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - get
-  - update
-  - delete
+  - apiGroups:
+      - entando.org
+    resources:
+      - entandoplugins
+    verbs:
+      - get
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - get
+      - update
+      - delete

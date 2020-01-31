@@ -85,7 +85,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     public void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         final EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
-        client.entandoResources().putEntandoCustomResource(keycloakServer);
+        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
         // When I  deploy the EntandoKeycloakServer
         sampleController.onStartup(new StartupEvent());
 
@@ -111,7 +111,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     public void testService() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
-        client.entandoResources().putEntandoCustomResource(keycloakServer);
+        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
         //And that K8S is up and receiving Service requests
         ServiceStatus dbServiceStatus = new ServiceStatus();
         lenient().when(client.services().loadService(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_SERVICE)))
@@ -121,7 +121,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         sampleController.onStartup(new StartupEvent());
         //Then a K8S Service was created with a name that reflects the EntandoApp and the fact that it is a JEE service
         NamedArgumentCaptor<Service> dbServiceCaptor = forResourceNamed(Service.class, MY_KEYCLOAK_DB_SERVICE);
-        verify(client.services()).createService(eq(newEntandoKeycloakServer), dbServiceCaptor.capture());
+        verify(client.services()).createOrReplaceService(eq(newEntandoKeycloakServer), dbServiceCaptor.capture());
         //And a selector that matches the Keyclaok DB pod
         Service dbService = dbServiceCaptor.getValue();
         Map<String, String> dbSelector = dbService.getSpec().getSelector();
@@ -142,7 +142,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     public void testMysqlDeployment() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
-        client.entandoResources().putEntandoCustomResource(keycloakServer);
+        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
         //And K8S is receiving Deployment requests
         DeploymentStatus dbDeploymentStatus = new DeploymentStatus();
         //And K8S is receiving Deployment requests
@@ -154,7 +154,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         //Then two K8S deployments are created with a name that reflects the EntandoKeycloakServer name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
                 MY_KEYCLOAK_DB_DEPLOYMENT);
-        verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
+        verify(client.deployments()).createOrPatchDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
         Container theDbContainer = theContainerNamed("db-container").on(dbDeployment);
         //Exposing a port 3306
@@ -183,7 +183,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
                 .withDbms(DbmsImageVendor.POSTGRESQL)
                 .endSpec()
                 .done();
-        client.entandoResources().putEntandoCustomResource(newEntandoKeycloakServer);
+        client.entandoResources().createOrPatchEntandoResource(newEntandoKeycloakServer);
         //And K8S is receiving Deployment requests
         DeploymentStatus dbDeploymentStatus = new DeploymentStatus();
         //And K8S is receiving Deployment requests
@@ -195,7 +195,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         //Then two K8S deployments are created with a name that reflects the EntandoKeycloakServer name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
                 MY_KEYCLOAK_DB_DEPLOYMENT);
-        verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
+        verify(client.deployments()).createOrPatchDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
         Container theDbContainer = theContainerNamed("db-container").on(dbDeployment);
         //Exposing a port 5432
@@ -220,7 +220,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     public void testPersistentVolumeClaims() {
         //Given I have  a Keycloak server
         EntandoKeycloakServer newEntandoKeycloakServer = this.keycloakServer;
-        client.entandoResources().putEntandoCustomResource(newEntandoKeycloakServer);
+        client.entandoResources().createOrPatchEntandoResource(newEntandoKeycloakServer);
         //And that K8S is up and receiving PVC requests
         PersistentVolumeClaimStatus dbPvcStatus = new PersistentVolumeClaimStatus();
         lenient().when(client.persistentVolumeClaims()
@@ -234,7 +234,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         NamedArgumentCaptor<PersistentVolumeClaim> dbPvcCaptor = forResourceNamed(PersistentVolumeClaim.class,
                 MY_KEYCLOAK_DB_PVC);
         verify(this.client.persistentVolumeClaims())
-                .createPersistentVolumeClaim(eq(newEntandoKeycloakServer), dbPvcCaptor.capture());
+                .createPersistentVolumeClaimIfAbsent(eq(newEntandoKeycloakServer), dbPvcCaptor.capture());
         //With names that reflect the EntandoPlugin and the type of deployment the claim is used for
         PersistentVolumeClaim dbPvc = dbPvcCaptor.getValue();
 

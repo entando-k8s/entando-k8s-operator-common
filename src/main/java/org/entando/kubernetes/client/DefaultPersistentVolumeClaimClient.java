@@ -14,10 +14,15 @@ public class DefaultPersistentVolumeClaimClient implements PersistentVolumeClaim
     }
 
     @Override
-    public PersistentVolumeClaim createPersistentVolumeClaim(EntandoCustomResource peerInNamespace,
+    public PersistentVolumeClaim createPersistentVolumeClaimIfAbsent(EntandoCustomResource peerInNamespace,
             PersistentVolumeClaim persistentVolumeClaim) {
-        return client.persistentVolumeClaims().inNamespace(peerInNamespace.getMetadata().getNamespace())
-                .create(persistentVolumeClaim);
+        PersistentVolumeClaim existing = client.persistentVolumeClaims()
+                .inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(persistentVolumeClaim.getMetadata().getName()).get();
+        if (existing == null) {
+            return client.persistentVolumeClaims()
+                    .inNamespace(peerInNamespace.getMetadata().getNamespace()).create(persistentVolumeClaim);
+        }
+        return existing;
     }
 
     @Override

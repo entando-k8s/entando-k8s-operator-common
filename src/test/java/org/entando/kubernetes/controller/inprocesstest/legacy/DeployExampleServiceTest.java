@@ -97,7 +97,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     public void prepareKeycloakCustomResource() {
         this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
         };
-        client.entandoResources().putEntandoCustomResource(keycloakServer);
+        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
         client.secrets().overwriteControllerSecret(buildKeycloakSecret());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
@@ -187,9 +187,9 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         sampleController.onStartup(new StartupEvent());
         //Then a K8S Service was created with a name that reflects the EntandoApp and the fact that it is a JEE service
         NamedArgumentCaptor<Service> dbServiceCaptor = forResourceNamed(Service.class, MY_KEYCLOAK_DB_SERVICE);
-        verify(client.services()).createService(eq(newEntandoKeycloakServer), dbServiceCaptor.capture());
+        verify(client.services()).createOrReplaceService(eq(newEntandoKeycloakServer), dbServiceCaptor.capture());
         NamedArgumentCaptor<Service> serverServiceCaptor = forResourceNamed(Service.class, MY_KEYCLOAK_SERVER_SERVICE);
-        verify(client.services()).createService(eq(newEntandoKeycloakServer), serverServiceCaptor.capture());
+        verify(client.services()).createOrReplaceService(eq(newEntandoKeycloakServer), serverServiceCaptor.capture());
         //And a selector that matches the EntandoKeycloakServer pod
         Service serverService = serverServiceCaptor.getValue();
         Map<String, String> serverSelector = serverService.getSpec().getSelector();
@@ -312,7 +312,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         //Then two K8S deployments are created with a name that reflects the EntandoKeycloakServer name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
                 MY_KEYCLOAK_DB_DEPLOYMENT);
-        verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
+        verify(client.deployments()).createOrPatchDeployment(eq(newEntandoKeycloakServer), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
         verifyTheDbContainer(theContainerNamed("db-container").on(dbDeployment));
         //With a Pod Template that has labels linking it to the previously created K8S Database Service
@@ -323,7 +323,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         // And a ServerDeployment
         NamedArgumentCaptor<Deployment> serverDeploymentCaptor = forResourceNamed(Deployment.class,
                 MY_KEYCLOAK_SERVER_DEPLOYMENT);
-        verify(client.deployments()).createDeployment(eq(newEntandoKeycloakServer), serverDeploymentCaptor.capture());
+        verify(client.deployments()).createOrPatchDeployment(eq(newEntandoKeycloakServer), serverDeploymentCaptor.capture());
         Deployment serverDeployment = serverDeploymentCaptor.getValue();
         //With a Pod Template that has labels linking it to the previously created K8S  Keycloak Service
         assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(serverDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK_SERVER));
@@ -401,7 +401,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         NamedArgumentCaptor<PersistentVolumeClaim> dbPvcCaptor = forResourceNamed(PersistentVolumeClaim.class,
                 MY_KEYCLOAK_DB_PVC);
         verify(this.client.persistentVolumeClaims())
-                .createPersistentVolumeClaim(eq(newEntandoKeycloakServer), dbPvcCaptor.capture());
+                .createPersistentVolumeClaimIfAbsent(eq(newEntandoKeycloakServer), dbPvcCaptor.capture());
         //With names that reflect the EntandoPlugin and the type of deployment the claim is used for
         PersistentVolumeClaim dbPvc = dbPvcCaptor.getValue();
 

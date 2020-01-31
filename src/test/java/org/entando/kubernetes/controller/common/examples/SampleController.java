@@ -30,7 +30,7 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
         processCommand();
     }
 
-    protected void processAddition(T newEntandoResource) {
+    protected void synchronizeDeploymentState(T newEntandoResource) {
         // Create database for Keycloak
         EntandoDeploymentSpec spec = resolveSpec(newEntandoResource);
         DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newEntandoResource, spec.getDbms(),

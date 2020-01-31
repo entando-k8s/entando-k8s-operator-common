@@ -56,7 +56,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable deployable) {
         deployment = deploymentClient
-                .createDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
+                .createOrPatchDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
         return deployment;
     }
 

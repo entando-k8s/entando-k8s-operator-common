@@ -5,7 +5,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface PersistentVolumeClaimClient {
 
-    PersistentVolumeClaim createPersistentVolumeClaim(EntandoCustomResource customResource,
+    PersistentVolumeClaim createPersistentVolumeClaimIfAbsent(EntandoCustomResource customResource,
             PersistentVolumeClaim persistentVolumeClaim);
 
     PersistentVolumeClaim loadPersistentVolumeClaim(EntandoCustomResource customResource, String name);

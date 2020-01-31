@@ -26,7 +26,9 @@ import java.lang.reflect.Field;
 import java.util.List;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.creators.KeycloakClientCreator;
+import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.DbmsImageVendor;
+import org.hamcrest.Matchers;
 
 public interface FluentTraversals {
 
@@ -114,6 +116,27 @@ public interface FluentTraversals {
         assertThat(
                 theVariableReferenceNamed("KEYCLOAK_CLIENT_SECRET").on(container).getSecretKeyRef().getKey(),
                 is(KeycloakClientCreator.CLIENT_SECRET_KEY));
+    }
+
+    default void verifySpringSecuritySettings(Container container, String keycloakClientSecret) {
+        assertThat(theVariableNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name())
+                .on(container), Matchers.is(MY_KEYCLOAK_BASE_URL + "/realms/entando"));
+        assertThat(theVariableReferenceNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
+                        .on(container).getSecretKeyRef().getName(),
+                Matchers.is(keycloakClientSecret));
+        assertThat(theVariableReferenceNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
+                .on(container).getSecretKeyRef().getKey(), Matchers.is(KeycloakClientCreator.CLIENT_ID_KEY));
+        assertThat(theVariableReferenceNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
+                        .on(container).getSecretKeyRef().getName(),
+                Matchers.is(keycloakClientSecret));
+        assertThat(theVariableReferenceNamed(
+                SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH_2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
+                        .on(container).getSecretKeyRef().getKey(),
+                Matchers.is(KeycloakClientCreator.CLIENT_SECRET_KEY));
     }
 
     default void verifyStandardSchemaCreationVariables(String adminSecret, String secretToMatch, Container resultingContainer,

@@ -14,7 +14,7 @@ public class ServiceClientDouble extends AbstractK8SClientDouble implements Serv
     }
 
     @Override
-    public Service createService(EntandoCustomResource peerInNamespace, Service service) {
+    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
         if (peerInNamespace == null) {
             return null;
         }
@@ -23,7 +23,7 @@ public class ServiceClientDouble extends AbstractK8SClientDouble implements Serv
     }
 
     @Override
-    public void createEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
+    public void createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
         getNamespace(peerInNamespace).putEndpoints(endpoints);
     }
 

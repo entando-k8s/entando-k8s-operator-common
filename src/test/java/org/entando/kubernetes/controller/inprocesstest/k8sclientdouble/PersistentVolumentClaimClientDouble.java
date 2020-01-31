@@ -14,7 +14,7 @@ public class PersistentVolumentClaimClientDouble extends AbstractK8SClientDouble
     }
 
     @Override
-    public PersistentVolumeClaim createPersistentVolumeClaim(EntandoCustomResource peerInNamespace,
+    public PersistentVolumeClaim createPersistentVolumeClaimIfAbsent(EntandoCustomResource peerInNamespace,
             PersistentVolumeClaim persistentVolumeClaim) {
         if (peerInNamespace == null) {
             return null;

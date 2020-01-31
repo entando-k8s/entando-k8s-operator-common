@@ -28,21 +28,21 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     public void putEntandoApp(EntandoApp entandoApp) {
-        putEntandoCustomResource(entandoApp);
+        createOrPatchEntandoResource(entandoApp);
     }
 
     public void putEntandoPlugin(EntandoPlugin entandoPlugin) {
-        putEntandoCustomResource(entandoPlugin);
+        createOrPatchEntandoResource(entandoPlugin);
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T putEntandoCustomResource(T r) {
+    public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
         this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
         return r;
     }
 
     public void putEntandoDatabaseService(EntandoDatabaseService externalDatabase) {
-        putEntandoCustomResource(externalDatabase);
+        createOrPatchEntandoResource(externalDatabase);
     }
 
     @Override

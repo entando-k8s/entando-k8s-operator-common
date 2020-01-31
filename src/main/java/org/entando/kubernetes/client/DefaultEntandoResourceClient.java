@@ -29,7 +29,7 @@ import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
-public class DefaultEntandoResourceClient implements EntandoResourceClient {
+public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
     private final KubernetesClient client;
     private final EntandoResourceOperationsRegistry entandoResourceRegistry;
@@ -102,9 +102,9 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T putEntandoCustomResource(T r) {
+    public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
         Class<T> type = (Class<T>) r.getClass();
-        return this.getOperations(type).inNamespace(r.getMetadata().getNamespace()).create(r);
+        return createOrPatch(r, r, this.getOperations(type));
 
     }
 

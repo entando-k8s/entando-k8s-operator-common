@@ -65,7 +65,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
-        client.entandoResources().putEntandoCustomResource(keycloakServer);
+        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         //Then a K8S deployment is created
         NamedArgumentCaptor<Deployment> keyclaokDeploymentCaptor = forResourceNamed(Deployment.class,
                 MY_KEYCLOAK_SERVER_DEPLOYMENT);
-        verify(client.deployments()).createDeployment(eq(keycloakServer), keyclaokDeploymentCaptor.capture());
+        verify(client.deployments()).createOrPatchDeployment(eq(keycloakServer), keyclaokDeploymentCaptor.capture());
         //Then a pod was created for Keycloak using the credentials and connection settings of the EntandoDatabaseService
         LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabel(Pod.class, KEYCLOAK_SERVER_LABEL_NAME, MY_KEYCLOAK)
                 .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_KEYCLOAK + "-db-preparation-job");

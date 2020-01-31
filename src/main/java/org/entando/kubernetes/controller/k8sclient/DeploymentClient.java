@@ -5,7 +5,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface DeploymentClient {
 
-    Deployment createDeployment(EntandoCustomResource customResource, Deployment deployment);
+    Deployment createOrPatchDeployment(EntandoCustomResource customResource, Deployment deployment);
 
     Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name);
 }

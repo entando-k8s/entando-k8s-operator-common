@@ -6,10 +6,10 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface ServiceClient {
 
-    Service createService(EntandoCustomResource peerInNamespace, Service service);
+    Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service);
 
     Service loadService(EntandoCustomResource peerInNamespace, String name);
 
-    void createEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints);
+    void createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints);
 
 }

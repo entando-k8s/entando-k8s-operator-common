@@ -28,7 +28,7 @@ public class EntandoDatabaseServiceController extends AbstractDbAwareController<
     }
 
     @Override
-    protected void processAddition(EntandoDatabaseService entandoDatabaseService) {
+    protected void synchronizeDeploymentState(EntandoDatabaseService entandoDatabaseService) {
         new CreateExternalServiceCommand(entandoDatabaseService).execute(super.k8sClient);
     }
 }
