@@ -37,9 +37,9 @@ import org.keycloak.representations.idm.UserRepresentation;
 public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
     public static final String MASTER_REALM = "master";
+    public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
     private static final Logger LOGGER = Logger.getLogger(DefaultKeycloakClient.class.getName());
     private static final int MAX_RETRY_COUNT = 60;
-    public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
     private Keycloak keycloak;
     private boolean isHttps = false;
 

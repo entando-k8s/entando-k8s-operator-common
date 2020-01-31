@@ -1,4 +1,4 @@
-package org.entando.kubernetes.controller.common.examples;
+package org.entando.kubernetes.controller.common.examples.barebones;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Arrays;

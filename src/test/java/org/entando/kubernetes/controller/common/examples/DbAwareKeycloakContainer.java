@@ -1,5 +1,6 @@
 package org.entando.kubernetes.controller.common.examples;
 
+import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -18,5 +19,10 @@ public class DbAwareKeycloakContainer extends MinimalKeycloakContainer implement
     @Override
     public Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas) {
         return Optional.empty();
+    }
+
+    @Override
+    public void addDatabaseConnectionVariables(List<EnvVar> envVars) {
+
     }
 }

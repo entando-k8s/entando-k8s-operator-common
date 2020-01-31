@@ -30,18 +30,18 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
         processCommand();
     }
 
-    protected void processAddition(T newEntandoKeycloakServer) {
+    protected void processAddition(T newEntandoResource) {
         // Create database for Keycloak
-        EntandoDeploymentSpec spec = resolveSpec(newEntandoKeycloakServer);
-        DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newEntandoKeycloakServer, spec.getDbms(),
+        EntandoDeploymentSpec spec = resolveSpec(newEntandoResource);
+        DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newEntandoResource, spec.getDbms(),
                 "db");
         // Create the Keycloak service using the provided database
         KeycloakConnectionConfig keycloakConnectionConfig = k8sClient.entandoResources().findKeycloak(() -> Optional.empty());
-        Deployable<ServiceDeploymentResult> keycloakDeployable = createDeployable(newEntandoKeycloakServer, databaseServiceResult,
+        Deployable<ServiceDeploymentResult> keycloakDeployable = createDeployable(newEntandoResource, databaseServiceResult,
                 keycloakConnectionConfig);
         DeployCommand<ServiceDeploymentResult> keycloakCommand = new DeployCommand<>(keycloakDeployable);
         ServiceDeploymentResult keycloakDeploymentResult = keycloakCommand.execute(k8sClient, Optional.of(keycloakClient));
-        k8sClient.entandoResources().updateStatus(newEntandoKeycloakServer, keycloakCommand.getStatus());
+        k8sClient.entandoResources().updateStatus(newEntandoResource, keycloakCommand.getStatus());
     }
 
     private EntandoDeploymentSpec resolveSpec(T r) {

@@ -1,5 +1,6 @@
 package org.entando.kubernetes.controller.common.examples;
 
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -33,6 +34,11 @@ public class EntandoDbConsumingDeployable implements PublicIngressingDeployable<
         this.entandoApp = entandoApp;
         this.databaseServiceResult = databaseServiceResult;
         this.containers = Arrays.asList(new EntandoDatabaseConsumingContainer() {
+
+            @Override
+            public void addDatabaseConnectionVariables(List<EnvVar> envVars) {
+
+            }
 
             @Override
             public String determineImageToUse() {

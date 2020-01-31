@@ -52,6 +52,12 @@ public class SampleDeployableContainer<T extends EntandoBaseCustomResource> impl
     public void addEnvironmentVariables(List<EnvVar> vars) {
         vars.add(new EnvVar("KEYCLOAK_USER", null, KubeUtils.secretKeyRef(secretName(entandoResource), KubeUtils.USERNAME_KEY)));
         vars.add(new EnvVar("KEYCLOAK_PASSWORD", null, KubeUtils.secretKeyRef(secretName(entandoResource), KubeUtils.PASSSWORD_KEY)));
+        addDatabaseConnectionVariables(vars);
+        vars.add(new EnvVar("PROXY_ADDRESS_FORWARDING", "true", null));
+    }
+
+    @Override
+    public void addDatabaseConnectionVariables(List<EnvVar> vars) {
         DatabaseSchemaCreationResult databaseSchemaCreationResult = dbSchemas.get("db");
         vars.add(new EnvVar("DB_ADDR", databaseSchemaCreationResult.getInternalServiceHostname(), null));
         vars.add(new EnvVar("DB_PORT", databaseSchemaCreationResult.getPort(), null));
@@ -61,7 +67,6 @@ public class SampleDeployableContainer<T extends EntandoBaseCustomResource> impl
         vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databaseSchemaCreationResult), null));
         vars.add(new EnvVar("DB_SCHEMA", databaseSchemaCreationResult.getSchemaName(), null));
         databaseSchemaCreationResult.addAdditionalConfigFromDatabaseSecret(vars);
-        vars.add(new EnvVar("PROXY_ADDRESS_FORWARDING", "true", null));
     }
 
     private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaCreationResult databaseSchemaCreationResult) {

@@ -101,4 +101,9 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
         return Optional.empty();
     }
 
+    @Override
+    public void addDatabaseConnectionVariables(List<EnvVar> envVars) {
+
+    }
+
 }
