@@ -22,10 +22,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
+import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.HasHealthCommand;
@@ -228,16 +227,10 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         ArrayList<EnvVar> vars = new ArrayList<>();
         if (container instanceof KeycloakAware) {
             KeycloakAware keycloakAware = (KeycloakAware) container;
-            KeycloakConnectionConfig keycloakDeployment = keycloakAware.getKeycloakConnectionConfig();
-            vars.add(new EnvVar("KEYCLOAK_ENABLED", "true", null));
-            vars.add(new EnvVar("KEYCLOAK_REALM", KubeUtils.ENTANDO_KEYCLOAK_REALM, null));
-            vars.add(new EnvVar("KEYCLOAK_PUBLIC_CLIENT_ID", KubeUtils.PUBLIC_CLIENT_ID, null));
-            vars.add(new EnvVar("KEYCLOAK_AUTH_URL", keycloakDeployment.getBaseUrl(), null));
-            String keycloakSecretName = KeycloakClientCreator.keycloakClientSecret(keycloakAware.getKeycloakClientConfig());
-            vars.add(new EnvVar("KEYCLOAK_CLIENT_SECRET", null,
-                    KubeUtils.secretKeyRef(keycloakSecretName, KeycloakClientCreator.CLIENT_SECRET_KEY)));
-            vars.add(new EnvVar("KEYCLOAK_CLIENT_ID", null,
-                    KubeUtils.secretKeyRef(keycloakSecretName, KeycloakClientCreator.CLIENT_ID_KEY)));
+            keycloakAware.addKeycloakVariables(vars);
+        }
+        if (container instanceof DbAware) {
+            ((DbAware) container).addDatabaseConnectionVariables(vars);
         }
         if (container instanceof HasWebContext) {
             vars.add(new EnvVar("SERVER_SERVLET_CONTEXT_PATH", ((HasWebContext) container).getWebContextPath(), null));

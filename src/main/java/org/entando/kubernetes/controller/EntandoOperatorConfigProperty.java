@@ -5,7 +5,7 @@ public enum EntandoOperatorConfigProperty {
     Config to resolve Entando Docker Images
      */
     ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK("entando.docker.image.version.fallback"),
-    ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE("entando.docker.image.override"),
+    ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE("entando.docker.image.version.override"),
     ENTANDO_DOCKER_REGISTRY_FALLBACK("entando.docker.registry.fallback"),
     ENTANDO_DOCKER_REGISTRY_OVERRIDE("entando.docker.registry.override"),
     ENTANDO_DOCKER_IMAGE_ORG_FALLBACK("entando.docker.image.org.fallback"),
