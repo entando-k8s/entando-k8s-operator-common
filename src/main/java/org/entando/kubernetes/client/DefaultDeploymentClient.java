@@ -18,7 +18,7 @@ public class DefaultDeploymentClient implements DeploymentClient {
     @Override
     public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace, Deployment deployment) {
         RollableScalableResource<Deployment, DoneableDeployment> resource = client.apps()
-                .deployments().inNamespace(peerInNamespace.getMetadata().getName()).withName(deployment.getMetadata().getName());
+                .deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(deployment.getMetadata().getName());
         if (resource.get() == null) {
             return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(deployment);
         } else {
