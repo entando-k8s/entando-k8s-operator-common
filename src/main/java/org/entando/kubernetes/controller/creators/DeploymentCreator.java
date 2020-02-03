@@ -79,6 +79,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .withNewSelector()
                 .withMatchLabels(labelsFromResource(deployable.getNameQualifier()))
                 .endSelector()
+                .withReplicas(deployable.getReplicas())
                 .withNewTemplate()
                 .withNewMetadata()
                 .withName(resolveName(deployable.getNameQualifier(), "-pod"))

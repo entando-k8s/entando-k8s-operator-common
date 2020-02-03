@@ -24,4 +24,7 @@ public interface Deployable<T extends ServiceResult> {
         return "default";
     }
 
+    default int getReplicas() {
+        return 1;
+    }
 }

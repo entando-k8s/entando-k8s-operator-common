@@ -4,6 +4,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
+import java.util.Optional;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -24,7 +25,7 @@ public class DefaultDeploymentClient implements DeploymentClient {
         } else {
             resource.scale(0, true);
             resource.patch(deployment);
-            return resource.scale(deployment.getSpec().getReplicas(), true);
+            return resource.scale(Optional.ofNullable(deployment.getSpec().getReplicas()).orElse(1), true);
         }
     }
 
