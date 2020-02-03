@@ -119,7 +119,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         //TODO lookup the version here once we have a pipeline for dbjob
         return new ContainerBuilder()
                 .withImage(entandoImageResolver
-                        .determineImageUri("entando/entando-k8s-dbjob", Optional.of("6.0.0")))
+                        .determineImageUri("entando/entando-k8s-dbjob", Optional.empty()))
                 .withImagePullPolicy("Always")
                 .withName(dbJobName)
                 .withCommand("/bin/bash", "-c", "/process-command.sh")
