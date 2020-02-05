@@ -20,14 +20,14 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 public class ServiceAccountCreator extends AbstractK8SResourceCreator {
 
     public static final String ROLEBINDING_SUFFIX = "-rolebinding";
-    private ServiceAccount serviceAccount;
-    private Role role;
+    private String serviceAccount;
+    private String role;
 
     public ServiceAccountCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public ServiceAccount prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?> deployable) {
+    public String prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?> deployable) {
         this.serviceAccount = serviceAccountClient.createServiceAccountIfAbsent(entandoCustomResource, newServiceAccount(deployable));
         this.role = serviceAccountClient.createRoleIfAbsent(entandoCustomResource, newRole(deployable));
         serviceAccountClient.createRoleBindingIfAbsent(entandoCustomResource, newRoleBinding());
@@ -52,18 +52,18 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
 
     private RoleBinding newRoleBinding() {
         return new RoleBindingBuilder()
-                .withNewMetadata().withName(serviceAccount.getMetadata().getName() + ROLEBINDING_SUFFIX)
+                .withNewMetadata().withName(serviceAccount + ROLEBINDING_SUFFIX)
                 .endMetadata()
                 .withNewRoleRef()
                 //                .withApiGroup("rbac.authorization.k8s.io")
-                .withName(role.getMetadata().getName())
+                .withName(role)
                 .withKind("Role")
                 .endRoleRef()
                 .addNewSubject()
                 //                .withApiGroup("rbac.authorization.k8s.io")
                 .withKind("ServiceAccount")
-                .withName(serviceAccount.getMetadata().getName())
-                .withNamespace(serviceAccount.getMetadata().getNamespace())
+                .withName(serviceAccount)
+                .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .endSubject()
                 .build();
     }

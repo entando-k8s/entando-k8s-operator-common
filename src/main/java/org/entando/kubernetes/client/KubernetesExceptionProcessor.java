@@ -19,7 +19,7 @@ public final class KubernetesExceptionProcessor {
         if (e.getCode() == UNAUTHORIZED) {
             throw new UnauthorizedExcepion(String.format(
                     "Could not create a %s in namespace %s. If you are running the Entando controllers in STRICT security mode, please "
-                            + "check  that you have associated the entando-k8s-infra service account with a Role that allows the 'CREATE' "
+                            + "check  that you have associated the entando-operator ServiceAccount with a Role that allows the 'CREATE' "
                             + "verb against resources of kind %s ",
                     resource.getKind(), controllerNamespace, resource.getKind()), e);
         } else if (e.getCode() == CONFLICT) {
@@ -33,20 +33,18 @@ public final class KubernetesExceptionProcessor {
         }
     }
 
-    public static <T extends HasMetadata> T squashDuplicateExceptionOnCreate(EntandoCustomResource peerInNamespace, T resource,
+    public static String squashDuplicateExceptionOnCreate(EntandoCustomResource peerInNamespace, HasMetadata resource,
             KubernetesClientException e) {
         if (e.getCode() == UNAUTHORIZED) {
             throw new UnauthorizedExcepion(String.format(
                     "Could not create a %s in namespace %s. If you are running the Entando controllers in STRICT security mode,  please "
-                            + "check that you have associated the entando-k8s-infra service account with a Role that allows the 'CREATE' "
+                            + "check that you have associated the entando-operator ServiceAccount with a Role that allows the 'CREATE' "
                             + "verb against resources of kind %s ",
                     resource.getKind(), peerInNamespace.getMetadata().getNamespace(), resource.getKind()), e);
         } else if (e.getCode() == CONFLICT) {
             //We're generally interested in its name here. 409 guarantees the name already exists, and it is safe to bind to.
             //The client code should not return this object if assumptions have been made about its state
-            //TODO maybe only return the name?
-
-            return resource;
+            return resource.getMetadata().getName();
         } else {
             throw e;
         }
@@ -57,7 +55,7 @@ public final class KubernetesExceptionProcessor {
         if (e.getCode() == UNAUTHORIZED) {
             return new UnauthorizedExcepion(String.format(
                     "Could not load %s named %s in namespace %s. If you are running the Entando controllers in STRICT security mode, "
-                            + "please check  that you have associated the entando-k8s-infra service account with a Role that allows the "
+                            + "please check  that you have associated the entando-operator ServiceAccount with a Role that allows the "
                             + "'GET' verb against resources of kind %s ",
                     kind, name, peerInNamespace.getMetadata().getNamespace(), kind), e);
         } else {

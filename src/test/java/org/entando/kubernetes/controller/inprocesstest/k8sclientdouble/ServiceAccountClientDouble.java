@@ -14,15 +14,15 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
     }
 
     @Override
-    public ServiceAccount createServiceAccountIfAbsent(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
+    public String createServiceAccountIfAbsent(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
         getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
-        return serviceAccount;
+        return serviceAccount.getMetadata().getName();
     }
 
     @Override
-    public RoleBinding createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
+    public String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
         getNamespace(peerInNamespace).putRoleBinding(roleBinding);
-        return roleBinding;
+        return roleBinding.getMetadata().getName();
     }
 
     @Override
@@ -36,9 +36,9 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
     }
 
     @Override
-    public Role createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role) {
+    public String createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role) {
         getNamespace(peerInNamespace).putRole(role);
-        return role;
+        return role.getMetadata().getName();
     }
 
     @Override
