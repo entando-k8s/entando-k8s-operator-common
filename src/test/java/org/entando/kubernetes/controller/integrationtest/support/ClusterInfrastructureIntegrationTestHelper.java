@@ -3,7 +3,6 @@ package org.entando.kubernetes.controller.integrationtest.support;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
@@ -64,14 +63,6 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
 
     public void waitForClusterInfrastructure(EntandoClusterInfrastructure infrastructure, int waitOffset, boolean deployingDbContainers) {
         getOperations().inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE).create(infrastructure);
-        if (deployingDbContainers) {
-            waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
-                    CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-digexdb");
-        }
-        this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(240 + waitOffset)),
-                CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-db-preparation-job");
-        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240 + waitOffset)),
-                CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-dig-ex");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
                 CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc");
         await().atMost(30, SECONDS).until(
