@@ -34,47 +34,37 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
 
     @Test
     public void testStart() {
-        try {
-            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
-            this.client = getClient();
-            ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
-            resource = newEntandoKeycloakServer();
-            emulatePodWaitingBehaviour();
-            controllerExecutor.startControllerFor(Action.ADDED, resource, "6.0.0");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
+        this.client = getClient();
+        ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
+        resource = newEntandoKeycloakServer();
+        emulatePodWaitingBehaviour();
+        controllerExecutor.startControllerFor(Action.ADDED, resource, "6.0.0");
 
-            Pod pod = this.client.pods()
-                    .waitForPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName());
-            assertThat(pod, is(notNullValue()));
-            assertThat(
-                    theVariableNamed(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.name())
-                            .on(thePrimaryContainerOn(pod)),
-                    is("9000000"));
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Pod pod = this.client.pods()
+                .waitForPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName());
+        assertThat(pod, is(notNullValue()));
+        assertThat(
+                theVariableNamed(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.name())
+                        .on(thePrimaryContainerOn(pod)),
+                is("9000000"));
         //TODO check other variables
         //TODO check mounts for certs, etc
     }
 
     @Test
     public void testRun() {
-        try {
-            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
-            this.client = getClient();
-            ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
-            resource = newEntandoKeycloakServer();
-            emulatePodWaitingBehaviour();
-            Pod pod = controllerExecutor.runControllerFor(Action.ADDED, resource, "6.0.0");
-            assertThat(pod, is(notNullValue()));
-            assertThat(
-                    theVariableNamed(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.name())
-                            .on(thePrimaryContainerOn(pod)),
-                    is("9000000"));
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            throw e;
-        }
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
+        this.client = getClient();
+        ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
+        resource = newEntandoKeycloakServer();
+        emulatePodWaitingBehaviour();
+        Pod pod = controllerExecutor.runControllerFor(Action.ADDED, resource, "6.0.0");
+        assertThat(pod, is(notNullValue()));
+        assertThat(
+                theVariableNamed(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.name())
+                        .on(thePrimaryContainerOn(pod)),
+                is("9000000"));
         //TODO check other variables
         //TODO check mounts for certs, etc
     }
