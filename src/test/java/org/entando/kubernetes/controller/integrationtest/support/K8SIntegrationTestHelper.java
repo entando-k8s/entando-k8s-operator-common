@@ -15,7 +15,6 @@ import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
 
-    public static final String ORACLE_HOST = System.getProperty("entando.oracle.host", "10.0.0.100");
 
     private final DefaultKubernetesClient client = TestFixturePreparation.newClient();
     private final String domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));

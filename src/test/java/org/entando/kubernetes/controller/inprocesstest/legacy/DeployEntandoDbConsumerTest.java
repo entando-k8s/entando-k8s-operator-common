@@ -15,13 +15,14 @@ import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
 import org.entando.kubernetes.controller.common.examples.EntandoDbConsumingDeployable;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ public class DeployEntandoDbConsumerTest implements InProcessTestUtil, FluentTra
         //Given I have an EntandoApp
         EntandoApp app = newTestEntandoApp();
         //And a database deployment
-        DatabaseServiceResult databaseServiceResult = new DeployCommand<>(new DatabaseDeployable(DbmsImageVendor.POSTGRESQL, app, "db"))
+        DatabaseServiceResult databaseServiceResult = new DeployCommand<>(new DatabaseDeployable(DbmsVendorStrategy.POSTGRESQL, app, "db"))
                 .execute(client, Optional.empty());
         //And a KeycloakConnectionsecret
         KeycloakConnectionSecret keycloakConnectionSecret = new KeycloakConnectionSecret(new SecretBuilder()
@@ -65,7 +66,7 @@ public class DeployEntandoDbConsumerTest implements InProcessTestUtil, FluentTra
         //That the portdb schema was initialized
         Container portdbInitializer = theInitContainerNamed(MY_APP + "-portdb-schema-creation-job").on(dbJob);
         verifyStandardSchemaCreationVariables(MY_APP + "-db-admin-secret", MY_APP + "-portdb-secret", portdbInitializer,
-                DbmsImageVendor.POSTGRESQL);
+                DbmsVendor.POSTGRESQL);
         assertThat(theVariableNamed(DATABASE_SERVER_HOST).on(portdbInitializer),
                 is(MY_APP + "-db-service." + MY_APP_NAMESPACE + ".svc.cluster.local"));
         assertThat(theVariableNamed(DATABASE_NAME).on(portdbInitializer), is("my_app_db"));
@@ -74,7 +75,7 @@ public class DeployEntandoDbConsumerTest implements InProcessTestUtil, FluentTra
         Container servdbInitializer = theInitContainerNamed(MY_APP + "-servdb-schema-creation-job").on(dbJob);
 
         verifyStandardSchemaCreationVariables(MY_APP + "-db-admin-secret", MY_APP + "-servdb-secret", servdbInitializer,
-                DbmsImageVendor.POSTGRESQL);
+                DbmsVendor.POSTGRESQL);
         assertThat(theVariableNamed(DATABASE_SERVER_HOST).on(servdbInitializer),
                 is(MY_APP + "-db-service." + MY_APP_NAMESPACE + ".svc.cluster.local"));
         assertThat(theVariableNamed(DATABASE_NAME).on(servdbInitializer), is("my_app_db"));

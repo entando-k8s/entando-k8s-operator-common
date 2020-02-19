@@ -19,6 +19,7 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_K8S_OPERATOR_SCOPE("entando.k8s.operator.scope"),
     ENTANDO_K8S_OPERATOR_SECURITY_MODE("entando.k8s.operator.security.mode"),
     ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE("entando.k8s.operator.namespace.to.observe"),
+    ENTANDO_NAMESPACES_TO_OBSERVE("entando.namespaces.to.observe"),
     ENTANDO_K8S_OPERATOR_SERVICEACCOUNT("entando.k8s.operator.serviceaccount"),
 
     /*
@@ -28,6 +29,11 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_USE_AUTO_CERT_GENERATION("entando.use.auto.cert.generation"),
     ENTANDO_PATH_TO_TLS_KEYPAIR("entando.path.to.tls.keypair"),
     ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT("entando.disable.keycloak.ssl.requirement"),
+    /*
+    Git config
+     */
+    ENTANDO_DEFAULT_GIT_USERNAME("entando.default.git.username"),
+    ENTANDO_DEFAULT_GIT_TOKEN("entando.default.git.token"),
     /*
     Misc config
      */

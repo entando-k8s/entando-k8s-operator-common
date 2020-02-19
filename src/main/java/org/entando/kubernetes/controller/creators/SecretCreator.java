@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import java.util.HashMap;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
@@ -43,6 +44,7 @@ public class SecretCreator extends AbstractK8SResourceCreator {
         Secret tlsSecret = new SecretBuilder()
                 .withMetadata(fromCustomResource(true, entandoCustomResource.getMetadata().getName() + "-tls-secret"))
                 .withType("kubernetes.io/tls")
+                .withData(new HashMap<>())
                 .build();
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
             tlsSecret.getData().put(TlsHelper.TLS_CRT, TlsHelper.getInstance().getTlsCertBase64());

@@ -11,11 +11,12 @@ import org.entando.kubernetes.controller.FluentTernary;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.TlsAware;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class TestServerDeployableContainer implements IngressingContainer, DbAware, TlsAware {
@@ -60,7 +61,6 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
         vars.add(new EnvVar("DB_USER", null, databaseSchemaCreationResult.getUsernameRef()));
         vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databaseSchemaCreationResult), null));
         vars.add(new EnvVar("DB_SCHEMA", databaseSchemaCreationResult.getSchemaName(), null));
-        databaseSchemaCreationResult.addAdditionalConfigFromDatabaseSecret(vars);
         vars.add(new EnvVar("PROXY_ADDRESS_FORWARDING", "true", null));
     }
 
@@ -76,7 +76,7 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
     }
 
     private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaCreationResult databaseSchemaCreationResult) {
-        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor() == DbmsImageVendor.POSTGRESQL)
+        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor() == DbmsVendorStrategy.POSTGRESQL)
                 .orElse(databaseSchemaCreationResult.getVendor().getName());
     }
 

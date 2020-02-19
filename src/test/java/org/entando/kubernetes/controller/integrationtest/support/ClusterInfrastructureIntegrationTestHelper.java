@@ -4,7 +4,7 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.infrastructure.DoneableEntandoClusterInfrastructure;
@@ -54,7 +54,7 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
             waitForClusterInfrastructure(
                     new EntandoClusterInfrastructureBuilder().withNewMetadata().withNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
                             .withName(CLUSTER_INFRASTRUCTURE_NAME).endMetadata()
-                            .withNewSpec().withDbms(DbmsImageVendor.POSTGRESQL).withDefault(true).withReplicas(1)
+                            .withNewSpec().withDbms(DbmsVendor.POSTGRESQL).withDefault(true).withReplicas(1)
                             .withIngressHostName(CLUSTER_INFRASTRUCTURE_NAME + "." + getDomainSuffix()).endSpec().build(), 30, true);
             return true;
         }

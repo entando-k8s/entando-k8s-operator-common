@@ -30,7 +30,7 @@ import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegra
 import org.entando.kubernetes.controller.integrationtest.support.TestFixturePreparation;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -71,7 +71,7 @@ public class KeycloakClientIT implements FluentIntegrationTesting {
             .withNamespace(KC_TEST_NAMESPACE)
             .endMetadata()
             .withNewSpec()
-            .withDbms(DbmsImageVendor.NONE)
+            .withDbms(DbmsVendor.NONE)
             .withIngressHostName("test-kc." + helper.getDomainSuffix())
             .withReplicas(1)
             .endSpec()

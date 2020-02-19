@@ -18,7 +18,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
@@ -30,6 +32,7 @@ import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.HasWebContext;
 import org.entando.kubernetes.controller.spi.KeycloakAware;
+import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.EntandoCustomResource;
@@ -241,7 +244,19 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         }
         vars.add(new EnvVar("CONNECTION_CONFIG_ROOT", ENTANDO_SECRET_MOUNTS_ROOT, null));
         container.addEnvironmentVariables(vars);
+        if (container instanceof ParameterizableContainer) {
+            ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;
+            overrideFromParameters(vars, parameterizableContainer.getCustomResourceSpec().getParameters().entrySet());
+
+        }
         return vars;
+    }
+
+    private void overrideFromParameters(List<EnvVar> vars, Set<Entry<String, String>> parameters) {
+        for (Entry<String, String> parameter : parameters) {
+            vars.removeIf(envVar -> envVar.getName().equals(parameter.getKey()));
+            vars.add(new EnvVar(parameter.getKey(), parameter.getValue(), null));
+        }
     }
 
     private String volumeName(DeployableContainer container) {

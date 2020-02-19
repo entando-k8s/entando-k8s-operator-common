@@ -26,8 +26,9 @@ import java.lang.reflect.Field;
 import java.util.List;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.creators.KeycloakClientCreator;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.hamcrest.Matchers;
 
 public interface FluentTraversals {
@@ -140,10 +141,11 @@ public interface FluentTraversals {
     }
 
     default void verifyStandardSchemaCreationVariables(String adminSecret, String secretToMatch, Container resultingContainer,
-            DbmsImageVendor vendor) {
+            DbmsVendor vendor) {
         assertThat(theVariableNamed(DATABASE_VENDOR).on(resultingContainer), is(vendor.toValue()));
         assertThat(theVariableNamed(DATABASE_SCHEMA_COMMAND).on(resultingContainer), is("CREATE_SCHEMA"));
-        assertThat(theVariableNamed(DATABASE_SERVER_PORT).on(resultingContainer), is(String.valueOf(vendor.getPort())));
+        assertThat(theVariableNamed(DATABASE_SERVER_PORT).on(resultingContainer),
+                is(String.valueOf(DbmsVendorStrategy.forVendor(vendor).getPort())));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_USER).on(resultingContainer).getSecretKeyRef().getKey(),
                 is(KubeUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(resultingContainer).getSecretKeyRef().getKey(),
@@ -346,8 +348,10 @@ public interface FluentTraversals {
         }
 
         public String on(Secret secret) {
-            String stringValue = secret.getStringData().get(key);
-            if (stringValue == null) {
+            String stringValue = null;
+            if (secret.getStringData() != null && secret.getStringData().containsKey(key)) {
+                stringValue = secret.getStringData().get(key);
+            } else if (secret.getData() != null) {
                 stringValue = secret.getData().get(key);
             }
             return stringValue;

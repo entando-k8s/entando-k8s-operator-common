@@ -19,25 +19,23 @@ import org.entando.kubernetes.controller.spi.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
-import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Secretive {
 
-    private final Map<DbmsImageVendor, VariableInitializer> variableInitializers = new ConcurrentHashMap<>();
-    private final DbmsImageVendor dbmsVendor;
+    private final Map<DbmsVendorStrategy, VariableInitializer> variableInitializers = new ConcurrentHashMap<>();
+    private final DbmsVendorStrategy dbmsVendor;
     private final EntandoCustomResource customResource;
     private final List<DeployableContainer> containers;
     private final String nameQualifier;
 
-    public DatabaseDeployable(DbmsImageVendor dbmsVendor,
-            EntandoCustomResource customResource, String nameQualifier) {
-        variableInitializers.put(DbmsImageVendor.MYSQL, vars ->
+    public DatabaseDeployable(DbmsVendorStrategy dbmsVendor, EntandoCustomResource customResource, String nameQualifier) {
+        variableInitializers.put(DbmsVendorStrategy.MYSQL, vars ->
                 //No DB creation. Dbs are created during schema creation
                 vars.add(new EnvVar("MYSQL_ROOT_PASSWORD", null,
                         KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)))
         );
-        variableInitializers.put(DbmsImageVendor.POSTGRESQL, vars -> {
+        variableInitializers.put(DbmsVendorStrategy.POSTGRESQL, vars -> {
             vars.add(new EnvVar("POSTGRESQL_DATABASE", getDatabaseName(), null));
             // This username will not be used, as we will be creating schema/user pairs,
             // but without it the DB isn't created.
@@ -71,8 +69,7 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
 
     @Override
     public DatabaseServiceResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new DatabaseServiceResult(service, dbmsVendor, getDatabaseName(), getDatabaseAdminSecretName(),
-                ofNullable(pod));
+        return new DatabaseServiceResult(service, dbmsVendor, getDatabaseName(), getDatabaseAdminSecretName(), pod);
     }
 
     @Override
@@ -99,12 +96,12 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
 
     public static class DatabaseContainer implements ServiceBackingContainer, PersistentVolumeAware, HasHealthCommand {
 
-        private final Map<DbmsImageVendor, VariableInitializer> variableInitializers;
-        private final DbmsImageVendor dbmsVendor;
+        private final Map<DbmsVendorStrategy, VariableInitializer> variableInitializers;
+        private final DbmsVendorStrategy dbmsVendor;
         private final String nameQualifier;
 
-        public DatabaseContainer(Map<DbmsImageVendor, VariableInitializer> variableInitializers,
-                DbmsImageVendor dbmsVendor,
+        public DatabaseContainer(Map<DbmsVendorStrategy, VariableInitializer> variableInitializers,
+                DbmsVendorStrategy dbmsVendor,
                 String nameQualifier) {
             this.variableInitializers = variableInitializers;
             this.dbmsVendor = dbmsVendor;

@@ -1,6 +1,6 @@
 package org.entando.kubernetes.controller.integrationtest;
 
-import static org.entando.kubernetes.model.DbmsImageVendor.POSTGRESQL;
+import static org.entando.kubernetes.model.DbmsVendor.POSTGRESQL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;

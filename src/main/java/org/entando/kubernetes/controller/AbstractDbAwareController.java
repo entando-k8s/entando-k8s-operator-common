@@ -16,9 +16,10 @@ import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
@@ -90,10 +91,8 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         if (cls.getGenericSuperclass() instanceof ParameterizedType) {
             ParameterizedType genericSuperclass = (ParameterizedType) cls.getGenericSuperclass();
             if (genericSuperclass.getActualTypeArguments().length == 1 && genericSuperclass.getActualTypeArguments()[0] instanceof Class) {
-                Class argument = (Class) genericSuperclass.getActualTypeArguments()[0];
-                if (EntandoBaseCustomResource.class.isAssignableFrom(argument)) {
-                    return true;
-                }
+                Class<?> argument = (Class<?>) genericSuperclass.getActualTypeArguments()[0];
+                return EntandoBaseCustomResource.class.isAssignableFrom(argument);
             }
         }
         return false;
@@ -142,22 +141,21 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         }
     }
 
-    protected DatabaseServiceResult prepareDatabaseService(EntandoCustomResource entandoCustomResource,
-            Optional<DbmsImageVendor> dbmsImageVendor, String nameQualifier) {
-        ExternalDatabaseDeployment externalDatabase = k8sClient.entandoResources().findExternalDatabase(entandoCustomResource);
+    protected DatabaseServiceResult prepareDatabaseService(EntandoCustomResource entandoCustomResource, DbmsVendor dbmsVendor,
+            String nameQualifier) {
+        Optional<ExternalDatabaseDeployment> externalDatabase = k8sClient.entandoResources()
+                .findExternalDatabase(entandoCustomResource, dbmsVendor);
         DatabaseServiceResult result;
-        if (externalDatabase == null) {
-            DbmsImageVendor dbmsVendor = dbmsImageVendor.orElse(DbmsImageVendor.POSTGRESQL);
-            final DatabaseDeployable databaseDeployable = new DatabaseDeployable(dbmsVendor, entandoCustomResource, nameQualifier);
+        if (externalDatabase.isPresent()) {
+            result = new DatabaseServiceResult(externalDatabase.get().getService(),externalDatabase.get().getEntandoDatabaseService());
+        } else {
+            final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsVendorStrategy.forVendor(dbmsVendor),
+                    entandoCustomResource, nameQualifier);
             final DeployCommand<DatabaseServiceResult> dbCommand = new DeployCommand<>(databaseDeployable);
             result = dbCommand.execute(k8sClient, empty());
             if (result.hasFailed()) {
                 throw new EntandoControllerException("Database deployment failed");
             }
-        } else {
-            EntandoDatabaseServiceSpec spec = externalDatabase.getEntandoDatabaseService().getSpec();
-            result = new DatabaseServiceResult(externalDatabase.getService(), spec.getDbms(), spec.getDatabaseName(),
-                    spec.getSecretName(), empty());
         }
         return result;
     }

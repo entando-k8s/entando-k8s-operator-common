@@ -12,16 +12,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
-import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
@@ -122,7 +123,6 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
                         .determineImageUri("entando/entando-k8s-dbjob", Optional.empty()))
                 .withImagePullPolicy("Always")
                 .withName(dbJobName)
-                .withCommand("/bin/bash", "-c", "/process-command.sh")
                 .withEnv(buildEnvironment(databaseDeployment, nameQualifier)).build();
     }
 
@@ -133,15 +133,20 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         result.add(new EnvVar("DATABASE_ADMIN_USER", null, buildSecretKeyRef(databaseDeployment, KubeUtils.USERNAME_KEY)));
         result.add(new EnvVar("DATABASE_ADMIN_PASSWORD", null, buildSecretKeyRef(databaseDeployment, KubeUtils.PASSSWORD_KEY)));
         result.add(new EnvVar("DATABASE_NAME", databaseDeployment.getDatabaseName(), null));
-        DbmsImageVendor dbms = databaseDeployment.getVendor();
+        DbmsVendorStrategy dbms = databaseDeployment.getVendor();
         result.add(new EnvVar("DATABASE_VENDOR", dbms.toValue(), null));
         result.add(new EnvVar("DATABASE_SCHEMA_COMMAND", "CREATE_SCHEMA", null));
         result.add(new EnvVar("DATABASE_USER", null,
                 KubeUtils.secretKeyRef(getSchemaSecretName(nameQualifier), KubeUtils.USERNAME_KEY)));
         result.add(new EnvVar("DATABASE_PASSWORD", null,
                 KubeUtils.secretKeyRef(getSchemaSecretName(nameQualifier), KubeUtils.PASSSWORD_KEY)));
-        dbms.getAdditionalConfig().stream().forEach(cfg -> result
-                .add(new EnvVar(cfg.getEnvironmentVariable(), null, buildSecretKeyRef(databaseDeployment, cfg.getConfigKey()))));
+        databaseDeployment.getTablespace().ifPresent(s -> result.add(new EnvVar("TABLESPACE", s, null)));
+        if (!databaseDeployment.getJdbcParameters().isEmpty()) {
+            result.add(new EnvVar("JDBC_PARAMETERS", databaseDeployment.getJdbcParameters().entrySet()
+                    .stream()
+                    .map(entry -> entry.getKey() + "=" + entry.getValue())
+                    .collect(Collectors.joining(",")), null));
+        }
         return result;
     }
 

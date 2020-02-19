@@ -4,8 +4,10 @@ import static org.awaitility.Awaitility.await;
 import static org.entando.kubernetes.controller.KubeUtils.standardIngressName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertNull;
 
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
@@ -15,6 +17,7 @@ import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.common.examples.springboot.SpringBootDeployable;
@@ -29,21 +32,24 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
-public abstract class SpringBootContainerTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior, VariableReferenceAssertions {
+public abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior,
+        VariableReferenceAssertions {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController controller;
+    private SampleController<?> controller;
 
     @Test
-    public void testBasicDeployment() {
+    public void testSelectingOneOfTwoExternalDatabase() {
         //Given I have a controller that processes EntandoPlugins
         controller = new SampleController<EntandoPlugin>(getClient(), getKeycloakClient()) {
             @Override
@@ -57,6 +63,9 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         getClient().secrets().overwriteControllerSecret(buildKeycloakSecret());
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
+        //And we have two ExternalDatabases: one MySQL and one PostgreSQL
+        createExternalDatabaseService(DbmsVendor.MYSQL, "10.0.0.123");
+        createExternalDatabaseService(DbmsVendor.POSTGRESQL, "10.0.0.124");
         //When I create a new EntandoPlugin
         onAdd(plugin1);
 
@@ -69,18 +78,29 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         Deployment serverDeployment = getClient().deployments()
                 .loadDeployment(plugin1, SAMPLE_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
         assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), Matchers.is(1));
-        verifyThatAllVariablesAreMapped(plugin1, getClient(), serverDeployment);
-        verifyThatAllVolumesAreMapped(plugin1, getClient(), serverDeployment);
         verifySpringDatasource(serverDeployment);
-        verifySpringSecuritySettings(thePrimaryContainerOn(serverDeployment), SAMPLE_NAME + "-server-secret");
-        //Then  a db deployment
-        Deployment dbDeployment = getClient().deployments().loadDeployment(plugin1, SAMPLE_NAME + "-db-deployment");
-        assertThat(dbDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(1));
+        //Then  no db deployment
+        assertNull(getClient().deployments().loadDeployment(plugin1, SAMPLE_NAME + "-db-deployment"));
 
         //And I an ingress paths
         Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(), standardIngressName(plugin1));
         assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
                 Matchers.is(8080));
+    }
+
+    private void createExternalDatabaseService(DbmsVendor mysql, String s) {
+        String secretName = mysql.name().toLowerCase() + "-secret";
+        EntandoDatabaseService databaseService = new EntandoDatabaseServiceBuilder()
+                .withNewMetadata().withName(SAMPLE_NAME + "-" + mysql.name().toLowerCase()).withNamespace(SAMPLE_NAMESPACE)
+                .endMetadata()
+                .withNewSpec().withDbms(mysql).withDatabaseName(SAMPLE_NAME_DB).withHost(s)
+                .withSecretName(secretName).endSpec()
+                .build();
+        getClient().entandoResources().createOrPatchEntandoResource(databaseService);
+        getClient().secrets().createSecretIfAbsent(databaseService,
+                new SecretBuilder().withNewMetadata().withNamespace(SAMPLE_NAMESPACE).withName(secretName).endMetadata()
+                        .addToData(KubeUtils.USERNAME_KEY, "username").addToData(KubeUtils.PASSSWORD_KEY, "asdf123").build());
+        new CreateExternalServiceCommand(databaseService).execute(getClient());
     }
 
     protected abstract SimpleKeycloakClient getKeycloakClient();
@@ -96,7 +116,8 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
         assertThat(theVariableNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_URL.name())
                 .on(thePrimaryContainerOn(serverDeployment)), is(
-                "jdbc:postgresql://" + SAMPLE_NAME + "-db-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/" + SAMPLE_NAME_DB));
+                "jdbc:postgresql://" + SAMPLE_NAME + "-postgresql-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/"
+                        + SAMPLE_NAME_DB));
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));
     }
@@ -114,10 +135,6 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource, String deploymentName) {
         new Thread(() -> {
             try {
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-                Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
                 String dbJobName = String.format("%s-db-preparation-job", resource.getMetadata().getName());
                 Pod dbPreparationPod = getClient().pods()

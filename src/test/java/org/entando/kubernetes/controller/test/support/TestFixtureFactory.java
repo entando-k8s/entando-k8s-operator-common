@@ -1,7 +1,7 @@
 package org.entando.kubernetes.controller.test.support;
 
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.JeeServer;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
@@ -18,7 +18,7 @@ public interface TestFixtureFactory {
                 .withName(TEST_APP_NAME)
                 .endMetadata()
                 .withNewSpec()
-                .withDbms(DbmsImageVendor.POSTGRESQL)
+                .withDbms(DbmsVendor.POSTGRESQL)
                 .withStandardServerImage(JeeServer.WILDFLY)
                 .withReplicas(2)
                 .endSpec()

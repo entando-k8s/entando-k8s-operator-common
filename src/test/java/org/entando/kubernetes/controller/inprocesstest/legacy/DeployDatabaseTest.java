@@ -34,7 +34,7 @@ import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoRe
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.junit.jupiter.api.BeforeEach;
@@ -180,7 +180,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = new DoneableEntandoKeycloakServer(keycloakServer, s -> s)
                 .editSpec()
-                .withDbms(DbmsImageVendor.POSTGRESQL)
+                .withDbms(DbmsVendor.POSTGRESQL)
                 .endSpec()
                 .done();
         client.entandoResources().createOrPatchEntandoResource(newEntandoKeycloakServer);

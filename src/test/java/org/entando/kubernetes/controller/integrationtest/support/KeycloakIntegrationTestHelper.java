@@ -16,7 +16,7 @@ import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
@@ -53,7 +53,7 @@ public class KeycloakIntegrationTestHelper extends
             createAndWaitForKeycloak(new EntandoKeycloakServerBuilder()
                     .withNewMetadata().withNamespace(KEYCLOAK_NAMESPACE).withName(KEYCLOAK_NAME).endMetadata()
                     .withNewSpec().withDefault(true).withEntandoImageVersion("6.0.0-SNAPSHOT")
-                    .withDbms(DbmsImageVendor.NONE)
+                    .withDbms(DbmsVendor.NONE)
                     .withIngressHostName(KEYCLOAK_NAME + "." + getDomainSuffix())
                     .withImageName("entando/entando-keycloak").endSpec()
                     .build(), 30, true);
@@ -70,7 +70,7 @@ public class KeycloakIntegrationTestHelper extends
 
     public void createAndWaitForKeycloak(EntandoKeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
         getOperations().inNamespace(KEYCLOAK_NAMESPACE).create(keycloakServer);
-        if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsImageVendor.NONE).orElse(false)) {
+        if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsVendor.NONE).orElse(false)) {
             if (deployingDbContainers) {
                 waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
                         KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db");

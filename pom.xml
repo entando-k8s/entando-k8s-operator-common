@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.entando.kubernetes</groupId>
-        <version>6.0.18</version>
+        <version>6.0.19</version>
         <artifactId>entando-k8s-infrastructure-parent</artifactId>
         <relativePath/>
     </parent>
@@ -49,7 +49,7 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
-        <entando.k8s.custom.model.version>6.0.51</entando.k8s.custom.model.version>
+        <entando.k8s.custom.model.version>6.0.64</entando.k8s.custom.model.version>
     </properties>
     <issueManagement>
         <system>Github</system>

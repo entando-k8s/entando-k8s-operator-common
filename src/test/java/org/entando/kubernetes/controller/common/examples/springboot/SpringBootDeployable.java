@@ -28,7 +28,7 @@ public class SpringBootDeployable<T extends EntandoBaseCustomResource> implement
             DatabaseServiceResult databaseServiceResult) {
         this.customResource = customResource;
         this.databaseServiceResult = databaseServiceResult;
-        container = new SampleSpringBootDeployableContainer(customResource, keycloakConnectionConfig);
+        container = new SampleSpringBootDeployableContainer<>(customResource, keycloakConnectionConfig);
     }
 
     /**

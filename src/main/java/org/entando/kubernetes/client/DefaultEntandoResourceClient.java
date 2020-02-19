@@ -21,6 +21,7 @@ import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
 import org.entando.kubernetes.model.AbstractServerStatus;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
@@ -67,17 +68,13 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public ExternalDatabaseDeployment findExternalDatabase(EntandoCustomResource resource) {
+    public Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
         List<EntandoDatabaseService> externalDatabaseList = getOperations(EntandoDatabaseService.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
-        if (externalDatabaseList.isEmpty()) {
-            return null;
-        } else {
-            EntandoDatabaseService externalDatabase = externalDatabaseList.get(0);
-            return new ExternalDatabaseDeployment(
-                    loadService(resource, externalDatabase.getMetadata().getName() + "-service"), null,
-                    externalDatabase);
-        }
+        return externalDatabaseList.stream().filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor)
+                .findFirst().map(externalDatabase ->
+                        new ExternalDatabaseDeployment(loadService(resource, externalDatabase.getMetadata().getName() + "-service"), null,
+                                externalDatabase));
     }
 
     @Override

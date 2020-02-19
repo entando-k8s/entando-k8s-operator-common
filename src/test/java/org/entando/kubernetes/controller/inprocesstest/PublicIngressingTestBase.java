@@ -33,7 +33,7 @@ import org.entando.kubernetes.controller.spi.KubernetesPermission;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
@@ -171,7 +171,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 .withNamespace(sampleNamespace)
                 .withName(sampleName).endMetadata().withNewSpec()
                 .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
-                .withDbms(DbmsImageVendor.POSTGRESQL).withReplicas(2).withIngressHostName("myhost.name.com")
+                .withDbms(DbmsVendor.POSTGRESQL).withReplicas(2).withIngressHostName("myhost.name.com")
                 .endSpec().build();
     }
 

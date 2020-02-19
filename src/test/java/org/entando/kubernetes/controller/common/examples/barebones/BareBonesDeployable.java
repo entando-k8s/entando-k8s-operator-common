@@ -8,10 +8,11 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.Secretive;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class BareBonesDeployable implements Deployable<BarebonesDeploymentResult>, Secretive {
@@ -20,7 +21,7 @@ public class BareBonesDeployable implements Deployable<BarebonesDeploymentResult
     public static final String NAME_QUALIFIER = "db";
     private List<DeployableContainer> containers = Arrays.asList(new BareBonesContainer());
     private EntandoCustomResource customResource;
-    private DbmsImageVendor dbmsVendor = DbmsImageVendor.POSTGRESQL;
+    private DbmsVendorStrategy dbmsVendor = DbmsVendorStrategy.POSTGRESQL;
 
     public BareBonesDeployable(EntandoCustomResource customResource) {
         this.customResource = customResource;

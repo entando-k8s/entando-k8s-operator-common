@@ -8,12 +8,12 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.FluentTernary;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.TlsAware;
-import org.entando.kubernetes.model.DbmsImageVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class SampleDeployableContainer<T extends EntandoBaseCustomResource> implements IngressingContainer, DbAware, TlsAware,
@@ -66,11 +66,10 @@ public class SampleDeployableContainer<T extends EntandoBaseCustomResource> impl
         vars.add(new EnvVar("DB_USER", null, databaseSchemaCreationResult.getUsernameRef()));
         vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databaseSchemaCreationResult), null));
         vars.add(new EnvVar("DB_SCHEMA", databaseSchemaCreationResult.getSchemaName(), null));
-        databaseSchemaCreationResult.addAdditionalConfigFromDatabaseSecret(vars);
     }
 
     private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaCreationResult databaseSchemaCreationResult) {
-        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor() == DbmsImageVendor.POSTGRESQL)
+        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor() == DbmsVendorStrategy.POSTGRESQL)
                 .orElse(databaseSchemaCreationResult.getVendor().getName());
     }
 

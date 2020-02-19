@@ -1,10 +1,12 @@
 package org.entando.kubernetes.controller.k8sclient;
 
+import java.util.Optional;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.InfrastructureConfig;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.model.AbstractServerStatus;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresKeycloak;
@@ -23,7 +25,7 @@ public interface EntandoResourceClient {
 
     void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason);
 
-    ExternalDatabaseDeployment findExternalDatabase(EntandoCustomResource resource);
+    Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor);
 
     KeycloakConnectionConfig findKeycloak(RequiresKeycloak resource);
 

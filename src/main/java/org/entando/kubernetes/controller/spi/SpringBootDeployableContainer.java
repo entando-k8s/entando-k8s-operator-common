@@ -34,7 +34,6 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
             /*
             TODO: Set SPRING_JPA_PROPERTIES_HIBERNATE_ID_NEW_GENERATOR_MAPPINGS to 'false' if we ever run into issues with ID Generation
             */
-            databaseSchema.addAdditionalConfigFromDatabaseSecret(vars);
         }
     }
 

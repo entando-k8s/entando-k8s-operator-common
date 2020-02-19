@@ -9,10 +9,13 @@ import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
+import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource> implements SpringBootDeployableContainer {
+public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource> implements SpringBootDeployableContainer,
+        ParameterizableContainer {
 
     public static final String MY_IMAGE = "entando/entando-k8s-service";
     public static final String MY_WEB_CONTEXT = "/my-context";
@@ -20,8 +23,7 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     private final KeycloakConnectionConfig keycloakConnectionConfig;
     private Map<String, DatabaseSchemaCreationResult> dbSchemas;
 
-    public SampleSpringBootDeployableContainer(T customResource,
-            KeycloakConnectionConfig keycloakConnectionConfig) {
+    public SampleSpringBootDeployableContainer(T customResource, KeycloakConnectionConfig keycloakConnectionConfig) {
         this.customResource = customResource;
         this.keycloakConnectionConfig = keycloakConnectionConfig;
     }
@@ -77,5 +79,10 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     @Override
     public DatabaseSchemaCreationResult getDatabaseSchema() {
         return this.dbSchemas.get(getNameQualifier() + "db");
+    }
+
+    @Override
+    public EntandoDeploymentSpec getCustomResourceSpec() {
+        return customResource.getSpec() instanceof EntandoDeploymentSpec ? (EntandoDeploymentSpec) customResource.getSpec() : null;
     }
 }

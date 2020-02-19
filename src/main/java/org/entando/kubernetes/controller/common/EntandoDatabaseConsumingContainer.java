@@ -38,7 +38,6 @@ public abstract class EntandoDatabaseConsumingContainer implements DbAware, Ingr
         vars.add(new EnvVar("DB_STARTUP_CHECK", "false", null));
         addEntandoDbConnectionVars(vars, this.dbSchemas.get(PORTDB), PORTDB_PREFIX);
         addEntandoDbConnectionVars(vars, this.dbSchemas.get(SERVDB), SERVDB_PREFIX);
-        this.dbSchemas.get(PORTDB).addAdditionalConfigFromDatabaseSecret(vars);
     }
 
     private void addEntandoDbConnectionVars(List<EnvVar> vars, DatabaseSchemaCreationResult dbDeploymentResult, String varNamePrefix) {

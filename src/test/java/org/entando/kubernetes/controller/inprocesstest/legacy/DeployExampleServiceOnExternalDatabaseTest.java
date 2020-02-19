@@ -27,10 +27,11 @@ import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoRe
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,11 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
 
     public static final String MY_KEYCLOAK_SERVER_DEPLOYMENT = MY_KEYCLOAK + "-server-deployment";
     private static final String MY_KEYCLOAK_DB_SECRET = MY_KEYCLOAK + "-db-secret";
-    private final EntandoKeycloakServer keycloakServer = newEntandoKeycloakServer();
+    private final EntandoKeycloakServer keycloakServer = new EntandoKeycloakServerBuilder(newEntandoKeycloakServer())
+            .editSpec()
+            .withDbms(DbmsVendor.ORACLE)
+            .endSpec()
+            .build();
     private final EntandoDatabaseService externalDatabase = buildEntandoDatabaseService();
     @Spy
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
@@ -65,6 +70,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
+
         client.entandoResources().createOrPatchEntandoResource(keycloakServer);
     }
 
@@ -99,7 +105,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
         verify(client.pods()).runToCompletion(keycloakSchemaJobCaptor.capture());
         Pod keycloakDbJob = keycloakSchemaJobCaptor.getValue();
         Container theInitContainer = theInitContainerNamed(MY_KEYCLOAK + "-db-schema-creation-job").on(keycloakDbJob);
-        verifyStandardSchemaCreationVariables("my-secret", MY_KEYCLOAK_DB_SECRET, theInitContainer, DbmsImageVendor.ORACLE);
+        verifyStandardSchemaCreationVariables("my-secret", MY_KEYCLOAK_DB_SECRET, theInitContainer, DbmsVendor.ORACLE);
         assertThat(theVariableNamed(DATABASE_SERVER_HOST).on(theInitContainer),
                 is("mydb-service." + MY_KEYCLOAK_NAMESPACE + ".svc.cluster.local"));
         //And it was instructed to create a schema reflecting the keycloakdb user
@@ -107,10 +113,15 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     }
 
     private EntandoDatabaseService buildEntandoDatabaseService() {
-        EntandoDatabaseService edb = new EntandoDatabaseService(
-                new EntandoDatabaseServiceSpec(DbmsImageVendor.ORACLE, "myoracle.com", 1521, "my_db", "my-secret"));
-        edb.getMetadata().setName("mydb");
-        edb.getMetadata().setNamespace("mynamespace");
-        return edb;
+        return new EntandoDatabaseServiceBuilder()
+                .withNewMetadata().withName("mydb").withNamespace("mynamespace").endMetadata()
+                .withNewSpec()
+                .withDbms(DbmsVendor.ORACLE)
+                .withHost("myoracle.com")
+                .withPort(1521)
+                .withDatabaseName("my_db")
+                .withSecretName("my-secret")
+                .addToJdbcParameters("some.param", "some.value")
+                .endSpec().build();
     }
 }

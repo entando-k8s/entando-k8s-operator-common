@@ -1,12 +1,8 @@
 package org.entando.kubernetes.controller.database;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarSource;
-import java.util.List;
 import org.entando.kubernetes.controller.AbstractServiceResult;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.model.ConfigVariable;
-import org.entando.kubernetes.model.DbmsImageVendor;
 
 public class DatabaseSchemaCreationResult extends AbstractServiceResult {
 
@@ -28,11 +24,11 @@ public class DatabaseSchemaCreationResult extends AbstractServiceResult {
     public String getJdbcUrl() {
         return getVendor().getConnectionStringBuilder().toHost(getInternalServiceHostname()).onPort(getPort())
                 .usingDatabase(
-                        getDatabase()).usingSchema(schemaName)
-                .buildConnectionString();
+                        getDatabase()).usingSchema(schemaName).usingParameters(this.databaseServiceResult.getJdbcParameters())
+                .buildJdbcConnectionString();
     }
 
-    public DbmsImageVendor getVendor() {
+    public DbmsVendorStrategy getVendor() {
         return this.databaseServiceResult.getVendor();
     }
 
@@ -42,16 +38,6 @@ public class DatabaseSchemaCreationResult extends AbstractServiceResult {
         } else {
             return this.databaseServiceResult.getDatabaseName();
         }
-    }
-
-    public void addAdditionalConfigFromDatabaseSecret(List<EnvVar> vars) {
-        getVendor().getAdditionalConfig().stream().forEach(cfg -> vars.add(newSecretKeyRef(cfg)));
-    }
-
-    protected EnvVar newSecretKeyRef(ConfigVariable cfg) {
-        //Point the EnvVar to the externalDb's secret.
-        return new EnvVar(cfg.getEnvironmentVariable(), null,
-                KubeUtils.secretKeyRef(this.databaseServiceResult.getDatabaseSecretName(), cfg.getConfigKey()));
     }
 
     public String getSchemaName() {

@@ -33,7 +33,7 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
     protected void synchronizeDeploymentState(T newEntandoResource) {
         // Create database for Keycloak
         EntandoDeploymentSpec spec = resolveSpec(newEntandoResource);
-        DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newEntandoResource, spec.getDbms(),
+        DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newEntandoResource, spec.getDbms().get(),
                 "db");
         // Create the Keycloak service using the provided database
         KeycloakConnectionConfig keycloakConnectionConfig = k8sClient.entandoResources().findKeycloak(() -> Optional.empty());

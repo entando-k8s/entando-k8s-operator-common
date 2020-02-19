@@ -3,6 +3,7 @@ package org.entando.kubernetes.controller;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,13 +35,14 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE);
     }
 
+    public static List<String> getNamespacesToObserve() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE).map(s -> s.split("\\,")).map(Arrays::asList)
+                .orElse(new ArrayList<>());
+    }
+
     public static SecurityMode getOperatorSecurityMode() {
         return SecurityMode
                 .caseInsensitiveValueOf(getProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SECURITY_MODE, "lenient"));
-    }
-
-    public static OperatorScope getOperatorScope() {
-        return OperatorScope.caseInsensitiveValueOf(getProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SCOPE, "cluster"));
     }
 
     /*
@@ -70,6 +72,18 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static Optional<Path> getPathToDefaultTlsKeyPair() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR).filter(s -> Paths.get(s).toFile().exists())
                 .map(Paths::get);
+    }
+
+    /*
+    Git config
+     */
+
+    public static Optional<String> getDefaultGitUsername() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_GIT_USERNAME);
+    }
+
+    public static Optional<String> getDefaultGitToken() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_GIT_TOKEN);
     }
 
     /*

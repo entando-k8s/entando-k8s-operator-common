@@ -11,7 +11,7 @@ import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.test.support.VolumeMatchAssertions;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.JeeServer;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
@@ -68,7 +68,7 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .withReplicas(2)
                 .withImageName("entando/entando-keycloak")
                 .withIngressHostName(MY_KEYCLOAK_HOSTNAME)
-                .withDbms(DbmsImageVendor.MYSQL)
+                .withDbms(DbmsVendor.MYSQL)
                 //                .withTlsSecretName(MY_KEYCLOAK_TLS_SECRET)
                 .withEntandoImageVersion("6.0.0").endSpec()
                 .build();
@@ -81,7 +81,7 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .withNamespace(MY_CLUSTER_INFRASTRUCTURE_NAMESPACE)
                 .endMetadata()
                 .withNewSpec()
-                .withDbms(DbmsImageVendor.MYSQL)
+                .withDbms(DbmsVendor.MYSQL)
                 .withEntandoImageVersion("6.0.0")
                 .withKeycloakSecretToUse(DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .withIngressHostName("entando-infra.192.168.0.100.nip.io")
@@ -100,7 +100,7 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .endMetadata()
                 .withNewSpec()
                 .withStandardServerImage(JeeServer.WILDFLY)
-                .withDbms(DbmsImageVendor.MYSQL)
+                .withDbms(DbmsVendor.MYSQL)
                 .withIngressHostName("myapp.192.168.0.100.nip.io")
                 .withReplicas(1)
                 .withEntandoImageVersion("6.0.0")
@@ -118,7 +118,7 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .endMetadata()
                 .withNewSpec()
                 .withImage("entando/myplugin")
-                .withDbms(DbmsImageVendor.MYSQL)
+                .withDbms(DbmsVendor.MYSQL)
                 .withReplicas(2)
                 .withIngressPath("/myplugin")
                 .withHealthCheckPath("/actuator/health")

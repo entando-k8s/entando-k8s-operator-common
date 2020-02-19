@@ -12,11 +12,13 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
+import java.util.Collections;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
-import org.entando.kubernetes.model.DbmsImageVendor;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.DoneableEntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceList;
@@ -27,7 +29,13 @@ public class ExternalDatabaseIntegrationTestHelper extends
         IntegrationTestHelperBase<EntandoDatabaseService, EntandoDatabaseServiceList, DoneableEntandoDatabaseService> {
 
     public static final String MY_EXTERNAL_DB = EntandoOperatorTestConfig.calculateName("my-external-db");
-    private static final String ADMIN = "admin";
+    private static final String ORACLE_INTERNAL_HOST = EntandoOperatorTestConfig.getOracleInternalHost().orElse("localhost");
+    private static final String ORACLE_EXTERNAL_HOST = EntandoOperatorTestConfig.getOracleExternalHost().orElse("localhost");
+    private static final Integer ORACLE_INTERNAL_PORT = EntandoOperatorTestConfig.getOracleInternalPort().orElse(1521);
+    private static final Integer ORACLE_EXTERNAL_PORT = EntandoOperatorTestConfig.getOracleExternalPort().orElse(1521);
+    private static final String ORACLE_ADMIN_USER = EntandoOperatorTestConfig.getOracleAdminUser().orElse("admin");
+    private static final String ORACLE_ADMIN_PASSWORD = EntandoOperatorTestConfig.getOracleAdminPassword().orElse("admin");
+    private static final String ORACLE_DATABASE_NAME = EntandoOperatorTestConfig.getOracleDatabaseName().orElse("ORCLPDB1.localdomain");
     private static final String TEST_SECRET = "test-secret";
 
     public ExternalDatabaseIntegrationTestHelper(DefaultKubernetesClient client) {
@@ -64,7 +72,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
         SampleWriter.writeSample(secret, "postgresql-secret");
         client.secrets().inNamespace(namespace).create(secret);
         EntandoDatabaseService externalDatabase = new EntandoDatabaseService(
-                new EntandoDatabaseServiceSpec(DbmsImageVendor.POSTGRESQL, podIP, 5432, "testdb", TEST_SECRET));
+                new EntandoDatabaseServiceSpec(DbmsVendor.POSTGRESQL, podIP, 5432, "testdb", TEST_SECRET, null, Collections.emptyMap()));
         externalDatabase.getMetadata().setName(MY_EXTERNAL_DB);
         SampleWriter.writeSample(externalDatabase, "external-postgresql-db");
         createAndWaitForDbService(namespace, externalDatabase);
@@ -78,21 +86,19 @@ public class ExternalDatabaseIntegrationTestHelper extends
     public void prepareExternalOracleDatabase(String namespace, String... usersToDrop) {
         deleteCommonPreviousState(namespace);
         Secret secret = new SecretBuilder().withNewMetadata().withName(TEST_SECRET).endMetadata()
-                .addToStringData(KubeUtils.USERNAME_KEY, ADMIN)
-                .addToStringData(KubeUtils.PASSSWORD_KEY, ADMIN)
-                .addToStringData("oracleMavenRepo", "http://10.0.0.100:8081/repository/maven-releases/")
-                .addToStringData("oracleRepoUser", ADMIN)
-                .addToStringData("oracleRepoPassword", "admin123")
+                .addToStringData(KubeUtils.USERNAME_KEY, ORACLE_ADMIN_USER)
+                .addToStringData(KubeUtils.PASSSWORD_KEY, ORACLE_ADMIN_PASSWORD)
                 .addToStringData("oracleTablespace", "USERS").build();
         SampleWriter.writeSample(secret, "oracle-secret");
         client.secrets().inNamespace(namespace).create(secret);
-        EntandoDatabaseServiceSpec spec = new EntandoDatabaseServiceSpec(DbmsImageVendor.ORACLE, K8SIntegrationTestHelper.ORACLE_HOST, 1521,
-                "XEPDB1",
-                TEST_SECRET);
-        String jdbcUrl = DbmsImageVendor.ORACLE.getConnectionStringBuilder().toHost(spec.getHost())
-                .onPort(spec.getPort().get().toString()).usingDatabase(spec.getDatabaseName()).usingSchema(null)
+        EntandoDatabaseServiceSpec spec = new EntandoDatabaseServiceSpec(DbmsVendor.ORACLE, ORACLE_INTERNAL_HOST, ORACLE_INTERNAL_PORT,
+                ORACLE_DATABASE_NAME, null,
+                TEST_SECRET,
+                Collections.singletonMap("oracle.jdbc.timezoneAsRegion", "false"));
+        String externalJdbcUrl = DbmsVendorStrategy.ORACLE.getConnectionStringBuilder().toHost(ORACLE_EXTERNAL_HOST)
+                .onPort(ORACLE_EXTERNAL_PORT.toString()).usingDatabase(ORACLE_DATABASE_NAME).usingSchema(null)
                 .buildConnectionString();
-        dropUsers(jdbcUrl, usersToDrop);
+        dropUsers(externalJdbcUrl, usersToDrop);
         EntandoDatabaseService externalDatabase = new EntandoDatabaseService(spec);
         externalDatabase.getMetadata().setName(MY_EXTERNAL_DB);
         SampleWriter.writeSample(externalDatabase, "external-oracle-db");
@@ -111,7 +117,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
 
     protected void dropUsers(String jdbcUrl, String... users) {
         try {
-            try (Connection connection = DriverManager.getConnection(jdbcUrl, ADMIN, ADMIN)) {
+            try (Connection connection = DriverManager.getConnection(jdbcUrl, ORACLE_ADMIN_USER, ORACLE_ADMIN_PASSWORD)) {
                 for (String user : users) {
                     try {
                         try (Statement statement = connection.createStatement()) {
