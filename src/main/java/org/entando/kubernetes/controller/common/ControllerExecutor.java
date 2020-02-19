@@ -144,7 +144,7 @@ public class ControllerExecutor {
         List<Volume> result = new ArrayList<>();
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-controller-ca-cert-secret")
-                    .endMetadata().build();
+                    .endMetadata().withData(new ConcurrentHashMap<>()).build();
             //Add all available CA Certs. No need to map the trustStore itself - the controller will build this up internally
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path -> secret.getData()
                     .put(path.getFileName().toString(), TlsHelper.getInstance().getTlsCaCertBase64(path)));
