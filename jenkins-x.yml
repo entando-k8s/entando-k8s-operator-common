@@ -30,8 +30,8 @@ pipelineConfig:
         steps:
           - sh: fetch-history-by-days 30
             name: fetch-history-for-sonar
-          - sh: mvn-deploy-release -Pinter-process-verification
-#          - sh: mvn-deploy-release
+#          - sh: mvn-deploy-release -Pinter-process-verification
+          - sh: mvn-deploy-release
             name: mvn-deploy-release
       promote:
         replace: true

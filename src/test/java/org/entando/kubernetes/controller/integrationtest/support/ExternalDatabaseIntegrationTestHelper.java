@@ -21,6 +21,7 @@ import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWa
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.DoneableEntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceList;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceOperationFactory;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
@@ -71,8 +72,19 @@ public class ExternalDatabaseIntegrationTestHelper extends
                 .build();
         SampleWriter.writeSample(secret, "postgresql-secret");
         client.secrets().inNamespace(namespace).create(secret);
-        EntandoDatabaseService externalDatabase = new EntandoDatabaseService(
-                new EntandoDatabaseServiceSpec(DbmsVendor.POSTGRESQL, podIP, 5432, "testdb", TEST_SECRET, null, Collections.emptyMap()));
+        EntandoDatabaseService externalDatabase = new EntandoDatabaseServiceBuilder()
+                .withNewMetadata()
+                .withName(MY_EXTERNAL_DB)
+                .withNamespace(namespace)
+                .endMetadata()
+                .withNewSpec()
+                .withDbms(DbmsVendor.POSTGRESQL)
+                .withHost(podIP)
+                .withPort(5432)
+                .withDatabaseName("testdb")
+                .withSecretName(TEST_SECRET)
+                .endSpec()
+                .build();
         externalDatabase.getMetadata().setName(MY_EXTERNAL_DB);
         SampleWriter.writeSample(externalDatabase, "external-postgresql-db");
         createAndWaitForDbService(namespace, externalDatabase);
