@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.util.HashMap;
+import java.util.Optional;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
@@ -81,7 +82,7 @@ public class SecretCreator extends AbstractK8SResourceCreator {
 
     private void createSecret(SecretClient client, Secret secret) {
         ObjectMeta metadata = fromCustomResource(true, secret.getMetadata().getName());
-        metadata.getLabels().putAll(secret.getMetadata().getLabels());
+        Optional.ofNullable(secret.getMetadata().getLabels()).ifPresent(map -> metadata.getLabels().putAll(map));
         secret.setMetadata(metadata);
         client.createSecretIfAbsent(entandoCustomResource, secret);
     }
