@@ -100,26 +100,6 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
         helper.afterTest();
     }
 
-    protected void verifyKeycloakDeployment() {
-        String http = TlsHelper.getDefaultProtocol();
-        KubernetesClient client = helper.getClient();
-        await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> HttpTestHelper
-                .statusOk(http + "://" + KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + helper.getDomainSuffix()
-                        + "/auth"));
-        Deployment deployment = client.apps().deployments().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
-                .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-deployment").get();
-        assertThat(thePortNamed("server-port")
-                        .on(theContainerNamed("server-container").on(deployment))
-                        .getContainerPort(),
-                is(8080));
-        Service service = client.services().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(
-                KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-service").get();
-        assertThat(thePortNamed("server-port").on(service).getPort(), is(8080));
-        assertTrue(deployment.getStatus().getReadyReplicas() >= 1);
-        assertTrue(helper.keycloak().getOperations()
-                .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
-                .fromServer().get().getStatus().forServerQualifiedBy("server").isPresent());
-    }
 
     @Test
     public void create() {
@@ -167,6 +147,27 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
         assertThat("It has a db status", helper.keycloak().getOperations()
                 .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
                 .fromServer().get().getStatus().forDbQualifiedBy("db").isPresent());
+    }
+
+    protected void verifyKeycloakDeployment() {
+        String http = TlsHelper.getDefaultProtocol();
+        KubernetesClient client = helper.getClient();
+        await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> HttpTestHelper
+                .statusOk(http + "://" + KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + helper.getDomainSuffix()
+                        + "/auth"));
+        Deployment deployment = client.apps().deployments().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
+                .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-deployment").get();
+        assertThat(thePortNamed("server-port")
+                        .on(theContainerNamed("server-container").on(deployment))
+                        .getContainerPort(),
+                is(8080));
+        Service service = client.services().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(
+                KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-service").get();
+        assertThat(thePortNamed("server-port").on(service).getPort(), is(8080));
+        assertTrue(deployment.getStatus().getReadyReplicas() >= 1);
+        assertTrue(helper.keycloak().getOperations()
+                .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
+                .fromServer().get().getStatus().forServerQualifiedBy("server").isPresent());
     }
 
 }
