@@ -31,11 +31,17 @@ import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public interface EntandoResourceClient {
 
+    EntandoCustomResource removeFinalizer(EntandoCustomResource r);
+
+    EntandoCustomResource addFinalizer(EntandoCustomResource r);
+
     void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status);
 
     <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
     <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
+
+    <T extends EntandoCustomResource> T patchEntandoResource(T r);
 
     void updatePhase(EntandoCustomResource entandoCustomResource, EntandoDeploymentPhase phase);
 

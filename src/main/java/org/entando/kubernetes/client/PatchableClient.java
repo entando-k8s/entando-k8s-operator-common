@@ -38,4 +38,12 @@ public interface PatchableClient {
         }
     }
 
+    default <T extends HasMetadata> T patch(EntandoCustomResource peerInNamespace, T deployment,
+            MixedOperation<T, ? extends KubernetesResourceList<T>, ? extends Doneable<T>, ?
+                    extends Resource<T, ? extends Doneable<T>>> operation) {
+        return operation
+                .inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(deployment.getMetadata().getName())
+                .patch(deployment);
+    }
+
 }

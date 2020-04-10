@@ -77,6 +77,50 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
         }
     };
 
+    @BeforeEach
+    public void cleanup() {
+
+        //Recreate all namespaces as they depend on previously created Keycloak clients that are now invalid
+        helper.keycloak().releaseAllFinalizers(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE);
+        helper.clusterInfrastructure().releaseAllFinalizers(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
+        helper.entandoApps().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
+        helper.entandoPlugins().releaseAllFinalizers(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE);
+
+        helper.setTextFixture(
+                deleteAll(EntandoKeycloakServer.class).fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
+                        .deleteAll(EntandoClusterInfrastructure.class)
+                        .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
+                        .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
+                        .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
+        );
+    }
+
+    @AfterEach
+    public void afterwards() {
+        helper.afterTest();
+    }
+
+    protected void verifyKeycloakDeployment() {
+        String http = TlsHelper.getDefaultProtocol();
+        KubernetesClient client = helper.getClient();
+        await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> HttpTestHelper
+                .statusOk(http + "://" + KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + helper.getDomainSuffix()
+                        + "/auth"));
+        Deployment deployment = client.apps().deployments().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
+                .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-deployment").get();
+        assertThat(thePortNamed("server-port")
+                        .on(theContainerNamed("server-container").on(deployment))
+                        .getContainerPort(),
+                is(8080));
+        Service service = client.services().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(
+                KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-service").get();
+        assertThat(thePortNamed("server-port").on(service).getPort(), is(8080));
+        assertTrue(deployment.getStatus().getReadyReplicas() >= 1);
+        assertTrue(helper.keycloak().getOperations()
+                .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
+                .fromServer().get().getStatus().forServerQualifiedBy("server").isPresent());
+    }
+
     @Test
     public void create() {
         //When I create a EntandoKeycloakServer and I specify it to use PostgreSQL
@@ -125,42 +169,4 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                 .fromServer().get().getStatus().forDbQualifiedBy("db").isPresent());
     }
 
-    @BeforeEach
-    public void cleanup() {
-
-        //Recreate all namespaces as they depend on previously created Keycloak clients that are now invalid
-        helper.setTextFixture(
-                deleteAll(EntandoKeycloakServer.class).fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
-                        .deleteAll(EntandoClusterInfrastructure.class)
-                        .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
-                        .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
-                        .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
-        );
-    }
-
-    @AfterEach
-    public void afterwards() {
-        helper.afterTest();
-    }
-
-    protected void verifyKeycloakDeployment() {
-        String http = TlsHelper.getDefaultProtocol();
-        KubernetesClient client = helper.getClient();
-        await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> HttpTestHelper
-                .statusOk(http + "://" + KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + helper.getDomainSuffix()
-                        + "/auth"));
-        Deployment deployment = client.apps().deployments().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
-                .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-deployment").get();
-        assertThat(thePortNamed("server-port")
-                        .on(theContainerNamed("server-container").on(deployment))
-                        .getContainerPort(),
-                is(8080));
-        Service service = client.services().inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(
-                KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "-server-service").get();
-        assertThat(thePortNamed("server-port").on(service).getPort(), is(8080));
-        assertTrue(deployment.getStatus().getReadyReplicas() >= 1);
-        assertTrue(helper.keycloak().getOperations()
-                .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
-                .fromServer().get().getStatus().forServerQualifiedBy("server").isPresent());
-    }
 }

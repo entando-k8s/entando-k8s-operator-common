@@ -20,9 +20,11 @@ import static java.lang.String.format;
 import static java.util.Optional.empty;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -39,7 +41,6 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 
 public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResource> {
 
@@ -121,7 +122,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
             Action action = Action.valueOf(
                     EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_ACTION).orElseThrow(IllegalArgumentException::new));
             TlsHelper.getInstance().init();
-            if (resourceExists(action)) {
+            if (actionToProcess(action)) {
                 String resourceName = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAME)
                         .orElseThrow(IllegalArgumentException::new);
                 String resourceNamespace = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE)
@@ -135,26 +136,36 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
 
     }
 
-    private boolean resourceExists(Action action) {
-        return action == Action.ADDED || action == Action.MODIFIED;
+    private boolean actionToProcess(Action action) {
+        return action == Action.ADDED || action == Action.MODIFIED || action == Action.DELETED;
     }
 
-    protected void processAction(Action action, T newResource) {
+    protected void processAction(Action action, T resource) {
         try {
-            EntandoDeploymentPhase initialPhase = newResource.getStatus().getEntandoDeploymentPhase();
-            k8sClient.entandoResources().updatePhase(newResource, EntandoDeploymentPhase.STARTED);
-            if (action == Action.ADDED || (action == Action.MODIFIED && initialPhase == EntandoDeploymentPhase.REQUESTED)) {
-                synchronizeDeploymentState(newResource);
+            if (action == Action.ADDED || action == Action.MODIFIED) {
+                k8sClient.entandoResources().addFinalizer(resource);
+                EntandoDeploymentPhase initialPhase = resource.getStatus().getEntandoDeploymentPhase();
+                k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.STARTED);
+                if (action == Action.ADDED || initialPhase == EntandoDeploymentPhase.REQUESTED) {
+                    synchronizeDeploymentState(resource);
+                }
+                k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.SUCCESSFUL);
+            } else if (action == Action.DELETED){
+               cleanBeforeDeletion(resource);
+               k8sClient.entandoResources().removeFinalizer(resource);
             }
-            k8sClient.entandoResources().updatePhase(newResource, EntandoDeploymentPhase.SUCCESSFUL);
         } catch (Exception e) {
             autoExit.withCode(-1);
             logger.log(Level.SEVERE, e, () -> format("Unexpected exception occurred while adding %s %s/%s",
-                    newResource.getKind(),
-                    newResource.getMetadata().getNamespace(),
-                    newResource.getMetadata().getName()));
-            k8sClient.entandoResources().deploymentFailed(newResource, e);
+                    resource.getKind(),
+                    resource.getMetadata().getNamespace(),
+                    resource.getMetadata().getName()));
+            k8sClient.entandoResources().deploymentFailed(resource, e);
         }
+    }
+
+    protected void cleanBeforeDeletion(T newResource) {
+        // To be implemented by subclasses if required
     }
 
     protected DatabaseServiceResult prepareDatabaseService(EntandoCustomResource entandoCustomResource, DbmsVendor dbmsVendor,
