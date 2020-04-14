@@ -60,6 +60,19 @@ public class DefaultIngressClient implements IngressClient {
     }
 
     @Override
+    public Ingress removeHttpPath(Ingress ingress, HTTPIngressPath path) {
+        return client.extensions().ingresses().inNamespace(ingress.getMetadata().getNamespace())
+                .withName(ingress.getMetadata().getName()).edit()
+                .editSpec().editFirstRule().editHttp()
+                .removeFromPaths(path)
+                .endHttp()
+                .endRule()
+                .endSpec()
+                .done();
+
+    }
+
+    @Override
     public String getMasterUrlHost() {
         return resolveMasterHostname(this.client);
     }

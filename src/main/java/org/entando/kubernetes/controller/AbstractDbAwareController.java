@@ -20,11 +20,9 @@ import static java.lang.String.format;
 import static java.util.Optional.empty;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -150,9 +148,9 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
                     synchronizeDeploymentState(resource);
                 }
                 k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.SUCCESSFUL);
-            } else if (action == Action.DELETED){
-               cleanBeforeDeletion(resource);
-               k8sClient.entandoResources().removeFinalizer(resource);
+            } else if (action == Action.DELETED) {
+                cleanBeforeDeletion(resource);
+                k8sClient.entandoResources().removeFinalizer(resource);
             }
         } catch (Exception e) {
             autoExit.withCode(-1);
@@ -174,7 +172,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
                 .findExternalDatabase(entandoCustomResource, dbmsVendor);
         DatabaseServiceResult result;
         if (externalDatabase.isPresent()) {
-            result = new DatabaseServiceResult(externalDatabase.get().getService(),externalDatabase.get().getEntandoDatabaseService());
+            result = new DatabaseServiceResult(externalDatabase.get().getService(), externalDatabase.get().getEntandoDatabaseService());
         } else {
             final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsVendorStrategy.forVendor(dbmsVendor),
                     entandoCustomResource, nameQualifier);

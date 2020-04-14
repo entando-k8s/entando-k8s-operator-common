@@ -65,7 +65,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tag("in-process")
-@Disabled
 public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     private static final String MY_KEYCLOAK_DB = MY_KEYCLOAK + "-db";

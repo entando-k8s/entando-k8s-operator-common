@@ -70,9 +70,9 @@ public class IntegrationTestHelperBase<
         return operations;
     }
 
-    public void releaseAllFinalizers(String namespace)  {
+    public void releaseAllFinalizers(String namespace) {
         List<R> resList = this.getOperations().inNamespace(namespace).list().getItems();
-        for(R r: resList) {
+        for (R r : resList) {
             r.getMetadata().setFinalizers(Collections.emptyList());
             this.getOperations()
                     .inNamespace(namespace)

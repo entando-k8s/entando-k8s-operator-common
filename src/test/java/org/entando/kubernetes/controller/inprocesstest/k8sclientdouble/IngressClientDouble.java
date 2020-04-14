@@ -57,6 +57,15 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
     }
 
     @Override
+    public Ingress removeHttpPath(Ingress ingress, HTTPIngressPath path) {
+        if (ingress == null) {
+            return null;
+        }
+        ingress.getSpec().getRules().get(0).getHttp().getPaths().removeIf(p -> p.equals(path));
+        return ingress;
+    }
+
+    @Override
     public String getMasterUrlHost() {
         return "somehost.com";
     }
