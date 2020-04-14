@@ -97,6 +97,10 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
 
     @AfterEach
     public void afterwards() {
+        helper.keycloak().releaseAllFinalizers(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE);
+        helper.clusterInfrastructure().releaseAllFinalizers(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
+        helper.entandoApps().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
+        helper.entandoPlugins().releaseAllFinalizers(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE);
         helper.afterTest();
     }
 
@@ -115,15 +119,16 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                 .withEntandoImageVersion("6.0.0-SNAPSHOT")
                 .endSpec().build();
         SampleWriter.writeSample(keycloakServer, "keycloak-with-embedded-postgresql-db");
-        helper.setTextFixture(
-                deleteAll(EntandoKeycloakServer.class)
-                        .fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
-                        .deleteAll(EntandoClusterInfrastructure.class)
-                        .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
-                        .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
-                        .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
-                        .deleteAll(EntandoAppPluginLink.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
-        );
+//        helper.setTextFixture(
+//                deleteAll(EntandoKeycloakServer.class)
+//                        .fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
+//                        .deleteAll(EntandoClusterInfrastructure.class)
+//                        .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
+//                        .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
+//                        .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
+//                        .deleteAll(EntandoAppPluginLink.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
+//        );
+        this.cleanup();
         helper.keycloak()
                 .listenAndRespondWithStartupEvent(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE, controller::onStartup);
         helper.keycloak().createAndWaitForKeycloak(keycloakServer, 30, true);
