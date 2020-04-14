@@ -32,7 +32,8 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class SampleController<T extends EntandoBaseCustomResource> extends AbstractDbAwareController<T> {
+public class SampleController<T extends EntandoBaseCustomResource> extends AbstractDbAwareController<T> implements
+        StartupEventControllerObserver {
 
     public SampleController(KubernetesClient kubernetesClient) {
         super(kubernetesClient, false);
@@ -42,7 +43,8 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
         super(k8sClient, keycloakClient);
     }
 
-    public void onStartup(@Observes StartupEvent event) {
+    @Override
+    public void onStartup(StartupEvent event) {
         processCommand();
     }
 
