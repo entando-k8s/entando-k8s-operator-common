@@ -45,12 +45,14 @@ import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.K8SIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.SampleWriter;
+import org.entando.kubernetes.controller.integrationtest.support.TestFixtureRequest;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
+import org.entando.kubernetes.model.link.EntandoAppPluginLink;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,20 +80,17 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
 
     @BeforeEach
     public void cleanup() {
-
-        //Recreate all namespaces as they depend on previously created Keycloak clients that are now invalid
-        helper.keycloak().releaseAllFinalizers(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE);
-        helper.clusterInfrastructure().releaseAllFinalizers(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
-        helper.entandoApps().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
-        helper.entandoPlugins().releaseAllFinalizers(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE);
-
-        helper.setTextFixture(
+        TestFixtureRequest fixtureRequest =
                 deleteAll(EntandoKeycloakServer.class).fromNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE)
                         .deleteAll(EntandoClusterInfrastructure.class)
                         .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE)
                         .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
                         .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
-        );
+                        .deleteAll(EntandoAppPluginLink.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
+
+        //Recreate all namespaces as they depend on previously created Keycloak clients that are now invalid
+        helper.removeFinalizers(fixtureRequest);
+        helper.setTextFixture(fixtureRequest);
     }
 
     @AfterEach
