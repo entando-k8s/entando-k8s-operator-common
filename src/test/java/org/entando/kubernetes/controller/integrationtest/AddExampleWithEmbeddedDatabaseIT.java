@@ -89,16 +89,12 @@ public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTestin
                         .deleteAll(EntandoAppPluginLink.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
 
         //Recreate all namespaces as they depend on previously created Keycloak clients that are now invalid
-        helper.removeFinalizers(fixtureRequest);
         helper.setTextFixture(fixtureRequest);
     }
 
     @AfterEach
     public void afterwards() {
-        helper.keycloak().releaseAllFinalizers(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE);
-        helper.clusterInfrastructure().releaseAllFinalizers(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
-        helper.entandoApps().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
-        helper.entandoPlugins().releaseAllFinalizers(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE);
+        helper.releaseAllFinalizers();
         helper.afterTest();
     }
 
