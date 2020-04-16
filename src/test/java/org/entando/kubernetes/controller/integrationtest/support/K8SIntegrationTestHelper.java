@@ -37,7 +37,6 @@ import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
 
-
     private final DefaultKubernetesClient client = TestFixturePreparation.newClient();
     private final String domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));
     private final EntandoPluginIntegrationTestHelper entandoPluginIntegrationTestHelper = new EntandoPluginIntegrationTestHelper(client);
@@ -158,6 +157,7 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
             }
         }
     }
+
     public void releaseAllFinalizers() {
         keycloak().releaseAllFinalizers(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE);
         clusterInfrastructure().releaseAllFinalizers(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
