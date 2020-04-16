@@ -20,6 +20,8 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.client.DefaultIngressClient;
@@ -66,6 +68,18 @@ public class IntegrationTestHelperBase<
 
     public CustomResourceOperationsImpl<R, L, D> getOperations() {
         return operations;
+    }
+
+    public void releaseAllFinalizers(String namespace) {
+        List<R> resList = this.getOperations().inNamespace(namespace).list().getItems();
+        for (R r : resList) {
+            r.getMetadata().setFinalizers(Collections.emptyList());
+            this.getOperations()
+                    .inNamespace(namespace)
+                    .withName(r.getMetadata().getName())
+                    .patch(r);
+        }
+
     }
 
     public void setTestFixture(TestFixtureRequest request) {

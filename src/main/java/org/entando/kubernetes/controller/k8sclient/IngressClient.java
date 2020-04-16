@@ -29,5 +29,7 @@ public interface IngressClient {
 
     Ingress addHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath, Map<String, String> annotations);
 
+    Ingress removeHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath);
+
     String getMasterUrlHost();
 }

@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
@@ -58,8 +59,25 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         return r;
     }
 
+    @Override
+    public <T extends EntandoCustomResource> T patchEntandoResource(T r) {
+        return this.createOrPatchEntandoResource(r);
+    }
+
     public void putEntandoDatabaseService(EntandoDatabaseService externalDatabase) {
         createOrPatchEntandoResource(externalDatabase);
+    }
+
+    @Override
+    public EntandoCustomResource removeFinalizer(EntandoCustomResource r) {
+        r.getMetadata().setFinalizers(Collections.emptyList());
+        return this.createOrPatchEntandoResource(r);
+    }
+
+    @Override
+    public EntandoCustomResource addFinalizer(EntandoCustomResource r) {
+        r.getMetadata().setFinalizers(Collections.singletonList("entando.org.finalizer"));
+        return this.createOrPatchEntandoResource(r);
     }
 
     @Override

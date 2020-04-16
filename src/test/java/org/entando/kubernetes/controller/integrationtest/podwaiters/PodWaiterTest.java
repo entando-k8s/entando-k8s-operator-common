@@ -148,13 +148,13 @@ public class PodWaiterTest {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitReadinessTo(Duration.ofMillis(3000)).waitOn(podOperationMock));
-        await().atMost(50, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.CREATING);
+        await().atMost(120, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.CREATING);
         assertFalse(mutex.timedOut);
         mutex.eventReceived(Watcher.Action.MODIFIED, podWithCondition(RUNNING_PHASE, POD_SCHEDULED));
-        await().atMost(50, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.RUNNING);
+        await().atMost(120, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.RUNNING);
         assertFalse(mutex.timedOut);
         mutex.eventReceived(Watcher.Action.MODIFIED, podWithCondition(RUNNING_PHASE, READY_CONDITION, CONTAINERS_READY_CONDITION));
-        await().atMost(50, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.READY);
+        await().atMost(120, TimeUnit.MILLISECONDS).pollDelay(1, TimeUnit.MILLISECONDS).until(() -> mutex.state == State.READY);
         assertFalse(mutex.timedOut);
         assertTrue(mutex.wasSuccessful());
     }

@@ -19,12 +19,16 @@ package org.entando.kubernetes.client;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.base.HasMetadataOperation;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -94,6 +98,23 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
+    public EntandoCustomResource removeFinalizer(EntandoCustomResource r) {
+        r.getMetadata().setFinalizers(Collections.emptyList());
+        return patchEntandoResource(r);
+    }
+
+    @Override
+    public EntandoCustomResource addFinalizer(EntandoCustomResource customResource) {
+        List<String> finalizers = Collections.singletonList("entando.org.finalizer");
+        EntandoCustomResource availableResource = getOperations(customResource.getClass())
+                .inNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName())
+                .require();
+        availableResource.getMetadata().setFinalizers(finalizers);
+        return patchEntandoResource(availableResource);
+    }
+
+    @Override
     public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
         getOperations(customResource.getClass())
                 .inNamespace(customResource.getMetadata().getNamespace())
@@ -119,6 +140,13 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         Class<T> type = (Class<T>) r.getClass();
         return createOrPatch(r, r, this.getOperations(type));
 
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends EntandoCustomResource> T patchEntandoResource(T r) {
+        Class<T> type = (Class<T>) r.getClass();
+        return patch(r, r, this.getOperations(type));
     }
 
     @SuppressWarnings("unchecked")
