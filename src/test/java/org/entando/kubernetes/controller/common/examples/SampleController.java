@@ -42,7 +42,7 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
         super(k8sClient, keycloakClient);
     }
 
-    public void onStartup(@Observes StartupEvent event) {
+    public void onStartup(StartupEvent event) {
         processCommand();
     }
 

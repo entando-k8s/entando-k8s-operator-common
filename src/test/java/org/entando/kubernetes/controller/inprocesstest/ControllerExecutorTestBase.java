@@ -46,6 +46,8 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     @AfterEach
     public void resetSystemProperty() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty());
+        client.pods().getPodWatcherHolder().set(null);
+        PodClientDouble.setEmulatePodWatching(false);
     }
 
     @Test
