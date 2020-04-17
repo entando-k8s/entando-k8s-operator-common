@@ -30,6 +30,7 @@ import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("inter-process"),@Tag("pre-deployment") })
