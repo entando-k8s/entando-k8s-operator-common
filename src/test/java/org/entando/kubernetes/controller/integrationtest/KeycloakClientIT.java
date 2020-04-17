@@ -58,7 +58,7 @@ import org.junit.jupiter.api.Test;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 
-@Tags({@Tag("inter-process"), @Tag("smoke-test")})
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") , @Tag("smoke-test")})
 public class KeycloakClientIT implements FluentIntegrationTesting {
 
     public static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);

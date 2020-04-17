@@ -22,8 +22,9 @@ import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 public class PublicIngressingMockClientTest extends PublicIngressingTestBase {
 
     SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();

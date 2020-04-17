@@ -39,12 +39,13 @@ import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.PodResult;
 import org.entando.kubernetes.controller.PodResult.State;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 @ExtendWith(MockitoExtension.class)
 public class PodWaiterTest {
 

@@ -50,7 +50,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 //in execute component test
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 public class DeployEntandoDbConsumerTest implements InProcessTestUtil, FluentTraversals {
 
     @Spy
