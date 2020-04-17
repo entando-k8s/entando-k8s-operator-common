@@ -1,7 +1,5 @@
-buildPack: maven-java11
+buildPack: entando-maven-lib
 pipelineConfig:
-  agent:
-    image: entando-jx-maven-java11
   env:
     - name: PIPELINE_CODE
       value: cm
