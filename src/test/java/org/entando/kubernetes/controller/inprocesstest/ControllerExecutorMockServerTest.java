@@ -21,9 +21,10 @@ import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.junit.Rule;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 @EnableRuleMigrationSupport
 public class ControllerExecutorMockServerTest extends ControllerExecutorTestBase {
 

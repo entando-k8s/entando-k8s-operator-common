@@ -22,6 +22,7 @@ import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.junit.Rule;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 /**
@@ -33,7 +34,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
  * still have to set them somehow to test status updates. <br/> Future possibilities: <br/> We can perhaps implement test cases to run in
  * one of three modes: <br/> 1. Mockito mocked. <br/> 2. Mockserver. <br/> 3. Actual server.
  */
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 @EnableRuleMigrationSupport
 public class PublicIngressingMockServerTest extends PublicIngressingTestBase implements PodBehavior {
 

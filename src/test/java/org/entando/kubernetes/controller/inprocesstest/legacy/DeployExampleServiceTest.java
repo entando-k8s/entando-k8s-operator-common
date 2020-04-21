@@ -72,6 +72,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -80,7 +81,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 //in execute component test
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
 
     private static final String MY_KEYCLOAK_ADMIN_SECRET = MY_KEYCLOAK + "-admin-secret";

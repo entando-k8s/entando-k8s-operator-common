@@ -42,6 +42,7 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -50,7 +51,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 //in execute component test
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 public class DeployEntandoDbConsumerTest implements InProcessTestUtil, FluentTraversals {
 
     @Spy

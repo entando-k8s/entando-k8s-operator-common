@@ -28,9 +28,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.mockito.Mockito;
 
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 public class SpringBootContainerMockClientTest extends SpringBootContainerTestBase {
 
     private SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();

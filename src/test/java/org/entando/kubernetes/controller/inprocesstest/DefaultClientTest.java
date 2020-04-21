@@ -28,10 +28,11 @@ import org.junit.Rule;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 @EnableRuleMigrationSupport
 public class DefaultClientTest {
 

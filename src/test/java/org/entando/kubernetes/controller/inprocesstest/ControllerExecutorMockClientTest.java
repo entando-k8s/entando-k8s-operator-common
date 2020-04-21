@@ -19,8 +19,9 @@ package org.entando.kubernetes.controller.inprocesstest;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 
-@Tag("in-process")
+@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 public class ControllerExecutorMockClientTest extends ControllerExecutorTestBase {
 
     SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
