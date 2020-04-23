@@ -36,16 +36,11 @@ import org.junit.jupiter.api.Test;
 @Tags({@Tag("in-process"), @Tag("pre-deployment")})
 public class ImageResolutionTest {
 
-    private Map<String, String> storedProps = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Object, Object> storedProps = new ConcurrentHashMap<>();
 
     @BeforeEach
     public void backupSystemProperties() {
-        Stream.of(EntandoOperatorConfigProperty.values()).forEach(p -> {
-            if (System.getProperties().containsKey(p.getJvmSystemProperty())) {
-                storedProps.put(p.getJvmSystemProperty(), (String) System.getProperties().remove(p.getJvmSystemProperty()));
-            }
-        });
-
+        storedProps=new ConcurrentHashMap<>(System.getProperties());
     }
 
     @AfterEach
