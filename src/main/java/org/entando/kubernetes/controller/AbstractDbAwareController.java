@@ -165,7 +165,8 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     }
 
     protected boolean shouldAddFinalizer() {
-        return EntandoOperatorConfigBase.lookupProperty(EntandoOperatorConfigProperty.ENTANDO_REGISTER_FINALIZER).orElse("true").equalsIgnoreCase("true");
+        return EntandoOperatorConfigBase.lookupProperty(EntandoOperatorConfigProperty.ENTANDO_REGISTER_FINALIZER).orElse("true")
+                .equalsIgnoreCase("true");
     }
 
     protected void cleanBeforeDeletion(T newResource) {

@@ -21,7 +21,6 @@ import static org.hamcrest.Matchers.is;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -40,7 +39,7 @@ public class ImageResolutionTest {
 
     @BeforeEach
     public void backupSystemProperties() {
-        storedProps=new ConcurrentHashMap<>(System.getProperties());
+        storedProps = new ConcurrentHashMap<>(System.getProperties());
     }
 
     @AfterEach
