@@ -40,7 +40,7 @@ import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
 
 /**
- * Mostly a source of test fixture factories. TODO: These need to refactored to be inter-process friendly
+ * Mostly a source of test fixture factories. TODO: These need to refactored to be in-process friendly
  */
 public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBasedAnswers, K8SResourceArgumentMatchers,
         StandardArgumentCaptors {

@@ -24,7 +24,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 
-@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"),@Tag("pre-deployment") })
 public class PublicIngressingMockClientTest extends PublicIngressingTestBase {
 
     SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();

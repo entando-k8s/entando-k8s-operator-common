@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"),@Tag("pre-deployment") })
 public class ImageResolutionTest {
 
     private Map<String, String> storedProps = new ConcurrentHashMap<>();
