@@ -51,6 +51,7 @@ public class ImageResolutionTest {
     @AfterEach
     public void restoreSystemProperties() {
         System.getProperties().putAll(storedProps);
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE.getJvmSystemProperty());
     }
 
     @Test
