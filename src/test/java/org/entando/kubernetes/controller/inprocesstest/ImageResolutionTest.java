@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tags({@Tag("in-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"), @Tag("pre-deployment")})
 public class ImageResolutionTest {
 
     private Map<String, String> storedProps = new ConcurrentHashMap<>();
@@ -50,8 +50,10 @@ public class ImageResolutionTest {
 
     @AfterEach
     public void restoreSystemProperties() {
+        Stream.of(EntandoOperatorConfigProperty.values()).forEach(p -> {
+            System.getProperties().remove(p.getJvmSystemProperty());
+        });
         System.getProperties().putAll(storedProps);
-        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE.getJvmSystemProperty());
     }
 
     @Test
