@@ -137,9 +137,9 @@ public class ControllerExecutor {
 
     private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {
         ArrayList<EnvVar> result = new ArrayList<>();
-        result.add(new EnvVar(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name(), null));
-        result.add(new EnvVar(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, resource.getMetadata().getNamespace(), null));
-        result.add(new EnvVar(KubeUtils.ENTANDO_RESOURCE_NAME, resource.getMetadata().getName(), null));
+        result.add(new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
+        result.add(new EnvVar("ENTANDO_RESOURCE_NAMESPACE", resource.getMetadata().getNamespace(), null));
+        result.add(new EnvVar("ENTANDO_RESOURCE_NAME", resource.getMetadata().getName(), null));
         result.addAll(Stream.of(EntandoOperatorConfigProperty.values())
                 .filter(prop -> EntandoOperatorConfigBase.lookupProperty(prop).isPresent())
                 .map(prop -> new EnvVar(prop.name(), EntandoOperatorConfigBase.lookupProperty(prop).get(), null))

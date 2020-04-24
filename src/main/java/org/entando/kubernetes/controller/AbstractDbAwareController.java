@@ -120,7 +120,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
             Action action = Action.valueOf(
                     EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_ACTION).orElseThrow(IllegalArgumentException::new));
             TlsHelper.getInstance().init();
-            if (shouldProcessAction(action)) {
+            if (actionToProcess(action)) {
                 String resourceName = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAME)
                         .orElseThrow(IllegalArgumentException::new);
                 String resourceNamespace = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE)
@@ -134,16 +134,14 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
 
     }
 
-    private boolean shouldProcessAction(Action action) {
+    private boolean actionToProcess(Action action) {
         return action == Action.ADDED || action == Action.MODIFIED || action == Action.DELETED;
     }
 
     protected void processAction(Action action, T resource) {
         try {
             if (action == Action.ADDED || action == Action.MODIFIED) {
-                if (shouldAddFinalizer()) {
-                    k8sClient.entandoResources().addFinalizer(resource);
-                }
+                k8sClient.entandoResources().addFinalizer(resource);
                 EntandoDeploymentPhase initialPhase = resource.getStatus().getEntandoDeploymentPhase();
                 k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.STARTED);
                 if (action == Action.ADDED || initialPhase == EntandoDeploymentPhase.REQUESTED) {
@@ -162,11 +160,6 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
                     resource.getMetadata().getName()));
             k8sClient.entandoResources().deploymentFailed(resource, e);
         }
-    }
-
-    protected boolean shouldAddFinalizer() {
-        return EntandoOperatorConfigBase.lookupProperty(EntandoOperatorConfigProperty.ENTANDO_REGISTER_FINALIZER).orElse("true")
-                .equalsIgnoreCase("true");
     }
 
     protected void cleanBeforeDeletion(T newResource) {
