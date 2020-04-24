@@ -21,7 +21,6 @@ import static org.hamcrest.Matchers.is;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -33,23 +32,21 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"), @Tag("pre-deployment")})
 public class ImageResolutionTest {
 
-    private Map<String, String> storedProps = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Object, Object> storedProps = new ConcurrentHashMap<>();
 
     @BeforeEach
     public void backupSystemProperties() {
-        Stream.of(EntandoOperatorConfigProperty.values()).forEach(p -> {
-            if (System.getProperties().containsKey(p.getJvmSystemProperty())) {
-                storedProps.put(p.getJvmSystemProperty(), (String) System.getProperties().remove(p.getJvmSystemProperty()));
-            }
-        });
-
+        storedProps = new ConcurrentHashMap<>(System.getProperties());
     }
 
     @AfterEach
     public void restoreSystemProperties() {
+        Stream.of(EntandoOperatorConfigProperty.values()).forEach(p -> {
+            System.getProperties().remove(p.getJvmSystemProperty());
+        });
         System.getProperties().putAll(storedProps);
     }
 

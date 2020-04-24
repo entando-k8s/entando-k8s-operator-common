@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
-@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"),@Tag("pre-deployment") })
 @EnableRuleMigrationSupport
 public class DefaultClientTest {
 

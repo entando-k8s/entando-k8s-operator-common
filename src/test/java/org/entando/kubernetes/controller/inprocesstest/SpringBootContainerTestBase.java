@@ -26,8 +26,6 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -99,54 +97,6 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(), standardIngressName(plugin1));
         assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
                 Matchers.is(8080));
-    }
-
-    @Test
-    public void testBasicDelete() {
-
-        //Given I have a controller that processes EntandoPlugins
-        controller = new SampleController<EntandoPlugin>(getClient(), getKeycloakClient()) {
-
-            @Override
-            protected Deployable<ServiceDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
-                    DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
-            }
-
-            @Override
-            protected void cleanBeforeDeletion(EntandoPlugin newResource) {
-                Map<String, String> annotations = new HashMap<>();
-                annotations.put("marked-for-deletion", "true");
-                newResource.getMetadata().setAnnotations(annotations);
-                k8sClient.entandoResources().patchEntandoResource(newResource);
-            }
-
-        };
-        //And I have prepared the Standard KeycloakAdminSecert
-        getClient().secrets().overwriteControllerSecret(buildKeycloakSecret());
-        //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
-        //And a plugin is created
-        onAdd(plugin1);
-
-        await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
-                getClient().entandoResources()
-                        .load(plugin1.getClass(), plugin1.getMetadata().getNamespace(), plugin1.getMetadata().getName())
-                        .getStatus()
-                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
-
-        EntandoPlugin plugin = getClient().entandoResources()
-                .load(plugin1.getClass(), plugin1.getMetadata().getNamespace(), plugin1.getMetadata().getName());
-
-        assertThat(plugin.getMetadata().getFinalizers().size(), Matchers.is(1));
-        assertThat(plugin.getMetadata().getFinalizers().get(0), Matchers.equalTo("entando.org.finalizer"));
-        // When I delete the plugin,
-        onDelete(plugin1);
-        await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
-                getClient().entandoResources()
-                        .load(plugin1.getClass(), plugin1.getMetadata().getNamespace(), plugin1.getMetadata().getName())
-                        .getMetadata().getAnnotations().getOrDefault("marked-for-deletion", "false").equals("true"));
     }
 
     protected abstract SimpleKeycloakClient getKeycloakClient();

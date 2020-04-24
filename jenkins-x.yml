@@ -7,3 +7,5 @@ pipelineConfig:
       value: "false"
     - name: UPDATE_OWASP_DB
       value: "false"
+    - name: ENTANDO_DOCKER_IMAGE_INFO_CONFIGMAP
+      value: "entando-docker-image-info-v6.1"

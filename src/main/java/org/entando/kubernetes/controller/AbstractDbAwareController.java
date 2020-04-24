@@ -135,7 +135,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     }
 
     private boolean actionToProcess(Action action) {
-        return action == Action.ADDED || action == Action.MODIFIED || action == Action.DELETED;
+        return action == Action.ADDED || action == Action.MODIFIED;
     }
 
     protected void processAction(Action action, T resource) {
@@ -148,9 +148,6 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
                     synchronizeDeploymentState(resource);
                 }
                 k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.SUCCESSFUL);
-            } else if (action == Action.DELETED) {
-                cleanBeforeDeletion(resource);
-                k8sClient.entandoResources().removeFinalizer(resource);
             }
         } catch (Exception e) {
             autoExit.withCode(-1);
@@ -160,10 +157,6 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
                     resource.getMetadata().getName()));
             k8sClient.entandoResources().deploymentFailed(resource, e);
         }
-    }
-
-    protected void cleanBeforeDeletion(T newResource) {
-        // To be implemented by subclasses if required
     }
 
     protected DatabaseServiceResult prepareDatabaseService(EntandoCustomResource entandoCustomResource, DbmsVendor dbmsVendor,

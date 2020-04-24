@@ -60,8 +60,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tags({@Tag("inter-process"), @Tag("pre-deployment"), @Tag("smoke-test")})
-public class AddExampleWithEmbeddedDatabaseIT implements FluentIntegrationTesting, InProcessTestUtil {
+@Tags({@Tag("inter-process"), @Tag("pre-deployment")})
+public class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTesting, InProcessTestUtil {
 
     static final int KEYCLOAK_DB_PORT = 5432;
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
