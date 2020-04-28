@@ -141,7 +141,6 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     protected void processAction(Action action, T resource) {
         try {
             if (action == Action.ADDED || action == Action.MODIFIED) {
-                k8sClient.entandoResources().addFinalizer(resource);
                 EntandoDeploymentPhase initialPhase = resource.getStatus().getEntandoDeploymentPhase();
                 k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.STARTED);
                 if (action == Action.ADDED || initialPhase == EntandoDeploymentPhase.REQUESTED) {
