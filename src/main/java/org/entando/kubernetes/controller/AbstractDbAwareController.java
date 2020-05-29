@@ -162,10 +162,10 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
             String nameQualifier) {
         Optional<ExternalDatabaseDeployment> externalDatabase = k8sClient.entandoResources()
                 .findExternalDatabase(entandoCustomResource, dbmsVendor);
-        DatabaseServiceResult result;
+        DatabaseServiceResult result = null;
         if (externalDatabase.isPresent()) {
             result = new DatabaseServiceResult(externalDatabase.get().getService(), externalDatabase.get().getEntandoDatabaseService());
-        } else {
+        } else if (dbmsVendor != DbmsVendor.NONE){
             final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsVendorStrategy.forVendor(dbmsVendor),
                     entandoCustomResource, nameQualifier);
             final DeployCommand<DatabaseServiceResult> dbCommand = new DeployCommand<>(databaseDeployable);

@@ -21,8 +21,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
+import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
@@ -33,7 +35,7 @@ public abstract class EntandoDatabaseConsumingContainer implements DbAware, Ingr
     private static final String SERVDB = "servdb";
     private static final String PORTDB_PREFIX = "PORTDB_";
     private static final String SERVDB_PREFIX = "SERVDB_";
-    private Map<String, DatabaseSchemaCreationResult> dbSchemas;
+    private Map<String, DatabaseSchemaCreationResult> dbSchemas = new ConcurrentHashMap<>();
 
     protected DatabasePopulator buildDatabasePopulator() {
         return new EntandoAppDatabasePopulator(this);
@@ -57,11 +59,27 @@ public abstract class EntandoDatabaseConsumingContainer implements DbAware, Ingr
     }
 
     private void addEntandoDbConnectionVars(List<EnvVar> vars, DatabaseSchemaCreationResult dbDeploymentResult, String varNamePrefix) {
-        vars.add(new EnvVar(varNamePrefix + "USERNAME", null,
-                KubeUtils.secretKeyRef(dbDeploymentResult.getSchemaSecretName(), KubeUtils.USERNAME_KEY)));
-        vars.add(new EnvVar(varNamePrefix + "PASSWORD", null,
-                KubeUtils.secretKeyRef(dbDeploymentResult.getSchemaSecretName(), KubeUtils.PASSSWORD_KEY)));
-        vars.add(new EnvVar(varNamePrefix + "URL", dbDeploymentResult.getJdbcUrl(), null));
+        final DbmsVendorStrategy vendor;
+        final String jdbcUrl;
+
+        if (dbDeploymentResult == null) {
+            vendor = DbmsVendorStrategy.DERBY;
+            jdbcUrl = DbmsVendorStrategy.DERBY.getConnectionStringBuilder().usingDatabase("production").buildConnectionString();
+        } else {
+            vendor = dbDeploymentResult.getVendor();
+            jdbcUrl = dbDeploymentResult.getJdbcUrl();
+        }
+
+        vars.add(new EnvVar(varNamePrefix + "DRIVER", vendor.getHibernateDialect(), null));
+        vars.add(new EnvVar(varNamePrefix + "URL", jdbcUrl, null));
+
+        Optional.ofNullable(dbDeploymentResult).ifPresent(result -> {
+            vars.add(new EnvVar(varNamePrefix + "USERNAME", null,
+                    KubeUtils.secretKeyRef(result.getSchemaSecretName(), KubeUtils.USERNAME_KEY)));
+            vars.add(new EnvVar(varNamePrefix + "PASSWORD", null,
+                    KubeUtils.secretKeyRef(result.getSchemaSecretName(), KubeUtils.PASSSWORD_KEY)));
+
+        });
     }
 
     @Override
@@ -71,7 +89,7 @@ public abstract class EntandoDatabaseConsumingContainer implements DbAware, Ingr
 
     @Override
     public Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas) {
-        this.dbSchemas = dbSchemas;
+        this.dbSchemas = Optional.ofNullable(dbSchemas).orElse(new ConcurrentHashMap<>());
         return Optional.of(buildDatabasePopulator());
     }
 

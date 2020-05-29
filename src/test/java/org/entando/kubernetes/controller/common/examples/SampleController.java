@@ -20,7 +20,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.quarkus.runtime.StartupEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
-import javax.enterprise.event.Observes;
 import org.entando.kubernetes.controller.AbstractDbAwareController;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
