@@ -86,7 +86,7 @@ public class KeycloakIntegrationTestHelper extends
 
     public void createAndWaitForKeycloak(EntandoKeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
         getOperations().inNamespace(KEYCLOAK_NAMESPACE).create(keycloakServer);
-        if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsVendor.NONE).orElse(false)) {
+        if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsVendor.NONE && v != DbmsVendor.EMBEDDED).orElse(false)) {
             if (deployingDbContainers) {
                 waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
                         KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db");

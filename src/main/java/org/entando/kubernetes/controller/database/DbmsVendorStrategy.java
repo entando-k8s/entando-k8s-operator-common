@@ -54,7 +54,28 @@ public enum DbmsVendorStrategy {
                 }
             };
         }
+    },
+    DERBY("org.apache.derby.jdbc.EmbeddedDriver") {
+        @Override
+        public JdbcConnectionStringBuilder getConnectionStringBuilder() {
+            return new JdbcConnectionStringBuilder() {
+                public String buildConnectionString() {
+                    return String.format("jdbc:derby:%s/%s;create=true", this.getHost(), this.getDatabase());
+                }
+            };
+        }
+    },
+    H2("org.hibernate.dialect.H2Dialect", "sa") {
+        @Override
+        public JdbcConnectionStringBuilder getConnectionStringBuilder() {
+            return new JdbcConnectionStringBuilder() {
+                public String buildConnectionString() {
+                    return String.format("jdbc:h2:file:%s/%s;DB_CLOSE_ON_EXIT=FALSE", this.getHost(), this.getDatabase());
+                }
+            };
+        }
     };
+
     public static final String DATABASE_IDENTIFIER_TYPE = "databaseIdentifierType";
     public static final String TABLESPACE_PARAMETER_NAME = "tablespace";
     private String imageName;
@@ -72,6 +93,15 @@ public enum DbmsVendorStrategy {
         this.volumeMountPath = volumeMountPath;
         this.healthCheck = healthCheck;
         this.hibernateDialect = hibernateDialect;
+    }
+
+    private DbmsVendorStrategy(String hibernateDialect) {
+        this.hibernateDialect = hibernateDialect;
+    }
+
+    private DbmsVendorStrategy(String hibernateDialect, String defaultAdminUsername) {
+        this.hibernateDialect = hibernateDialect;
+        this.defaultAdminUsername = defaultAdminUsername;
     }
 
     public abstract JdbcConnectionStringBuilder getConnectionStringBuilder();
