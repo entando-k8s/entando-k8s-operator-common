@@ -23,7 +23,6 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.KubernetesPermission;
-import org.entando.kubernetes.model.DbmsVendor;
 
 public class BareBonesContainer implements DeployableContainer {
 

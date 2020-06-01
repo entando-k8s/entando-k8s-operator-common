@@ -263,7 +263,6 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         if (container instanceof ParameterizableContainer) {
             ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;
             overrideFromParameters(vars, parameterizableContainer.getCustomResourceSpec().getParameters().entrySet());
-
         }
         return vars;
     }
