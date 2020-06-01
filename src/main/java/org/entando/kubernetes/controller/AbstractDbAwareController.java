@@ -165,7 +165,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         DatabaseServiceResult result = null;
         if (externalDatabase.isPresent()) {
             result = new DatabaseServiceResult(externalDatabase.get().getService(), externalDatabase.get().getEntandoDatabaseService());
-        } else if (dbmsVendor != DbmsVendor.NONE){
+        } else if (!(dbmsVendor == DbmsVendor.NONE || dbmsVendor == DbmsVendor.EMBEDDED)) {
             final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsVendorStrategy.forVendor(dbmsVendor),
                     entandoCustomResource, nameQualifier);
             final DeployCommand<DatabaseServiceResult> dbCommand = new DeployCommand<>(databaseDeployable);

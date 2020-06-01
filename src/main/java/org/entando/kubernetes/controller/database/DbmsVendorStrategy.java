@@ -54,16 +54,6 @@ public enum DbmsVendorStrategy {
                 }
             };
         }
-    },
-    DERBY("org.apache.derby.jdbc.EmbeddedDriver") {
-        @Override
-        public JdbcConnectionStringBuilder getConnectionStringBuilder() {
-            return new JdbcConnectionStringBuilder() {
-                public String buildConnectionString() {
-                    return String.format("jdbc:derby:%s/%s;create=true", "/entando-data/derby", this.getDatabase());
-                }
-            };
-        }
     };
     public static final String DATABASE_IDENTIFIER_TYPE = "databaseIdentifierType";
     public static final String TABLESPACE_PARAMETER_NAME = "tablespace";
@@ -81,10 +71,6 @@ public enum DbmsVendorStrategy {
         this.defaultAdminUsername = defaultAdminUsername;
         this.volumeMountPath = volumeMountPath;
         this.healthCheck = healthCheck;
-        this.hibernateDialect = hibernateDialect;
-    }
-
-    DbmsVendorStrategy(String hibernateDialect) {
         this.hibernateDialect = hibernateDialect;
     }
 
