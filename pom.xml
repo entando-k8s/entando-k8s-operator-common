@@ -24,7 +24,7 @@
         <artifactId>entando-quarkus-parent</artifactId>
         <relativePath/>
     </parent>
-    <version>6.1.0-SNAPSHOT</version>
+    <version>6.1.4</version>
     <artifactId>entando-k8s-operator-common</artifactId>
     <name>Entando K8S Operator Common Library</name>
     <description>Entando's K8S Operator Common Library</description>
@@ -65,7 +65,7 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
-        <entando.k8s.custom.model.version>6.1.0-SNAPSHOT</entando.k8s.custom.model.version>
+        <entando.k8s.custom.model.version>6.1.3</entando.k8s.custom.model.version>
         <preDeploymentTestGroups>pre-deployment</preDeploymentTestGroups>
         <postDeploymentTestGroups>none</postDeploymentTestGroups>
     </properties>
