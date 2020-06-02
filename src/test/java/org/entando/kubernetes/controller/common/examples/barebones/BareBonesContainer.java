@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Arrays;
 import java.util.List;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
+import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.KubernetesPermission;
 
@@ -32,7 +32,7 @@ public class BareBonesContainer implements DeployableContainer {
     public static final String DATABASE_SECRET_NAME = "my-db-secret";
     public static final int MEMORY_LIMIT = 256;
     public static final int CPU_LIMIT = 800;
-    private final DbmsVendorStrategy dbmsVendor = DbmsVendorStrategy.POSTGRESQL;
+    private final DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.POSTGRESQL;
 
     public static String getDatabaseAdminSecretName() {
         return DATABASE_SECRET_NAME;

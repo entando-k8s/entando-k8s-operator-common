@@ -27,20 +27,21 @@ import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
 public class DatabaseServiceResult extends AbstractServiceResult {
 
-    private final DbmsVendorStrategy vendor;
+    private final DbmsDockerVendorStrategy vendor;
     private final String databaseName;
     private final String databaseSecretName;
     private String tablespace;
     private Pod pod;
     private Map<String, String> databaseParameters;
 
-    public DatabaseServiceResult(Service service, DbmsVendorStrategy vendor, String databaseName, String databaseSecretName, Pod pod) {
+    public DatabaseServiceResult(Service service, DbmsDockerVendorStrategy vendor, String databaseName, String databaseSecretName,
+            Pod pod) {
         this(service, vendor, databaseName, databaseSecretName);
         this.pod = pod;
         this.databaseParameters = Collections.emptyMap();
     }
 
-    private DatabaseServiceResult(Service service, DbmsVendorStrategy vendor, String databaseName, String databaseSecretName) {
+    private DatabaseServiceResult(Service service, DbmsDockerVendorStrategy vendor, String databaseName, String databaseSecretName) {
         super(service);
         this.vendor = vendor;
         this.databaseName = databaseName;
@@ -49,7 +50,7 @@ public class DatabaseServiceResult extends AbstractServiceResult {
 
     public DatabaseServiceResult(Service service, EntandoDatabaseService databaseService) {
         this(service,
-                DbmsVendorStrategy.forVendor(databaseService.getSpec().getDbms()),
+                DbmsDockerVendorStrategy.forVendor(databaseService.getSpec().getDbms()),
                 databaseService.getSpec().getDatabaseName(),
                 databaseService.getSpec().getSecretName());
         this.databaseParameters = databaseService.getSpec().getJdbcParameters();
@@ -72,7 +73,7 @@ public class DatabaseServiceResult extends AbstractServiceResult {
         return databaseName;
     }
 
-    public DbmsVendorStrategy getVendor() {
+    public DbmsDockerVendorStrategy getVendor() {
         return vendor;
     }
 

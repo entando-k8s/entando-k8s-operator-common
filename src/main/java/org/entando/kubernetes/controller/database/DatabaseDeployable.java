@@ -39,19 +39,19 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Secretive {
 
-    private final Map<DbmsVendorStrategy, VariableInitializer> variableInitializers = new ConcurrentHashMap<>();
-    private final DbmsVendorStrategy dbmsVendor;
+    private final Map<DbmsDockerVendorStrategy, VariableInitializer> variableInitializers = new ConcurrentHashMap<>();
+    private final DbmsDockerVendorStrategy dbmsVendor;
     private final EntandoCustomResource customResource;
     private final List<DeployableContainer> containers;
     private final String nameQualifier;
 
-    public DatabaseDeployable(DbmsVendorStrategy dbmsVendor, EntandoCustomResource customResource, String nameQualifier) {
-        variableInitializers.put(DbmsVendorStrategy.MYSQL, vars ->
+    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoCustomResource customResource, String nameQualifier) {
+        variableInitializers.put(DbmsDockerVendorStrategy.MYSQL, vars ->
                 //No DB creation. Dbs are created during schema creation
                 vars.add(new EnvVar("MYSQL_ROOT_PASSWORD", null,
                         KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)))
         );
-        variableInitializers.put(DbmsVendorStrategy.POSTGRESQL, vars -> {
+        variableInitializers.put(DbmsDockerVendorStrategy.POSTGRESQL, vars -> {
             vars.add(new EnvVar("POSTGRESQL_DATABASE", getDatabaseName(), null));
             // This username will not be used, as we will be creating schema/user pairs,
             // but without it the DB isn't created.
@@ -112,12 +112,12 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
 
     public static class DatabaseContainer implements ServiceBackingContainer, PersistentVolumeAware, HasHealthCommand {
 
-        private final Map<DbmsVendorStrategy, VariableInitializer> variableInitializers;
-        private final DbmsVendorStrategy dbmsVendor;
+        private final Map<DbmsDockerVendorStrategy, VariableInitializer> variableInitializers;
+        private final DbmsDockerVendorStrategy dbmsVendor;
         private final String nameQualifier;
 
-        public DatabaseContainer(Map<DbmsVendorStrategy, VariableInitializer> variableInitializers,
-                DbmsVendorStrategy dbmsVendor,
+        public DatabaseContainer(Map<DbmsDockerVendorStrategy, VariableInitializer> variableInitializers,
+                DbmsDockerVendorStrategy dbmsVendor,
                 String nameQualifier) {
             this.variableInitializers = variableInitializers;
             this.dbmsVendor = dbmsVendor;

@@ -32,7 +32,7 @@ import java.util.Collections;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
-import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
+import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.DoneableEntandoDatabaseService;
@@ -123,7 +123,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
                 ORACLE_DATABASE_NAME, null,
                 TEST_SECRET,
                 Collections.singletonMap("oracle.jdbc.timezoneAsRegion", "false"));
-        String externalJdbcUrl = DbmsVendorStrategy.ORACLE.getConnectionStringBuilder().toHost(ORACLE_EXTERNAL_HOST)
+        String externalJdbcUrl = DbmsDockerVendorStrategy.ORACLE.getConnectionStringBuilder().toHost(ORACLE_EXTERNAL_HOST)
                 .onPort(ORACLE_EXTERNAL_PORT.toString()).usingDatabase(ORACLE_DATABASE_NAME).usingSchema(null)
                 .buildConnectionString();
         dropUsers(externalJdbcUrl, usersToDrop);
