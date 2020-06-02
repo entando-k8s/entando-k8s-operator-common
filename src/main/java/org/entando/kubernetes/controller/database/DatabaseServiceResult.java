@@ -34,7 +34,8 @@ public class DatabaseServiceResult extends AbstractServiceResult {
     private Pod pod;
     private Map<String, String> databaseParameters;
 
-    public DatabaseServiceResult(Service service, DbmsDockerVendorStrategy vendor, String databaseName, String databaseSecretName, Pod pod) {
+    public DatabaseServiceResult(Service service, DbmsDockerVendorStrategy vendor, String databaseName, String databaseSecretName,
+            Pod pod) {
         this(service, vendor, databaseName, databaseSecretName);
         this.pod = pod;
         this.databaseParameters = Collections.emptyMap();

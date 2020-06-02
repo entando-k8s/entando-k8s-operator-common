@@ -79,7 +79,8 @@ public class CreateExternalServiceCommand {
     }
 
     private Integer getPort() {
-        return externalDatabase.getSpec().getPort().orElse(DbmsDockerVendorStrategy.forVendor(externalDatabase.getSpec().getDbms()).getPort());
+        return externalDatabase.getSpec().getPort()
+                .orElse(DbmsDockerVendorStrategy.forVendor(externalDatabase.getSpec().getDbms()).getPort());
     }
 
     private Service newExternalService() {
