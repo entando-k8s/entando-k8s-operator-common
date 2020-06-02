@@ -50,7 +50,7 @@ public enum DbmsVendorConfig {
             };
         }
     },
-    DERBY("org.apache.derby.jdbc.EmbeddedDriver", "agile", "agile") {
+    DERBY("org.hibernate.dialect.DerbyDialect", "agile", "agile") {
         @Override
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
