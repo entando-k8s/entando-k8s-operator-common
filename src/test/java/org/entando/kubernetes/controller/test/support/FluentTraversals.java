@@ -42,7 +42,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.creators.KeycloakClientCreator;
-import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
+import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.hamcrest.Matchers;
@@ -161,7 +161,7 @@ public interface FluentTraversals {
         assertThat(theVariableNamed(DATABASE_VENDOR).on(resultingContainer), is(vendor.toValue()));
         assertThat(theVariableNamed(DATABASE_SCHEMA_COMMAND).on(resultingContainer), is("CREATE_SCHEMA"));
         assertThat(theVariableNamed(DATABASE_SERVER_PORT).on(resultingContainer),
-                is(String.valueOf(DbmsVendorStrategy.forVendor(vendor).getPort())));
+                is(String.valueOf(DbmsDockerVendorStrategy.forVendor(vendor).getPort())));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_USER).on(resultingContainer).getSecretKeyRef().getKey(),
                 is(KubeUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(resultingContainer).getSecretKeyRef().getKey(),

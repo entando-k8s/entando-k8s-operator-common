@@ -44,7 +44,7 @@ public class DatabaseSchemaCreationResult extends AbstractServiceResult {
                 .buildJdbcConnectionString();
     }
 
-    public DbmsVendorStrategy getVendor() {
+    public DbmsDockerVendorStrategy getVendor() {
         return this.databaseServiceResult.getVendor();
     }
 

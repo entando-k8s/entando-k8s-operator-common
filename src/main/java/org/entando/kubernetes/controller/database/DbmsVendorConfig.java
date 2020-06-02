@@ -16,12 +16,9 @@
 
 package org.entando.kubernetes.controller.database;
 
-import java.util.Locale;
-import org.entando.kubernetes.model.DbmsVendor;
-
-public enum DbmsVendorStrategy {
-    MYSQL("docker.io/centos/mysql-57-centos7:latest", 3306, "root", "/var/lib/mysql/data",
-            "MYSQL_PWD=${MYSQL_ROOT_PASSWORD} mysql -h 127.0.0.1 -u root -e 'SELECT 1'", "org.hibernate.dialect.MySQL5InnoDBDialect") {
+public enum DbmsVendorConfig {
+    MYSQL("org.hibernate.dialect.MySQL5InnoDBDialect", 3306, "root",
+            "MYSQL_PWD=${MYSQL_ROOT_PASSWORD} mysql -h 127.0.0.1 -u root -e 'SELECT 1'") {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
@@ -34,9 +31,8 @@ public enum DbmsVendorStrategy {
             return true;
         }
     },
-    POSTGRESQL("docker.io/centos/postgresql-96-centos7:latest", 5432, "postgres", "/var/lib/pgsql/data",
-            "psql -h 127.0.0.1 -U ${POSTGRESQL_USER} -q -d postgres -c '\\l'|grep ${POSTGRESQL_DATABASE}",
-            "org.hibernate.dialect.PostgreSQLDialect") {
+    POSTGRESQL("org.hibernate.dialect.PostgreSQLDialect", 5432, "postgres",
+            "psql -h 127.0.0.1 -U ${POSTGRESQL_USER} -q -d postgres -c '\\l'|grep ${POSTGRESQL_DATABASE}") {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
@@ -45,8 +41,7 @@ public enum DbmsVendorStrategy {
             };
         }
     },
-    ORACLE("docker.io/store/oracle/database-enterprise:12.2.0.1", 1521, "sys", "/ORCL", "sqlplus sys/Oradoc_db1:${DB_SID}",
-            "org.hibernate.dialect.Oracle10gDialect") {
+    ORACLE("org.hibernate.dialect.Oracle10gDialect", 1521, "sys", "sqlplus sys/Oradoc_db1:${DB_SID}") {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
@@ -55,7 +50,7 @@ public enum DbmsVendorStrategy {
             };
         }
     },
-    DERBY("org.apache.derby.jdbc.EmbeddedDriver") {
+    DERBY("org.apache.derby.jdbc.EmbeddedDriver", "agile", "agile") {
         @Override
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
@@ -65,7 +60,7 @@ public enum DbmsVendorStrategy {
             };
         }
     },
-    H2("org.hibernate.dialect.H2Dialect", "sa") {
+    H2("org.hibernate.dialect.H2Dialect", "sa", "") {
         @Override
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
@@ -76,73 +71,44 @@ public enum DbmsVendorStrategy {
         }
     };
 
-    public static final String DATABASE_IDENTIFIER_TYPE = "databaseIdentifierType";
-    public static final String TABLESPACE_PARAMETER_NAME = "tablespace";
-    private String imageName;
-    private int port;
-    private String defaultAdminUsername;
-    private String volumeMountPath;
+    private int defaultPort;
+    private String defaultUser;
+    private String defaultPassword;
     private String healthCheck;
     private String hibernateDialect;
 
-    private DbmsVendorStrategy(String imageName, int port, String defaultAdminUsername, String volumeMountPath, String healthCheck,
-            String hibernateDialect) {
-        this.imageName = imageName;
-        this.port = port;
-        this.defaultAdminUsername = defaultAdminUsername;
-        this.volumeMountPath = volumeMountPath;
+    DbmsVendorConfig(String hibernateDialect, int port, String user, String healthCheck) {
+        this.hibernateDialect = hibernateDialect;
+        this.defaultPort = port;
+        this.defaultUser = user;
         this.healthCheck = healthCheck;
-        this.hibernateDialect = hibernateDialect;
     }
 
-    private DbmsVendorStrategy(String hibernateDialect) {
+    DbmsVendorConfig(String hibernateDialect, String user, String password) {
         this.hibernateDialect = hibernateDialect;
-    }
-
-    private DbmsVendorStrategy(String hibernateDialect, String defaultAdminUsername) {
-        this.hibernateDialect = hibernateDialect;
-        this.defaultAdminUsername = defaultAdminUsername;
+        this.defaultUser = user;
+        this.defaultPassword = password;
     }
 
     public abstract JdbcConnectionStringBuilder getConnectionStringBuilder();
 
+    public int getDefaultPort() {
+        return defaultPort;
+    }
+
+    public String getDefaultUser() {
+        return defaultUser;
+    }
+
+    public String getDefaultPassword() {
+        return defaultPassword;
+    }
+
     public String getHealthCheck() {
-        return this.healthCheck;
-    }
-
-    public String getImageName() {
-        return this.imageName;
-    }
-
-    public int getPort() {
-        return this.port;
-    }
-
-    public String getVolumeMountPath() {
-        return this.volumeMountPath;
-    }
-
-    public String toValue() {
-        return this.name().toLowerCase(Locale.getDefault());
-    }
-
-    public String getName() {
-        return this.name().toLowerCase(Locale.getDefault());
-    }
-
-    public boolean schemaIsDatabase() {
-        return false;
-    }
-
-    public String getDefaultAdminUsername() {
-        return this.defaultAdminUsername;
+        return healthCheck;
     }
 
     public String getHibernateDialect() {
-        return this.hibernateDialect;
-    }
-
-    public static DbmsVendorStrategy forVendor(DbmsVendor vendor) {
-        return valueOf(vendor.name());
+        return hibernateDialect;
     }
 }

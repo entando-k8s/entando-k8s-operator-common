@@ -32,7 +32,7 @@ import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
-import org.entando.kubernetes.controller.database.DbmsVendorStrategy;
+import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DbmsVendor;
@@ -166,7 +166,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         if (externalDatabase.isPresent()) {
             result = new DatabaseServiceResult(externalDatabase.get().getService(), externalDatabase.get().getEntandoDatabaseService());
         } else if (!(dbmsVendor == DbmsVendor.NONE || dbmsVendor == DbmsVendor.EMBEDDED)) {
-            final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsVendorStrategy.forVendor(dbmsVendor),
+            final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
                     entandoCustomResource, nameQualifier);
             final DeployCommand<DatabaseServiceResult> dbCommand = new DeployCommand<>(databaseDeployable);
             result = dbCommand.execute(k8sClient, empty());
