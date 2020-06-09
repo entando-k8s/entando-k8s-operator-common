@@ -185,15 +185,19 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private Map<String, Quantity> buildResourceRequests(DeployableContainer deployableContainer) {
         Map<String, Quantity> result = new ConcurrentHashMap<>();
-        result.put("memory", new Quantity((deployableContainer.getMemoryLimitMebibytes() / 4) + "Mi"));
-        result.put("cpu", new Quantity((deployableContainer.getCpuLimitMillicores() / 4) + "m"));
+        if (EntandoOperatorConfig.imposeResourceLimits()) {
+            result.put("memory", new Quantity((deployableContainer.getMemoryLimitMebibytes() / 4) + "Mi"));
+            result.put("cpu", new Quantity((deployableContainer.getCpuLimitMillicores() / 4) + "m"));
+        }
         return result;
     }
 
     private Map<String, Quantity> buildResourceLimits(DeployableContainer deployableContainer) {
         Map<String, Quantity> result = new ConcurrentHashMap<>();
-        result.put("memory", new Quantity(deployableContainer.getMemoryLimitMebibytes() + "Mi"));
-        result.put("cpu", new Quantity(deployableContainer.getCpuLimitMillicores() + "m"));
+        if (EntandoOperatorConfig.imposeResourceLimits()) {
+            result.put("memory", new Quantity(deployableContainer.getMemoryLimitMebibytes() + "Mi"));
+            result.put("cpu", new Quantity(deployableContainer.getCpuLimitMillicores() + "m"));
+        }
         return result;
     }
 

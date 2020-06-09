@@ -134,4 +134,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static long getPodReadinessTimeoutSeconds() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS).map(Long::valueOf).orElse(600L);
     }
+
+    public static boolean imposeResourceLimits() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS).map(Boolean::valueOf).orElse(true);
+    }
 }
