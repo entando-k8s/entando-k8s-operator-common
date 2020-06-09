@@ -37,6 +37,7 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE("entando.k8s.operator.namespace.to.observe"),
     ENTANDO_NAMESPACES_TO_OBSERVE("entando.namespaces.to.observe"),
     ENTANDO_K8S_OPERATOR_SERVICEACCOUNT("entando.k8s.operator.serviceaccount"),
+    ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS("entando.k8s.operator.impose.default.limits"),
 
     /*
     TLS config
