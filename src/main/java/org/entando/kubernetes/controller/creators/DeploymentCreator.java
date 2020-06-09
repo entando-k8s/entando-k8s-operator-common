@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
 import org.entando.kubernetes.controller.spi.DbAware;
@@ -173,15 +174,19 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private Map<String, Quantity> buildResourceRequests(DeployableContainer deployableContainer) {
         Map<String, Quantity> result = new ConcurrentHashMap<>();
-        result.put("memory", new Quantity((deployableContainer.getMemoryLimitMebibytes() / 4) + "Mi"));
-        result.put("cpu", new Quantity((deployableContainer.getCpuLimitMillicores() / 4) + "m"));
+        if (EntandoOperatorConfig.imposeResourceLimits()) {
+            result.put("memory", new Quantity((deployableContainer.getMemoryLimitMebibytes() / 4) + "Mi"));
+            result.put("cpu", new Quantity((deployableContainer.getCpuLimitMillicores() / 4) + "m"));
+        }
         return result;
     }
 
     private Map<String, Quantity> buildResourceLimits(DeployableContainer deployableContainer) {
         Map<String, Quantity> result = new ConcurrentHashMap<>();
-        result.put("memory", new Quantity(deployableContainer.getMemoryLimitMebibytes() + "Mi"));
-        result.put("cpu", new Quantity(deployableContainer.getCpuLimitMillicores() + "m"));
+        if (EntandoOperatorConfig.imposeResourceLimits()) {
+            result.put("memory", new Quantity(deployableContainer.getMemoryLimitMebibytes() + "Mi"));
+            result.put("cpu", new Quantity(deployableContainer.getCpuLimitMillicores() + "m"));
+        }
         return result;
     }
 
