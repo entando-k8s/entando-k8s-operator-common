@@ -106,6 +106,10 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     Misc config
      */
 
+    public static KubernetesProvider getKubernetesProvider() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_KUBERNETES_PROVIDER).map(KubernetesProvider::fromValue).orElse(KubernetesProvider.KUBERNETES);
+    }
+
     public static boolean requiresFilesystemGroupOverride() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE).map("true"::equals).orElse(false);
     }

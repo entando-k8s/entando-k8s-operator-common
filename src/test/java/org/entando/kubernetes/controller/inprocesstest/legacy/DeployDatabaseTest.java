@@ -93,6 +93,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     @BeforeEach
     public void before() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty(), "true");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_KUBERNETES_PROVIDER.getJvmSystemProperty(), "gke");
         this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
         };
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
@@ -100,12 +101,12 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
         client.secrets().overwriteControllerSecret(buildKeycloakSecret());
     }
-
     @AfterEach
-    public void cleanup() {
+    public void cleanup(){
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_KUBERNETES_PROVIDER.getJvmSystemProperty());
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty());
-
     }
+
 
     @Test
     public void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
