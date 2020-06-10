@@ -22,6 +22,9 @@ import org.entando.kubernetes.controller.EntandoOperatorConfigBase;
 public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 
     private static final String ENTANDO_TEST_NAMESPACE_OVERRIDE = "entando.test.namespace.override";
+    /**
+     * the suffix to append to the app name
+     */
     private static final String ENTANDO_TEST_NAME_SUFFIX = "entando.test.name.suffix";
     private static final String ENTANDO_INTEGRATION_TARGET_ENVIRONMENT = "entando.k8s.operator.tests.run.target";
     private static final String ENTANDO_TESTS_CERT_ROOT = "entando.k8s.operator.tests.cert.root";
