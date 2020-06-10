@@ -57,7 +57,8 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS("entando.pod.completion.timeout.seconds"),
     ENTANDO_POD_READINESS_TIMEOUT_SECONDS("entando.pod.readiness.timeout.seconds"),
     ENTANDO_CLUSTER_INFRASTRUCTURE_SECRET_NAME("entando.cluster.infrastructure.secret.name"),
-    ENTANDO_DEFAULT_KEYCLOAK_SECRET_NAME("entando.default.keycloak.secret.name");
+    ENTANDO_DEFAULT_KEYCLOAK_SECRET_NAME("entando.default.keycloak.secret.name"),
+    ENTANDO_KUBERNETES_PROVIDER("entando.kubernetes.provider");
 
     private final String jvmSystemProperty;
 

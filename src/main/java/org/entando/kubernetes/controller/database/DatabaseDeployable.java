@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.spi.Deployable;
@@ -66,6 +67,11 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
         this.customResource = customResource;
         containers = Arrays.asList(new DatabaseContainer(this.variableInitializers, dbmsVendor, nameQualifier));
         this.nameQualifier = nameQualifier;
+    }
+
+    @Override
+    public Optional<Long> getFileSystemUserAndGroupId() {
+        return dbmsVendor.getFileSystemUserGroupid();
     }
 
     @Override
