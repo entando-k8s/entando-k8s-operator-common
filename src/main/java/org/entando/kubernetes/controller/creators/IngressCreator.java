@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -139,13 +138,8 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         if (TlsHelper.canAutoCreateTlsSecret() || (entandoCustomResource instanceof HasIngress && ((HasIngress) entandoCustomResource)
                 .getTlsSecretName().isPresent())) {
 
-            Map<String,String> annotationMap = new HashMap<String,String>();
-            annotationMap.put("kubernetes.io/ingress.class", "nginx");
-
             //for cases where we have https available but the Keycloak redirect was specified as http
-            annotationMap.put("nginx.ingress.kubernetes.io/force-ssl-redirect", "true");
-
-            return Collections.unmodifiableMap(annotationMap);
+            return Collections.singletonMap("nginx.ingress.kubernetes.io/force-ssl-redirect", "true");
         } else {
             return Collections.emptyMap();
         }
