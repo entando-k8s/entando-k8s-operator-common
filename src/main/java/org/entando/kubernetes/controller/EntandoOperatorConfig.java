@@ -106,6 +106,10 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     Misc config
      */
 
+    public static KubernetesProvider getKubernetesProvider() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_KUBERNETES_PROVIDER).map(KubernetesProvider::fromValue).orElse(KubernetesProvider.KUBERNETES);
+    }
+
     public static Optional<String> getDefaultRoutingSuffix() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_ROUTING_SUFFIX);
     }
