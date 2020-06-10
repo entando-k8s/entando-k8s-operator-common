@@ -25,7 +25,7 @@ Here are some of the key interfaces to implement by consumers
 
 ## org.entando.kubernetes.controller.spi.Deployable  
 
-TBD
+This is a generic interface that represents a common deployable pod. As a pod, it has a list of containers (represented by a list of DeployableContainer).
 
 ## org.entando.kubernetes.controller.spi.Secretive
 
@@ -37,7 +37,11 @@ TBD
 
 ## org.entando.kubernetes.controller.spi.DeployableContainer
 
-TBD
+Base interface representing a container to deploy inside a Pod. So it needs at least:
+
+- the docker image of which instantiate the container
+- a name qualifier to append to the container name
+- the port exposed by the container
 
 ## org.entando.kubernetes.controller.spi.ServiceBackingContainer  
 
@@ -56,10 +60,21 @@ TBD
 
 ## org.entando.kubernetes.controller.spi.DbAware
 
-TBD
+This interface has to be implemented by those DeployableContainer that needs a DB to serve their functionalities.
+It takes care of:
+
+- creating the desired DB schema
+
+## org.entando.kubernetes.controller.spi.PersistentVolumeAware
+
+This interface has to be implemented by those DeployableContainer that needs a [PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) in order to persist some data.
+This interface has only one method to be overridden: `getVolumeMountPath()`. It returns the path of the volume to claim inside the container that is about to be created.
+Once overridden that method, claim operation is automatically made, the PVC is bound to the claimer [CR](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and once the owner CR is deleted the PVC is deleted too.
+
+
 ## org.entando.kubernetes.controller.spi.KeycloakAware
 
-TBD
+This interface has to be implemented by those DeployableContainer that needs to reach Keycloak to guarantee their functionalities.
 
 ## org.entando.kubernetes.controller.spi.TlsAware
 
@@ -108,6 +123,8 @@ The image version segment will be resolved as follows:
 TBD
   
  
+## Examples
 
+Some examples are available in the test package at the location `org.entando.kubernetes.controller.common.examples`
  
  

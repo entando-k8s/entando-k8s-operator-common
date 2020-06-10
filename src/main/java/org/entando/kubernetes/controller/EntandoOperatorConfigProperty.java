@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller;
 
 public enum EntandoOperatorConfigProperty {
+
     /*
     Config to resolve Entando Docker Images
      */
@@ -28,9 +29,11 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE("entando.docker.image.org.override"),
     ENTANDO_DOCKER_IMAGE_INFO_CONFIGMAP("entando.docker.image.info.configmap"),
 
+
     /*
     K8S Operator operational config
      */
+    // the specified namespace is used to find the config-map from which create the entando app
     ENTANDO_K8S_OPERATOR_CONFIGMAP_NAMESPACE("entando.k8s.operator.configmap.namespace"),
     ENTANDO_K8S_OPERATOR_SCOPE("entando.k8s.operator.scope"),
     ENTANDO_K8S_OPERATOR_SECURITY_MODE("entando.k8s.operator.security.mode"),
@@ -53,6 +56,7 @@ public enum EntandoOperatorConfigProperty {
     /*
     Misc config
      */
+    // creates a dns mapping from the specified hostname *.*.*.*.nip.io to the corresponding ip *.*.*.* . typically it should point to hosting machine ip address (https://nip.io/)
     ENTANDO_DEFAULT_ROUTING_SUFFIX("entando.default.routing.suffix"),
     ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS("entando.pod.completion.timeout.seconds"),
     ENTANDO_POD_READINESS_TIMEOUT_SECONDS("entando.pod.readiness.timeout.seconds"),
