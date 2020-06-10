@@ -147,6 +147,9 @@ public class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTest
                 .fromServer().get().getStatus().forDbQualifiedBy("db").isPresent());
     }
 
+
+
+
     protected void verifyKeycloakDeployment() {
         String http = TlsHelper.getDefaultProtocol();
         KubernetesClient client = helper.getClient();
