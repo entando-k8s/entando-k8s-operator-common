@@ -32,7 +32,6 @@ public class ResourceRequirementsAssertionHelper {
      * @param actualResources
      */
     public static void assertQuantities(List<Quantity> expectedQuantities, ResourceRequirements actualResources) {
-
         assertQuantity(expectedQuantities.get(DeployableStubHelper.QTY_LIMITS_CPU), actualResources.getLimits().get("cpu"));
         assertQuantity(expectedQuantities.get(DeployableStubHelper.QTY_LIMITS_MEM), actualResources.getLimits().get("memory"));
         assertQuantity(expectedQuantities.get(DeployableStubHelper.QTY_REQUESTS_CPU), actualResources.getRequests().get("cpu"));
