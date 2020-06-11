@@ -106,6 +106,14 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     Misc config
      */
 
+    public static boolean requiresFilesystemGroupOverride() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE).map("true"::equals).orElse(false);
+    }
+
+    public static Optional<String> getIngressClass() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS);
+    }
+
     public static Optional<String> getDefaultRoutingSuffix() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_ROUTING_SUFFIX);
     }

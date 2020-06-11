@@ -21,6 +21,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.List;
+import java.util.Optional;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface Deployable<T extends ServiceResult> {
@@ -42,5 +43,9 @@ public interface Deployable<T extends ServiceResult> {
 
     default int getReplicas() {
         return 1;
+    }
+
+    default Optional<Long> getFileSystemUserAndGroupId() {
+        return Optional.empty();
     }
 }

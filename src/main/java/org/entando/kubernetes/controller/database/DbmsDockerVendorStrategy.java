@@ -17,23 +17,30 @@
 package org.entando.kubernetes.controller.database;
 
 import java.util.Locale;
+import java.util.Optional;
 import org.entando.kubernetes.model.DbmsVendor;
 
 public enum DbmsDockerVendorStrategy {
-    MYSQL(DbmsVendorConfig.MYSQL, "docker.io/centos/mysql-57-centos7:latest", "/var/lib/mysql/data"),
-    POSTGRESQL(DbmsVendorConfig.POSTGRESQL, "docker.io/centos/postgresql-96-centos7:latest", "/var/lib/pgsql/data"),
-    ORACLE(DbmsVendorConfig.ORACLE, "docker.io/store/oracle/database-enterprise:12.2.0.1", "/ORCL");
+    MYSQL(DbmsVendorConfig.MYSQL, "docker.io/centos/mysql-57-centos7:latest", "/var/lib/mysql/data", 27L),
+    POSTGRESQL(DbmsVendorConfig.POSTGRESQL, "docker.io/centos/postgresql-96-centos7:latest", "/var/lib/pgsql/data", 26L),
+    ORACLE(DbmsVendorConfig.ORACLE, "docker.io/store/oracle/database-enterprise:12.2.0.1", "/ORCL", null);
 
     public static final String DATABASE_IDENTIFIER_TYPE = "databaseIdentifierType";
     public static final String TABLESPACE_PARAMETER_NAME = "tablespace";
     private String imageName;
     private String volumeMountPath;
     private DbmsVendorConfig vendorConfig;
+    private Long fsUserGroupId;
 
-    DbmsDockerVendorStrategy(DbmsVendorConfig vendorConfig, String imageName, String volumeMountPath) {
+    DbmsDockerVendorStrategy(DbmsVendorConfig vendorConfig, String imageName, String volumeMountPath, Long fsUserGroupId) {
         this.imageName = imageName;
         this.volumeMountPath = volumeMountPath;
         this.vendorConfig = vendorConfig;
+        this.fsUserGroupId = fsUserGroupId;
+    }
+
+    public Optional<Long> getFileSystemUserGroupid() {
+        return Optional.ofNullable(fsUserGroupId);
     }
 
     public JdbcConnectionStringBuilder getConnectionStringBuilder() {

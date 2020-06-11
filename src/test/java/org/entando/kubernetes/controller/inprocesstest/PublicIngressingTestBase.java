@@ -31,6 +31,7 @@ import io.quarkus.runtime.StartupEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -55,6 +56,8 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -69,6 +72,16 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
     SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
     private SampleController controller;
+
+    @BeforeEach
+    public void setIngressClass() {
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty(), "nginx");
+    }
+
+    @AfterEach
+    public void removeIngressClass() {
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty());
+    }
 
     @Test
     public void testTwoDeploymentsSharingAnIngress() {
@@ -180,6 +193,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         Ingress ingress = k8sClient.ingresses().loadIngress(plugin1.getMetadata().getNamespace(), standardIngressName(plugin1));
         assertThat(theHttpPath("/auth").on(ingress).getBackend().getServicePort().getIntVal(), is(8080));
         assertThat(theHttpPath("/auth2").on(ingress).getBackend().getServicePort().getIntVal(), is(8081));
+        assertThat(ingress.getMetadata().getAnnotations().get("kubernetes.io/ingress.class"), is("nginx"));
     }
 
     private EntandoPlugin buildPlugin(String sampleNamespace, String sampleName) {
