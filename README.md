@@ -14,7 +14,7 @@ Kubernetes controllers. Most of the logic in this project is co-ordinated by the
 `org.entando.kubernetes.controller.DeployCommand` class. Consumers of this project basically implement a set 
 of simple interfaces specified in the package `org.entando.kubernetes.controller.spi`. The pivitol
 interface here is the `org.entando.kubernetes.controller.spi.Deployable`, which can be passed as parameter to
-the constructor of the `DeployCommand`. The `DeployCommand` then the  uses the implementations of the various
+the constructor of the `DeployCommand`. The `DeployCommand` then uses the implementations of the various
 interfaces to construct Kubernetes Deployments, and if the necessary interfaces are implement, also Services 
 and Ingresses. It also constructs the various Secrets required by the Deployments produced.
    
@@ -26,14 +26,17 @@ Here are some of the key interfaces to implement by consumers
 ## org.entando.kubernetes.controller.spi.Deployable  
 
 This is a generic interface that represents a common deployable pod. As a pod, it has a list of containers (represented by a list of DeployableContainer).
+There are some classes implementing the Deployable interface, representing each one a different type of deployable (e.g. DatabaseDeployable, PublicIngressingDeployable)
+The DeploymentCreator class is responsible to create Deployable instances.
 
 ## org.entando.kubernetes.controller.spi.Secretive
 
-TBD
+This interface has to be implemented by those Deployable that need Kubernetes secrets for working.
+Currently all you have to do with this interface is to override `buildSecrets()` method returning all needed secrets and they will be bound to the pod that is about to be deployed.
 
 ## org.entando.kubernetes.controller.spi.TlsAware
 
-TBD
+This interface offers a predefined way to add some TLS environment variable to the implementing DeployableContainer.
 
 ## org.entando.kubernetes.controller.spi.DeployableContainer
 
@@ -49,21 +52,30 @@ TBD
 
 ## org.entando.kubernetes.controller.spi.IngressingDeployable  
 
-TBD
+This interface has to be implemented by those Deployable that contain some IngressingContainer inside their containers list.
+Its main functionality is to easily retrieve the IngressingContainer list of a Deployable.
+Read more about Kubernetes [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 
 ## org.entando.kubernetes.controller.spi.IngressingContainer  
 
-TBD
+IngressingContainer is an interface representing a container that supply ingress functionalities.
+Read more about Kubernetes [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 
 ## org.entando.kubernetes.controller.spi.PublicIngressingDeployable  
+
 TBD
 
 ## org.entando.kubernetes.controller.spi.DbAware
 
-This interface has to be implemented by those DeployableContainer that needs a DB to serve their functionalities.
+This interface has to be implemented by those `DeployableContainer` that needs a DB to serve their functionalities.
 It takes care of:
 
-- creating the desired DB schema
+- establish a connection between the implementing `DeployableContainer` and the DBMS instance identified by the environment variables supplied in the `addDatabaseConnectionVariables()` method. You can see an example in the [KeycloakDeployableContainer](https://github.com/entando-k8s/entando-k8s-keycloak-controller/blob/master/src/main/java/org/entando/kubernetes/controller/keycloakserver/KeycloakDeployableContainer.java) 
+- create the desired DB schema
+- populate the created DB schema if a DatabasePopulator is returned by the implemented `useDatabaseSchemas()` method
+
+Entando supports these DBMS: `H2`, `Postgresql`, `MySQL`, `Oracle`. You can choose which one to use for each `DeployableContainer` implementing `DbAware` interface by specifying a `spec.dbms` property in the Kubernetes deployment file.
+You can find more info in the [Getting started](http://docs.entando.com/local-install.html#dbms)
 
 ## org.entando.kubernetes.controller.spi.PersistentVolumeAware
 
@@ -75,10 +87,8 @@ Once overridden that method, claim operation is automatically made, the PVC is b
 ## org.entando.kubernetes.controller.spi.KeycloakAware
 
 This interface has to be implemented by those DeployableContainer that needs to reach Keycloak to guarantee their functionalities.
+It comes with a predefined set of environment variables pointing to the Entando default Keycloak installation.
 
-## org.entando.kubernetes.controller.spi.TlsAware
-
-TBD
 
 # Configuration
 
