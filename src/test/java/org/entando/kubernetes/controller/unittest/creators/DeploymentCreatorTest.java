@@ -58,7 +58,7 @@ public class DeploymentCreatorTest {
 
 
     @Test
-    public void createDeploymentWithFalseImposeResourceLimitsWillSetResourceLimitsOnCreatedDeployment() {
+    public void createDeploymentWithFalseImposeResourceLimitsWillNOTSetResourceLimitsOnCreatedDeployment() {
 
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty(), "false");
 
