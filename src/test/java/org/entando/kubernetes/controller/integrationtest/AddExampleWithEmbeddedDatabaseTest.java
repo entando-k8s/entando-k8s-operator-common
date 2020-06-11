@@ -23,8 +23,6 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.fabric8.kubernetes.api.model.Quantity;
-import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -50,8 +48,6 @@ import org.entando.kubernetes.controller.integrationtest.support.SampleWriter;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixtureRequest;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.test.support.assertionhelper.ResourceRequirementsAssertionHelper;
-import org.entando.kubernetes.controller.test.support.stubhelper.DeployableStubHelper;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -173,11 +169,6 @@ public class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTest
         assertTrue(helper.keycloak().getOperations()
                 .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
                 .fromServer().get().getStatus().forServerQualifiedBy("server").isPresent());
-
-        // check if resource limits are added to the container
-        ResourceRequirements resources = deployment.getSpec().getTemplate().getSpec().getContainers().get(0).getResources();
-        List<Quantity> quantities = DeployableStubHelper.stubResourceQuantities();
-        ResourceRequirementsAssertionHelper.assertQuantities(quantities, resources);
     }
 
 }
