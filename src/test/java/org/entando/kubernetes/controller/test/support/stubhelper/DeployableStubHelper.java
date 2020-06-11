@@ -35,6 +35,8 @@ public class DeployableStubHelper {
     public static final int QTY_LIMITS_MEM = 3;
 
     /**
+     * creates and returns a stub DatabaseDeployable filled with test data.
+     *
      * @return a DatabaseDeployable
      */
     public static DatabaseDeployable stubDatabaseDeployable() {
@@ -44,7 +46,7 @@ public class DeployableStubHelper {
 
 
     /**
-     * craetes and returns a list representing the limits and requests resources for the received Deployment
+     * creates and returns a list representing the limits and requests resources for the received Deployment.
      *
      * @return a list of Quantity. {@link QTY_LIMITS_CPU} {@link QTY_LIMITS_MEM} {@link QTY_REQUESTS_CPU} {@link QTY_REQUESTS_MEM}
      */
@@ -55,7 +57,7 @@ public class DeployableStubHelper {
 
 
     /**
-     * craetes and returns a list representing the limits and requests resources for the received Deployment
+     * creates and returns a list representing the limits and requests resources for the received Deployment.
      *
      * @return a list of Quantity. {@link QTY_LIMITS_CPU} {@link QTY_LIMITS_MEM} {@link QTY_REQUESTS_CPU} {@link QTY_REQUESTS_MEM}
      */
