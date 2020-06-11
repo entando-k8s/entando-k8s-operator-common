@@ -20,11 +20,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.entando</groupId>
-        <version>6.1.4</version>
+        <version>6.1.6</version>
         <artifactId>entando-quarkus-parent</artifactId>
         <relativePath/>
     </parent>
-    <version>6.1.4</version>
+    <version>6.1.7</version>
     <artifactId>entando-k8s-operator-common</artifactId>
     <name>Entando K8S Operator Common Library</name>
     <description>Entando's K8S Operator Common Library</description>
