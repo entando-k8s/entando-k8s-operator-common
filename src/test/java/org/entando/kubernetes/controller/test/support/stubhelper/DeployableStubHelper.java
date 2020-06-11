@@ -42,6 +42,18 @@ public class DeployableStubHelper {
         return new DatabaseDeployable(DbmsDockerVendorStrategy.MYSQL, new EntandoDatabaseService(), DEPLOYABLE_NAME_QUALIFIER);
     }
 
+
+    /**
+     * craetes and returns a list representing the limits and requests resources for the received Deployment
+     *
+     * @return a list of Quantity. {@link QTY_LIMITS_CPU} {@link QTY_LIMITS_MEM} {@link QTY_REQUESTS_CPU} {@link QTY_REQUESTS_MEM}
+     */
+    public static List<Quantity> stubResourceQuantities() {
+
+        return stubResourceQuantities(stubDatabaseDeployable());
+    }
+
+
     /**
      * craetes and returns a list representing the limits and requests resources for the received Deployment
      *
