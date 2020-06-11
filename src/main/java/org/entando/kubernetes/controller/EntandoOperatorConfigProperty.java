@@ -58,7 +58,8 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_POD_READINESS_TIMEOUT_SECONDS("entando.pod.readiness.timeout.seconds"),
     ENTANDO_CLUSTER_INFRASTRUCTURE_SECRET_NAME("entando.cluster.infrastructure.secret.name"),
     ENTANDO_DEFAULT_KEYCLOAK_SECRET_NAME("entando.default.keycloak.secret.name"),
-    ENTANDO_KUBERNETES_PROVIDER("entando.kubernetes.provider");
+    ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE("entando.requires.filesystem.group.override"),
+    ENTANDO_INGRESS_CLASS("entando.ingress.class");
 
     private final String jvmSystemProperty;
 

@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.KubernetesProvider;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
 import org.entando.kubernetes.controller.spi.DbAware;
@@ -120,7 +119,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private PodSecurityContext buildSecurityContext(Deployable<?> deployable) {
-        if(EntandoOperatorConfig.getKubernetesProvider().requiresFsGroup() && deployable.getFileSystemUserAndGroupId().isPresent()){
+        if (EntandoOperatorConfig.requiresFilesystemGroupOverride() && deployable.getFileSystemUserAndGroupId().isPresent()) {
             return new PodSecurityContextBuilder().withFsGroup(deployable.getFileSystemUserAndGroupId().get()).build();
         }
         return null;

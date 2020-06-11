@@ -45,7 +45,7 @@ public interface Deployable<T extends ServiceResult> {
         return 1;
     }
 
-    default Optional<Long> getFileSystemUserAndGroupId(){
+    default Optional<Long> getFileSystemUserAndGroupId() {
         return Optional.empty();
     }
 }

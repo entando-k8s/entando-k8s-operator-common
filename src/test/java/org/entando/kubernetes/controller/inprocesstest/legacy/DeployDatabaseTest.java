@@ -66,7 +66,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 //in execute component test
-@Tags({@Tag("in-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"), @Tag("pre-deployment")})
 public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     private static final String MY_KEYCLOAK_DB = MY_KEYCLOAK + "-db";
@@ -92,7 +92,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     @BeforeEach
     public void before() {
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_KUBERNETES_PROVIDER.getJvmSystemProperty(), "gke");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty(), "true");
         this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
         };
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
@@ -100,9 +100,10 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
         client.secrets().overwriteControllerSecret(buildKeycloakSecret());
     }
+
     @AfterEach
-    public void cleanup(){
-        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_KUBERNETES_PROVIDER.getJvmSystemProperty());
+    public void cleanup() {
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty());
 
     }
 
@@ -190,7 +191,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         //With a Pod Template that has labels linking it to the previously created K8S Database Service
         assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK_DB));
         assertThat(theLabel(KEYCLOAK_SERVER_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK));
-        assertThat(dbDeployment.getSpec().getTemplate().getSpec().getSecurityContext().getFsGroup(), is(27l));
+        assertThat(dbDeployment.getSpec().getTemplate().getSpec().getSecurityContext().getFsGroup(), is(27L));
 
         //And the Deployment state was reloaded from K8S for both deployments
         verify(client.deployments()).loadDeployment(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT));
@@ -232,7 +233,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         //With a Pod Template that has labels linking it to the previously created K8S Database Service
         assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK_DB));
         assertThat(theLabel(KEYCLOAK_SERVER_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_KEYCLOAK));
-        assertThat(dbDeployment.getSpec().getTemplate().getSpec().getSecurityContext().getFsGroup(), is(26l));
+        assertThat(dbDeployment.getSpec().getTemplate().getSpec().getSecurityContext().getFsGroup(), is(26L));
 
         //And the Deployment state was reloaded from K8S for both deployments
         verify(client.deployments()).loadDeployment(eq(newEntandoKeycloakServer), eq(MY_KEYCLOAK_DB_DEPLOYMENT));
