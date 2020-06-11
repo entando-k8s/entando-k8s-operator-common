@@ -119,8 +119,9 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private PodSecurityContext buildSecurityContext(Deployable<?> deployable) {
-        if (EntandoOperatorConfig.requiresFilesystemGroupOverride() && deployable.getFileSystemUserAndGroupId().isPresent()) {
-            return new PodSecurityContextBuilder().withFsGroup(deployable.getFileSystemUserAndGroupId().get()).build();
+        if (EntandoOperatorConfig.requiresFilesystemGroupOverride()) {
+            return deployable.getFileSystemUserAndGroupId()
+                    .map(useAndGroupId -> new PodSecurityContextBuilder().withFsGroup(useAndGroupId).build()).orElse(null);
         }
         return null;
     }
