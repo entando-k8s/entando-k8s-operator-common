@@ -27,9 +27,9 @@ public class ResourceRequirementsAssertionHelper {
 
 
     /**
-     * asserts on the received Quantity objects
-     * @param expectedQuantities
-     * @param actualResources
+     * asserts on the received Quantity objects.
+     * @param expectedQuantities list of expected Quantity
+     * @param actualResources list of actual Quantity
      */
     public static void assertQuantities(List<Quantity> expectedQuantities, ResourceRequirements actualResources) {
         assertQuantity(expectedQuantities.get(DeployableStubHelper.QTY_LIMITS_CPU), actualResources.getLimits().get("cpu"));
@@ -40,9 +40,9 @@ public class ResourceRequirementsAssertionHelper {
 
 
     /**
-     * asserts on the received Quantity objects
-     * @param expected
-     * @param actual
+     * asserts on the received Quantity objects.
+     * @param expected expected Quantity
+     * @param actual actual Quantity
      */
     public static void assertQuantity(Quantity expected, Quantity actual) {
         assertEquals(expected.getAmount(), actual.getAmount());

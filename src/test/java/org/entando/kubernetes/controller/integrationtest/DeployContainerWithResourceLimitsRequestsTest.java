@@ -125,7 +125,7 @@ public class DeployContainerWithResourceLimitsRequestsTest implements FluentInte
     }
 
     /**
-     * creates the Deployment and returns its first container ResourceRequirements
+     * creates the Deployment and returns its first container ResourceRequirements.
      * @return
      */
     private ResourceRequirements execCreateDeploymentTest() {

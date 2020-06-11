@@ -27,6 +27,7 @@ public class CustomResourceStubHelper {
     public static final String CR_NAMESPACE = "cr_namespace";
 
     /**
+     * stubs a ObjectMeta filled with test data.
      * @return an ObjectMeta filled with test data
      */
     public static ObjectMeta stubObjectMeta() {
@@ -38,6 +39,7 @@ public class CustomResourceStubHelper {
     }
 
     /**
+     * stubs a EntandoDatabaseService filled with test data.
      * @return an EntandoDatabaseService filled with test data
      */
     public static EntandoDatabaseService stubEntandoDatabaseService() {

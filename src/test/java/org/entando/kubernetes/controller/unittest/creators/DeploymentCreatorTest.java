@@ -58,7 +58,7 @@ public class DeploymentCreatorTest {
 
 
     @Test
-    public void createDeploymentWithFalseImposeResourceLimitsWillNOTSetResourceLimitsOnCreatedDeployment() {
+    public void createDeploymentWithFalseImposeResourceLimitsWillNotSetResourceLimitsOnCreatedDeployment() {
 
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty(), "false");
 
@@ -69,7 +69,7 @@ public class DeploymentCreatorTest {
     }
 
     /**
-     * executes tests of types CreateDeploymentTest
+     * executes tests of types CreateDeploymentTest.
      * @return the ResourceRequirements of the first container of the resulting Deployment
      */
     private ResourceRequirements executeCreateDeploymentTest() {
