@@ -39,6 +39,7 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_NAMESPACES_TO_OBSERVE("entando.namespaces.to.observe"),
     ENTANDO_K8S_OPERATOR_SERVICEACCOUNT("entando.k8s.operator.serviceaccount"),
     ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS("entando.k8s.operator.impose.default.limits"),
+    ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET("entando.k8s.operator.force.db.password.reset"),
 
     /*
     TLS config
