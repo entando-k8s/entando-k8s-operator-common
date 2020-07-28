@@ -30,6 +30,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
@@ -149,8 +151,9 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         result.add(new EnvVar("DATABASE_ADMIN_USER", null, buildSecretKeyRef(databaseDeployment, KubeUtils.USERNAME_KEY)));
         result.add(new EnvVar("DATABASE_ADMIN_PASSWORD", null, buildSecretKeyRef(databaseDeployment, KubeUtils.PASSSWORD_KEY)));
         result.add(new EnvVar("DATABASE_NAME", databaseDeployment.getDatabaseName(), null));
-        DbmsDockerVendorStrategy dbms = databaseDeployment.getVendor();
-        result.add(new EnvVar("DATABASE_VENDOR", dbms.toValue(), null));
+        EntandoOperatorConfig.lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET).ifPresent(s ->
+                result.add(new EnvVar("FORCE_PASSWORD_RESET", s, null)));
+        result.add(new EnvVar("DATABASE_VENDOR", databaseDeployment.getVendor().toValue(), null));
         result.add(new EnvVar("DATABASE_SCHEMA_COMMAND", "CREATE_SCHEMA", null));
         result.add(new EnvVar("DATABASE_USER", null,
                 KubeUtils.secretKeyRef(getSchemaSecretName(nameQualifier), KubeUtils.USERNAME_KEY)));
