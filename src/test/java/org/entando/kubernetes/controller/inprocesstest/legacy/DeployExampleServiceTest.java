@@ -398,7 +398,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(3306));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));
         //And that uses the image reflecting the custom registry and Entando image version specified
-        assertThat(theDbContainer.getImage(), is("docker.io/centos/mysql-57-centos7:latest"));
+        assertThat(theDbContainer.getImage(), is("docker.io/entando/mysql-57-centos7:latest"));
     }
 
     @Test
