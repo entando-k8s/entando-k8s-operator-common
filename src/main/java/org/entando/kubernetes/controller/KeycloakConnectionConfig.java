@@ -29,4 +29,6 @@ public interface KeycloakConnectionConfig extends SecretBasedCredentials {
 
     String getBaseUrl();
 
+    String getInternalBaseUrl();
+
 }

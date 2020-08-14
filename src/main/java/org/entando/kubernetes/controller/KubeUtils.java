@@ -39,6 +39,7 @@ public final class KubeUtils {
     public static final String DB_JOB_LABEL_NAME = "dbJob";
     public static final String DEFAULT_SERVER_QUALIFIER = "server";
     public static final String URL_KEY = "url";
+    public static final String INTERNAL_URL_KEY = "internalUrl";
     public static final String DEFAULT_SERVICE_SUFFIX = "service";
     public static final String DEFAULT_INGRESS_SUFFIX = "ingress";
     public static final String ENTANDO_RESOURCE_ACTION = "entando.resource.action";
