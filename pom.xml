@@ -68,9 +68,6 @@
         <entando.k8s.custom.model.version>6.1.5</entando.k8s.custom.model.version>
         <preDeploymentTestGroups>pre-deployment</preDeploymentTestGroups>
         <postDeploymentTestGroups>none</postDeploymentTestGroups>
-        <owaspSuppressionFileLocation>
-            /home/ampie/Code/entando-k8s/entando-quarkus-parent/owasp-dependency-check-suppression.xml
-        </owaspSuppressionFileLocation>
     </properties>
     <issueManagement>
         <system>Github</system>
