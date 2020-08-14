@@ -180,11 +180,12 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
 
     private static class TestKeycloakDeployable implements IngressingDeployable<ServiceDeploymentResult> {
 
-        private final List<DeployableContainer> containers = Arrays.asList(new MinimalKeycloakContainer());
+        private final List<DeployableContainer> containers;
         private final EntandoKeycloakServer keycloakServer;
 
         private TestKeycloakDeployable(EntandoKeycloakServer keycloakServer) {
             this.keycloakServer = keycloakServer;
+            this.containers = Arrays.asList(new MinimalKeycloakContainer(keycloakServer));
         }
 
         @Override

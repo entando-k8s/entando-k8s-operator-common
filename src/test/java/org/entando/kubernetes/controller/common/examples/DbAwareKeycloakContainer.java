@@ -24,8 +24,13 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DbAwareKeycloakContainer extends MinimalKeycloakContainer implements DbAware {
+
+    public DbAwareKeycloakContainer(EntandoKeycloakServer entandoResource) {
+        super(entandoResource);
+    }
 
     @Override
     public List<String> getDbSchemaQualifiers() {

@@ -72,7 +72,7 @@ public class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTest
             return new SampleIngressingDbAwareDeployable<EntandoKeycloakServer>(newEntandoKeycloakServer, databaseServiceResult) {
                 @Override
                 protected List<DeployableContainer> createContainers(EntandoKeycloakServer entandoResource) {
-                    return Arrays.asList(new DbAwareKeycloakContainer());
+                    return Arrays.asList(new DbAwareKeycloakContainer(entandoResource));
                 }
             };
         }
