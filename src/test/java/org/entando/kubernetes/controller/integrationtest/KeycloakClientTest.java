@@ -89,6 +89,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
             .withNewSpec()
             .withDbms(DbmsVendor.NONE)
             .withIngressHostName("test-kc." + helper.getDomainSuffix())
+            .withImageName("jboss/keycloak:11.0.0")
             .withReplicas(1)
             .endSpec()
             .build();
