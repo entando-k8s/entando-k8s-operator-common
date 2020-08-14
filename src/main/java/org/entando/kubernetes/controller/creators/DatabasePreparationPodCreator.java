@@ -67,7 +67,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
                 .withInitContainers(buildContainers(entandoImageResolver, secretClient, dbAwareDeployable))
                 .addNewContainer()
                 .withName("dummy")
-                .withImage("busybox")
+                .withImage(entandoImageResolver.determineImageUri("entando/busybox", Optional.of("latest")))
                 .endContainer()
                 .withRestartPolicy("Never")
                 .endSpec()
