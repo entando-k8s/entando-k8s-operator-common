@@ -89,7 +89,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
             .withNewSpec()
             .withDbms(DbmsVendor.NONE)
             .withIngressHostName("test-kc." + helper.getDomainSuffix())
-            .withImageName("docker.io/entando/entando-keycloak:6.1.16")//Keycloak 11
+            .withImageName("docker.io/entando/entando-keycloak:6.1.1")//Keycloak 11
             .withReplicas(1)
             .endSpec()
             .build();
