@@ -89,6 +89,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
             .withNewSpec()
             .withDbms(DbmsVendor.NONE)
             .withIngressHostName("test-kc." + helper.getDomainSuffix())
+            .withImageName("docker.io/entando/entando-keycloak:6.1.1")//Keycloak 11
             .withReplicas(1)
             .endSpec()
             .build();
@@ -179,11 +180,12 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
 
     private static class TestKeycloakDeployable implements IngressingDeployable<ServiceDeploymentResult> {
 
-        private final List<DeployableContainer> containers = Arrays.asList(new MinimalKeycloakContainer());
+        private final List<DeployableContainer> containers;
         private final EntandoKeycloakServer keycloakServer;
 
         private TestKeycloakDeployable(EntandoKeycloakServer keycloakServer) {
             this.keycloakServer = keycloakServer;
+            this.containers = Arrays.asList(new MinimalKeycloakContainer(keycloakServer));
         }
 
         @Override

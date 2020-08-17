@@ -21,8 +21,16 @@ import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.integrationtest.KeycloakClientTest;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class MinimalKeycloakContainer implements IngressingContainer {
+
+    private EntandoKeycloakServer keycloakServer;
+
+    public MinimalKeycloakContainer(EntandoKeycloakServer keycloakServer) {
+
+        this.keycloakServer = keycloakServer;
+    }
 
     public int getMemoryLimitMebibytes() {
         return 512;
@@ -34,7 +42,7 @@ public class MinimalKeycloakContainer implements IngressingContainer {
 
     @Override
     public String determineImageToUse() {
-        return "entando/entando-keycloak:6.0.0-SNAPSHOT";
+        return keycloakServer.getSpec().getImageName().orElse("entando/entando-keycloak:6.0.0-SNAPSHOT");
     }
 
     @Override

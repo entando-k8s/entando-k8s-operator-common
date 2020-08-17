@@ -77,7 +77,7 @@ public class DeployContainerWithResourceLimitsRequestsTest implements FluentInte
             return new SampleIngressingDbAwareDeployable<EntandoKeycloakServer>(newEntandoKeycloakServer, databaseServiceResult) {
                 @Override
                 protected List<DeployableContainer> createContainers(EntandoKeycloakServer entandoResource) {
-                    return Arrays.asList(new DbAwareKeycloakContainer());
+                    return Arrays.asList(new DbAwareKeycloakContainer(entandoResource));
                 }
             };
         }

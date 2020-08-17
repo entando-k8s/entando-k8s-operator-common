@@ -123,7 +123,7 @@ public class KeycloakIntegrationTestHelper extends
         return getAdminSecret()
                 .map(KeycloakConnectionSecret::new)
                 .map(connectionConfig -> KeycloakBuilder.builder()
-                        .serverUrl(connectionConfig.getBaseUrl())
+                        .serverUrl(connectionConfig.getExternalBaseUrl())
                         .grantType(OAuth2Constants.PASSWORD)
                         .realm("master")
                         .clientId("admin-cli")
