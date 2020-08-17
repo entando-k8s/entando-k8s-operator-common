@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller;
 
 import io.fabric8.kubernetes.api.model.Secret;
+import java.util.Optional;
 
 public interface KeycloakConnectionConfig extends SecretBasedCredentials {
 
@@ -25,10 +26,14 @@ public interface KeycloakConnectionConfig extends SecretBasedCredentials {
         return getAdminSecret();
     }
 
+    default String determineBaseUrl() {
+        return getInternalBaseUrl().orElse(getExternalBaseUrl());
+    }
+
     Secret getAdminSecret();
 
-    String getBaseUrl();
+    String getExternalBaseUrl();
 
-    String getInternalBaseUrl();
+    Optional<String> getInternalBaseUrl();
 
 }

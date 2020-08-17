@@ -77,7 +77,7 @@ public class KeycloakClientCreator {
                     .findAny()
                     .orElseThrow(IllegalArgumentException::new);
         }
-        client.login(keycloakConnectionConfig.getInternalBaseUrl(), keycloakConnectionConfig.getUsername(),
+        client.login(keycloakConnectionConfig.determineBaseUrl(), keycloakConnectionConfig.getUsername(),
                 keycloakConnectionConfig.getPassword());
     }
 

@@ -35,12 +35,12 @@ public class KeycloakConnectionSecret implements KeycloakConnectionConfig {
     }
 
     @Override
-    public String getBaseUrl() {
+    public String getExternalBaseUrl() {
         return decodeSecretValue(KubeUtils.URL_KEY);
     }
 
     @Override
-    public String getInternalBaseUrl() {
-        return Optional.ofNullable(decodeSecretValue(KubeUtils.INTERNAL_URL_KEY)).orElse(getBaseUrl());
+    public Optional<String> getInternalBaseUrl() {
+        return Optional.ofNullable(decodeSecretValue(KubeUtils.INTERNAL_URL_KEY));
     }
 }

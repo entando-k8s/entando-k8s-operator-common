@@ -58,7 +58,7 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
         KeycloakAware.super.addKeycloakVariables(vars);//Temporarily for backward compatibility
         KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
-                keycloakDeployment.getBaseUrl() + "/realms/entando",
+                keycloakDeployment.getExternalBaseUrl() + "/realms/entando",
                 null));
         String keycloakSecretName = KeycloakClientCreator.keycloakClientSecret(getKeycloakClientConfig());
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name(), null,
