@@ -81,8 +81,6 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         isHttps = baseUrl.toLowerCase().startsWith("https");
 
         keycloak = KeycloakBuilder.builder()
-                .resteasyClient(new ResteasyClientBuilder()
-                        .connectionPoolSize(10).register(EntandoResteasyJackson2Provider.class, 100).build())
                 .serverUrl(baseUrl)
                 .grantType(OAuth2Constants.PASSWORD)
                 .realm(MASTER_REALM)
