@@ -42,7 +42,7 @@ public class MinimalKeycloakContainer implements IngressingContainer {
 
     @Override
     public String determineImageToUse() {
-        return keycloakServer.getSpec().getImageName().orElse("entando/entando-keycloak:6.0.0-SNAPSHOT")    ;
+        return keycloakServer.getSpec().getImageName().orElse("entando/entando-keycloak:6.0.0-SNAPSHOT");
     }
 
     @Override
