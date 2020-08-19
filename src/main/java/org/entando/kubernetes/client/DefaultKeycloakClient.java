@@ -22,6 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -268,7 +271,8 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     private void updateClient(KeycloakClientConfig config, String id) {
         RealmResource realmResource = keycloak.realm(config.getRealm());
         ClientResource clientResource = realmResource.clients().get(id);
-        List<ExpectedRole> desiredRoles = config.getRoles();
+        List<ExpectedRole> desiredRoles = config.getRoles().stream().filter(distinctByKey(ExpectedRole::getCode))
+                .collect(Collectors.toList());
         List<RoleRepresentation> currentRoles = clientResource.roles().list();
         Set<String> desiredRoleNames = desiredRoles.stream()
                 .map(ExpectedRole::getName)
@@ -309,4 +313,8 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
                 .map(clientsResource::get);
     }
 
+    private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
+    }
 }

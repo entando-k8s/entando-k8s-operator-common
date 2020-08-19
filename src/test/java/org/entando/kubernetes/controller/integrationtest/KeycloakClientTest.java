@@ -138,6 +138,8 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
         kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, EXISTING_CLIENT, EXISTING_CLIENT)
                 .withRedirectUri("http://existingclient.domain.com/*")
                 .withRole(EXISTING_ROLE)
+                .withRole(EXISTING_ROLE)//To confirm there is no failure on duplicates
+                .withRole(EXISTING_ROLE)
         );
         //When I create the public client in this realm
         kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
