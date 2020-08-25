@@ -127,7 +127,7 @@ public class DeployCommand<T extends ServiceResult> {
     }
 
     private boolean shouldCreateServiceAccount() {
-        return !DEFAULT.equals(deployable.getServiceAccountName())
+        return !DEFAULT.equals(deployable.determineServiceAccountName())
                 && EntandoOperatorConfig.getOperatorSecurityMode() == SecurityMode.LENIENT;
     }
 

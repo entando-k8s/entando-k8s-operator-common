@@ -22,7 +22,9 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.List;
 import java.util.Optional;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public interface Deployable<T extends ServiceResult> {
 
@@ -36,6 +38,16 @@ public interface Deployable<T extends ServiceResult> {
     EntandoCustomResource getCustomResource();
 
     T createResult(Deployment deployment, Service service, Ingress ingress, Pod pod);
+
+    default String determineServiceAccountName() {
+        if (getCustomResource() instanceof EntandoBaseCustomResource) {
+            EntandoBaseCustomResource b = (EntandoBaseCustomResource) getCustomResource();
+            if (b.getSpec() instanceof EntandoDeploymentSpec) {
+                return ((EntandoDeploymentSpec) b.getSpec()).getServiceAccountToUse().orElse(getServiceAccountName());
+            }
+        }
+        return getServiceAccountName();
+    }
 
     default String getServiceAccountName() {
         return "default";

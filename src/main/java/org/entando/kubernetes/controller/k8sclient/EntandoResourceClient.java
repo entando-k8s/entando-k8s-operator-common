@@ -25,6 +25,7 @@ import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.RequiresClusterInfrastructure;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
@@ -51,7 +52,7 @@ public interface EntandoResourceClient {
 
     KeycloakConnectionConfig findKeycloak(RequiresKeycloak resource);
 
-    InfrastructureConfig findInfrastructureConfig(EntandoCustomResource resource);
+    InfrastructureConfig findInfrastructureConfig(RequiresClusterInfrastructure resource);
 
     ServiceDeploymentResult loadServiceResult(EntandoCustomResource resource);
 
