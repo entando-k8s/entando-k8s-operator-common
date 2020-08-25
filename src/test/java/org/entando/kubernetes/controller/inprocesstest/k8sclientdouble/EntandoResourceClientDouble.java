@@ -34,6 +34,7 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.RequiresClusterInfrastructure;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
@@ -120,9 +121,10 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public InfrastructureConfig findInfrastructureConfig(EntandoCustomResource resource) {
+    public InfrastructureConfig findInfrastructureConfig(RequiresClusterInfrastructure resource) {
         return new InfrastructureConfig(getNamespaces().get(CONTROLLER_NAMESPACE)
-                .getSecret(EntandoOperatorConfig.getEntandoInfrastructureSecretName()));
+                .getSecret(
+                        resource.getClusterInfrastructureSecretToUse().orElse(EntandoOperatorConfig.getEntandoInfrastructureSecretName())));
     }
 
     @Override

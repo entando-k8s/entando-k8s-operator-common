@@ -53,7 +53,7 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
     private Role newRole(Deployable<?> deployable) {
         return new RoleBuilder()
                 .withNewMetadata()
-                .withName(deployable.getServiceAccountName())
+                .withName(deployable.determineServiceAccountName())
                 .endMetadata()
                 .withRules(forAllContainersIn(deployable))
                 .build();
@@ -95,7 +95,7 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
     private ServiceAccount newServiceAccount(Deployable deployable) {
         return new ServiceAccountBuilder()
                 .withNewMetadata()
-                .withName(deployable.getServiceAccountName())
+                .withName(deployable.determineServiceAccountName())
                 .endMetadata()
                 .build();
     }

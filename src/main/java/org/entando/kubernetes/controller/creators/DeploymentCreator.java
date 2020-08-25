@@ -112,7 +112,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .withContainers(buildContainers(imageResolver, deployable))
                 .withDnsPolicy("ClusterFirst")
                 .withRestartPolicy("Always")
-                .withServiceAccountName(deployable.getServiceAccountName())
+                .withServiceAccountName(deployable.determineServiceAccountName())
                 .withVolumes(buildVolumesForDeployable(deployable)).endSpec()
                 .endTemplate()
                 .endSpec().buildSpec();

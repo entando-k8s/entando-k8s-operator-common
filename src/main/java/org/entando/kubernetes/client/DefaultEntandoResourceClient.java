@@ -44,6 +44,7 @@ import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
+import org.entando.kubernetes.model.RequiresClusterInfrastructure;
 import org.entando.kubernetes.model.RequiresKeycloak;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
@@ -64,8 +65,9 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public InfrastructureConfig findInfrastructureConfig(EntandoCustomResource resource) {
-        String secretName = EntandoOperatorConfig.getEntandoInfrastructureSecretName();
+    public InfrastructureConfig findInfrastructureConfig(RequiresClusterInfrastructure resource) {
+        String secretName = resource.getClusterInfrastructureSecretToUse()
+                .orElse(EntandoOperatorConfig.getEntandoInfrastructureSecretName());
         return new InfrastructureConfig(this.client.secrets().withName(secretName).get());
     }
 
