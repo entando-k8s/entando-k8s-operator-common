@@ -35,6 +35,8 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_K8S_OPERATOR_CONFIGMAP_NAMESPACE("entando.k8s.operator.configmap.namespace"),
     ENTANDO_K8S_OPERATOR_SCOPE("entando.k8s.operator.scope"),
     ENTANDO_K8S_OPERATOR_SECURITY_MODE("entando.k8s.operator.security.mode"),
+    ENTANDO_K8S_OPERATOR_ID("entando.k8s.operator.id"),
+    ENTANDO_K8S_OPERATOR_API_VERSION_RANGE("entando.k8s.operator.api.version.range"),
     ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE("entando.k8s.operator.namespace.to.observe"),
     ENTANDO_NAMESPACES_TO_OBSERVE("entando.namespaces.to.observe"),
     ENTANDO_K8S_OPERATOR_SERVICEACCOUNT("entando.k8s.operator.serviceaccount"),
