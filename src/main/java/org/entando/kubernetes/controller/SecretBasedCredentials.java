@@ -21,18 +21,18 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Optional;
 
 public interface SecretBasedCredentials {
 
     default String decodeSecretValue(String key) {
-        String value = ofNullable(getSecret().getData()).map(stringStringMap -> stringStringMap.get(key)).orElse(null);
+        String value = ofNullable(getSecret().getData()).map(data -> data.get(key)).orElse(null);
         if (value == null) {
             //If not yet reloaded
-            return getSecret().getStringData().get(key);
+            return ofNullable(getSecret().getStringData()).map(data -> data.get(key)).orElse(null);
         } else {
             return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
         }
-
     }
 
     default String getUsername() {

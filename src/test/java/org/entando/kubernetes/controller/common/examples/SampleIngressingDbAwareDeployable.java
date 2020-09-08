@@ -56,7 +56,7 @@ public abstract class SampleIngressingDbAwareDeployable<T extends EntandoBaseCus
     }
 
     @Override
-    public EntandoCustomResource getCustomResource() {
+    public EntandoBaseCustomResource<?> getCustomResource() {
         return entandoResource;
     }
 

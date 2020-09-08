@@ -28,12 +28,14 @@ import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
+import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class SampleDeployableContainer<T extends EntandoBaseCustomResource> implements IngressingContainer, DbAware, TlsAware,
-        PersistentVolumeAware {
+        PersistentVolumeAware, ParameterizableContainer {
 
     public static final String DEFAULT_IMAGE_NAME = "entando/entando-keycloak:6.0.0-SNAPSHOT";
     public static final String VAR_LIB_MYDATA = "/var/lib/mydata";
@@ -113,5 +115,10 @@ public class SampleDeployableContainer<T extends EntandoBaseCustomResource> impl
     @Override
     public String getVolumeMountPath() {
         return VAR_LIB_MYDATA;
+    }
+
+    @Override
+    public EntandoDeploymentSpec getCustomResourceSpec() {
+        return (EntandoDeploymentSpec) entandoResource.getSpec();
     }
 }

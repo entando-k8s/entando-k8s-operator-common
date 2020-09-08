@@ -47,6 +47,7 @@ import org.entando.kubernetes.controller.integrationtest.support.TestFixturePrep
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsVendor;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -211,7 +212,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
         }
 
         @Override
-        public EntandoCustomResource getCustomResource() {
+        public EntandoBaseCustomResource<?> getCustomResource() {
             return keycloakServer;
         }
 

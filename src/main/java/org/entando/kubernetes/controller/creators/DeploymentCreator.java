@@ -43,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.common.ParameterizedResourceCalculator;
+import org.entando.kubernetes.controller.common.ResourceCalculator;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
 import org.entando.kubernetes.controller.spi.DbAware;
@@ -54,6 +56,7 @@ import org.entando.kubernetes.controller.spi.KeycloakAware;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.TlsAware;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DeploymentCreator extends AbstractK8SResourceCreator {
@@ -68,7 +71,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
     private Deployment deployment;
 
-    public DeploymentCreator(EntandoCustomResource entandoCustomResource) {
+    public DeploymentCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
         super(entandoCustomResource);
     }
 
@@ -186,17 +189,26 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     private Map<String, Quantity> buildResourceRequests(DeployableContainer deployableContainer) {
         Map<String, Quantity> result = new ConcurrentHashMap<>();
         if (EntandoOperatorConfig.imposeResourceLimits()) {
-            result.put("memory", new Quantity((deployableContainer.getMemoryLimitMebibytes() / 4) + "Mi"));
-            result.put("cpu", new Quantity((deployableContainer.getCpuLimitMillicores() / 4) + "m"));
+            ResourceCalculator resourceCalculator = buildResourceCalculator(deployableContainer);
+            result.put("memory", new Quantity(resourceCalculator.getMemoryRequest()));
+            result.put("cpu", new Quantity(resourceCalculator.getCpuRequest()));
         }
         return result;
+    }
+
+    private ResourceCalculator buildResourceCalculator(DeployableContainer deployableContainer) {
+        return deployableContainer instanceof ParameterizableContainer
+                ? new ParameterizedResourceCalculator((ParameterizableContainer) deployableContainer)
+                : new ResourceCalculator(deployableContainer);
+
     }
 
     private Map<String, Quantity> buildResourceLimits(DeployableContainer deployableContainer) {
         Map<String, Quantity> result = new ConcurrentHashMap<>();
         if (EntandoOperatorConfig.imposeResourceLimits()) {
-            result.put("memory", new Quantity(deployableContainer.getMemoryLimitMebibytes() + "Mi"));
-            result.put("cpu", new Quantity(deployableContainer.getCpuLimitMillicores() + "m"));
+            ResourceCalculator resourceCalculator = buildResourceCalculator(deployableContainer);
+            result.put("memory", new Quantity(resourceCalculator.getMemoryLimit()));
+            result.put("cpu", new Quantity(resourceCalculator.getCpuLimit()));
         }
         return result;
     }

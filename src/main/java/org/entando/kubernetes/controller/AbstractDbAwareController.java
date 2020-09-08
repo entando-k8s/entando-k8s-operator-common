@@ -158,7 +158,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         }
     }
 
-    protected DatabaseServiceResult prepareDatabaseService(EntandoCustomResource entandoCustomResource, DbmsVendor dbmsVendor,
+    protected DatabaseServiceResult prepareDatabaseService(EntandoBaseCustomResource<?> entandoCustomResource, DbmsVendor dbmsVendor,
             String nameQualifier) {
         Optional<ExternalDatabaseDeployment> externalDatabase = k8sClient.entandoResources()
                 .findExternalDatabase(entandoCustomResource, dbmsVendor);

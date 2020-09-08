@@ -76,7 +76,7 @@ public class SpringBootDeployable<T extends EntandoBaseCustomResource> implement
     }
 
     @Override
-    public EntandoCustomResource getCustomResource() {
+    public EntandoBaseCustomResource<?> getCustomResource() {
         return customResource;
     }
 

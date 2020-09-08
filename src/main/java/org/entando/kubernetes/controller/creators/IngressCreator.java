@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -39,7 +38,9 @@ import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.IngressClient;
 import org.entando.kubernetes.controller.spi.Ingressing;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.HasIngress;
 
 public class IngressCreator extends AbstractK8SResourceCreator {
@@ -47,7 +48,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
     private final IngressPathCreator ingressPathCreator;
     private Ingress ingress;
 
-    public IngressCreator(EntandoCustomResource entandoCustomResource) {
+    public IngressCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
         super(entandoCustomResource);
         this.ingressPathCreator = new IngressPathCreator(entandoCustomResource);
     }
@@ -143,6 +144,11 @@ public class IngressCreator extends AbstractK8SResourceCreator {
 
             //for cases where we have https available but the Keycloak redirect was specified as http
             result.put("nginx.ingress.kubernetes.io/force-ssl-redirect", "true");
+        }
+        if (entandoCustomResource.getSpec() instanceof EntandoDeploymentSpec) {
+            EntandoDeploymentSpec spec = (EntandoDeploymentSpec) entandoCustomResource.getSpec();
+            spec.getResourceRequirements().ifPresent(resourceRequirements -> resourceRequirements.getFileUploadLimit()
+                    .ifPresent(s -> result.put("nginx.ingress.kubernetes.io/proxy-body-size", s)));
         }
         return result;
     }

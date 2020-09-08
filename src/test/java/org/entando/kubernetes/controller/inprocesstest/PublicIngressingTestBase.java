@@ -194,6 +194,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         assertThat(theHttpPath("/auth").on(ingress).getBackend().getServicePort().getIntVal(), is(8080));
         assertThat(theHttpPath("/auth2").on(ingress).getBackend().getServicePort().getIntVal(), is(8081));
         assertThat(ingress.getMetadata().getAnnotations().get("kubernetes.io/ingress.class"), is("nginx"));
+        assertThat(ingress.getMetadata().getAnnotations().get("nginx.ingress.kubernetes.io/proxy-body-size"), is("50m"));
     }
 
     private EntandoPlugin buildPlugin(String sampleNamespace, String sampleName) {
@@ -202,6 +203,9 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 .withName(sampleName).endMetadata().withNewSpec()
                 .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
                 .withDbms(DbmsVendor.POSTGRESQL).withReplicas(2).withIngressHostName("myhost.name.com")
+                .withNewResourceRequirements()
+                .withFileUploadLimit("50m")
+                .endResourceRequirements()
                 .endSpec().build();
     }
 

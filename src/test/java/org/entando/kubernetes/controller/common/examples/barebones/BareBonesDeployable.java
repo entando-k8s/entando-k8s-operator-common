@@ -28,6 +28,7 @@ import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.Secretive;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class BareBonesDeployable implements Deployable<BarebonesDeploymentResult>, Secretive {
@@ -35,10 +36,10 @@ public class BareBonesDeployable implements Deployable<BarebonesDeploymentResult
     public static final String MY_SERVICE_ACCOUNT = "my-service-account";
     public static final String NAME_QUALIFIER = "db";
     private List<DeployableContainer> containers = Arrays.asList(new BareBonesContainer());
-    private EntandoCustomResource customResource;
+    private EntandoBaseCustomResource<?> customResource;
     private DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.POSTGRESQL;
 
-    public BareBonesDeployable(EntandoCustomResource customResource) {
+    public BareBonesDeployable(EntandoBaseCustomResource<?> customResource) {
         this.customResource = customResource;
     }
 
@@ -63,7 +64,7 @@ public class BareBonesDeployable implements Deployable<BarebonesDeploymentResult
     }
 
     @Override
-    public EntandoCustomResource getCustomResource() {
+    public EntandoBaseCustomResource<?> getCustomResource() {
         return customResource;
     }
 
