@@ -37,7 +37,6 @@ import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Secretive {
 
