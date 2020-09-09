@@ -32,7 +32,6 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.KubernetesPermission;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ServiceAccountCreator extends AbstractK8SResourceCreator {
 

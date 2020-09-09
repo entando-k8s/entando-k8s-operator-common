@@ -36,7 +36,6 @@ import org.entando.kubernetes.controller.spi.Ingressing;
 import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.ServiceResult;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ServiceCreator extends AbstractK8SResourceCreator {
 

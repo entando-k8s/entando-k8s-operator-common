@@ -24,6 +24,7 @@ import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
+import org.entando.kubernetes.controller.spi.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
@@ -32,7 +33,7 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource> implements SpringBootDeployableContainer,
-        ParameterizableContainer, PersistentVolumeAware {
+        ParameterizableContainer, PersistentVolumeAware, ConfigurableResourceContainer {
 
     public static final String MY_IMAGE = "entando/entando-k8s-service";
     public static final String MY_WEB_CONTEXT = "/my-context";

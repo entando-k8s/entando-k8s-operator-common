@@ -20,9 +20,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.common.ParameterizedResourceCalculator;
-import org.entando.kubernetes.controller.common.ResourceCalculator;
-import org.entando.kubernetes.controller.common.examples.barebones.BareBonesContainer;
+import org.entando.kubernetes.controller.common.ConfigurableResourceCalculator;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
@@ -33,7 +31,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("unit")
-public class ParameterizedResourceCalculatorTest {
+public class ConfigurableResourceCalculatorTest {
 
     @AfterEach
     @BeforeEach
@@ -43,7 +41,7 @@ public class ParameterizedResourceCalculatorTest {
 
     @Test
     public void calculateRequestsWithDefaultRatioAndNoOverride() {
-        ParameterizedResourceCalculator resourceCalculator = new ParameterizedResourceCalculator(
+        ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null));
         assertThat(resourceCalculator.getCpuLimit(), is("1000m"));
         assertThat(resourceCalculator.getMemoryLimit(), is("1024Mi"));
@@ -54,7 +52,7 @@ public class ParameterizedResourceCalculatorTest {
     @Test
     public void calculateRequestsWithProvidedRatioNoOverride() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
-        ParameterizedResourceCalculator resourceCalculator = new ParameterizedResourceCalculator(
+        ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null));
         assertThat(resourceCalculator.getCpuLimit(), is("1000m"));
         assertThat(resourceCalculator.getMemoryLimit(), is("1024Mi"));
@@ -64,7 +62,7 @@ public class ParameterizedResourceCalculatorTest {
 
     @Test
     public void calculateRequestsWithDefaultRatioButWithALimitOverride() {
-        ParameterizedResourceCalculator resourceCalculator = new ParameterizedResourceCalculator(
+        ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withMemoryLimit("2048Mi")
                         .withCpuLimit("2000m")
@@ -78,7 +76,7 @@ public class ParameterizedResourceCalculatorTest {
     @Test
     public void calculateRequestsWithProvidedRatioButWithALimitOverride() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
-        ParameterizedResourceCalculator resourceCalculator = new ParameterizedResourceCalculator(
+        ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withMemoryLimit("2048Mi")
                         .withCpuLimit("2000m")
@@ -91,7 +89,7 @@ public class ParameterizedResourceCalculatorTest {
 
     @Test
     public void calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides() {
-        ParameterizedResourceCalculator resourceCalculator = new ParameterizedResourceCalculator(
+        ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withMemoryLimit("2048Mi")
                         .withMemoryRequest("256Mi")

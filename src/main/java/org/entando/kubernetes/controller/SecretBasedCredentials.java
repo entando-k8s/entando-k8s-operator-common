@@ -21,7 +21,6 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Optional;
 
 public interface SecretBasedCredentials {
 

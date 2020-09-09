@@ -59,7 +59,8 @@ public enum EntandoOperatorConfigProperty {
     /*
     Misc config
      */
-    // creates a dns mapping from the specified hostname *.*.*.*.nip.io to the corresponding ip *.*.*.* . typically it should point to hosting machine ip address (https://nip.io/)
+    // creates a dns mapping from the specified hostname *.*.*.*.nip.io to the corresponding ip *.*.*.* . typically it should point to
+    // hosting machine ip address (https://nip.io/)
     ENTANDO_DEFAULT_ROUTING_SUFFIX("entando.default.routing.suffix"),
     ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS("entando.pod.completion.timeout.seconds"),
     ENTANDO_POD_READINESS_TIMEOUT_SECONDS("entando.pod.readiness.timeout.seconds"),

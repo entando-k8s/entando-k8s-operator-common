@@ -30,7 +30,6 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class SecretCreator extends AbstractK8SResourceCreator {
 

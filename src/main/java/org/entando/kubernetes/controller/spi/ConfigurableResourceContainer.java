@@ -16,13 +16,14 @@
 
 package org.entando.kubernetes.controller.spi;
 
-import java.util.Map;
+import java.util.Optional;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoResourceRequirements;
 
-public interface ParameterizableContainer extends DeployableContainer {
+public interface ConfigurableResourceContainer extends DeployableContainer {
 
-    default Map<String, String> getParameters() {
-        return getCustomResourceSpec().getParameters();
+    default Optional<EntandoResourceRequirements> getResourceRequirements() {
+        return getCustomResourceSpec().getResourceRequirements();
     }
 
     EntandoDeploymentSpec getCustomResourceSpec();

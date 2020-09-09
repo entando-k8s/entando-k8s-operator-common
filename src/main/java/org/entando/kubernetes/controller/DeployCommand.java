@@ -40,7 +40,6 @@ import org.entando.kubernetes.controller.spi.ServiceResult;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.DbServerStatus;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.WebServerStatus;
 
 /**
