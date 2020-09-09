@@ -28,6 +28,7 @@ import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.app.EntandoApp;
 
@@ -85,7 +86,7 @@ public class KeycloakConsumingDeployable implements PublicIngressingDeployable<S
     }
 
     @Override
-    public EntandoCustomResource getCustomResource() {
+    public EntandoBaseCustomResource<?> getCustomResource() {
         return entandoApp;
     }
 

@@ -31,10 +31,10 @@ public class InfrastructureConfig {
     }
 
     public static String decodeSecretValue(Secret secret, String key) {
-        String value = ofNullable(secret.getData()).map(stringStringMap -> stringStringMap.get(key)).orElse(null);
+        String value = ofNullable(secret.getData()).map(data -> data.get(key)).orElse(null);
         if (value == null) {
             //If not yet reloaded
-            return secret.getStringData().get(key);
+            return ofNullable(secret.getStringData()).map(data -> data.get(key)).orElse(null);
         } else {
             return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
         }
@@ -48,16 +48,8 @@ public class InfrastructureConfig {
         return decodeSecretValue(getInfrastructureSecret(), "entandoK8SServiceInternalUrl");
     }
 
-    public String getUserManagementInternalUrl() {
-        return decodeSecretValue(getInfrastructureSecret(), "userManagementInternalUrl");
-    }
-
     public String getK8SExternalServiceUrl() {
         return decodeSecretValue(getInfrastructureSecret(), "entandoK8SServiceExternalUrl");
-    }
-
-    public String getUserManagementExternalUrl() {
-        return decodeSecretValue(getInfrastructureSecret(), "userManagementExternalUrl");
     }
 
     public String getK8sServiceClientId() {

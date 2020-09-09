@@ -35,17 +35,18 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.Ingressing;
 import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.ServiceResult;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ServiceCreator extends AbstractK8SResourceCreator {
 
     private Service primaryService;
 
-    public ServiceCreator(EntandoCustomResource entandoCustomResource) {
+    public ServiceCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public ServiceCreator(EntandoCustomResource entandoCustomResource, Service primaryService) {
+    public ServiceCreator(EntandoBaseCustomResource<?> entandoCustomResource, Service primaryService) {
         super(entandoCustomResource);
         this.primaryService = primaryService;
     }

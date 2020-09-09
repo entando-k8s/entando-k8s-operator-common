@@ -35,7 +35,7 @@ public interface Deployable<T extends ServiceResult> {
 
     String getNameQualifier();
 
-    EntandoCustomResource getCustomResource();
+    EntandoBaseCustomResource<?> getCustomResource();
 
     T createResult(Deployment deployment, Service service, Ingress ingress, Pod pod);
 

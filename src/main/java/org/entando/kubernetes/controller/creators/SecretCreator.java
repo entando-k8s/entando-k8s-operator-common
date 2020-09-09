@@ -29,6 +29,7 @@ import org.entando.kubernetes.controller.k8sclient.SecretClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.Secretive;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class SecretCreator extends AbstractK8SResourceCreator {
@@ -36,7 +37,7 @@ public class SecretCreator extends AbstractK8SResourceCreator {
     public static final String DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME = "entando-default-ca-secret";
     public static final String TRUSTSTORE_SETTINGS_KEY = "TRUSTSTORE_SETTINGS";
 
-    public SecretCreator(EntandoCustomResource entandoCustomResource) {
+    public SecretCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
         super(entandoCustomResource);
     }
 

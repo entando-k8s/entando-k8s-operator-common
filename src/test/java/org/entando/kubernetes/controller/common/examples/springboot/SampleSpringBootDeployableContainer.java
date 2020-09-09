@@ -26,12 +26,13 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
+import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource> implements SpringBootDeployableContainer,
-        ParameterizableContainer {
+        ParameterizableContainer, PersistentVolumeAware {
 
     public static final String MY_IMAGE = "entando/entando-k8s-service";
     public static final String MY_WEB_CONTEXT = "/my-context";
@@ -100,5 +101,10 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     @Override
     public EntandoDeploymentSpec getCustomResourceSpec() {
         return customResource.getSpec() instanceof EntandoDeploymentSpec ? (EntandoDeploymentSpec) customResource.getSpec() : null;
+    }
+
+    @Override
+    public String getVolumeMountPath() {
+        return "/entando-data";
     }
 }

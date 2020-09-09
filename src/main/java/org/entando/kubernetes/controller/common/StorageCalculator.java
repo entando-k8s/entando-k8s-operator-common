@@ -14,14 +14,24 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi;
+package org.entando.kubernetes.controller.common;
 
-public interface PersistentVolumeAware extends DeployableContainer {
+import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 
-    String getVolumeMountPath();
+public class StorageCalculator extends LimitAndRequestCalculator {
 
-    default int getStorageLimitMebibytes() {
-        return 2048;
+    private final PersistentVolumeAware container;
+
+    public StorageCalculator(PersistentVolumeAware container) {
+        this.container = container;
+    }
+
+    public String getStorageLimit() {
+        return container.getStorageLimitMebibytes() + "Mi";
+    }
+
+    public String getStorageRequest() {
+        return applyRequestRatio(getStorageLimit());
     }
 
 }

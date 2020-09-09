@@ -36,17 +36,18 @@ import org.entando.kubernetes.controller.spi.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Secretive {
 
     private final Map<DbmsDockerVendorStrategy, VariableInitializer> variableInitializers = new ConcurrentHashMap<>();
     private final DbmsDockerVendorStrategy dbmsVendor;
-    private final EntandoCustomResource customResource;
+    private final EntandoBaseCustomResource<?> customResource;
     private final List<DeployableContainer> containers;
     private final String nameQualifier;
 
-    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoCustomResource customResource, String nameQualifier) {
+    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoBaseCustomResource<?> customResource, String nameQualifier) {
         variableInitializers.put(DbmsDockerVendorStrategy.MYSQL, vars ->
                 //No DB creation. Dbs are created during schema creation
                 vars.add(new EnvVar("MYSQL_ROOT_PASSWORD", null,
@@ -85,7 +86,7 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
     }
 
     @Override
-    public EntandoCustomResource getCustomResource() {
+    public EntandoBaseCustomResource<?> getCustomResource() {
         return customResource;
     }
 
