@@ -43,10 +43,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.common.ParameterizedResourceCalculator;
+import org.entando.kubernetes.controller.common.ConfigurableResourceCalculator;
 import org.entando.kubernetes.controller.common.ResourceCalculator;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
+import org.entando.kubernetes.controller.spi.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
@@ -57,7 +58,6 @@ import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DeploymentCreator extends AbstractK8SResourceCreator {
 
@@ -197,8 +197,8 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private ResourceCalculator buildResourceCalculator(DeployableContainer deployableContainer) {
-        return deployableContainer instanceof ParameterizableContainer
-                ? new ParameterizedResourceCalculator((ParameterizableContainer) deployableContainer)
+        return deployableContainer instanceof ConfigurableResourceContainer
+                ? new ConfigurableResourceCalculator((ConfigurableResourceContainer) deployableContainer)
                 : new ResourceCalculator(deployableContainer);
 
     }
@@ -290,7 +290,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         container.addEnvironmentVariables(vars);
         if (container instanceof ParameterizableContainer) {
             ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;
-            overrideFromParameters(vars, parameterizableContainer.getCustomResourceSpec().getParameters().entrySet());
+            overrideFromParameters(vars, parameterizableContainer.getParameters().entrySet());
         }
         return vars;
     }

@@ -16,17 +16,18 @@
 
 package org.entando.kubernetes.controller.common;
 
+import org.entando.kubernetes.controller.spi.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.model.EntandoResourceRequirements;
 
-public class ParameterizedStorageCalculator extends StorageCalculator {
+public class ConfigurableStorageCalculator extends StorageCalculator {
 
     private final EntandoResourceRequirements resourceRequirements;
 
-    public ParameterizedStorageCalculator(ParameterizableContainer container) {
+    public ConfigurableStorageCalculator(ConfigurableResourceContainer container) {
         super((PersistentVolumeAware) container);
-        this.resourceRequirements = container.getCustomResourceSpec().getResourceRequirements().orElse(new EntandoResourceRequirements());
+        this.resourceRequirements = container.getResourceRequirements().orElse(new EntandoResourceRequirements());
     }
 
     public String getStorageLimit() {

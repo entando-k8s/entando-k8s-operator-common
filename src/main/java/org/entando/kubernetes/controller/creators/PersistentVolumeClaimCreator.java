@@ -26,11 +26,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.common.ParameterizedStorageCalculator;
+import org.entando.kubernetes.controller.common.ConfigurableStorageCalculator;
 import org.entando.kubernetes.controller.common.StorageCalculator;
 import org.entando.kubernetes.controller.k8sclient.PersistentVolumeClaimClient;
+import org.entando.kubernetes.controller.spi.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.Deployable;
-import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
@@ -79,8 +79,8 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
     }
 
     private StorageCalculator buildStorageCalculator(PersistentVolumeAware deployableContainer) {
-        return deployableContainer instanceof ParameterizableContainer
-                ? new ParameterizedStorageCalculator((ParameterizableContainer) deployableContainer)
+        return deployableContainer instanceof ConfigurableResourceContainer
+                ? new ConfigurableStorageCalculator((ConfigurableResourceContainer) deployableContainer)
                 : new StorageCalculator(deployableContainer);
 
     }

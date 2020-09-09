@@ -16,16 +16,17 @@
 
 package org.entando.kubernetes.controller.common;
 
+import org.entando.kubernetes.controller.spi.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.model.EntandoResourceRequirements;
 
-public class ParameterizedResourceCalculator extends ResourceCalculator {
+public class ConfigurableResourceCalculator extends ResourceCalculator {
 
     private final EntandoResourceRequirements resourceRequirements;
 
-    public ParameterizedResourceCalculator(ParameterizableContainer container) {
+    public ConfigurableResourceCalculator(ConfigurableResourceContainer container) {
         super(container);
-        this.resourceRequirements = container.getCustomResourceSpec().getResourceRequirements().orElse(new EntandoResourceRequirements());
+        this.resourceRequirements = container.getResourceRequirements().orElse(new EntandoResourceRequirements());
     }
 
     public String getMemoryLimit() {
