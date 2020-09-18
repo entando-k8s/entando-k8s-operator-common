@@ -245,6 +245,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             client.setImplicitFlowEnabled(true);
             client.setDirectAccessGrantsEnabled(true);
             client.setAuthorizationServicesEnabled(false);
+            client.setWebOrigins(config.getWebOrigins());
             try (Response response = realmResource.clients().create(client)) {
                 String id = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
                 realmResource.clients().get(id).generateNewSecret();
@@ -289,7 +290,12 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             ClientRepresentation clientRepresentation = clientResource.toRepresentation();
             clientRepresentation.getRedirectUris().addAll(redirectUris);
             clientResource.update(clientRepresentation);
-
+        }
+        List<String> webOrigins = config.getWebOrigins();
+        if (webOrigins.size() > 0) {
+            ClientRepresentation clientRepresentation = clientResource.toRepresentation();
+            clientRepresentation.getWebOrigins().addAll(webOrigins);
+            clientResource.update(clientRepresentation);
         }
     }
 

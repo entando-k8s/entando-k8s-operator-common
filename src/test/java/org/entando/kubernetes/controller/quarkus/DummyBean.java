@@ -119,9 +119,9 @@ public class DummyBean {
     }
 
     public void testCreatePublicClient() {
-        //Given a Keycloak Server is available and I have logged int
+        //Given a Keycloak Server is available and I have logged in
         DefaultKeycloakClient kc = prepareKeycloak();
-        //And  I have ensured that a specific real is available
+        //And  I have ensured that a specific realm is available
         kc.ensureRealm(MY_REALM);
         //When I create the public client in this realm
         kc.createPublicClient(MY_REALM, "http://test.domain.com");
@@ -148,6 +148,7 @@ public class DummyBean {
         //When I create the public client in this realm
         kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
                 .withRedirectUri("http://test.domain.com/*")
+                .withWebOrigin("http://test.domain.com")
                 .withPermission(EXISTING_CLIENT, EXISTING_ROLE)
         );
         //Then a new client should be available
@@ -157,6 +158,8 @@ public class DummyBean {
         assertThat(publicClient.get().isPublicClient(), is(false));
         //With correct redirect uri
         assertThat(publicClient.get().getRedirectUris().get(0), is("http://test.domain.com/*"));
+        //With correct web origins
+        assertThat(publicClient.get().getRedirectUris().get(0), is("http://test.domain.com"));
         //With correct permissions
         List<RoleRepresentation> roleRepresentations = retrieveServiceAccountRolesInRealm(MY_REALM, MY_CLIENT, EXISTING_CLIENT);
         assertThat(roleRepresentations.get(0).getName(), is(EXISTING_ROLE));

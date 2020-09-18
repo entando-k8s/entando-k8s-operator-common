@@ -145,6 +145,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
         //When I create the public client in this realm
         kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
                 .withRedirectUri("http://test.domain.com/*")
+                .withWebOrigin("http://test.domain.com")
                 .withPermission(EXISTING_CLIENT, EXISTING_ROLE)
         );
         //Then a new client should be available
@@ -154,6 +155,8 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
         assertThat(publicClient.get().isPublicClient(), is(false));
         //With correct redirect uri
         assertThat(publicClient.get().getRedirectUris().get(0), is("http://test.domain.com/*"));
+        //With correct web origins
+        assertThat(publicClient.get().getWebOrigins().get(0), is("http://test.domain.com"));
         //With correct permissions
         List<RoleRepresentation> roleRepresentations = helper
                 .retrieveServiceAccountRolesInRealm(MY_REALM, MY_CLIENT, EXISTING_CLIENT);
