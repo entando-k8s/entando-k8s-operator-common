@@ -294,7 +294,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         List<String> webOrigins = config.getWebOrigins();
         if (webOrigins.size() > 0) {
             ClientRepresentation clientRepresentation = clientResource.toRepresentation();
-            clientRepresentation.getWebOrigins().addAll(redirectUris);
+            clientRepresentation.getWebOrigins().addAll(webOrigins);
             clientResource.update(clientRepresentation);
         }
     }
