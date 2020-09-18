@@ -92,6 +92,8 @@ public class KeycloakClientCreator {
                 keycloakClientConfig = keycloakClientConfig.withRedirectUri(
                         "http://" + ingress.get().getSpec().getRules().get(0).getHost() + container.getWebContextPath() + "/*");
             }
+            keycloakClientConfig = keycloakClientConfig
+                    .withWebOrigin(getIngressServerUrl(ingress.get()));
         }
         String keycloakClientSecret = client.prepareClientAndReturnSecret(keycloakClientConfig);
         String secretName = keycloakClientSecret(keycloakConfig);

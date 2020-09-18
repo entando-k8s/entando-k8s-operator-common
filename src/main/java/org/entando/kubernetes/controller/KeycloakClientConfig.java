@@ -31,6 +31,7 @@ public class KeycloakClientConfig {
     private final List<ExpectedRole> roles;
     private final List<Permission> permissions;
     private List<String> redirectUri = new ArrayList<>();
+    private List<String> webOrigins = new ArrayList<>();
 
     public KeycloakClientConfig(String realm, String clientId, String clientName, List<ExpectedRole> roles,
             List<Permission> permissions) {
@@ -47,6 +48,11 @@ public class KeycloakClientConfig {
 
     public KeycloakClientConfig withRedirectUri(String redirectUri) {
         this.redirectUri.add(redirectUri);
+        return this;
+    }
+
+    public KeycloakClientConfig withWebOrigin(String webOrigin) {
+        this.webOrigins.add(webOrigin);
         return this;
     }
 
@@ -82,5 +88,9 @@ public class KeycloakClientConfig {
 
     public List<String> getRedirectUris() {
         return redirectUri;
+    }
+
+    public List<String> getWebOrigins() {
+        return webOrigins;
     }
 }
