@@ -245,6 +245,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             client.setImplicitFlowEnabled(true);
             client.setDirectAccessGrantsEnabled(true);
             client.setAuthorizationServicesEnabled(false);
+            client.setWebOrigins(config.getWebOrigins());
             try (Response response = realmResource.clients().create(client)) {
                 String id = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
                 realmResource.clients().get(id).generateNewSecret();
