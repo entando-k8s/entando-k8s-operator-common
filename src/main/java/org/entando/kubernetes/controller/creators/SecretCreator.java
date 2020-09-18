@@ -41,10 +41,7 @@ public class SecretCreator extends AbstractK8SResourceCreator {
     }
 
     public void createSecrets(SecretClient client, Deployable<?> deployable) {
-        if (TlsHelper.getInstance().isTrustStoreAvailable()
-                && client.loadSecret(entandoCustomResource, DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME) == null) {
-            //Don't overwrite the secret. And reduce the risk of the password going out of sync
-            //with the truststore
+        if (TlsHelper.getInstance().isTrustStoreAvailable()) {
             client.createSecretIfAbsent(entandoCustomResource, newCertificateAuthoritySecret());
         }
         if (shouldCreateIngressTlsSecret(deployable)) {

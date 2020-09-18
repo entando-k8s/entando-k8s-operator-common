@@ -95,16 +95,14 @@ public class KeycloakClientCreator {
         }
         String keycloakClientSecret = client.prepareClientAndReturnSecret(keycloakClientConfig);
         String secretName = keycloakClientSecret(keycloakConfig);
-        if (secrets.loadSecret(entandoCustomResource, secretName) == null) {
-            secrets.createSecretIfAbsent(entandoCustomResource, new SecretBuilder()
-                    .withNewMetadata()
-                    .withOwnerReferences(KubeUtils.buildOwnerReference(entandoCustomResource))
-                    .withName(secretName)
-                    .endMetadata()
-                    .addToStringData(CLIENT_ID_KEY, keycloakConfig.getClientId())
-                    .addToStringData(CLIENT_SECRET_KEY, keycloakClientSecret)
-                    .build());
-        }
+        secrets.createSecretIfAbsent(entandoCustomResource, new SecretBuilder()
+                .withNewMetadata()
+                .withOwnerReferences(KubeUtils.buildOwnerReference(entandoCustomResource))
+                .withName(secretName)
+                .endMetadata()
+                .addToStringData(CLIENT_ID_KEY, keycloakConfig.getClientId())
+                .addToStringData(CLIENT_SECRET_KEY, keycloakClientSecret)
+                .build());
     }
 
 }
