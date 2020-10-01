@@ -178,7 +178,8 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
                             .empty());
             simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
             keycloakClient = new DefaultKeycloakClient();
-            keycloakClient.login(HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin", KCP);
+            keycloakClient
+                    .login(HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin", KCP);
         }
         return keycloakClient;
     }
