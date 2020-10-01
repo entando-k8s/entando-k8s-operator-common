@@ -65,7 +65,7 @@ public final class TestFixturePreparation {
         }
         TlsHelper.getInstance().init();
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(),
-                String.valueOf(TlsHelper.getDefaultProtocol().equals("http")));
+                String.valueOf(HttpTestHelper.getDefaultProtocol().equals("http")));
     }
 
     private static AutoAdaptableKubernetesClient buildKubernetesClient() {

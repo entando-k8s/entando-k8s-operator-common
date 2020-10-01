@@ -64,10 +64,6 @@ public final class TlsHelper {
         return EntandoOperatorConfig.useAutoCertGeneration() || isDefaultTlsKeyPairAvailable();
     }
 
-    public static String getDefaultProtocol() {
-        return canAutoCreateTlsSecret() ? "https" : "http";
-    }
-
     public void init() {
         List<Path> caPaths = EntandoOperatorConfig.getCertificateAuthorityCertPaths();
         if (caPaths.isEmpty()) {

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.FluentTernary;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.DeploymentCreator;
+import org.entando.kubernetes.controller.creators.SecretCreator;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
@@ -83,7 +83,7 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
     public void addTlsVariables(List<EnvVar> vars) {
         String certFiles = String.join(" ",
                 EntandoOperatorConfig.getCertificateAuthorityCertPaths().stream()
-                        .map(path -> DeploymentCreator.standardCertPathOf(path.getFileName().toString()))
+                        .map(path -> SecretCreator.standardCertPathOf(path.getFileName().toString()))
                         .collect(Collectors.toList()));
         vars.add(new EnvVar("X509_CA_BUNDLE",
                 "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt /var/run/secrets/kubernetes.io/serviceaccount/ca.crt "

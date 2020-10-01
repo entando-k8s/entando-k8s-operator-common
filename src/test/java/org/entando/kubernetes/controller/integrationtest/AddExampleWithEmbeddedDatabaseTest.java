@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
-import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.examples.DbAwareKeycloakContainer;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleIngressingDbAwareDeployable;
@@ -151,7 +150,7 @@ public class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTest
 
 
     protected void verifyKeycloakDeployment() {
-        String http = TlsHelper.getDefaultProtocol();
+        String http = HttpTestHelper.getDefaultProtocol();
         KubernetesClient client = helper.getClient();
         await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> HttpTestHelper
                 .statusOk(http + "://" + KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + helper.getDomainSuffix()

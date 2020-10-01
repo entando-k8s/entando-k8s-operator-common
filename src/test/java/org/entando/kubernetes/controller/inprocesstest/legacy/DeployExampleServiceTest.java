@@ -58,7 +58,6 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.examples.SampleController;
-import org.entando.kubernetes.controller.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.creators.SecretCreator;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
@@ -179,9 +178,9 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
                 SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME);
         verify(client.secrets(), atLeast(1)).createSecretIfAbsent(eq(newEntandoKeycloakServer), trustStoreSecretCaptor.capture());
         Secret trustStoreSecret = trustStoreSecretCaptor.getValue();
-        assertThat(theKey(DeploymentCreator.TRUST_STORE_FILE).on(trustStoreSecret), is(TlsHelper.getInstance().getTrustStoreBase64()));
+        assertThat(theKey(SecretCreator.TRUST_STORE_FILE).on(trustStoreSecret), is(TlsHelper.getInstance().getTrustStoreBase64()));
 
-        byte[] decode = Base64.getDecoder().decode(trustStoreSecret.getData().get(DeploymentCreator.TRUST_STORE_FILE).getBytes());
+        byte[] decode = Base64.getDecoder().decode(trustStoreSecret.getData().get(SecretCreator.TRUST_STORE_FILE).getBytes());
         KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
         ks.load(new ByteArrayInputStream(decode), TlsHelper.getInstance().getTrustStorePassword().toCharArray());
         assertNotNull(ks.getCertificate("ca.crt"));
@@ -390,7 +389,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
         assertThat(theVariableNamed(DB_VENDOR).on(theServerContainer), is("mysql"));
         assertThat(theVolumeMountNamed(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + "-volume").on(theServerContainer)
                         .getMountPath(),
-                is(DeploymentCreator.CERT_SECRET_MOUNT_ROOT + "/" + SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
+                is(SecretCreator.CERT_SECRET_MOUNT_ROOT + "/" + SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
     }
 
     private void verifyTheDbContainer(Container theDbContainer) {

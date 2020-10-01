@@ -138,4 +138,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static boolean imposeResourceLimits() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS).map(Boolean::valueOf).orElse(true);
     }
+
+    public static boolean assumeExternalHttpsProvider() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER).map(Boolean::valueOf).orElse(false);
+    }
 }

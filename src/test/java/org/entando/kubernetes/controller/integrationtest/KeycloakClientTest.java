@@ -38,17 +38,16 @@ import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
-import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.examples.MinimalKeycloakContainer;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrationTesting;
+import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixturePreparation;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
@@ -79,7 +78,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
                             .addToStringData(KubeUtils.USERNAME_KEY, "test-admin")
                             .addToStringData(KubeUtils.PASSSWORD_KEY, KCP)
                             .addToStringData(KubeUtils.URL_KEY,
-                                    TlsHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth")
+                                    HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth")
                             .build());
         }
     };
@@ -179,7 +178,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
                             .empty());
             simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
             keycloakClient = new DefaultKeycloakClient();
-            keycloakClient.login(TlsHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin", KCP);
+            keycloakClient.login(HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin", KCP);
         }
         return keycloakClient;
     }

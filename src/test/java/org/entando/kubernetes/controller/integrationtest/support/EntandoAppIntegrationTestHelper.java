@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.integrationtest.support;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
-import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
@@ -60,7 +59,7 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
                 });
 
         await().atMost(60, SECONDS).until(() -> HttpTestHelper.read(
-                TlsHelper.getDefaultProtocol() + "://" + entandoApp.getSpec().getIngressHostName()
+                HttpTestHelper.getDefaultProtocol() + "://" + entandoApp.getSpec().getIngressHostName()
                         .orElseThrow(() -> new IllegalStateException())
                         + "/entando-de-app/index.jsp").contains("Entando - Welcome"));
     }
