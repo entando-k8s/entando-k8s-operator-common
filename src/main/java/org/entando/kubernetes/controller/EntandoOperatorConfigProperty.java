@@ -48,6 +48,7 @@ public enum EntandoOperatorConfigProperty {
     TLS config
      */
     ENTANDO_CA_CERT_PATHS("entando.ca.cert.paths"),
+    ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER("entando.assume.external.https.provider"),
     ENTANDO_USE_AUTO_CERT_GENERATION("entando.use.auto.cert.generation"),
     ENTANDO_PATH_TO_TLS_KEYPAIR("entando.path.to.tls.keypair"),
     ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT("entando.disable.keycloak.ssl.requirement"),

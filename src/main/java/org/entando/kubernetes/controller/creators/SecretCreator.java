@@ -28,16 +28,26 @@ import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
+import org.entando.kubernetes.controller.spi.SecretToMount;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class SecretCreator extends AbstractK8SResourceCreator {
 
     public static final String DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME = "entando-default-ca-secret";
+    public static final String CERT_SECRET_MOUNT_ROOT = "/etc/entando/certs";
+    public static final SecretToMount DEFAULT_CERTIFICATE_AUTHORITY_SECRET_TO_MOUNT = new SecretToMount(
+            DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, CERT_SECRET_MOUNT_ROOT + "/" + DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME);
     public static final String TRUSTSTORE_SETTINGS_KEY = "TRUSTSTORE_SETTINGS";
+    public static final String TRUST_STORE_FILE = "store.jks";
+    public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
 
     public SecretCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
         super(entandoCustomResource);
+    }
+
+    public static String standardCertPathOf(String filename) {
+        return format("%s/%s/%s", CERT_SECRET_MOUNT_ROOT, DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, filename);
     }
 
     public void createSecrets(SecretClient client, Deployable<?> deployable) {
@@ -82,10 +92,10 @@ public class SecretCreator extends AbstractK8SResourceCreator {
                 .withNewMetadata()
                 .withName(DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME)
                 .endMetadata()
-                .addToData(DeploymentCreator.TRUST_STORE_FILE, TlsHelper.getInstance().getTrustStoreBase64())
+                .addToData(TRUST_STORE_FILE, TlsHelper.getInstance().getTrustStoreBase64())
                 .addToStringData(
                         TRUSTSTORE_SETTINGS_KEY,
-                        format("-Djavax.net.ssl.trustStore=%s -Djavax.net.ssl.trustStorePassword=%s", DeploymentCreator.TRUST_STORE_PATH,
+                        format("-Djavax.net.ssl.trustStore=%s -Djavax.net.ssl.trustStorePassword=%s", TRUST_STORE_PATH,
                                 TlsHelper.getInstance().getTrustStorePassword()))
                 .build();
         EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path -> secret.getData().put(path.getFileName().toString(),

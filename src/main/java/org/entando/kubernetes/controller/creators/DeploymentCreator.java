@@ -56,27 +56,20 @@ import org.entando.kubernetes.controller.spi.HasWebContext;
 import org.entando.kubernetes.controller.spi.KeycloakAware;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
+import org.entando.kubernetes.controller.spi.SecretToMount;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class DeploymentCreator extends AbstractK8SResourceCreator {
 
-    public static final String ENTANDO_SECRET_MOUNTS_ROOT = "/etc/entando/connectionconfigs";
-    public static final String TRUST_STORE_FILE = "store.jks";
     public static final String VOLUME_SUFFIX = "-volume";
     public static final String DEPLOYMENT_SUFFIX = "-deployment";
     public static final String CONTAINER_SUFFIX = "-container";
     public static final String PORT_SUFFIX = "-port";
-    public static final String CERT_SECRET_MOUNT_ROOT = "/etc/entando/certs";
-    public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
     private Deployment deployment;
 
     public DeploymentCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
         super(entandoCustomResource);
-    }
-
-    public static String standardCertPathOf(String filename) {
-        return String.format("%s/%s/%s", CERT_SECRET_MOUNT_ROOT, SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, filename);
     }
 
     public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable deployable) {
@@ -136,7 +129,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .collect(Collectors.toList());
 
         if (deployable.getContainers().stream().anyMatch(TlsAware.class::isInstance) && TlsHelper.getInstance().isTrustStoreAvailable()) {
-            volumeList.add(newSecretVolume(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
+            volumeList.add(newSecretVolume(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_TO_MOUNT));
         }
         return volumeList;
     }
@@ -149,17 +142,17 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                     .withNewPersistentVolumeClaim(resolveName(container.getNameQualifier(), "-pvc"), false)
                     .build());
         }
-        volumes.addAll(container.getNamesOfSecretsToMount().stream()
+        volumes.addAll(container.getSecretsToMount().stream()
                 .map(this::newSecretVolume)
                 .collect(Collectors.toList()));
         return volumes;
     }
 
-    private Volume newSecretVolume(String s) {
+    private Volume newSecretVolume(SecretToMount secretToMount) {
         return new VolumeBuilder()
-                .withName(s + VOLUME_SUFFIX)
+                .withName(secretToMount.getSecretName() + VOLUME_SUFFIX)
                 .withNewSecret()
-                .withSecretName(s)
+                .withSecretName(secretToMount.getSecretName())
                 .endSecret()
                 .build();
     }
@@ -215,14 +208,11 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private List<VolumeMount> buildVolumeMounts(DeployableContainer deployableContainer) {
         List<VolumeMount> volumeMounts = new ArrayList<>(
-                deployableContainer.getNamesOfSecretsToMount().stream()
+                deployableContainer.getSecretsToMount().stream()
                         .map(this::newSecretVolumeMount)
                         .collect(Collectors.toList()));
         if (deployableContainer instanceof TlsAware && TlsHelper.getInstance().isTrustStoreAvailable()) {
-            volumeMounts.add(new VolumeMountBuilder()
-                    .withName(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + VOLUME_SUFFIX)
-                    .withMountPath(CERT_SECRET_MOUNT_ROOT + "/" + SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME)
-                    .withReadOnly(true).build());
+            volumeMounts.add(newSecretVolumeMount(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_TO_MOUNT));
         }
         if (deployableContainer instanceof PersistentVolumeAware) {
             String volumeMountPath = ((PersistentVolumeAware) deployableContainer).getVolumeMountPath();
@@ -236,10 +226,10 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     }
 
-    private VolumeMount newSecretVolumeMount(String s) {
+    private VolumeMount newSecretVolumeMount(SecretToMount s) {
         return new VolumeMountBuilder()
-                .withName(s + VOLUME_SUFFIX)
-                .withMountPath(ENTANDO_SECRET_MOUNTS_ROOT + "/" + s).withReadOnly(true).build();
+                .withName(s.getSecretName() + VOLUME_SUFFIX)
+                .withMountPath(s.getMountPath()).withReadOnly(true).build();
     }
 
     private Probe buildReadinessProbe(DeployableContainer deployableContainer) {
@@ -286,7 +276,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         if (container instanceof TlsAware && TlsHelper.getInstance().isTrustStoreAvailable()) {
             ((TlsAware) container).addTlsVariables(vars);
         }
-        vars.add(new EnvVar("CONNECTION_CONFIG_ROOT", ENTANDO_SECRET_MOUNTS_ROOT, null));
+        vars.add(new EnvVar("CONNECTION_CONFIG_ROOT", DeployableContainer.ENTANDO_SECRET_MOUNTS_ROOT, null));
         container.addEnvironmentVariables(vars);
         if (container instanceof ParameterizableContainer) {
             ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;

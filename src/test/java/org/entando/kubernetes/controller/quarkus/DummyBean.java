@@ -38,14 +38,13 @@ import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.ServiceDeploymentResult;
-import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.creators.IngressCreator;
+import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
@@ -170,7 +169,7 @@ public class DummyBean {
             System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(), "true");
             keycloakClient = new DefaultKeycloakClient();
             keycloakClient
-                    .login(TlsHelper.getDefaultProtocol() + "://test-kc." + domainSuffix + "/auth",
+                    .login(HttpTestHelper.getDefaultProtocol() + "://test-kc." + domainSuffix + "/auth",
                             "test-admin", KCP);
         }
         return keycloakClient;
@@ -213,7 +212,7 @@ public class DummyBean {
 
     private Keycloak getKeycloak() {
         return KeycloakBuilder.builder()
-                .serverUrl(TlsHelper.getDefaultProtocol() + "://test-kc." + domainSuffix
+                .serverUrl(HttpTestHelper.getDefaultProtocol() + "://test-kc." + domainSuffix
                         + "/auth")
                 .grantType(OAuth2Constants.PASSWORD)
                 .realm("master")

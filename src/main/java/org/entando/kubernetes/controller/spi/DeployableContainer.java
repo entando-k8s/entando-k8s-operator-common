@@ -19,8 +19,11 @@ package org.entando.kubernetes.controller.spi;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface DeployableContainer {
+
+    String ENTANDO_SECRET_MOUNTS_ROOT = "/etc/entando/connectionconfigs";
 
     String determineImageToUse();
 
@@ -42,6 +45,11 @@ public interface DeployableContainer {
 
     default List<String> getNamesOfSecretsToMount() {
         return Collections.emptyList();
+    }
+
+    default List<SecretToMount> getSecretsToMount() {
+        return getNamesOfSecretsToMount().stream().map(s -> new SecretToMount(s, ENTANDO_SECRET_MOUNTS_ROOT + "/" + s))
+                .collect(Collectors.toList());
     }
 
     default List<KubernetesPermission> getKubernetesPermissions() {

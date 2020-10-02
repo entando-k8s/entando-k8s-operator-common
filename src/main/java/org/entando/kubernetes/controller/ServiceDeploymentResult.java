@@ -37,7 +37,7 @@ public class ServiceDeploymentResult extends AbstractServiceResult {
     }
 
     public String getExternalHostUrl() {
-        String protocol = isTlsEnabled() ? "https" : "http";
+        String protocol = isTlsEnabled() || EntandoOperatorConfig.assumeExternalHttpsProvider() ? "https" : "http";
         return protocol + "://" + ingress.getSpec().getRules().get(0).getHost();
     }
 

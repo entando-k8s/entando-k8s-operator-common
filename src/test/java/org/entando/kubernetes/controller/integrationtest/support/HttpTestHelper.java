@@ -39,6 +39,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.common.TlsHelper;
 
 public final class HttpTestHelper {
 
@@ -169,4 +170,7 @@ public final class HttpTestHelper {
         }
     }
 
+    public static String getDefaultProtocol() {
+        return TlsHelper.canAutoCreateTlsSecret() ? "https" : "http";
+    }
 }
