@@ -280,15 +280,15 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         container.addEnvironmentVariables(vars);
         if (container instanceof ParameterizableContainer) {
             ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;
-            overrideFromParameters(vars, parameterizableContainer.getParameters().entrySet());
+            overrideFromParameters(vars, parameterizableContainer.getParameters());
         }
         return vars;
     }
 
-    private void overrideFromParameters(List<EnvVar> vars, Set<Entry<String, String>> parameters) {
-        for (Entry<String, String> parameter : parameters) {
-            vars.removeIf(envVar -> envVar.getName().equals(parameter.getKey()));
-            vars.add(new EnvVar(parameter.getKey(), parameter.getValue(), null));
+    private void overrideFromParameters(List<EnvVar> vars, List<EnvVar> parameters) {
+        for (EnvVar parameter : parameters) {
+            vars.removeIf(envVar -> envVar.getName().equals(parameter.getName()));
+            vars.add(new EnvVar(parameter.getName(), parameter.getValue(), parameter.getValueFrom()));
         }
     }
 

@@ -16,12 +16,13 @@
 
 package org.entando.kubernetes.controller.spi;
 
-import java.util.Map;
+import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.List;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public interface ParameterizableContainer extends DeployableContainer {
 
-    default Map<String, String> getParameters() {
+    default List<EnvVar> getParameters() {
         return getCustomResourceSpec().getParameters();
     }
 

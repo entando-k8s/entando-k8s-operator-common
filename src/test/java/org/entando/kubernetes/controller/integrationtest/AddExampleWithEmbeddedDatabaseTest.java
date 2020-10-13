@@ -108,7 +108,6 @@ public class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTest
                 .withIngressHostName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME + "." + helper.getDomainSuffix())
                 .withDbms(POSTGRESQL)
                 .withDefault(true)
-                .withEntandoImageVersion("6.0.0-SNAPSHOT")
                 .endSpec().build();
         SampleWriter.writeSample(keycloakServer, "keycloak-with-embedded-postgresql-db");
         //        helper.setTextFixture(

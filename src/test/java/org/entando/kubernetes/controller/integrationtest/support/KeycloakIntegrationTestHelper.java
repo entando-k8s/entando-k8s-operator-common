@@ -68,7 +68,7 @@ public class KeycloakIntegrationTestHelper extends
             setTestFixture(deleteAll(EntandoKeycloakServer.class).fromNamespace(KEYCLOAK_NAMESPACE));
             createAndWaitForKeycloak(new EntandoKeycloakServerBuilder()
                     .withNewMetadata().withNamespace(KEYCLOAK_NAMESPACE).withName(KEYCLOAK_NAME).endMetadata()
-                    .withNewSpec().withDefault(true).withEntandoImageVersion("6.0.0-SNAPSHOT")
+                    .withNewSpec().withDefault(true)
                     .withDbms(DbmsVendor.NONE)
                     .withIngressHostName(KEYCLOAK_NAME + "." + getDomainSuffix())
                     .withImageName("entando/entando-keycloak").endSpec()

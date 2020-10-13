@@ -86,7 +86,7 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .withIngressHostName(MY_KEYCLOAK_HOSTNAME)
                 .withDbms(DbmsVendor.MYSQL)
                 //                .withTlsSecretName(MY_KEYCLOAK_TLS_SECRET)
-                .withEntandoImageVersion("6.0.0").endSpec()
+                .endSpec()
                 .build();
     }
 
@@ -98,7 +98,6 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .endMetadata()
                 .withNewSpec()
                 .withDbms(DbmsVendor.MYSQL)
-                .withEntandoImageVersion("6.0.0")
                 .withKeycloakSecretToUse(DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .withIngressHostName("entando-infra.192.168.0.100.nip.io")
                 .withReplicas(3)
@@ -119,7 +118,6 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .withDbms(DbmsVendor.MYSQL)
                 .withIngressHostName("myapp.192.168.0.100.nip.io")
                 .withReplicas(1)
-                .withEntandoImageVersion("6.0.0")
                 .withTlsSecretName(MY_APP_TLS_SECRET)
                 .withKeycloakSecretToUse(DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .endSpec()
