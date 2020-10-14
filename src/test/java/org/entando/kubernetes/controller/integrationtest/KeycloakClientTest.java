@@ -176,7 +176,13 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
             ServiceDeploymentResult result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer))
                     .execute(simpleK8SClient, Optional
                             .empty());
-            simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
+            Pod pod = simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
+            simpleK8SClient.pods().executeOnPod(pod, "server-container",
+                    "cd /opt/jboss/keycloak/bin",
+                    "./kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user $KEYCLOAK_USER --password "
+                            + "$KEYCLOAK_PASSWORD",
+                    "./kcadm.sh update realms/master -s sslRequired=NONE"
+            );
             keycloakClient = new DefaultKeycloakClient();
             keycloakClient
                     .login(HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin", KCP);

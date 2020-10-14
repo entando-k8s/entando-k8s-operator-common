@@ -53,11 +53,6 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_PATH_TO_TLS_KEYPAIR("entando.path.to.tls.keypair"),
     ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT("entando.disable.keycloak.ssl.requirement"),
     /*
-    Git config
-     */
-    ENTANDO_DEFAULT_GIT_USERNAME("entando.default.git.username"),
-    ENTANDO_DEFAULT_GIT_TOKEN("entando.default.git.token"),
-    /*
     Misc config
      */
     // creates a dns mapping from the specified hostname *.*.*.*.nip.io to the corresponding ip *.*.*.* . typically it should point to

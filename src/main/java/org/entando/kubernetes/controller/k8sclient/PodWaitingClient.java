@@ -28,12 +28,14 @@ import org.entando.kubernetes.client.PodWatcher;
 
 public interface PodWaitingClient {
 
+    /**
+     * A getter for the an AtomicReference to the most recently constructed PodWatcherholder for testing purposes
+     */
     AtomicReference<PodWatcher> getPodWatcherHolder();
 
     default Pod watchPod(Predicate<Pod> podPredicate, long timeoutSeconds, Watchable<Watch, Watcher<Pod>> podResource) {
         try {
             Object mutex = new Object();
-
             synchronized (mutex) {
                 PodWatcher watcher = new PodWatcher(podPredicate, mutex, timeoutSeconds * 1000);
                 getPodWatcherHolder().set(watcher);
@@ -48,7 +50,7 @@ public interface PodWaitingClient {
                     throw new IllegalStateException(format("Pod %s/%s did not meet the wait condition within %s seconds",
                             watcher.getLastPod().getMetadata().getNamespace(),
                             watcher.getLastPod().getMetadata().getName(),
-                            String.valueOf(timeoutSeconds)));
+                            timeoutSeconds));
                 }
             }
         } catch (InterruptedException e) {
@@ -56,4 +58,5 @@ public interface PodWaitingClient {
             throw new IllegalStateException(e);
         }
     }
+
 }

@@ -80,7 +80,6 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
             if (Paths.get(path).toFile().exists()) {
                 result.add(Paths.get(path));
             }
-
         }
         return result;
     }
@@ -88,18 +87,6 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static Optional<Path> getPathToDefaultTlsKeyPair() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR).filter(s -> Paths.get(s).toFile().exists())
                 .map(Paths::get);
-    }
-
-    /*
-    Git config
-     */
-
-    public static Optional<String> getDefaultGitUsername() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_GIT_USERNAME);
-    }
-
-    public static Optional<String> getDefaultGitToken() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_GIT_TOKEN);
     }
 
     /*
