@@ -61,6 +61,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+@SuppressWarnings("java:S5786")
 public abstract class PublicIngressingTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
@@ -74,17 +75,17 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     private SampleController controller;
 
     @BeforeEach
-    public void setIngressClass() {
+    void setIngressClass() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty(), "nginx");
     }
 
     @AfterEach
-    public void removeIngressClass() {
+    void removeIngressClass() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty());
     }
 
     @Test
-    public void testTwoDeploymentsSharingAnIngress() {
+    void testTwoDeploymentsSharingAnIngress() {
         //Given I have a PublicIngressingDeployment in the Sample Namespace
         testBasicDeployment();
         //And I have a plugin in another namespace to share the same Ingress
@@ -149,7 +150,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     }
 
     @Test
-    public void testBasicDeployment() {
+    void testBasicDeployment() {
         //Given I have a controller that processes EntandoPlugins
         lenient().when(mock.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn("ASDFASDFASDfa");
         this.k8sClient = getClient();

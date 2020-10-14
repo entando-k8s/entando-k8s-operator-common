@@ -47,7 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @Tags({@Tag("inter-process"),@Tag("pre-deployment") })
 @ExtendWith(MockitoExtension.class)
-public class PodWaiterTest {
+class PodWaiterTest {
 
     private static final String PENDING_PHASE = "Pending";
     private static final String POD_SCHEDULED = "PodScheduled";
@@ -58,7 +58,7 @@ public class PodWaiterTest {
     private PodResource<Pod, DoneablePod> podOperationMock;
 
     @Test
-    public void initialStateNull() throws Exception {
+    void initialStateNull() throws Exception {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(300)).limitReadinessTo(Duration.ofMillis(300))
@@ -69,7 +69,7 @@ public class PodWaiterTest {
     }
 
     @Test
-    public void ready() throws Exception {
+    void ready() throws Exception {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(RUNNING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(300)).limitReadinessTo(Duration.ofMillis(300))
@@ -82,7 +82,7 @@ public class PodWaiterTest {
     }
 
     @Test()
-    public void failedRunning() throws Exception {
+    void failedRunning() throws Exception {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(RUNNING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(1000)).limitReadinessTo(Duration.ofMillis(1000))
@@ -97,7 +97,7 @@ public class PodWaiterTest {
     }
 
     @Test
-    public void happyFlowToCompletion() throws Exception {
+    void happyFlowToCompletion() throws Exception {
         JobPodWaiter mutex = new JobPodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(3000)).limitCompletionTo(Duration.ofMillis(3000))
@@ -115,7 +115,7 @@ public class PodWaiterTest {
     }
 
     @Test
-    public void someContainersNotRun() throws Exception {
+    void someContainersNotRun() {
         PodResult podResult = PodResult.of(podWithContainerStatusMismatch());
         assertTrue(podResult.hasFailed());
         assertThat(podResult.getFailReason(), is("SomeContainersNotRun"));
@@ -128,7 +128,7 @@ public class PodWaiterTest {
     }
 
     @Test
-    public void completionTimeout() throws Exception {
+    void completionTimeout() throws Exception {
         JobPodWaiter mutex = new JobPodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(300)).limitCompletionTo(Duration.ofMillis(300))
@@ -146,7 +146,7 @@ public class PodWaiterTest {
     }
 
     @Test
-    public void happyFlowToReady() throws Exception {
+    void happyFlowToReady() throws Exception {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitReadinessTo(Duration.ofMillis(3000)).waitOn(podOperationMock));
@@ -162,7 +162,7 @@ public class PodWaiterTest {
     }
 
     @Test
-    public void readyTimeout() throws Exception {
+    void readyTimeout() throws Exception {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitReadinessTo(Duration.ofMillis(300)).waitOn(podOperationMock));
@@ -178,7 +178,7 @@ public class PodWaiterTest {
         assertFalse(mutex.wasSuccessful());
     }
 
-    private void asyncUntilNewThreadWaits(Runnable runnable) throws InterruptedException {
+    private void asyncUntilNewThreadWaits(Runnable runnable) {
         Thread thread = new Thread(runnable);
         thread.start();
         await().atMost(5, TimeUnit.SECONDS).until(() -> thread.getState() == Thread.State.TIMED_WAITING);
@@ -219,7 +219,7 @@ public class PodWaiterTest {
 
     //
     //    @Test
-    //    public void exceptionOnPulling() throws Exception {
+    //    void exceptionOnPulling() throws Exception {
     //        ServicePodWaiter mutex = new ServicePodWaiter();
     //        when(podOperationMock.get()).thenReturn(podWithContainerStatus(
     //                builder -> builder.withNewState().withNewWaiting().withReason(CONTAINER_CREATING).endWaiting()

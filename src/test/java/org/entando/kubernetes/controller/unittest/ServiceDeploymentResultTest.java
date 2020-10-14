@@ -32,16 +32,16 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-public class ServiceDeploymentResultTest {
+class ServiceDeploymentResultTest {
 
     @BeforeEach
     @AfterEach
-    public void clearProperties() {
+    void clearProperties() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER.getJvmSystemProperty());
     }
 
     @Test
-    public void testUrlsOnMultiplePorts() throws Exception {
+    void testUrlsOnMultiplePorts() throws Exception {
         ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
@@ -90,7 +90,7 @@ public class ServiceDeploymentResultTest {
     }
 
     @Test
-    public void testUrlsOnSinglePorts() throws Exception {
+    void testUrlsOnSinglePorts() throws Exception {
         ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
@@ -124,7 +124,7 @@ public class ServiceDeploymentResultTest {
     }
 
     @Test
-    public void testUrlsOnDelegatingService() throws Exception {
+    void testUrlsOnDelegatingService() throws Exception {
         ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
@@ -158,7 +158,7 @@ public class ServiceDeploymentResultTest {
     }
 
     @Test
-    public void testHttpsUrls() throws Exception {
+    void testHttpsUrls() throws Exception {
         ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
@@ -195,7 +195,7 @@ public class ServiceDeploymentResultTest {
     }
 
     @Test
-    public void testExternalHttpsProvider() throws Exception {
+    void testExternalHttpsProvider() throws Exception {
         System.getProperties().put(EntandoOperatorConfigProperty.ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER.getJvmSystemProperty(), "true");
         ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
                 .withNewMetadata()

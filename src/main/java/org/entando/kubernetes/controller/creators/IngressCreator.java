@@ -90,7 +90,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         return false;
     }
 
-    public boolean requiresDelegatingService(Service service, Ingressing ingressingContainer) {
+    public boolean requiresDelegatingService(Service service, Ingressing<?> ingressingContainer) {
         return !service.getMetadata().getNamespace().equals(ingressingContainer.getIngressNamespace());
     }
 

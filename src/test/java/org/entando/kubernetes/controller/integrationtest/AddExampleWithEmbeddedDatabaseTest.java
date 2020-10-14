@@ -60,7 +60,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("inter-process"), @Tag("pre-deployment")})
-public class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTesting, InProcessTestUtil {
+class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTesting, InProcessTestUtil {
 
     static final int KEYCLOAK_DB_PORT = 5432;
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
@@ -98,7 +98,7 @@ public class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTest
     }
 
     @Test
-    public void create() {
+    void create() {
         //When I create a EntandoKeycloakServer and I specify it to use PostgreSQL
         EntandoKeycloakServer keycloakServer = new EntandoKeycloakServerBuilder().withNewMetadata()
                 .withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)

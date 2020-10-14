@@ -81,7 +81,7 @@ public class DeployCommand<T extends ServiceResult> {
         keycloakClientCreator = new KeycloakClientCreator(entandoCustomResource);
     }
 
-    public T execute(SimpleK8SClient k8sClient, Optional<SimpleKeycloakClient> keycloakClient) {
+    public T execute(SimpleK8SClient<?> k8sClient, Optional<SimpleKeycloakClient> keycloakClient) {
         EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
                 k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
         if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable) deployable).hasContainersExpectingSchemas()) {
@@ -131,7 +131,7 @@ public class DeployCommand<T extends ServiceResult> {
                 && EntandoOperatorConfig.getOperatorSecurityMode() == SecurityMode.LENIENT;
     }
 
-    private void waitForPod(SimpleK8SClient k8sClient) {
+    private void waitForPod(SimpleK8SClient<?> k8sClient) {
         pod = k8sClient.pods()
                 .waitForPod(entandoCustomResource.getMetadata().getNamespace(), DEPLOYMENT_LABEL_NAME, resolveName(deployable));
         status.setPodStatus(pod.getStatus());
@@ -142,13 +142,13 @@ public class DeployCommand<T extends ServiceResult> {
         return entandoCustomResource.getMetadata().getName() + "-" + deployable.getNameQualifier();
     }
 
-    private void createDeployment(SimpleK8SClient k8sClient, EntandoImageResolver entandoImageResolver) {
+    private void createDeployment(SimpleK8SClient<?> k8sClient, EntandoImageResolver entandoImageResolver) {
         deploymentCreator.createDeployment(entandoImageResolver, k8sClient.deployments(), deployable);
         status.setDeploymentStatus(deploymentCreator.reloadDeployment(k8sClient.deployments()));
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private void syncIngress(SimpleK8SClient k8sClient, IngressingDeployable<?> ingressingContainer) {
+    private void syncIngress(SimpleK8SClient<?> k8sClient, IngressingDeployable<?> ingressingContainer) {
         if (ingressCreator.requiresDelegatingService(serviceCreator.getService(), ingressingContainer)) {
             Service newDelegatingService = serviceCreator.newDelegatingService(k8sClient.services(), ingressingContainer);
             ingressCreator.createIngress(k8sClient.ingresses(), ingressingContainer, newDelegatingService);
@@ -159,13 +159,13 @@ public class DeployCommand<T extends ServiceResult> {
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private void createService(SimpleK8SClient k8sClient) {
+    private void createService(SimpleK8SClient<?> k8sClient) {
         serviceCreator.createService(k8sClient.services(), deployable);
         status.setServiceStatus(serviceCreator.reloadPrimaryService(k8sClient.services()));
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private void createPersistentVolumeClaims(SimpleK8SClient k8sClient) {
+    private void createPersistentVolumeClaims(SimpleK8SClient<?> k8sClient) {
         persistentVolumeClaimCreator.createPersistentVolumeClaimsFor(k8sClient.persistentVolumeClaims(), deployable);
         List<PersistentVolumeClaimStatus> statuses = persistentVolumeClaimCreator
                 .reloadPersistentVolumeClaims(k8sClient.persistentVolumeClaims());
@@ -173,7 +173,7 @@ public class DeployCommand<T extends ServiceResult> {
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private void prepareDbSchemas(SimpleK8SClient k8sClient, EntandoImageResolver entandoImageResolver,
+    private void prepareDbSchemas(SimpleK8SClient<?> k8sClient, EntandoImageResolver entandoImageResolver,
             DbAwareDeployable dbAwareDeployable) {
         Pod completedPod = databasePreparationJobCreator.runToCompletion(k8sClient, dbAwareDeployable, entandoImageResolver);
         status.setInitPodStatus(completedPod.getStatus());

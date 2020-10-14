@@ -38,6 +38,7 @@ public interface PodClient extends PodWaitingClient {
 
     ExecWatch executeOnPod(Pod pod, String containerName, String... commands);
 
+    @SuppressWarnings({"java:S106"})
     default ExecWatch executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, String... script) {
         StringBuilder sb = new StringBuilder();
         for (String s : script) {
@@ -62,7 +63,7 @@ public interface PodClient extends PodWaitingClient {
                     mutex.wait(1000);
                 }
                 if (listener.hasFailed()) {
-                    throw new IllegalStateException(format("Pod %s/%s did not meet the wait condition within %s seconds"));
+                    throw new IllegalStateException(format("Command did not meet the wait condition within 20 seconds: %s", sb.toString()));
                 }
                 return exec;
             }

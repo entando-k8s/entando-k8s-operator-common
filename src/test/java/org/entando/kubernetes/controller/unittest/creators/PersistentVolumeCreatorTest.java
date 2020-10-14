@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-public class PersistentVolumeCreatorTest implements InProcessTestUtil {
+class PersistentVolumeCreatorTest implements InProcessTestUtil {
 
     private EntandoKeycloakServer entandoKeycloakServer = newEntandoKeycloakServer();
     private SamplePublicIngressingDbAwareDeployable<EntandoKeycloakServer> deployable = new SamplePublicIngressingDbAwareDeployable<>(
@@ -43,12 +43,12 @@ public class PersistentVolumeCreatorTest implements InProcessTestUtil {
 
     @AfterEach
     @BeforeEach
-    public void cleanUp() {
+    void cleanUp() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GC.getJvmSystemProperty());
     }
 
     @Test
-    public void createPersistentVolumeClaimWithoutGarbageCollection() {
+    void createPersistentVolumeClaimWithoutGarbageCollection() {
 
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GC.getJvmSystemProperty(), "false");
 
@@ -58,7 +58,7 @@ public class PersistentVolumeCreatorTest implements InProcessTestUtil {
     }
 
     @Test
-    public void createPersistentVolumeClaimWithGarbageCollection() {
+    void createPersistentVolumeClaimWithGarbageCollection() {
 
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GC.getJvmSystemProperty(), "true");
 

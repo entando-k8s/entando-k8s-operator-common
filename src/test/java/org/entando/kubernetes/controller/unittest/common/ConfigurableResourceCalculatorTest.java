@@ -32,16 +32,16 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-public class ConfigurableResourceCalculatorTest {
+class ConfigurableResourceCalculatorTest {
 
     @AfterEach
     @BeforeEach
-    public void resetProvidedRatio() {
+    void resetProvidedRatio() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty());
     }
 
     @Test
-    public void calculateRequestsWithDefaultRatioAndNoOverride() {
+    void calculateRequestsWithDefaultRatioAndNoOverride() {
         ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null));
         assertThat(resourceCalculator.getCpuLimit(), is("1000m"));
@@ -51,7 +51,7 @@ public class ConfigurableResourceCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithProvidedRatioNoOverride() {
+    void calculateRequestsWithProvidedRatioNoOverride() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
         ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null));
@@ -62,7 +62,7 @@ public class ConfigurableResourceCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithDefaultRatioButWithALimitOverride() {
+    void calculateRequestsWithDefaultRatioButWithALimitOverride() {
         ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withMemoryLimit("2048Mi")
@@ -75,7 +75,7 @@ public class ConfigurableResourceCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithProvidedRatioButWithALimitOverride() {
+    void calculateRequestsWithProvidedRatioButWithALimitOverride() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
         ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
@@ -89,7 +89,7 @@ public class ConfigurableResourceCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides() {
+    void calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides() {
         ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withMemoryLimit("2048Mi")

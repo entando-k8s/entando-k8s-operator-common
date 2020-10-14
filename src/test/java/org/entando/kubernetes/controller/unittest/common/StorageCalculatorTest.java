@@ -32,23 +32,23 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-public class StorageCalculatorTest {
+class StorageCalculatorTest {
 
     @AfterEach
     @BeforeEach
-    public void resetProvidedRatio() {
+    void resetProvidedRatio() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty());
     }
 
     @Test
-    public void calculateRequestsWithDefaultRatio() {
+    void calculateRequestsWithDefaultRatio() {
         StorageCalculator resourceCalculator = new StorageCalculator(new SampleDeployableContainer<>(new EntandoApp()));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));
         assertThat(resourceCalculator.getStorageRequest(), is("204.8Mi"));
     }
 
     @Test
-    public void calculateRequestsWithProvidedRatio() {
+    void calculateRequestsWithProvidedRatio() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
         StorageCalculator resourceCalculator = new StorageCalculator(new SampleDeployableContainer<>(new EntandoApp()));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));

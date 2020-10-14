@@ -32,7 +32,7 @@ public class EntandoExecListener implements ExecListener {
 
     @Override
     public void onOpen(Response response) {
-        System.out.println("response = " + response);
+        //no implementation required
     }
 
     @Override

@@ -60,7 +60,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"),@Tag("pre-deployment"),@Tag("component") })
-public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals {
+class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     public static final String MY_KEYCLOAK_SERVER_DEPLOYMENT = MY_KEYCLOAK + "-server-deployment";
     private static final String MY_KEYCLOAK_DB_SECRET = MY_KEYCLOAK + "-db-secret";
@@ -77,7 +77,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     private SampleController sampleController;
 
     @BeforeEach
-    public void prepareExternalDB() {
+    void prepareExternalDB() {
         this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
         };
         client.secrets().overwriteControllerSecret(buildKeycloakSecret());
@@ -92,7 +92,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     }
 
     @Test
-    public void testSecrets() {
+    void testSecrets() {
         //Given I have created an EntandoDatabaseService custom resource
         //When I deploy a EntandoKeycloakServer
         sampleController.onStartup(new StartupEvent());
@@ -105,7 +105,7 @@ public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTest
     }
 
     @Test
-    public void testDeployment() {
+    void testDeployment() {
         //Given I have created an EntandoDatabaseService custom resource
         //And Keycloak is receiving requests
         lenient().when(keycloakClient.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn(KEYCLOAK_SECRET);

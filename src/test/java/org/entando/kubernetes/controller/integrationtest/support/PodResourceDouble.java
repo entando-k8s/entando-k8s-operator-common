@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.integrationtest.support;
 
+import static org.awaitility.Awaitility.await;
+
 import io.fabric8.kubernetes.client.dsl.ContainerResource;
 import io.fabric8.kubernetes.client.dsl.ExecListenable;
 import io.fabric8.kubernetes.client.dsl.ExecListener;
@@ -31,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.concurrent.TimeUnit;
 
 public class PodResourceDouble extends PodOperationsImpl {
 
@@ -81,10 +84,11 @@ public class PodResourceDouble extends PodOperationsImpl {
     }
 
     @Override
+    @SuppressWarnings("java:S2925")
     public ExecWatch exec(String... command) {
         new Thread(() -> {
             try {
-                Thread.sleep(300);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

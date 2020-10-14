@@ -92,7 +92,7 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private ServiceAccount newServiceAccount(Deployable deployable) {
+    private ServiceAccount newServiceAccount(Deployable<?> deployable) {
         return new ServiceAccountBuilder()
                 .withNewMetadata()
                 .withName(deployable.determineServiceAccountName())

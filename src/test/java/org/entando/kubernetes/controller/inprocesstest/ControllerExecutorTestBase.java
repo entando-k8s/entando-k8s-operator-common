@@ -37,6 +37,7 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("java:S5786")
 public abstract class ControllerExecutorTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior {
 
     public static final String CONTROLLER_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("controller-namespace");
@@ -44,14 +45,14 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     private SimpleK8SClient<?> client;
 
     @AfterEach
-    public void resetSystemProperty() {
+    void resetSystemProperty() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty());
         client.pods().getPodWatcherHolder().set(null);
         PodClientDouble.setEmulatePodWatching(false);
     }
 
     @Test
-    public void testStart() {
+    void testStart() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
@@ -71,7 +72,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     }
 
     @Test
-    public void testRun() {
+    void testRun() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);

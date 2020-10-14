@@ -59,9 +59,7 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 
 @Tags({@Tag("inter-process"), @Tag("pre-deployment")})
-public class KeycloakClientTest implements FluentIntegrationTesting {
-
-    public static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);
+class KeycloakClientTest implements FluentIntegrationTesting {
 
     public static final String KC_TEST_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("kc-test-namespace");
     public static final String MY_REALM = "my-realm";
@@ -76,7 +74,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
             return Optional.ofNullable(
                     new SecretBuilder()
                             .addToStringData(KubeUtils.USERNAME_KEY, "test-admin")
-                            .addToStringData(KubeUtils.PASSSWORD_KEY, KCP)
+                            .addToStringData(KubeUtils.PASSSWORD_KEY, MinimalKeycloakContainer.KCP)
                             .addToStringData(KubeUtils.URL_KEY,
                                     HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth")
                             .build());
@@ -95,7 +93,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
             .build();
 
     @Test
-    public void testEnsureRealm() {
+    void testEnsureRealm() {
         //Given a Keycloak Server is available and I have logged int
         DefaultKeycloakClient kc = prepareKeycloak();
         //When I ensure that a specific real is available
@@ -111,7 +109,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
     }
 
     @Test
-    public void testCreatePublicClient() {
+    void testCreatePublicClient() {
         //Given a Keycloak Server is available and I have logged int
         DefaultKeycloakClient kc = prepareKeycloak();
         //And  I have ensured that a specific real is available
@@ -129,7 +127,7 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
     }
 
     @Test
-    public void testPrepareClientWithPermissions() {
+    void testPrepareClientWithPermissions() {
         //Given a Keycloak Server is available and I have logged int
         DefaultKeycloakClient kc = prepareKeycloak();
         //And  I have ensured that a specific real is available
@@ -185,7 +183,8 @@ public class KeycloakClientTest implements FluentIntegrationTesting {
             );
             keycloakClient = new DefaultKeycloakClient();
             keycloakClient
-                    .login(HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin", KCP);
+                    .login(HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin",
+                            MinimalKeycloakContainer.KCP);
         }
         return keycloakClient;
     }

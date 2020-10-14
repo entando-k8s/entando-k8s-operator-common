@@ -36,9 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
@@ -72,7 +70,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         super(entandoCustomResource);
     }
 
-    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable deployable) {
+    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?> deployable) {
         deployment = deploymentClient
                 .createOrPatchDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
         return deployment;

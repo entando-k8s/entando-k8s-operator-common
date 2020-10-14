@@ -80,7 +80,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"),@Tag("pre-deployment"),@Tag("component") })
-public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
+class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
 
     private static final String MY_KEYCLOAK_ADMIN_SECRET = MY_KEYCLOAK + "-admin-secret";
     private static final String MY_KEYCLOAK_SERVER = MY_KEYCLOAK + "-server";
@@ -110,7 +110,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     private SampleController sampleController;
 
     @BeforeEach
-    public void prepareKeycloakCustomResource() {
+    void prepareKeycloakCustomResource() {
         this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
         };
         client.entandoResources().createOrPatchEntandoResource(keycloakServer);
@@ -121,14 +121,14 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     }
 
     @AfterEach
-    public void resetSystemProps() {
+    void resetSystemProps() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.getJvmSystemProperty());
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.getJvmSystemProperty());
         TlsHelper.getInstance().init();
     }
 
     @Test
-    public void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
+    void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         final EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         //And the trust cert has been configured correctly
@@ -188,7 +188,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     }
 
     @Test
-    public void testService() {
+    void testService() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         //And that K8S is up and receiving Service requests
@@ -234,7 +234,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     }
 
     @Test
-    public void testIngress() {
+    void testIngress() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         //And that K8S is up and receiving Ingress requests
@@ -263,7 +263,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     }
 
     @Test
-    public void testSchemaPreparation() {
+    void testSchemaPreparation() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
 
@@ -305,7 +305,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     }
 
     @Test
-    public void testDeployment() {
+    void testDeployment() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         //And the trust cert has been configured correctly
@@ -401,7 +401,7 @@ public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraver
     }
 
     @Test
-    public void testPersistentVolumeClaims() {
+    void testPersistentVolumeClaims() {
         //Given I have  a Keycloak server
         EntandoKeycloakServer newEntandoKeycloakServer = this.keycloakServer;
         //And that K8S is up and receiving PVC requests
