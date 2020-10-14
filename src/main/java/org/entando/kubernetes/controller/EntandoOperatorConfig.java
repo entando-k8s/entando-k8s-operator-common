@@ -129,4 +129,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static boolean assumeExternalHttpsProvider() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER).map(Boolean::valueOf).orElse(false);
     }
+
+    public static boolean disablePvcGarbageCollection() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GC).map(Boolean::valueOf).orElse(false);
+    }
 }

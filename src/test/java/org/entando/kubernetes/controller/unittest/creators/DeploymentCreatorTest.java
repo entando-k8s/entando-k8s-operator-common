@@ -34,9 +34,10 @@ import org.entando.kubernetes.controller.test.support.stubhelper.DeployableStubH
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tag("unit")
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
 public class DeploymentCreatorTest {
 
     private EntandoDatabaseService entandoDatabaseService = CustomResourceStubHelper.stubEntandoDatabaseService();

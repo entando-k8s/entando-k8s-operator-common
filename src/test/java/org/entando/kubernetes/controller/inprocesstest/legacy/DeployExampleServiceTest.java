@@ -79,7 +79,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 //in execute component test
-@Tags({@Tag("in-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"),@Tag("pre-deployment"),@Tag("component") })
 public class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
 
     private static final String MY_KEYCLOAK_ADMIN_SECRET = MY_KEYCLOAK + "-admin-secret";

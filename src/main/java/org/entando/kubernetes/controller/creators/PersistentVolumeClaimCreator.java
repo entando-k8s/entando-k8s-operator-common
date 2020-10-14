@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.ConfigurableStorageCalculator;
 import org.entando.kubernetes.controller.common.StorageCalculator;
 import org.entando.kubernetes.controller.k8sclient.PersistentVolumeClaimClient;
@@ -68,7 +69,7 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
     private PersistentVolumeClaim newPersistentVolumeClaim(Deployable<?> deployable, PersistentVolumeAware container) {
         StorageCalculator resourceCalculator = buildStorageCalculator(container);
         return new PersistentVolumeClaimBuilder()
-                .withMetadata(fromCustomResource(true, resolveName(container.getNameQualifier(), "-pvc"),
+                .withMetadata(fromCustomResource(EntandoOperatorConfig.disablePvcGarbageCollection(), resolveName(container.getNameQualifier(), "-pvc"),
                         deployable.getNameQualifier()))
                 .withNewSpec().withAccessModes("ReadWriteOnce")
                 .withNewResources()

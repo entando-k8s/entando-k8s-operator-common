@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.mockito.Mockito;
 
-@Tags({@Tag("in-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"),@Tag("pre-deployment"),@Tag("component") })
 public class SpringBootContainerMockClientTest extends SpringBootContainerTestBase {
 
     private SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();

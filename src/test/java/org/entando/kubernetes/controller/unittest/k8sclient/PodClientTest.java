@@ -19,7 +19,6 @@ package org.entando.kubernetes.controller.unittest.k8sclient;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -29,8 +28,9 @@ import org.entando.kubernetes.controller.integrationtest.support.PodResourceDoub
 import org.entando.kubernetes.controller.integrationtest.support.PodResourceDouble.ExecWatchDouble;
 import org.junit.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 
-@Tag("in-process")
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
 public class PodClientTest {
 
     @Test

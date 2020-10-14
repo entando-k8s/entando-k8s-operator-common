@@ -25,9 +25,10 @@ import org.entando.kubernetes.controller.common.examples.barebones.BareBonesCont
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tag("unit")
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
 public class ResourceCalculatorTest {
 
     @AfterEach

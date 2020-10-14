@@ -59,7 +59,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 //in execute component test
-@Tags({@Tag("in-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"),@Tag("pre-deployment"),@Tag("component") })
 public class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     public static final String MY_KEYCLOAK_SERVER_DEPLOYMENT = MY_KEYCLOAK + "-server-deployment";
