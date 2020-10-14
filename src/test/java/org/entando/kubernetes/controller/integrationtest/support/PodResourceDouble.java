@@ -43,8 +43,9 @@ public class PodResourceDouble extends PodOperationsImpl {
     }
 
     @Override
-    public ContainerResource<String, LogWatch, InputStream, PipedOutputStream, OutputStream, PipedInputStream, String, ExecWatch, Boolean
-            , InputStream, Boolean> inContainer(
+    public ContainerResource<
+            String, LogWatch, InputStream, PipedOutputStream, OutputStream, PipedInputStream, String, ExecWatch, Boolean, InputStream,
+            Boolean> inContainer(
             String containerId) {
         return new PodResourceDouble(getContext().withContainerId(containerId));
     }
@@ -94,7 +95,7 @@ public class PodResourceDouble extends PodOperationsImpl {
 
     public class ExecWatchDouble implements ExecWatch {
 
-        private PodResourceDouble podResourceDouble= PodResourceDouble.this;
+        private PodResourceDouble podResourceDouble = PodResourceDouble.this;
 
         public PodResourceDouble getPodResourceDouble() {
             return podResourceDouble;

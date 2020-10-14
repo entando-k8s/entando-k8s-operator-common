@@ -29,7 +29,7 @@ import org.entando.kubernetes.client.PodWatcher;
 public interface PodWaitingClient {
 
     /**
-     * A getter for the an AtomicReference to the most recently constructed PodWatcherholder for testing purposes
+     * A getter for the an AtomicReference to the most recently constructed PodWatcherholder for testing purposes.
      */
     AtomicReference<PodWatcher> getPodWatcherHolder();
 

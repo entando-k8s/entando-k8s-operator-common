@@ -20,7 +20,6 @@ import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
-import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodConditionBuilder;
@@ -90,7 +89,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
 
     @Override
     public ExecWatch executeOnPod(Pod pod, String containerName, String... commands) {
-        if(pod != null){
+        if (pod != null) {
             PodResource<Pod, DoneablePod> podResource = null;
             return executeAndWait(podResource, containerName, commands);
         }

@@ -73,7 +73,7 @@ public interface PodClient extends PodWaitingClient {
     }
 
     /**
-     * A getter for the an AtomicReference to the most recently constructed ExecListener for testing purposes
+     * A getter for the an AtomicReference to the most recently constructed ExecListener for testing purposes.
      */
     AtomicReference<EntandoExecListener> getExecListenerHolder();
 
