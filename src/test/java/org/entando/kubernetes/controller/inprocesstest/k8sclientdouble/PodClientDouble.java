@@ -38,6 +38,7 @@ import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.PodResult;
 import org.entando.kubernetes.controller.PodResult.State;
+import org.entando.kubernetes.controller.integrationtest.support.PodResourceDouble;
 import org.entando.kubernetes.controller.k8sclient.PodClient;
 
 public class PodClientDouble extends AbstractK8SClientDouble implements PodClient {
@@ -90,7 +91,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     @Override
     public ExecWatch executeOnPod(Pod pod, String containerName, String... commands) {
         if (pod != null) {
-            PodResource<Pod, DoneablePod> podResource = null;
+            PodResource<Pod, DoneablePod> podResource = new PodResourceDouble();
             return executeAndWait(podResource, containerName, commands);
         }
         return null;
