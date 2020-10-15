@@ -35,9 +35,10 @@ import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
+import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.MinimalKeycloakContainer;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrationTesting;
@@ -47,7 +48,6 @@ import org.entando.kubernetes.controller.integrationtest.support.TestFixturePrep
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
@@ -91,22 +91,6 @@ class KeycloakClientTest implements FluentIntegrationTesting {
             .withReplicas(1)
             .endSpec()
             .build();
-
-    @Test
-    void testEnsureRealm() {
-        //Given a Keycloak Server is available and I have logged int
-        DefaultKeycloakClient kc = prepareKeycloak();
-        //When I ensure that a specific real is available
-        kc.ensureRealm(MY_REALM);
-        //Then an Operator Client is created under this realm
-        Optional<ClientRepresentation> operatorClient = helper
-                .findClientInRealm(MY_REALM, KubeUtils.OPERATOR_CLIENT_ID);
-        assertThat(operatorClient.isPresent(), is(true));
-        //With only basic functionality enabled
-        assertThat(operatorClient.get().isStandardFlowEnabled(), is(false));
-        assertThat(operatorClient.get().isImplicitFlowEnabled(), is(false));
-        assertThat(operatorClient.get().isPublicClient(), is(false));
-    }
 
     @Test
     void testCreatePublicClient() {
@@ -171,7 +155,7 @@ class KeycloakClientTest implements FluentIntegrationTesting {
                             DoneableEntandoKeycloakServer>> operation = helper
                     .getOperations().inNamespace(KC_TEST_NAMESPACE);
             keycloakServer = operation.createOrReplace(keycloakServer);
-            ServiceDeploymentResult result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer))
+            ExposedService result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer))
                     .execute(simpleK8SClient, Optional
                             .empty());
             Pod pod = simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
@@ -189,7 +173,7 @@ class KeycloakClientTest implements FluentIntegrationTesting {
         return keycloakClient;
     }
 
-    private static class TestKeycloakDeployable implements IngressingDeployable<ServiceDeploymentResult> {
+    private static class TestKeycloakDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServer> {
 
         private final List<DeployableContainer> containers;
         private final EntandoKeycloakServer keycloakServer;
@@ -220,13 +204,13 @@ class KeycloakClientTest implements FluentIntegrationTesting {
         }
 
         @Override
-        public EntandoBaseCustomResource<?> getCustomResource() {
+        public EntandoKeycloakServer getCustomResource() {
             return keycloakServer;
         }
 
         @Override
-        public ServiceDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-            return new ServiceDeploymentResult(service, ingress);
+        public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+            return new ExposedDeploymentResult(pod, service, ingress);
         }
 
     }

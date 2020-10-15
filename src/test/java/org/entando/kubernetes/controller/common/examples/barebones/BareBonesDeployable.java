@@ -29,17 +29,16 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class BareBonesDeployable implements Deployable<BarebonesDeploymentResult>, Secretive {
+public class BareBonesDeployable<T extends EntandoBaseCustomResource> implements Deployable<BarebonesDeploymentResult, T>, Secretive {
 
     public static final String MY_SERVICE_ACCOUNT = "my-service-account";
     public static final String NAME_QUALIFIER = "db";
     private List<DeployableContainer> containers = Arrays.asList(new BareBonesContainer());
-    private EntandoBaseCustomResource<?> customResource;
+    private T customResource;
     private DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.POSTGRESQL;
 
-    public BareBonesDeployable(EntandoBaseCustomResource<?> customResource) {
+    public BareBonesDeployable(T customResource) {
         this.customResource = customResource;
     }
 
@@ -64,13 +63,13 @@ public class BareBonesDeployable implements Deployable<BarebonesDeploymentResult
     }
 
     @Override
-    public EntandoBaseCustomResource<?> getCustomResource() {
+    public T getCustomResource() {
         return customResource;
     }
 
     @Override
     public BarebonesDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new BarebonesDeploymentResult(pod);
+        return new BarebonesDeploymentResult(service, pod);
     }
 
     @Override

@@ -21,8 +21,8 @@ import static org.entando.kubernetes.controller.KubeUtils.generateSecret;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Arrays;
 import java.util.List;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
@@ -30,7 +30,7 @@ import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class SamplePublicIngressingDbAwareDeployable<T extends EntandoBaseCustomResource> extends
-        SampleIngressingDbAwareDeployable<T> implements PublicIngressingDeployable<ServiceDeploymentResult>,
+        SampleIngressingDbAwareDeployable<T> implements PublicIngressingDeployable<ExposedDeploymentResult, T>,
         Secretive {
 
     public static final String SAMPLE_PUBLIC_CLIENT = "sample-public-client";

@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.InfrastructureConfig;
 import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
@@ -72,8 +72,8 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public ServiceDeploymentResult loadServiceResult(EntandoCustomResource resource) {
-        return new ServiceDeploymentResult(
+    public ExposedService loadExposedService(EntandoCustomResource resource) {
+        return new ExposedService(
                 loadService(resource, standardServiceName(resource)),
                 loadIngress(resource, standardIngressName(resource)));
     }

@@ -48,9 +48,7 @@ public final class KubeUtils {
     public static final String ENTANDO_APP_ROLE = "entandoApp";
     public static final String ENTANDO_PLUGIN_ROLE = "entandoPlugin";
     public static final String ENTANDO_CLUSTER_ROLE = "entandoCluster";
-    //TODO Find out why we only have one public client.
     public static final String PUBLIC_CLIENT_ID = "entando-web";
-    public static final String OPERATOR_CLIENT_ID = "entando-k8s-operator";
     public static final String ENTANDO_KEYCLOAK_REALM = "entando";
     public static final String ENTANDO_RESOURCE_KIND_LABEL_NAME = "EntandoResourceKind";
 

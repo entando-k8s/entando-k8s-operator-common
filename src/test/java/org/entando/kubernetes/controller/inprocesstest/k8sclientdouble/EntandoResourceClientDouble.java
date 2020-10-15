@@ -22,9 +22,10 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
+import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.InfrastructureConfig;
 import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
@@ -128,12 +129,12 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public ServiceDeploymentResult loadServiceResult(EntandoCustomResource resource) {
+    public ExposedService loadExposedService(EntandoCustomResource resource) {
         NamespaceDouble namespace = getNamespace(resource);
         Service service = namespace.getService(
                 resource.getMetadata().getName() + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-" + KubeUtils.DEFAULT_SERVICE_SUFFIX);
         Ingress ingress = namespace.getIngress(KubeUtils.standardIngressName(resource));
-        return new ServiceDeploymentResult(service, ingress);
+        return new ExposedService(service, ingress);
     }
 
 }

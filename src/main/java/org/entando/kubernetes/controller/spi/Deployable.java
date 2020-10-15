@@ -25,7 +25,7 @@ import java.util.Optional;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public interface Deployable<T extends ServiceResult> {
+public interface Deployable<T extends ServiceDeploymentResult, C extends EntandoBaseCustomResource> {
 
     /**
      * NB!!! Implementations need to implement this as a non-modifiable list with the exact same instances returned consistently.
@@ -34,7 +34,7 @@ public interface Deployable<T extends ServiceResult> {
 
     String getNameQualifier();
 
-    EntandoBaseCustomResource<?> getCustomResource();
+    C getCustomResource();
 
     T createResult(Deployment deployment, Service service, Ingress ingress, Pod pod);
 

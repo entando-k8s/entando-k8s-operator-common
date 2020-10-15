@@ -31,6 +31,7 @@ import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
+import org.entando.kubernetes.controller.database.DatabaseDeploymentResult;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
@@ -68,7 +69,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     /**
      * Constructor for integration tests where we would need to override the auto exit behaviour.
      */
-    public AbstractDbAwareController(KubernetesClient kubernetesClient, boolean exitAutomatically) {
+    protected AbstractDbAwareController(KubernetesClient kubernetesClient, boolean exitAutomatically) {
         this(new DefaultSimpleK8SClient(kubernetesClient), new DefaultKeycloakClient(), new AutoExit(exitAutomatically));
 
     }
@@ -157,22 +158,23 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         }
     }
 
-    protected DatabaseServiceResult prepareDatabaseService(EntandoBaseCustomResource<?> entandoCustomResource, DbmsVendor dbmsVendor,
+    protected <C extends EntandoBaseCustomResource> DatabaseServiceResult prepareDatabaseService(C entandoCustomResource,
+            DbmsVendor dbmsVendor,
             String nameQualifier) {
         Optional<ExternalDatabaseDeployment> externalDatabase = k8sClient.entandoResources()
                 .findExternalDatabase(entandoCustomResource, dbmsVendor);
-        DatabaseServiceResult result = null;
         if (externalDatabase.isPresent()) {
-            result = new DatabaseServiceResult(externalDatabase.get().getService(), externalDatabase.get().getEntandoDatabaseService());
+            return externalDatabase.get();
         } else if (!(dbmsVendor == DbmsVendor.NONE || dbmsVendor == DbmsVendor.EMBEDDED)) {
-            final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
+            final DatabaseDeployable<C> databaseDeployable = new DatabaseDeployable<>(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
                     entandoCustomResource, nameQualifier);
-            final DeployCommand<DatabaseServiceResult> dbCommand = new DeployCommand<>(databaseDeployable);
-            result = dbCommand.execute(k8sClient, empty());
+            final DeployCommand<DatabaseDeploymentResult, C> dbCommand = new DeployCommand<>(databaseDeployable);
+            DatabaseDeploymentResult result = dbCommand.execute(k8sClient, empty());
             if (result.hasFailed()) {
                 throw new EntandoControllerException("Database deployment failed");
             }
+            return result;
         }
-        return result;
+        return null;
     }
 }

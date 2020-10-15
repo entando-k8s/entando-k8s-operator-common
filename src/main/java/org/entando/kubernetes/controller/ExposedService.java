@@ -23,11 +23,11 @@ import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
 
-public class ServiceDeploymentResult extends AbstractServiceResult {
+public class ExposedService extends AbstractServiceResult {
 
     protected final Ingress ingress;
 
-    public ServiceDeploymentResult(Service service, Ingress ingress) {
+    public ExposedService(Service service, Ingress ingress) {
         super(service);
         this.ingress = ingress;
     }

@@ -14,52 +14,42 @@
  *
  */
 
-package org.entando.kubernetes.controller.common.examples.barebones;
+package org.entando.kubernetes.controller;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
-import org.entando.kubernetes.controller.AbstractServiceResult;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import org.entando.kubernetes.controller.spi.ServiceDeploymentResult;
 import org.entando.kubernetes.model.AbstractServerStatus;
 
-public class BarebonesDeploymentResult extends AbstractServiceResult implements ServiceDeploymentResult<BarebonesDeploymentResult> {
+public class ExposedDeploymentResult<T extends ExposedDeploymentResult> extends ExposedService implements ServiceDeploymentResult<T> {
 
-    private final Pod pod;
     private AbstractServerStatus status;
+    private Pod pod;
 
-    public BarebonesDeploymentResult(Service service, Pod pod) {
-        super(service);
+    public ExposedDeploymentResult(Pod pod, Service service, Ingress ingress) {
+        super(service, ingress);
         this.pod = pod;
     }
 
     @Override
-    public String getInternalServiceHostname() {
-        return pod.getStatus().getPodIP();
-    }
-
-    @Override
-    public String getPort() {
-        return pod.getSpec().getContainers().get(0).getPorts().get(0).getContainerPort().toString();
-    }
-
-    @Override
-    public Service getService() {
-        return null;
-    }
-
-    @Override
-    public BarebonesDeploymentResult withStatus(AbstractServerStatus status) {
+    public T withStatus(AbstractServerStatus status) {
         this.status = status;
-        return this;
+        return thisAsT();
     }
 
-    @Override
-    public Pod getPod() {
-        return pod;
+    @SuppressWarnings("gene")
+    private T thisAsT() {
+        return (T) this;
     }
 
     @Override
     public AbstractServerStatus getStatus() {
         return status;
+    }
+
+    @Override
+    public Pod getPod() {
+        return pod;
     }
 }

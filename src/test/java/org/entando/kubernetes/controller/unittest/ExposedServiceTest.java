@@ -24,7 +24,7 @@ import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
+import org.entando.kubernetes.controller.ExposedService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-class ServiceDeploymentResultTest {
+class ExposedServiceTest {
 
     @BeforeEach
     @AfterEach
@@ -42,7 +42,7 @@ class ServiceDeploymentResultTest {
 
     @Test
     void testUrlsOnMultiplePorts() throws Exception {
-        ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
+        ExposedService actual = new ExposedService(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
                 .withNamespace("my-namespace")
@@ -91,7 +91,7 @@ class ServiceDeploymentResultTest {
 
     @Test
     void testUrlsOnSinglePorts() throws Exception {
-        ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
+        ExposedService actual = new ExposedService(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
                 .withNamespace("my-namespace")
@@ -125,7 +125,7 @@ class ServiceDeploymentResultTest {
 
     @Test
     void testUrlsOnDelegatingService() throws Exception {
-        ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
+        ExposedService actual = new ExposedService(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
                 .withNamespace("another-namespace")
@@ -159,7 +159,7 @@ class ServiceDeploymentResultTest {
 
     @Test
     void testHttpsUrls() throws Exception {
-        ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
+        ExposedService actual = new ExposedService(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
                 .withNamespace("my-namespace")
@@ -197,7 +197,7 @@ class ServiceDeploymentResultTest {
     @Test
     void testExternalHttpsProvider() throws Exception {
         System.getProperties().put(EntandoOperatorConfigProperty.ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER.getJvmSystemProperty(), "true");
-        ServiceDeploymentResult actual = new ServiceDeploymentResult(new ServiceBuilder()
+        ExposedService actual = new ExposedService(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
                 .withNamespace("my-namespace")

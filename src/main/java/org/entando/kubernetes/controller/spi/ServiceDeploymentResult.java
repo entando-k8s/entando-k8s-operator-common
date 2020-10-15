@@ -14,21 +14,16 @@
  *
  */
 
-package org.entando.kubernetes.controller.database;
+package org.entando.kubernetes.controller.spi;
 
-import java.util.Map;
-import java.util.Optional;
-import org.entando.kubernetes.controller.spi.ServiceResult;
+import io.fabric8.kubernetes.api.model.Pod;
+import org.entando.kubernetes.model.AbstractServerStatus;
 
-public interface DatabaseServiceResult extends ServiceResult {
+public interface ServiceDeploymentResult<T extends ServiceDeploymentResult> extends ServiceResult {
 
-    String getDatabaseSecretName();
+    T withStatus(AbstractServerStatus status);
 
-    Map<String, String> getJdbcParameters();
+    AbstractServerStatus getStatus();
 
-    String getDatabaseName();
-
-    DbmsDockerVendorStrategy getVendor();
-
-    Optional<String> getTablespace();
+    Pod getPod();
 }

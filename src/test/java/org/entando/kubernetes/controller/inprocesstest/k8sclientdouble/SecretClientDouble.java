@@ -44,6 +44,11 @@ public class SecretClientDouble extends AbstractK8SClientDouble implements Secre
     }
 
     @Override
+    public Secret loadControllerSecret(String secretName) {
+        return getNamespace(CONTROLLER_NAMESPACE).getSecret(secretName);
+    }
+
+    @Override
     public ConfigMap loadControllerConfigMap(String configMapName) {
         return getNamespace(CONTROLLER_NAMESPACE).getConfigMap(configMapName);
     }

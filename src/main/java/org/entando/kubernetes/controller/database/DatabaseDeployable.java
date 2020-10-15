@@ -38,15 +38,15 @@ import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
-public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Secretive {
+public class DatabaseDeployable<C extends EntandoBaseCustomResource> implements Deployable<DatabaseDeploymentResult, C>, Secretive {
 
     private final Map<DbmsDockerVendorStrategy, VariableInitializer> variableInitializers = new ConcurrentHashMap<>();
     private final DbmsDockerVendorStrategy dbmsVendor;
-    private final EntandoBaseCustomResource<?> customResource;
+    private final C customResource;
     private final List<DeployableContainer> containers;
     private final String nameQualifier;
 
-    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoBaseCustomResource<?> customResource, String nameQualifier) {
+    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, C customResource, String nameQualifier) {
         variableInitializers.put(DbmsDockerVendorStrategy.MYSQL, vars ->
                 //No DB creation. Dbs are created during schema creation
                 vars.add(new EnvVar("MYSQL_ROOT_PASSWORD", null,
@@ -85,13 +85,13 @@ public class DatabaseDeployable implements Deployable<DatabaseServiceResult>, Se
     }
 
     @Override
-    public EntandoBaseCustomResource<?> getCustomResource() {
+    public C getCustomResource() {
         return customResource;
     }
 
     @Override
-    public DatabaseServiceResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new DatabaseServiceResult(service, dbmsVendor, getDatabaseName(), getDatabaseAdminSecretName(), pod);
+    public DatabaseDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+        return new DatabaseDeploymentResult(service, dbmsVendor, getDatabaseName(), getDatabaseAdminSecretName(), pod);
     }
 
     @Override

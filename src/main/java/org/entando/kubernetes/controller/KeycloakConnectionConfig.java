@@ -27,7 +27,11 @@ public interface KeycloakConnectionConfig extends SecretBasedCredentials {
     }
 
     default String determineBaseUrl() {
-        return getInternalBaseUrl().orElse(getExternalBaseUrl());
+        if (EntandoOperatorConfig.forceExternalAccessToKeycloak()) {
+            return getExternalBaseUrl();
+        } else {
+            return getInternalBaseUrl().orElse(getExternalBaseUrl());
+        }
     }
 
     Secret getAdminSecret();

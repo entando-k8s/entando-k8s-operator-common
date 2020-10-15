@@ -64,7 +64,8 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_CLUSTER_INFRASTRUCTURE_SECRET_NAME("entando.cluster.infrastructure.secret.name"),
     ENTANDO_DEFAULT_KEYCLOAK_SECRET_NAME("entando.default.keycloak.secret.name"),
     ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE("entando.requires.filesystem.group.override"),
-    ENTANDO_INGRESS_CLASS("entando.ingress.class");
+    ENTANDO_INGRESS_CLASS("entando.ingress.class"),
+    ENTANDO_FORCE_EXTERNAL_ACCESS_TO_KEYCLOAK("entando.force.external.access.to.keycloak");
 
     private final String jvmSystemProperty;
 

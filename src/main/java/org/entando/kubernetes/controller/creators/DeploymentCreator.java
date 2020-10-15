@@ -70,7 +70,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         super(entandoCustomResource);
     }
 
-    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?> deployable) {
+    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?, ?> deployable) {
         deployment = deploymentClient
                 .createOrPatchDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
         return deployment;
@@ -89,7 +89,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver,
-            Deployable<?> deployable) {
+            Deployable<?, ?> deployable) {
         return new DeploymentBuilder()
                 .withNewSpec()
                 .withNewSelector()
@@ -112,7 +112,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .endSpec().buildSpec();
     }
 
-    private PodSecurityContext buildSecurityContext(Deployable<?> deployable) {
+    private PodSecurityContext buildSecurityContext(Deployable<?, ?> deployable) {
         if (EntandoOperatorConfig.requiresFilesystemGroupOverride()) {
             return deployable.getFileSystemUserAndGroupId()
                     .map(useAndGroupId -> new PodSecurityContextBuilder().withFsGroup(useAndGroupId).build()).orElse(null);
@@ -120,7 +120,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return null;
     }
 
-    private List<Volume> buildVolumesForDeployable(Deployable<?> deployable) {
+    private List<Volume> buildVolumesForDeployable(Deployable<?, ?> deployable) {
         List<Volume> volumeList = deployable.getContainers().stream()
                 .map(this::buildVolumesForContainer)
                 .flatMap(Collection::stream)
@@ -155,7 +155,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?> deployable) {
+    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?, ?> deployable) {
         return deployable.getContainers().stream().map(deployableContainer -> this.newContainer(imageResolver, deployableContainer))
                 .collect(Collectors.toList());
     }
@@ -294,7 +294,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return resolveName(container.getNameQualifier(), VOLUME_SUFFIX);
     }
 
-    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable) {
+    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?, ?> deployable) {
         return new DeploymentBuilder()
                 .withMetadata(fromCustomResource(true, resolveName(deployable.getNameQualifier(), DEPLOYMENT_SUFFIX),
                         deployable.getNameQualifier()))
