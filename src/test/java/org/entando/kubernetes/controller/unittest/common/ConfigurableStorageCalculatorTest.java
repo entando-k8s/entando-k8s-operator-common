@@ -28,19 +28,20 @@ import org.entando.kubernetes.model.app.EntandoAppSpecBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tag("unit")
-public class ConfigurableStorageCalculatorTest {
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
+class ConfigurableStorageCalculatorTest {
 
     @AfterEach
     @BeforeEach
-    public void resetProvidedRatio() {
+    void resetProvidedRatio() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty());
     }
 
     @Test
-    public void calculateRequestsWithDefaultRatioAndNoOverride() {
+    void calculateRequestsWithDefaultRatioAndNoOverride() {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));
@@ -48,7 +49,7 @@ public class ConfigurableStorageCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithProvidedRatioNoOverride() {
+    void calculateRequestsWithProvidedRatioNoOverride() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null));
@@ -57,7 +58,7 @@ public class ConfigurableStorageCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithDefaultRatioButWithALimitOverride() {
+    void calculateRequestsWithDefaultRatioButWithALimitOverride() {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withStorageLimit("4096Mi")
@@ -67,7 +68,7 @@ public class ConfigurableStorageCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithProvidedRatioButWithALimitOverride() {
+    void calculateRequestsWithProvidedRatioButWithALimitOverride() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
@@ -78,7 +79,7 @@ public class ConfigurableStorageCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides() {
+    void calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides() {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withStorageLimit("4096Mi")

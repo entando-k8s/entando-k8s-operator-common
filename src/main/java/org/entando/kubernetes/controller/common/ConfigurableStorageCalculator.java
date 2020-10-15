@@ -29,10 +29,12 @@ public class ConfigurableStorageCalculator extends StorageCalculator {
         this.resourceRequirements = container.getResourceRequirements().orElse(new EntandoResourceRequirements());
     }
 
+    @Override
     public String getStorageLimit() {
         return resourceRequirements.getStorageLimit().orElse(super.getStorageLimit());
     }
 
+    @Override
     public String getStorageRequest() {
         return this.resourceRequirements.getStorageRequest().orElse(super.getStorageRequest());
     }

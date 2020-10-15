@@ -32,9 +32,9 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
-@Tags({@Tag("in-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 @EnableRuleMigrationSupport
-public class DefaultClientTest {
+class DefaultClientTest {
 
     @Rule
     public KubernetesServer server = new KubernetesServer(false, true);
@@ -46,7 +46,7 @@ public class DefaultClientTest {
     }
 
     @Test
-    public void shouldRemovePathFromIngress() {
+    void shouldRemovePathFromIngress() {
 
         EntandoPlugin plugin = new EntandoPluginBuilder()
                 .withNewMetadata()

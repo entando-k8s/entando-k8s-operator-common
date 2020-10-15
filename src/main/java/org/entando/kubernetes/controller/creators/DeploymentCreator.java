@@ -36,9 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
@@ -72,7 +70,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         super(entandoCustomResource);
     }
 
-    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable deployable) {
+    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?> deployable) {
         deployment = deploymentClient
                 .createOrPatchDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
         return deployment;
@@ -280,15 +278,15 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         container.addEnvironmentVariables(vars);
         if (container instanceof ParameterizableContainer) {
             ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;
-            overrideFromParameters(vars, parameterizableContainer.getParameters().entrySet());
+            overrideFromParameters(vars, parameterizableContainer.getParameters());
         }
         return vars;
     }
 
-    private void overrideFromParameters(List<EnvVar> vars, Set<Entry<String, String>> parameters) {
-        for (Entry<String, String> parameter : parameters) {
-            vars.removeIf(envVar -> envVar.getName().equals(parameter.getKey()));
-            vars.add(new EnvVar(parameter.getKey(), parameter.getValue(), null));
+    private void overrideFromParameters(List<EnvVar> vars, List<EnvVar> parameters) {
+        for (EnvVar parameter : parameters) {
+            vars.removeIf(envVar -> envVar.getName().equals(parameter.getName()));
+            vars.add(new EnvVar(parameter.getName(), parameter.getValue(), parameter.getValueFrom()));
         }
     }
 

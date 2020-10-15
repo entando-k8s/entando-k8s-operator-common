@@ -16,10 +16,13 @@
 
 package org.entando.kubernetes.client;
 
+import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,11 +36,16 @@ public class DefaultPodClient implements PodClient {
 
     private final KubernetesClient client;
     private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
+    private AtomicReference<EntandoExecListener> execListenerHolder = new AtomicReference<>();
 
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;
         //HACK for GraalVM
         KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
+    }
+
+    public AtomicReference<EntandoExecListener> getExecListenerHolder() {
+        return execListenerHolder;
     }
 
     @Override
@@ -50,6 +58,13 @@ public class DefaultPodClient implements PodClient {
         Pod running = this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
         return waitFor(running, got -> PodResult.of(got).getState() == State.COMPLETED,
                 EntandoOperatorConfig.getPodCompletionTimeoutSeconds());
+    }
+
+    @Override
+    public ExecWatch executeOnPod(Pod pod, String containerName, String... commands) {
+        PodResource<Pod, DoneablePod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
+                .withName(pod.getMetadata().getName());
+        return executeAndWait(podResource, containerName, commands);
     }
 
     @Override
@@ -80,4 +95,6 @@ public class DefaultPodClient implements PodClient {
         return watchPod(podPredicate, timeoutSeconds, watchable);
 
     }
+
 }
+

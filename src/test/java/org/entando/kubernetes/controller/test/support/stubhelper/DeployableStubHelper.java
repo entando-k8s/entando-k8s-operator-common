@@ -16,14 +16,8 @@
 
 package org.entando.kubernetes.controller.test.support.stubhelper;
 
-import io.fabric8.kubernetes.api.model.Quantity;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import java.util.Arrays;
-import java.util.List;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.Deployable;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
 public class DeployableStubHelper {
@@ -44,32 +38,4 @@ public class DeployableStubHelper {
         return new DatabaseDeployable(DbmsDockerVendorStrategy.MYSQL, new EntandoDatabaseService(), DEPLOYABLE_NAME_QUALIFIER);
     }
 
-
-    /**
-     * creates and returns a list representing the limits and requests resources for the received Deployment.
-     *
-     * @return a list of Quantity. {@link QTY_LIMITS_CPU} {@link QTY_LIMITS_MEM} {@link QTY_REQUESTS_CPU} {@link QTY_REQUESTS_MEM}
-     */
-    public static List<Quantity> stubResourceQuantities() {
-
-        return stubResourceQuantities(stubDatabaseDeployable());
-    }
-
-
-    /**
-     * creates and returns a list representing the limits and requests resources for the received Deployment.
-     *
-     * @return a list of Quantity. {@link QTY_LIMITS_CPU} {@link QTY_LIMITS_MEM} {@link QTY_REQUESTS_CPU} {@link QTY_REQUESTS_MEM}
-     */
-    public static List<Quantity> stubResourceQuantities(Deployable deployable) {
-
-        DeployableContainer deployableContainer = (DeployableContainer) deployable.getContainers().get(0);
-
-        return Arrays.asList(
-                new Quantity(deployableContainer.getCpuLimitMillicores() / 4 + "", "m"),        // request cpu
-                new Quantity(deployableContainer.getMemoryLimitMebibytes() / 4 + "", "Mi"),     // request mem
-                new Quantity(deployableContainer.getCpuLimitMillicores() + "", "m"),            // limit cpu
-                new Quantity(deployableContainer.getMemoryLimitMebibytes() + "", "Mi")          // limit mem
-        );
-    }
 }

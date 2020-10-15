@@ -50,6 +50,7 @@ import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("java:S5786")
 public abstract class SpringBootContainerTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior, VariableReferenceAssertions {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
@@ -59,7 +60,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     private SampleController controller;
 
     @Test
-    public void testBasicDeployment() {
+    void testBasicDeployment() {
         //Given I have a controller that processes EntandoPlugins
         controller = new SampleController<EntandoPlugin>(getClient(), getKeycloakClient()) {
             @Override

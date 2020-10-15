@@ -16,10 +16,11 @@
 
 package org.entando.kubernetes.controller.common;
 
+import static org.entando.kubernetes.controller.EntandoOperatorConfigBase.lookupProperty;
+
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 
 public class LimitAndRequestCalculator {
@@ -50,7 +51,7 @@ public class LimitAndRequestCalculator {
     }
 
     protected double getRequestToLimitRatio() {
-        return EntandoOperatorConfig.lookupProperty(
+        return lookupProperty(
                 EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO).map(this::parse).orElse(0.1d).doubleValue();
     }
 

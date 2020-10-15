@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.creators;
 
+import static org.entando.kubernetes.controller.EntandoOperatorConfigBase.lookupProperty;
+
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -30,7 +32,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.EntandoImageResolver;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
@@ -48,7 +49,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         super(entandoCustomResource);
     }
 
-    public Pod runToCompletion(SimpleK8SClient client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
+    public Pod runToCompletion(SimpleK8SClient<?> client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
         return client.pods().runToCompletion(buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable));
     }
 
@@ -134,7 +135,6 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     private Container buildContainerToCreateSchema(EntandoImageResolver entandoImageResolver,
             DatabaseServiceResult databaseDeployment, String nameQualifier) {
         String dbJobName = entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-schema-creation-job";
-        //TODO lookup the version here once we have a pipeline for dbjob
         return new ContainerBuilder()
                 .withImage(entandoImageResolver
                         .determineImageUri("entando/entando-k8s-dbjob", Optional.empty()))
@@ -150,7 +150,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         result.add(new EnvVar("DATABASE_ADMIN_USER", null, buildSecretKeyRef(databaseDeployment, KubeUtils.USERNAME_KEY)));
         result.add(new EnvVar("DATABASE_ADMIN_PASSWORD", null, buildSecretKeyRef(databaseDeployment, KubeUtils.PASSSWORD_KEY)));
         result.add(new EnvVar("DATABASE_NAME", databaseDeployment.getDatabaseName(), null));
-        EntandoOperatorConfig.lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET).ifPresent(s ->
+        lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET).ifPresent(s ->
                 result.add(new EnvVar("FORCE_PASSWORD_RESET", s, null)));
         result.add(new EnvVar("DATABASE_VENDOR", databaseDeployment.getVendor().toValue(), null));
         result.add(new EnvVar("DATABASE_SCHEMA_COMMAND", "CREATE_SCHEMA", null));

@@ -55,7 +55,7 @@ import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
-public abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior,
+abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior,
         VariableReferenceAssertions {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
@@ -65,7 +65,7 @@ public abstract class ContainerUsingExternalDatabaseTestBase implements InProces
     private SampleController<?> controller;
 
     @Test
-    public void testSelectingOneOfTwoExternalDatabase() {
+    void testSelectingOneOfTwoExternalDatabase() {
         //Given I have a controller that processes EntandoPlugins
         controller = new SampleController<EntandoPlugin>(getClient(), getKeycloakClient()) {
             @Override
@@ -121,7 +121,7 @@ public abstract class ContainerUsingExternalDatabaseTestBase implements InProces
 
     protected abstract SimpleKeycloakClient getKeycloakClient();
 
-    public void verifySpringDatasource(Deployment serverDeployment) {
+    void verifySpringDatasource(Deployment serverDeployment) {
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KubeUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())

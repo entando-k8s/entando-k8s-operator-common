@@ -36,6 +36,12 @@ public class ServiceDeploymentResult extends AbstractServiceResult {
         return getExternalHostUrl() + getHttpIngressPathForPort(portName).getPath();
     }
 
+    public String getInternalBaseUrlForPort(String portName) {
+        HTTPIngressPath pathForPort = getHttpIngressPathForPort(portName);
+        return "http://" + getInternalServiceHostname() + ":" + pathForPort.getBackend().getServicePort().getIntVal() + pathForPort
+                .getPath();
+    }
+
     public String getExternalHostUrl() {
         String protocol = isTlsEnabled() || EntandoOperatorConfig.assumeExternalHttpsProvider() ? "https" : "http";
         return protocol + "://" + ingress.getSpec().getRules().get(0).getHost();
@@ -91,7 +97,9 @@ public class ServiceDeploymentResult extends AbstractServiceResult {
 
     private boolean hasMatchingServicePort(IngressBackend backend) {
         return service.getSpec().getPorts().stream()
-                .anyMatch(servicePort -> backend.getServicePort().getIntVal().equals(servicePort.getPort()));
+                .anyMatch(servicePort ->
+                        backend.getServicePort().getIntVal().equals(
+                                servicePort.getPort()));
     }
 
     private boolean matchesThisService(IngressBackend backend) {
@@ -105,4 +113,5 @@ public class ServiceDeploymentResult extends AbstractServiceResult {
     public Ingress getIngress() {
         return ingress;
     }
+
 }

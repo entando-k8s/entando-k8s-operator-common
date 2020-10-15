@@ -25,19 +25,20 @@ import org.entando.kubernetes.controller.common.examples.barebones.BareBonesCont
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tag("unit")
-public class ResourceCalculatorTest {
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
+class ResourceCalculatorTest {
 
     @AfterEach
     @BeforeEach
-    public void resetProvidedRatio() {
+    void resetProvidedRatio() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty());
     }
 
     @Test
-    public void calculateRequestsWithDefaultRatio() {
+    void calculateRequestsWithDefaultRatio() {
         ResourceCalculator resourceCalculator = new ResourceCalculator(new BareBonesContainer());
         assertThat(resourceCalculator.getCpuLimit(), is("800m"));
         assertThat(resourceCalculator.getMemoryLimit(), is("256Mi"));
@@ -46,7 +47,7 @@ public class ResourceCalculatorTest {
     }
 
     @Test
-    public void calculateRequestsWithProvidedRatio() {
+    void calculateRequestsWithProvidedRatio() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
         ResourceCalculator resourceCalculator = new ResourceCalculator(new BareBonesContainer());
         assertThat(resourceCalculator.getCpuLimit(), is("800m"));

@@ -47,14 +47,14 @@ public class CreateExternalServiceCommand {
         return status;
     }
 
-    public ExternalDatabaseDeployment execute(SimpleK8SClient k8sClient) {
+    public ExternalDatabaseDeployment execute(SimpleK8SClient<?> k8sClient) {
         Service service = k8sClient.services().createOrReplaceService(externalDatabase, newExternalService());
         Endpoints endpoints = maybeCreateEndpoints(k8sClient);
         this.status.setServiceStatus(service.getStatus());
         return new ExternalDatabaseDeployment(service, endpoints, externalDatabase);
     }
 
-    public Endpoints maybeCreateEndpoints(SimpleK8SClient k8sClient) {
+    public Endpoints maybeCreateEndpoints(SimpleK8SClient<?> k8sClient) {
         Endpoints endpoints = null;
         if (isIpAddress()) {
             endpoints = newEndpoints();

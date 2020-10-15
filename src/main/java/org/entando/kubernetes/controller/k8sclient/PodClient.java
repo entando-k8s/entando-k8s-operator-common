@@ -16,7 +16,15 @@
 
 package org.entando.kubernetes.controller.k8sclient;
 
+import static java.lang.String.format;
+
+import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import java.io.ByteArrayInputStream;
+import java.util.concurrent.atomic.AtomicReference;
+import org.entando.kubernetes.client.EntandoExecListener;
 
 public interface PodClient extends PodWaitingClient {
 
@@ -27,5 +35,47 @@ public interface PodClient extends PodWaitingClient {
     Pod loadPod(String namespace, String labelName, String labelValue);
 
     Pod runToCompletion(Pod pod);
+
+    ExecWatch executeOnPod(Pod pod, String containerName, String... commands);
+
+    @SuppressWarnings({"java:S106"})
+    default ExecWatch executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, String... script) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : script) {
+            sb.append(s);
+            sb.append('\n');
+        }
+        sb.append("exit 0\n");
+        ByteArrayInputStream in = new ByteArrayInputStream(sb.toString().getBytes());
+        try {
+            Object mutex = new Object();
+            synchronized (mutex) {
+                EntandoExecListener listener = new EntandoExecListener(mutex);
+                getExecListenerHolder().set(listener);
+                ExecWatch exec = podResource.inContainer(containerName)
+                        .readingInput(in)
+                        .writingOutput(System.out)
+                        .writingError(System.err)
+                        .withTTY()
+                        .usingListener(listener)
+                        .exec();
+                while (listener.shouldStillWait()) {
+                    mutex.wait(1000);
+                }
+                if (listener.hasFailed()) {
+                    throw new IllegalStateException(format("Command did not meet the wait condition within 20 seconds: %s", sb.toString()));
+                }
+                return exec;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * A getter for the an AtomicReference to the most recently constructed ExecListener for testing purposes.
+     */
+    AtomicReference<EntandoExecListener> getExecListenerHolder();
 
 }

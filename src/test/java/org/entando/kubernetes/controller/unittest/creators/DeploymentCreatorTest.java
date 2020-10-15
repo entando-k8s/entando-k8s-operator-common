@@ -16,49 +16,50 @@
 
 package org.entando.kubernetes.controller.unittest.creators;
 
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.HashMap;
-import java.util.List;
 import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.DeploymentClientDouble;
-import org.entando.kubernetes.controller.test.support.assertionhelper.ResourceRequirementsAssertionHelper;
 import org.entando.kubernetes.controller.test.support.stubhelper.CustomResourceStubHelper;
 import org.entando.kubernetes.controller.test.support.stubhelper.DeployableStubHelper;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tag("unit")
-public class DeploymentCreatorTest {
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
+class DeploymentCreatorTest {
 
     private EntandoDatabaseService entandoDatabaseService = CustomResourceStubHelper.stubEntandoDatabaseService();
     private DatabaseDeployable deployable = DeployableStubHelper.stubDatabaseDeployable();
 
     @AfterEach
-    public void cleanUp() {
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty(), "true");
+    void cleanUp() {
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty());
     }
 
     @Test
-    public void createDeploymentWithTrueImposeResourceLimitsWillSetResourceLimitsOnCreatedDeployment() {
+    void createDeploymentWithTrueImposeResourceLimitsWillSetResourceLimitsOnCreatedDeployment() {
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty(), "true");
 
         ResourceRequirements resources = executeCreateDeploymentTest();
-        List<Quantity> quantities = DeployableStubHelper.stubResourceQuantities(deployable);
-
-        ResourceRequirementsAssertionHelper.assertQuantities(quantities, resources);
+        assertThat(resources.getLimits().get("cpu").getAmount(), is("500"));
+        assertThat(resources.getLimits().get("memory").getAmount(), is("256"));
+        assertThat(resources.getRequests().get("cpu").getAmount(), is("50"));
+        assertThat(resources.getRequests().get("memory").getAmount(), is("25.6"));
     }
 
-
     @Test
-    public void createDeploymentWithFalseImposeResourceLimitsWillNotSetResourceLimitsOnCreatedDeployment() {
+    void createDeploymentWithFalseImposeResourceLimitsWillNotSetResourceLimitsOnCreatedDeployment() {
 
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty(), "false");
 
@@ -70,6 +71,7 @@ public class DeploymentCreatorTest {
 
     /**
      * executes tests of types CreateDeploymentTest.
+     *
      * @return the ResourceRequirements of the first container of the resulting Deployment
      */
     private ResourceRequirements executeCreateDeploymentTest() {

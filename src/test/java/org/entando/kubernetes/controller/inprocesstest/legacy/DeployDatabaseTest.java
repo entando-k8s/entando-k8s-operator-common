@@ -67,7 +67,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"), @Tag("pre-deployment")})
-public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
+class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     private static final String MY_KEYCLOAK_DB = MY_KEYCLOAK + "-db";
     private static final String MY_KEYCLOAK_DB_SERVICE = MY_KEYCLOAK_DB + "-service";
@@ -91,7 +91,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     private SampleController<EntandoKeycloakServer> sampleController;
 
     @BeforeEach
-    public void before() {
+    void before() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty(), "true");
         this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
         };
@@ -102,13 +102,13 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     }
 
     @AfterEach
-    public void cleanup() {
+    void cleanup() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty());
 
     }
 
     @Test
-    public void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
+    void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         final EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         client.entandoResources().createOrPatchEntandoResource(keycloakServer);
@@ -134,7 +134,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     }
 
     @Test
-    public void testService() {
+    void testService() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         client.entandoResources().createOrPatchEntandoResource(keycloakServer);
@@ -165,7 +165,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     }
 
     @Test
-    public void testMysqlDeployment() {
+    void testMysqlDeployment() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = keycloakServer;
         client.entandoResources().createOrPatchEntandoResource(keycloakServer);
@@ -203,7 +203,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     }
 
     @Test
-    public void testPostgresqlDeployment() {
+    void testPostgresqlDeployment() {
         //Given I have an EntandoKeycloakServer custom resource with MySQL as database
         EntandoKeycloakServer newEntandoKeycloakServer = new DoneableEntandoKeycloakServer(keycloakServer, s -> s)
                 .editSpec()
@@ -245,7 +245,7 @@ public class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     }
 
     @Test
-    public void testPersistentVolumeClaims() {
+    void testPersistentVolumeClaims() {
         //Given I have  a Keycloak server
         EntandoKeycloakServer newEntandoKeycloakServer = this.keycloakServer;
         client.entandoResources().createOrPatchEntandoResource(newEntandoKeycloakServer);

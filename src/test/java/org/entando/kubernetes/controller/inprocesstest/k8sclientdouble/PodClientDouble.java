@@ -20,26 +20,32 @@ import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
+import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodConditionBuilder;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.PodStatusBuilder;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import org.entando.kubernetes.client.EntandoExecListener;
 import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.PodResult;
 import org.entando.kubernetes.controller.PodResult.State;
+import org.entando.kubernetes.controller.integrationtest.support.PodResourceDouble;
 import org.entando.kubernetes.controller.k8sclient.PodClient;
 
 public class PodClientDouble extends AbstractK8SClientDouble implements PodClient {
 
     private static boolean emulatePodWatching = false;
     private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
+    private AtomicReference<EntandoExecListener> execListenerHolder = new AtomicReference<>();
 
     public PodClientDouble(Map<String, NamespaceDouble> namespaces) {
         super(namespaces);
@@ -52,6 +58,11 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     @Override
     public AtomicReference<PodWatcher> getPodWatcherHolder() {
         return podWatcherHolder;
+    }
+
+    @Override
+    public AtomicReference<EntandoExecListener> getExecListenerHolder() {
+        return execListenerHolder;
     }
 
     @Override
@@ -75,6 +86,15 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
             }
         }
         return pod;
+    }
+
+    @Override
+    public ExecWatch executeOnPod(Pod pod, String containerName, String... commands) {
+        if (pod != null) {
+            PodResource<Pod, DoneablePod> podResource = new PodResourceDouble();
+            return executeAndWait(podResource, containerName, commands);
+        }
+        return null;
     }
 
     @Override

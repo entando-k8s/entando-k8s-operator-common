@@ -34,7 +34,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
  * still have to set them somehow to test status updates. <br/> Future possibilities: <br/> We can perhaps implement test cases to run in
  * one of three modes: <br/> 1. Mockito mocked. <br/> 2. Mockserver. <br/> 3. Actual server.
  */
-@Tags({@Tag("in-process"),@Tag("pre-deployment") })
+@Tags({@Tag("in-process"),@Tag("pre-deployment"),@Tag("component") })
 @EnableRuleMigrationSupport
 public class PublicIngressingMockServerTest extends PublicIngressingTestBase implements PodBehavior {
 

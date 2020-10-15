@@ -33,17 +33,17 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment")})
-public class ImageResolutionTest {
+class ImageResolutionTest {
 
     private ConcurrentHashMap<Object, Object> storedProps = new ConcurrentHashMap<>();
 
     @BeforeEach
-    public void backupSystemProperties() {
+    void backupSystemProperties() {
         storedProps = new ConcurrentHashMap<>(System.getProperties());
     }
 
     @AfterEach
-    public void restoreSystemProperties() {
+    void restoreSystemProperties() {
         Stream.of(EntandoOperatorConfigProperty.values()).forEach(p -> {
             System.getProperties().remove(p.getJvmSystemProperty());
         });
@@ -51,7 +51,7 @@ public class ImageResolutionTest {
     }
 
     @Test
-    public void testResolutionFromDefaultProperties() {
+    void testResolutionFromDefaultProperties() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "test.io");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "test-entando");
@@ -63,7 +63,7 @@ public class ImageResolutionTest {
     }
 
     @Test
-    public void testResolutionFromDefaultPropertiesThatAreOverridden() {
+    void testResolutionFromDefaultPropertiesThatAreOverridden() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "default.io");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
@@ -79,7 +79,7 @@ public class ImageResolutionTest {
     }
 
     @Test
-    public void testResolutionFromDefaultPropertiesWhenThereIsAConfigMap() {
+    void testResolutionFromDefaultPropertiesWhenThereIsAConfigMap() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "default.io");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
@@ -95,7 +95,7 @@ public class ImageResolutionTest {
     }
 
     @Test
-    public void testResolutionFromDefaultPropertiesWhenThereIsAConfigMapButItIsOverridden() {
+    void testResolutionFromDefaultPropertiesWhenThereIsAConfigMapButItIsOverridden() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "default.io");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
@@ -116,7 +116,7 @@ public class ImageResolutionTest {
     }
 
     @Test
-    public void testVersionResolution() {
+    void testVersionResolution() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "default");
         //And I have a configMap
@@ -130,7 +130,7 @@ public class ImageResolutionTest {
     }
 
     @Test
-    public void testResolutionIgnoredForNonEntandoImages() {
+    void testResolutionIgnoredForNonEntandoImages() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "test.io");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "test-entando");
