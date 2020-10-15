@@ -29,8 +29,8 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.DbAwareKeycloakContainer;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleIngressingDbAwareDeployable;
@@ -60,13 +60,14 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("inter-process"), @Tag("pre-deployment")})
-class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTesting, InProcessTestUtil {
+class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTesting, InProcessTestUtil {
 
     static final int KEYCLOAK_DB_PORT = 5432;
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
     private final SampleController<EntandoKeycloakServer> controller = new SampleController<EntandoKeycloakServer>(helper.getClient()) {
         @Override
-        protected Deployable<ServiceDeploymentResult> createDeployable(EntandoKeycloakServer newEntandoKeycloakServer,
+        protected Deployable<ExposedDeploymentResult, EntandoKeycloakServer> createDeployable(
+                EntandoKeycloakServer newEntandoKeycloakServer,
                 DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
             return new SampleIngressingDbAwareDeployable<EntandoKeycloakServer>(newEntandoKeycloakServer, databaseServiceResult) {
                 @Override
@@ -144,9 +145,6 @@ class AddExampleWithEmbeddedDatabaseTest implements FluentIntegrationTesting, In
                 .inNamespace(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE).withName(KeycloakIntegrationTestHelper.KEYCLOAK_NAME)
                 .fromServer().get().getStatus().forDbQualifiedBy("db").isPresent());
     }
-
-
-
 
     protected void verifyKeycloakDeployment() {
         String http = HttpTestHelper.getDefaultProtocol();

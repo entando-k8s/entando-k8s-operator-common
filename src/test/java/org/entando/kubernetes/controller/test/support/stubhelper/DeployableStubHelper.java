@@ -33,7 +33,7 @@ public class DeployableStubHelper {
      *
      * @return a DatabaseDeployable
      */
-    public static DatabaseDeployable stubDatabaseDeployable() {
+    public static DatabaseDeployable<EntandoDatabaseService> stubDatabaseDeployable() {
 
         return new DatabaseDeployable(DbmsDockerVendorStrategy.MYSQL, new EntandoDatabaseService(), DEPLOYABLE_NAME_QUALIFIER);
     }

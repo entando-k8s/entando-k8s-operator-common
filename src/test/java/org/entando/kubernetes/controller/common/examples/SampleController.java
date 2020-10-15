@@ -22,8 +22,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import org.entando.kubernetes.controller.AbstractDbAwareController;
 import org.entando.kubernetes.controller.DeployCommand;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
+import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
@@ -52,10 +53,10 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
                 "db");
         // Create the Keycloak service using the provided database
         KeycloakConnectionConfig keycloakConnectionConfig = k8sClient.entandoResources().findKeycloak(() -> Optional.empty());
-        Deployable<ServiceDeploymentResult> keycloakDeployable = createDeployable(newEntandoResource, databaseServiceResult,
+        Deployable<ExposedDeploymentResult, T> keycloakDeployable = createDeployable(newEntandoResource, databaseServiceResult,
                 keycloakConnectionConfig);
-        DeployCommand<ServiceDeploymentResult> keycloakCommand = new DeployCommand<>(keycloakDeployable);
-        ServiceDeploymentResult keycloakDeploymentResult = keycloakCommand.execute(k8sClient, Optional.of(keycloakClient));
+        DeployCommand<ExposedDeploymentResult, T> keycloakCommand = new DeployCommand<>(keycloakDeployable);
+        ExposedService keycloakDeploymentResult = keycloakCommand.execute(k8sClient, Optional.of(keycloakClient));
         k8sClient.entandoResources().updateStatus(newEntandoResource, keycloakCommand.getStatus());
     }
 
@@ -69,7 +70,7 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
         return (EntandoDeploymentSpec) spec;
     }
 
-    protected Deployable<ServiceDeploymentResult> createDeployable(T newEntandoKeycloakServer,
+    protected Deployable<ExposedDeploymentResult, T> createDeployable(T newEntandoKeycloakServer,
             DatabaseServiceResult databaseServiceResult,
             KeycloakConnectionConfig keycloakConnectionConfig) {
         return new SamplePublicIngressingDbAwareDeployable<>(newEntandoKeycloakServer, databaseServiceResult, keycloakConnectionConfig);

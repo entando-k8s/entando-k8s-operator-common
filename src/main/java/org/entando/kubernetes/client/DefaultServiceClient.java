@@ -51,7 +51,6 @@ public class DefaultServiceClient implements ServiceClient {
 
     @Override
     public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
-        //TODO remove once we create delegate services from the correct context (the App)
         String namespace = ofNullable(service.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
         return client.services().inNamespace(namespace).createOrReplace(service);

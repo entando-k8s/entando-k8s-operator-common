@@ -21,9 +21,9 @@ import org.entando.kubernetes.controller.spi.ServiceResult;
 
 public abstract class AbstractServiceResult implements ServiceResult {
 
-    protected Service service;
+    protected final Service service;
 
-    public AbstractServiceResult(Service service) {
+    protected AbstractServiceResult(Service service) {
         this.service = service;
     }
 

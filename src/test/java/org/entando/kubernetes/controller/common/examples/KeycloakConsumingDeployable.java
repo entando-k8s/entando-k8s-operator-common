@@ -22,17 +22,15 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.ArrayList;
 import java.util.List;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
+import org.entando.kubernetes.controller.database.DatabaseDeploymentResult;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.app.EntandoApp;
 
-public class KeycloakConsumingDeployable implements PublicIngressingDeployable<ServiceDeploymentResult>, DbAwareDeployable {
+public class KeycloakConsumingDeployable implements PublicIngressingDeployable<ExposedDeploymentResult, EntandoApp>, DbAwareDeployable {
 
     public static final String KEYCLOAK_PUBLIC_CLIENT_ID = "keycloak-public-client-id";
     public static final String TEST_INGRESS_NAMESPACE = "test-ingress-namespace";
@@ -41,10 +39,10 @@ public class KeycloakConsumingDeployable implements PublicIngressingDeployable<S
     private final KeycloakConnectionConfig keycloakConnectionConfig;
     private final EntandoApp entandoApp;
     private final List<DeployableContainer> containers = new ArrayList<>();
-    private DatabaseServiceResult databaseServiceResult;
+    private DatabaseDeploymentResult databaseServiceResult;
 
     public KeycloakConsumingDeployable(KeycloakConnectionConfig keycloakConnectionConfig, EntandoApp entandoApp,
-            DatabaseServiceResult databaseServiceResult) {
+            DatabaseDeploymentResult databaseServiceResult) {
         this.keycloakConnectionConfig = keycloakConnectionConfig;
         this.entandoApp = entandoApp;
         this.databaseServiceResult = databaseServiceResult;
@@ -66,7 +64,7 @@ public class KeycloakConsumingDeployable implements PublicIngressingDeployable<S
     }
 
     @Override
-    public DatabaseServiceResult getDatabaseServiceResult() {
+    public DatabaseDeploymentResult getDatabaseServiceResult() {
         return databaseServiceResult;
     }
 
@@ -86,12 +84,12 @@ public class KeycloakConsumingDeployable implements PublicIngressingDeployable<S
     }
 
     @Override
-    public EntandoBaseCustomResource<?> getCustomResource() {
+    public EntandoApp getCustomResource() {
         return entandoApp;
     }
 
     @Override
-    public ServiceDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new ServiceDeploymentResult(service, ingress);
+    public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+        return new ExposedDeploymentResult(pod, service, ingress);
     }
 }

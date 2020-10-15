@@ -27,7 +27,7 @@ public abstract class JdbcConnectionStringBuilder {
     private String schema;
     private Map<String, String> parameters;
 
-    public JdbcConnectionStringBuilder() {
+    protected JdbcConnectionStringBuilder() {
     }
 
     public JdbcConnectionStringBuilder toHost(String host) {

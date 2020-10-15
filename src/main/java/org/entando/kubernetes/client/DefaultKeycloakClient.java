@@ -140,7 +140,6 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             newRealm.setDisplayName(realm);
             keycloak.realms().create(newRealm);
             createFirstUser(realmResource);
-            createOperatorClient(realmResource);
         }
     }
 
@@ -192,21 +191,6 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             client.getWebOrigins().add(domain);
             realmResource.clients().get(client.getId()).update(client);
         }
-    }
-
-    //TODO this is a signficant security risk but should fall away when we move the Component registration elsewhere
-    private void createOperatorClient(RealmResource realmResource) {
-        ClientRepresentation client = new ClientRepresentation();
-        client.setName("Entando K8s Operator");
-        client.setClientId(KubeUtils.OPERATOR_CLIENT_ID);
-        client.setSecret(KubeUtils.OPERATOR_CLIENT_ID);
-        client.setEnabled(true);
-        client.setStandardFlowEnabled(false);
-        client.setImplicitFlowEnabled(false);
-        client.setDirectAccessGrantsEnabled(false);
-        client.setServiceAccountsEnabled(true);
-        client.setAuthorizationServicesEnabled(false);
-        realmResource.clients().create(client);
     }
 
     private void createFirstUser(RealmResource realmResource) {

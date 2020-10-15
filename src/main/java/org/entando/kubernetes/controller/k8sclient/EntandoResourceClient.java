@@ -17,8 +17,8 @@
 package org.entando.kubernetes.controller.k8sclient;
 
 import java.util.Optional;
+import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.common.InfrastructureConfig;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.model.AbstractServerStatus;
@@ -54,7 +54,7 @@ public interface EntandoResourceClient {
 
     InfrastructureConfig findInfrastructureConfig(RequiresClusterInfrastructure resource);
 
-    ServiceDeploymentResult loadServiceResult(EntandoCustomResource resource);
+    ExposedService loadExposedService(EntandoCustomResource resource);
 
     default EntandoApp loadEntandoApp(String namespace, String name) {
         return load(EntandoApp.class, namespace, name);

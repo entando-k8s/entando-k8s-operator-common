@@ -36,11 +36,11 @@ public interface SecretClient {
      * @param peerInNamespace EntandoCustomResource that determines the namespace that the secret is to be created in.
      * @param secret the secret to be created.
      */
-    //TODO we need to revisit this. There are different scenarios that require different behaviour here, e.g.
-    // generated DB secrets, Keycloak generated secrets, TLS secrets
     void createSecretIfAbsent(EntandoCustomResource peerInNamespace, Secret secret);
 
     Secret loadSecret(EntandoCustomResource peerInNamespace, String secretName);
+
+    Secret loadControllerSecret(String secretName);
 
     ConfigMap loadControllerConfigMap(String configMapName);
 }

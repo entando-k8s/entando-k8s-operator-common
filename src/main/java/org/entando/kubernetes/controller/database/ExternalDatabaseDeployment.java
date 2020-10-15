@@ -18,10 +18,12 @@ package org.entando.kubernetes.controller.database;
 
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
+import java.util.Map;
+import java.util.Optional;
 import org.entando.kubernetes.controller.AbstractServiceResult;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
-public class ExternalDatabaseDeployment extends AbstractServiceResult {
+public class ExternalDatabaseDeployment extends AbstractServiceResult implements DatabaseServiceResult {
 
     protected final Endpoints endpoints;
     protected final EntandoDatabaseService externalDatabase;
@@ -36,4 +38,28 @@ public class ExternalDatabaseDeployment extends AbstractServiceResult {
         return externalDatabase;
     }
 
+    @Override
+    public String getDatabaseSecretName() {
+        return getEntandoDatabaseService().getSpec().getSecretName();
+    }
+
+    @Override
+    public Map<String, String> getJdbcParameters() {
+        return getEntandoDatabaseService().getSpec().getJdbcParameters();
+    }
+
+    @Override
+    public String getDatabaseName() {
+        return getEntandoDatabaseService().getSpec().getDatabaseName();
+    }
+
+    @Override
+    public DbmsDockerVendorStrategy getVendor() {
+        return DbmsDockerVendorStrategy.forVendor(getEntandoDatabaseService().getSpec().getDbms());
+    }
+
+    @Override
+    public Optional<String> getTablespace() {
+        return Optional.empty();
+    }
 }

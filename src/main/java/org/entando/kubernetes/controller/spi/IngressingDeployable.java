@@ -19,9 +19,12 @@ package org.entando.kubernetes.controller.spi;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.HasIngress;
 
-public interface IngressingDeployable<T extends ServiceResult> extends Deployable<T>, Ingressing<IngressingContainer> {
+public interface IngressingDeployable<T extends ExposedDeploymentResult, C extends EntandoBaseCustomResource> extends Deployable<T, C>,
+        Ingressing<IngressingContainer> {
 
     default boolean isTlsSecretSpecified() {
         return getIngressingResource().getTlsSecretName().isPresent();

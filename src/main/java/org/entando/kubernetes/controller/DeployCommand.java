@@ -36,7 +36,7 @@ import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
-import org.entando.kubernetes.controller.spi.ServiceResult;
+import org.entando.kubernetes.controller.spi.ServiceDeploymentResult;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.DbServerStatus;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
@@ -45,11 +45,11 @@ import org.entando.kubernetes.model.WebServerStatus;
 /**
  * On addition of an Entando CustomResource, the DeployCommand is invoked for every service and database that needs to be deployed.
  */
-public class DeployCommand<T extends ServiceResult> {
+public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoBaseCustomResource> {
 
     public static final String DEPLOYMENT_LABEL_NAME = "deployment";
     private static final String DEFAULT = "default";
-    private final Deployable<T> deployable;
+    private final Deployable<T, C> deployable;
     private final PersistentVolumeClaimCreator persistentVolumeClaimCreator;
     private final ServiceCreator serviceCreator;
     private final DeploymentCreator deploymentCreator;
@@ -62,7 +62,7 @@ public class DeployCommand<T extends ServiceResult> {
     private final EntandoBaseCustomResource<?> entandoCustomResource;
     private Pod pod;
 
-    public DeployCommand(Deployable<T> deployable) {
+    public DeployCommand(Deployable<T, C> deployable) {
         entandoCustomResource = deployable.getCustomResource();
         serviceAccountCreator = new ServiceAccountCreator(entandoCustomResource);
         persistentVolumeClaimCreator = new PersistentVolumeClaimCreator(entandoCustomResource);
@@ -119,10 +119,10 @@ public class DeployCommand<T extends ServiceResult> {
         if (status.hasFailed()) {
             throw new EntandoControllerException("Creation of Kubernetes resources has failed");
         }
-        return deployable.createResult(getDeployment(), getService(), getIngress(), getPod());
+        return (T)deployable.createResult(getDeployment(), getService(), getIngress(), getPod()).withStatus(getStatus());
     }
 
-    private boolean shouldCreateService(Deployable<T> deployable) {
+    private boolean shouldCreateService(Deployable<T, ?> deployable) {
         return deployable.getContainers().stream().anyMatch(ServiceBackingContainer.class::isInstance);
     }
 
@@ -138,7 +138,7 @@ public class DeployCommand<T extends ServiceResult> {
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private String resolveName(Deployable<T> deployable) {
+    private String resolveName(Deployable<T,C> deployable) {
         return entandoCustomResource.getMetadata().getName() + "-" + deployable.getNameQualifier();
     }
 
@@ -148,7 +148,7 @@ public class DeployCommand<T extends ServiceResult> {
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private void syncIngress(SimpleK8SClient<?> k8sClient, IngressingDeployable<?> ingressingContainer) {
+    private void syncIngress(SimpleK8SClient<?> k8sClient, IngressingDeployable<?, ?> ingressingContainer) {
         if (ingressCreator.requiresDelegatingService(serviceCreator.getService(), ingressingContainer)) {
             Service newDelegatingService = serviceCreator.newDelegatingService(k8sClient.services(), ingressingContainer);
             ingressCreator.createIngress(k8sClient.ingresses(), ingressingContainer, newDelegatingService);

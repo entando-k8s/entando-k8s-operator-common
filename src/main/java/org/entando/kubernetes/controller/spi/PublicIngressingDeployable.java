@@ -16,9 +16,12 @@
 
 package org.entando.kubernetes.controller.spi;
 
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
-public interface PublicIngressingDeployable<T extends ServiceResult> extends IngressingDeployable<T> {
+public interface PublicIngressingDeployable<T extends ExposedDeploymentResult, C extends EntandoBaseCustomResource> extends
+        IngressingDeployable<T, C> {
 
     String getPublicKeycloakClientId();
 

@@ -25,25 +25,24 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
+import org.entando.kubernetes.controller.database.DatabaseDeploymentResult;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.Secretive;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
-public class TestServerDeployable implements IngressingDeployable<ServiceDeploymentResult>, DbAwareDeployable, Secretive {
+public class TestServerDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServer>, DbAwareDeployable,
+        Secretive {
 
     private final EntandoKeycloakServer keycloakServer;
     private final List<DeployableContainer> containers;
-    private final DatabaseServiceResult databaseServiceResult;
+    private final DatabaseDeploymentResult databaseServiceResult;
     private final Secret keycloakAdminSecret;
 
-    public TestServerDeployable(EntandoKeycloakServer keycloakServer, DatabaseServiceResult databaseServiceResult) {
+    public TestServerDeployable(EntandoKeycloakServer keycloakServer, DatabaseDeploymentResult databaseServiceResult) {
         this.keycloakServer = keycloakServer;
         this.databaseServiceResult = databaseServiceResult;
         containers = Arrays.asList(new TestServerDeployableContainer(keycloakServer));
@@ -57,7 +56,7 @@ public class TestServerDeployable implements IngressingDeployable<ServiceDeploym
     }
 
     @Override
-    public DatabaseServiceResult getDatabaseServiceResult() {
+    public DatabaseDeploymentResult getDatabaseServiceResult() {
         return databaseServiceResult;
     }
 
@@ -67,13 +66,13 @@ public class TestServerDeployable implements IngressingDeployable<ServiceDeploym
     }
 
     @Override
-    public EntandoBaseCustomResource<?> getCustomResource() {
+    public EntandoKeycloakServer getCustomResource() {
         return keycloakServer;
     }
 
     @Override
-    public ServiceDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new ServiceDeploymentResult(service, ingress);
+    public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+        return new ExposedDeploymentResult(pod, service, ingress);
     }
 
     @Override

@@ -94,7 +94,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         return !service.getMetadata().getNamespace().equals(ingressingContainer.getIngressNamespace());
     }
 
-    public void createIngress(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable, Service service) {
+    public void createIngress(IngressClient ingressClient, IngressingDeployable<?, ?> ingressingDeployable, Service service) {
         this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(), ingressingDeployable.getIngressName());
         if (this.ingress == null) {
             Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service));

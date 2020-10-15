@@ -133,4 +133,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static boolean disablePvcGarbageCollection() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GC).map(Boolean::valueOf).orElse(false);
     }
+
+    public static boolean forceExternalAccessToKeycloak() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_FORCE_EXTERNAL_ACCESS_TO_KEYCLOAK).map(Boolean::valueOf).orElse(false);
+    }
 }

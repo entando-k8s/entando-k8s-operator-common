@@ -43,14 +43,14 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
         super(entandoCustomResource);
     }
 
-    public String prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?> deployable) {
+    public String prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?, ?> deployable) {
         this.serviceAccount = serviceAccountClient.createServiceAccountIfAbsent(entandoCustomResource, newServiceAccount(deployable));
         this.role = serviceAccountClient.createRoleIfAbsent(entandoCustomResource, newRole(deployable));
         serviceAccountClient.createRoleBindingIfAbsent(entandoCustomResource, newRoleBinding());
         return serviceAccount;
     }
 
-    private Role newRole(Deployable<?> deployable) {
+    private Role newRole(Deployable<?, ?> deployable) {
         return new RoleBuilder()
                 .withNewMetadata()
                 .withName(deployable.determineServiceAccountName())
@@ -59,7 +59,7 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private List<PolicyRule> forAllContainersIn(Deployable<?> deployable) {
+    private List<PolicyRule> forAllContainersIn(Deployable<?, ?> deployable) {
         return deployable.getContainers().stream()
                 .map(DeployableContainer::getKubernetesPermissions)
                 .flatMap(Collection::stream)
@@ -92,7 +92,7 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private ServiceAccount newServiceAccount(Deployable<?> deployable) {
+    private ServiceAccount newServiceAccount(Deployable<?, ?> deployable) {
         return new ServiceAccountBuilder()
                 .withNewMetadata()
                 .withName(deployable.determineServiceAccountName())

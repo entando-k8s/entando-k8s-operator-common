@@ -61,31 +61,6 @@ public final class HttpTestHelper {
         }
     }
 
-    @Deprecated
-    //Need to get rid of this as soon as possible after the App/Plugin decoupling
-    public static String getOperatorOAuthToken(String tokenUrl) {
-        try {
-            List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("client_id", KubeUtils.OPERATOR_CLIENT_ID));
-            params.add(new BasicNameValuePair("client_secret", KubeUtils.OPERATOR_CLIENT_ID));
-            params.add(new BasicNameValuePair("grant_type", "client_credentials"));
-            HttpPost httpPost = new HttpPost(tokenUrl);
-            httpPost.setEntity(new UrlEncodedFormEntity(params));
-
-            try (CloseableHttpClient client = HttpClientBuilder.create().build();
-                    CloseableHttpResponse response = client.execute(httpPost)) {
-                int responseStatus = getResponseStatus(response);
-                if (responseStatus != CODE_200) {
-                    throw new IllegalStateException("An error occurred while retrieving authorization token");
-                }
-
-                return JsonPath.parse(getResponseBody(response)).read("access_token", String.class);
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
     private static String getWidgetsPayload(String baseUrl, String token) {
         String widgetEndpoints = baseUrl + "/api/widgets";
         try {

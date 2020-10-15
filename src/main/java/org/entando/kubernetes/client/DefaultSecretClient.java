@@ -63,6 +63,15 @@ public class DefaultSecretClient implements SecretClient {
     }
 
     @Override
+    public Secret loadControllerSecret(String secretName) {
+        try {
+            return client.secrets().inNamespace(client.getNamespace()).withName(secretName).get();
+        } catch (KubernetesClientException e) {
+            throw KubernetesExceptionProcessor.processExceptionOnLoad(e, "Secret", client.getNamespace(), secretName);
+        }
+    }
+
+    @Override
     public ConfigMap loadControllerConfigMap(String configMapName) {
         return client.configMaps().inNamespace(EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace()))
                 .withName(configMapName).get();

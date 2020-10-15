@@ -26,15 +26,15 @@ import org.apache.commons.io.IOUtils;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PodClientDouble;
 import org.entando.kubernetes.controller.integrationtest.support.PodResourceDouble;
 import org.entando.kubernetes.controller.integrationtest.support.PodResourceDouble.ExecWatchDouble;
-import org.junit.Test;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
+import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-public class PodClientTest {
+class PodClientTest {
 
     @Test
-    public void testExec() throws IOException {
+    void testExec() throws IOException {
         PodClientDouble podClientDouble = new PodClientDouble(new HashMap<>());
         PodResourceDouble podResource = new PodResourceDouble();
         ExecWatchDouble execWatchDouble = (ExecWatchDouble) podClientDouble

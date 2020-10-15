@@ -35,16 +35,15 @@ import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
@@ -109,12 +108,7 @@ public class DummyBean {
         //When I ensure that a specific real is available
         kc.ensureRealm(MY_REALM);
         //Then an Operator Client is created under this realm
-        Optional<ClientRepresentation> operatorClient = findClientInRealm(MY_REALM, KubeUtils.OPERATOR_CLIENT_ID);
-        assertThat(operatorClient.isPresent(), is(true));
-        //With only basic functionality enabled
-        assertThat(operatorClient.get().isStandardFlowEnabled(), is(false));
-        assertThat(operatorClient.get().isImplicitFlowEnabled(), is(false));
-        assertThat(operatorClient.get().isPublicClient(), is(false));
+        //no retrieval logic available to confirm
     }
 
     public void testCreatePublicClient() {
@@ -275,7 +269,7 @@ public class DummyBean {
         ResteasyProviderFactory.setInstance(instance);
     }
 
-    private static class TestKeycloakDeployable implements IngressingDeployable<ServiceDeploymentResult> {
+    private static class TestKeycloakDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServer> {
 
         private final List<DeployableContainer> containers = Arrays.asList(new TestKeycloakContainer());
         private final EntandoKeycloakServer keycloakServer;
@@ -305,13 +299,13 @@ public class DummyBean {
         }
 
         @Override
-        public EntandoBaseCustomResource<?> getCustomResource() {
+        public EntandoKeycloakServer getCustomResource() {
             return keycloakServer;
         }
 
         @Override
-        public ServiceDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-            return new ServiceDeploymentResult(service, ingress);
+        public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+            return new ExposedDeploymentResult(pod, service, ingress);
         }
 
         private static class TestKeycloakContainer implements IngressingContainer {

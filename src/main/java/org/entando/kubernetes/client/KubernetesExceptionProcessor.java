@@ -68,12 +68,16 @@ public final class KubernetesExceptionProcessor {
 
     public static RuntimeException processExceptionOnLoad(EntandoCustomResource peerInNamespace, KubernetesClientException e, String kind,
             String name) {
+        return processExceptionOnLoad(e, kind, peerInNamespace.getMetadata().getNamespace(), name);
+    }
+
+    public static RuntimeException processExceptionOnLoad(KubernetesClientException e, String kind, String namespace, String name) {
         if (e.getCode() == UNAUTHORIZED) {
             return new UnauthorizedExcepion(String.format(
                     "Could not load %s named %s in namespace %s. If you are running the Entando controllers in STRICT security mode, "
                             + "please check  that you have associated the entando-operator ServiceAccount with a Role that allows the "
                             + "'GET' verb against resources of kind %s ",
-                    kind, name, peerInNamespace.getMetadata().getNamespace(), kind), e);
+                    kind, name, namespace, kind), e);
         } else {
             return e;
         }

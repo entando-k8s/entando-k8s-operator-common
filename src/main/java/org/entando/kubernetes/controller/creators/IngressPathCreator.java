@@ -37,7 +37,7 @@ public class IngressPathCreator {
         this.entandoCustomResource = entandoCustomResource;
     }
 
-    public List<HTTPIngressPath> buildPaths(IngressingDeployable<?> ingressingDeployable, Service service) {
+    public List<HTTPIngressPath> buildPaths(IngressingDeployable<?, ?> ingressingDeployable, Service service) {
         return ingressingDeployable.getIngressingContainers().stream().map(o -> newHttpPath(o, service)).collect(Collectors
                 .toList());
     }

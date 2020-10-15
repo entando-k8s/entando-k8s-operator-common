@@ -45,17 +45,17 @@ public class KeycloakClientCreator {
         return keycloakConfig.getClientId() + "-secret";
     }
 
-    public boolean requiresKeycloakClients(Deployable<?> deployable) {
+    public boolean requiresKeycloakClients(Deployable<?,?> deployable) {
         return deployable instanceof PublicIngressingDeployable
                 || deployable.getContainers().stream().anyMatch(KeycloakAware.class::isInstance);
     }
 
-    public void createKeycloakClients(SecretClient secrets, SimpleKeycloakClient keycloak, Deployable<?> deployable,
+    public void createKeycloakClients(SecretClient secrets, SimpleKeycloakClient keycloak, Deployable<?,?> deployable,
             Optional<Ingress> ingress) {
         login(keycloak, deployable);
         if (deployable instanceof PublicIngressingDeployable) {
             //Create a single public keycloak
-            keycloak.createPublicClient(((PublicIngressingDeployable<?>) deployable).getPublicKeycloakClientId(), getIngressServerUrl(
+            keycloak.createPublicClient(((PublicIngressingDeployable<?,?>) deployable).getPublicKeycloakClientId(), getIngressServerUrl(
                     ingress.orElseThrow(IllegalStateException::new)));
 
         }
@@ -65,7 +65,7 @@ public class KeycloakClientCreator {
                 .forEach(keycloakAware -> createClient(secrets, keycloak, keycloakAware, ingress));
     }
 
-    private void login(SimpleKeycloakClient client, Deployable<?> deployable) {
+    private void login(SimpleKeycloakClient client, Deployable<?,?> deployable) {
         KeycloakConnectionConfig keycloakConnectionConfig;
         if (deployable instanceof PublicIngressingDeployable) {
             keycloakConnectionConfig = ((PublicIngressingDeployable) deployable).getKeycloakDeploymentResult();

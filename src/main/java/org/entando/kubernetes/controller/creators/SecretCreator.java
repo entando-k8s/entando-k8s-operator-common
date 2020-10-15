@@ -50,7 +50,7 @@ public class SecretCreator extends AbstractK8SResourceCreator {
         return format("%s/%s/%s", CERT_SECRET_MOUNT_ROOT, DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, filename);
     }
 
-    public void createSecrets(SecretClient client, Deployable<?> deployable) {
+    public void createSecrets(SecretClient client, Deployable<?,?> deployable) {
         if (TlsHelper.getInstance().isTrustStoreAvailable()) {
             client.createSecretIfAbsent(entandoCustomResource, newCertificateAuthoritySecret());
         }
@@ -80,9 +80,9 @@ public class SecretCreator extends AbstractK8SResourceCreator {
         createSecret(client, tlsSecret);
     }
 
-    private boolean shouldCreateIngressTlsSecret(Deployable<?> deployable) {
+    private boolean shouldCreateIngressTlsSecret(Deployable<?,?> deployable) {
         return deployable instanceof IngressingDeployable
-                && (!((IngressingDeployable<?>) deployable).isTlsSecretSpecified())
+                && (!((IngressingDeployable<?,?>) deployable).isTlsSecretSpecified())
                 && TlsHelper.canAutoCreateTlsSecret();
     }
 
