@@ -251,10 +251,10 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         if (deployableContainer instanceof HasHealthCommand) {
             probe = new ProbeBuilder().withNewExec().addToCommand("/bin/sh", "-i", "-c",
                     ((HasHealthCommand) deployableContainer).getHealthCheckCommand()).endExec()
-                    .withPeriodSeconds(5)
-                    .withInitialDelaySeconds(10)
-                    .withTimeoutSeconds(3)
-                    .withFailureThreshold(40)
+                    .withPeriodSeconds(10)
+                    .withInitialDelaySeconds(15)
+                    .withTimeoutSeconds(5)
+                    .withFailureThreshold(20)
                     .build();
         } else if (deployableContainer instanceof HasWebContext) {
             Optional<String> healthCheckPath = ((HasWebContext) deployableContainer).getHealthCheckPath();
