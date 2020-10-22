@@ -64,7 +64,9 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
 
     static final int KEYCLOAK_DB_PORT = 5432;
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
-    private final SampleController<EntandoKeycloakServer> controller = new SampleController<EntandoKeycloakServer>(helper.getClient()) {
+    private final SampleController<EntandoKeycloakServer, ExposedDeploymentResult> controller =
+            new SampleController<EntandoKeycloakServer, ExposedDeploymentResult>(
+            helper.getClient()) {
         @Override
         protected Deployable<ExposedDeploymentResult, EntandoKeycloakServer> createDeployable(
                 EntandoKeycloakServer newEntandoKeycloakServer,

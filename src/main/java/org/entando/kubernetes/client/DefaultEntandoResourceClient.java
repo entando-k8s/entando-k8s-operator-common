@@ -92,7 +92,8 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
         return externalDatabaseList.stream().filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor)
                 .findFirst().map(externalDatabase ->
-                        new ExternalDatabaseDeployment(loadService(resource, externalDatabase.getMetadata().getName() + "-service"), null,
+                        new ExternalDatabaseDeployment(
+                                loadService(externalDatabase, ExternalDatabaseDeployment.serviceName(externalDatabase)),
                                 externalDatabase));
     }
 

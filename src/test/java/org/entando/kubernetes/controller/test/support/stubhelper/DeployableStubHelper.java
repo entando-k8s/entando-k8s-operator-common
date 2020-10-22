@@ -23,10 +23,6 @@ import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 public class DeployableStubHelper {
 
     public static final String DEPLOYABLE_NAME_QUALIFIER = "nq-test";
-    public static final int QTY_REQUESTS_CPU = 0;
-    public static final int QTY_REQUESTS_MEM = 1;
-    public static final int QTY_LIMITS_CPU = 2;
-    public static final int QTY_LIMITS_MEM = 3;
 
     /**
      * creates and returns a stub DatabaseDeployable filled with test data.
@@ -35,7 +31,7 @@ public class DeployableStubHelper {
      */
     public static DatabaseDeployable<EntandoDatabaseService> stubDatabaseDeployable() {
 
-        return new DatabaseDeployable(DbmsDockerVendorStrategy.MYSQL, new EntandoDatabaseService(), DEPLOYABLE_NAME_QUALIFIER);
+        return new DatabaseDeployable<>(DbmsDockerVendorStrategy.MYSQL, new EntandoDatabaseService(), DEPLOYABLE_NAME_QUALIFIER, null);
     }
 
 }

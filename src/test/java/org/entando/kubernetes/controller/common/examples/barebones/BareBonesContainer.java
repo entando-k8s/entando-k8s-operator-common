@@ -49,7 +49,7 @@ public class BareBonesContainer implements DeployableContainer {
     }
 
     @Override
-    public int getPort() {
+    public int getPrimaryPort() {
         return dbmsVendor.getPort();
     }
 

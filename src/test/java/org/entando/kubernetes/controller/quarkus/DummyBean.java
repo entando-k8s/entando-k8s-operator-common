@@ -321,7 +321,7 @@ public class DummyBean {
             }
 
             @Override
-            public int getPort() {
+            public int getPrimaryPort() {
                 return 8080;
             }
 

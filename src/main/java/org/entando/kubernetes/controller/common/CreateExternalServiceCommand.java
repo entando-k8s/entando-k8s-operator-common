@@ -40,7 +40,7 @@ public class CreateExternalServiceCommand {
 
     public CreateExternalServiceCommand(EntandoDatabaseService externalDatabase) {
         this.externalDatabase = externalDatabase;
-        status.setQualifier("external-db");
+        status.setQualifier(ExternalDatabaseDeployment.NAME_QUALIFIER);
     }
 
     public DbServerStatus getStatus() {
@@ -49,9 +49,9 @@ public class CreateExternalServiceCommand {
 
     public ExternalDatabaseDeployment execute(SimpleK8SClient<?> k8sClient) {
         Service service = k8sClient.services().createOrReplaceService(externalDatabase, newExternalService());
-        Endpoints endpoints = maybeCreateEndpoints(k8sClient);
+        maybeCreateEndpoints(k8sClient);
         this.status.setServiceStatus(service.getStatus());
-        return new ExternalDatabaseDeployment(service, endpoints, externalDatabase);
+        return new ExternalDatabaseDeployment(service, externalDatabase);
     }
 
     public Endpoints maybeCreateEndpoints(SimpleK8SClient<?> k8sClient) {
@@ -66,10 +66,10 @@ public class CreateExternalServiceCommand {
     private Endpoints newEndpoints() {
         return new EndpointsBuilder()
                 //Needs to match the service name exactly
-                .withMetadata(fromCustomResource("-service", true))
+                .withMetadata(fromCustomResource(ExternalDatabaseDeployment.DATABASE_SERVICE_SUFFIX, true))
                 .addNewSubset()
                 .addNewAddress()
-                .withIp(externalDatabase.getSpec().getHost())
+                .withIp(externalDatabase.getSpec().getHost().orElseThrow(IllegalStateException::new))
                 .endAddress()
                 .addNewPort()
                 .withPort(getPort())
@@ -85,9 +85,10 @@ public class CreateExternalServiceCommand {
 
     private Service newExternalService() {
         return new ServiceBuilder()
-                .withMetadata(fromCustomResource("-service", true))
+                .withMetadata(fromCustomResource(ExternalDatabaseDeployment.DATABASE_SERVICE_SUFFIX, true))
                 .withNewSpec()
-                .withExternalName(FluentTernary.useNull(String.class).when(isIpAddress()).orElse(externalDatabase.getSpec().getHost()))
+                .withExternalName(FluentTernary.useNull(String.class).when(isIpAddress())
+                        .orElse(externalDatabase.getSpec().getHost().orElseThrow(IllegalStateException::new)))
                 .withType(FluentTernary.use("ClusterIP").when(isIpAddress()).orElse("ExternalName"))
                 .addNewPort()
                 .withNewTargetPort(
@@ -99,7 +100,7 @@ public class CreateExternalServiceCommand {
     }
 
     private boolean isIpAddress() {
-        String host = externalDatabase.getSpec().getHost();
+        String host = externalDatabase.getSpec().getHost().orElseThrow(IllegalStateException::new);
         try {
             String[] split = host.split("\\.");
             if (split.length == TCP4_NUMBER_OF_BYTES) {

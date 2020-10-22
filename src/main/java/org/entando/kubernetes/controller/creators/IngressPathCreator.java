@@ -59,7 +59,7 @@ public class IngressPathCreator {
                 .withPath(ingressingPathOnPort.getWebContextPath())
                 .withNewBackend()
                 .withServiceName(service.getMetadata().getName())
-                .withNewServicePort(ingressingPathOnPort.getPort())
+                .withNewServicePort(ingressingPathOnPort.getPortForIngressPath())
                 .endBackend()
                 .build();
     }

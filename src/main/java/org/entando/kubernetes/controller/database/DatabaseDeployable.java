@@ -16,7 +16,7 @@
 
 package org.entando.kubernetes.controller.database;
 
-import static java.util.Optional.ofNullable;
+import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -26,47 +26,51 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.HasHealthCommand;
-import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.Secretive;
-import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class DatabaseDeployable<C extends EntandoBaseCustomResource> implements Deployable<DatabaseDeploymentResult, C>, Secretive {
 
-    private final Map<DbmsDockerVendorStrategy, VariableInitializer> variableInitializers = new ConcurrentHashMap<>();
     private final DbmsDockerVendorStrategy dbmsVendor;
     private final C customResource;
-    private final List<DeployableContainer> containers;
     private final String nameQualifier;
+    protected List<DeployableContainer> containers;
 
-    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, C customResource, String nameQualifier) {
-        variableInitializers.put(DbmsDockerVendorStrategy.MYSQL, vars ->
-                //No DB creation. Dbs are created during schema creation
-                vars.add(new EnvVar("MYSQL_ROOT_PASSWORD", null,
-                        KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)))
-        );
-        variableInitializers.put(DbmsDockerVendorStrategy.POSTGRESQL, vars -> {
-            vars.add(new EnvVar("POSTGRESQL_DATABASE", getDatabaseName(), null));
-            // This username will not be used, as we will be creating schema/user pairs,
-            // but without it the DB isn't created.
-            vars.add(new EnvVar("POSTGRESQL_USER", getDatabaseName() + "_user", null));
-            vars.add(new EnvVar("POSTGRESQL_PASSWORD", null,
-                    KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
-            vars.add(new EnvVar("POSTGRESQL_ADMIN_PASSWORD", null,
-                    KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
-
-        });
+    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, C customResource, String nameQualifier, Integer portOverride) {
         this.dbmsVendor = dbmsVendor;
         this.customResource = customResource;
-        containers = Arrays.asList(new DatabaseContainer(this.variableInitializers, dbmsVendor, nameQualifier));
         this.nameQualifier = nameQualifier;
+        this.containers = Arrays
+                .asList(new DatabaseContainer(buildVariableInitializer(dbmsVendor), dbmsVendor, nameQualifier, portOverride));
+    }
+
+    private VariableInitializer buildVariableInitializer(DbmsDockerVendorStrategy vendorStrategy) {
+        switch (vendorStrategy) {
+            case MYSQL:
+                return vars ->
+                        //No DB creation. Dbs are created during schema creation
+                        vars.add(new EnvVar("MYSQL_ROOT_PASSWORD", null,
+                                KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
+            case POSTGRESQL:
+                return vars -> {
+                    vars.add(new EnvVar("POSTGRESQL_DATABASE", getDatabaseName(), null));
+                    // This username will not be used, as we will be creating schema/user pairs,
+                    // but without it the DB isn't created.
+                    vars.add(new EnvVar("POSTGRESQL_USER", getDatabaseName() + "_user", null));
+                    vars.add(new EnvVar("POSTGRESQL_PASSWORD", null,
+                            KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
+                    vars.add(new EnvVar("POSTGRESQL_ADMIN_PASSWORD", null,
+                            KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
+
+                };
+            default:
+                throw new IllegalStateException(
+                        format("The DBMS %s not supported for containerized deployments", vendorStrategy.getName()));
+        }
     }
 
     @Override
@@ -101,14 +105,12 @@ public class DatabaseDeployable<C extends EntandoBaseCustomResource> implements 
         return Arrays.asList(secret);
     }
 
-    private String getDatabaseAdminSecretName() {
-        return customResource.getMetadata().getName() + "-" + getNameQualifier()
-                + "-admin-secret";
+    protected String getDatabaseAdminSecretName() {
+        return ExternalDatabaseDeployment.adminSecretName(customResource, getNameQualifier());
     }
 
-    private String getDatabaseName() {
-        return KubeUtils
-                .snakeCaseOf(customResource.getMetadata().getName() + "_" + getNameQualifier());
+    protected String getDatabaseName() {
+        return ExternalDatabaseDeployment.databaseName(customResource, getNameQualifier());
     }
 
     interface VariableInitializer {
@@ -116,51 +118,4 @@ public class DatabaseDeployable<C extends EntandoBaseCustomResource> implements 
         void addEnvironmentVariables(List<EnvVar> vars);
     }
 
-    public static class DatabaseContainer implements ServiceBackingContainer, PersistentVolumeAware, HasHealthCommand {
-
-        private final Map<DbmsDockerVendorStrategy, VariableInitializer> variableInitializers;
-        private final DbmsDockerVendorStrategy dbmsVendor;
-        private final String nameQualifier;
-
-        public DatabaseContainer(Map<DbmsDockerVendorStrategy, VariableInitializer> variableInitializers,
-                DbmsDockerVendorStrategy dbmsVendor,
-                String nameQualifier) {
-            this.variableInitializers = variableInitializers;
-            this.dbmsVendor = dbmsVendor;
-            this.nameQualifier = nameQualifier;
-        }
-
-        @Override
-        public String determineImageToUse() {
-            return dbmsVendor.getImageName();
-        }
-
-        @Override
-        public String getNameQualifier() {
-            return nameQualifier;
-        }
-
-        @Override
-        public int getPort() {
-            return dbmsVendor.getPort();
-        }
-
-        @Override
-        public String getVolumeMountPath() {
-            return dbmsVendor.getVolumeMountPath();
-        }
-
-        @Override
-        public String getHealthCheckCommand() {
-            return dbmsVendor.getHealthCheck();
-        }
-
-        @Override
-        public void addEnvironmentVariables(List<EnvVar> vars) {
-            ofNullable(variableInitializers.get(dbmsVendor))
-                    .orElseThrow(() -> new IllegalStateException(dbmsVendor + " not supported for container creation"))
-                    .addEnvironmentVariables(vars);
-        }
-
-    }
 }

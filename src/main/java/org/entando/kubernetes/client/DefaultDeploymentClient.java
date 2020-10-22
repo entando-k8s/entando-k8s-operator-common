@@ -25,7 +25,6 @@ import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
@@ -43,13 +42,11 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
 
     @Override
     public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace, Deployment deployment) {
-        RollableScalableResource<Deployment, DoneableDeployment> resource = client.apps()
-                .deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(deployment.getMetadata().getName());
-        Deployment existingDeployment = resource.get();
+        Deployment existingDeployment = getDeploymenResourceFor(peerInNamespace, deployment).get();
         if (existingDeployment == null) {
             return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(deployment);
         } else {
-            resource.scale(0, true);
+            getDeploymenResourceFor(peerInNamespace, deployment).scale(0, true);
             FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
@@ -57,9 +54,17 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
                 watchPod(pod -> podResource.list().getItems().isEmpty(), EntandoOperatorConfig.getPodCompletionTimeoutSeconds(),
                         podResource);
             }
-            resource.patch(deployment);
-            return resource.scale(Optional.ofNullable(deployment.getSpec().getReplicas()).orElse(1), true);
+            //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod
+            return getDeploymenResourceFor(peerInNamespace, deployment).patch(deployment);
         }
+    }
+
+    private RollableScalableResource<Deployment, DoneableDeployment> getDeploymenResourceFor(EntandoCustomResource peerInNamespace,
+            Deployment deployment) {
+        return client.apps()
+                .deployments()
+                .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                .withName(deployment.getMetadata().getName());
     }
 
     @Override

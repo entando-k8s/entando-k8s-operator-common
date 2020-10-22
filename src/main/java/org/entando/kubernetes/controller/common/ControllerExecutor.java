@@ -73,6 +73,7 @@ public class ControllerExecutor {
         map.put("EntandoApp", "entando-k8s-app-controller");
         map.put("EntandoAppPluginLink", "entando-k8s-app-plugin-link-controller");
         map.put("EntandoCompositeApp", "entando-k8s-composite-app-controller");
+        map.put("EntandoDatabaseService", "entando-k8s-database-service-controller");
         return map;
     }
 
@@ -117,7 +118,7 @@ public class ControllerExecutor {
                 .addNewContainer()
                 .withName("deployer")
                 .withImage(determineControllerImage(resource, imageVersionToUse))
-                .withImagePullPolicy("Always")
+                .withImagePullPolicy("IfNotPresent")
                 .withEnv(buildEnvVars(action, resource))
                 .withVolumeMounts(maybeCreateTlsVolumeMounts())
                 .endContainer()

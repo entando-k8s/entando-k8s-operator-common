@@ -29,7 +29,11 @@ public interface DeployableContainer {
 
     String getNameQualifier();
 
-    int getPort();
+    int getPrimaryPort();
+
+    default List<PortSpec> getAdditionalPorts() {
+        return Collections.emptyList();
+    }
 
     default void addEnvironmentVariables(List<EnvVar> vars) {
         //to avoid the need for repeated empty implementations

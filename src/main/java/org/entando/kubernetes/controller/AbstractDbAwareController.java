@@ -105,7 +105,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
     private boolean isImplementedCorrectly(Class<?> cls) {
         if (cls.getGenericSuperclass() instanceof ParameterizedType) {
             ParameterizedType genericSuperclass = (ParameterizedType) cls.getGenericSuperclass();
-            if (genericSuperclass.getActualTypeArguments().length == 1 && genericSuperclass.getActualTypeArguments()[0] instanceof Class) {
+            if (genericSuperclass.getActualTypeArguments().length >= 1 && genericSuperclass.getActualTypeArguments()[0] instanceof Class) {
                 Class<?> argument = (Class<?>) genericSuperclass.getActualTypeArguments()[0];
                 return EntandoBaseCustomResource.class.isAssignableFrom(argument);
             }
@@ -167,7 +167,7 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
             return externalDatabase.get();
         } else if (!(dbmsVendor == DbmsVendor.NONE || dbmsVendor == DbmsVendor.EMBEDDED)) {
             final DatabaseDeployable<C> databaseDeployable = new DatabaseDeployable<>(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
-                    entandoCustomResource, nameQualifier);
+                    entandoCustomResource, nameQualifier, null);
             final DeployCommand<DatabaseDeploymentResult, C> dbCommand = new DeployCommand<>(databaseDeployable);
             DatabaseDeploymentResult result = dbCommand.execute(k8sClient, empty());
             if (result.hasFailed()) {

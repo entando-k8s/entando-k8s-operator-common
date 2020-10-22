@@ -22,8 +22,8 @@ import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public interface ParameterizableContainer extends DeployableContainer {
 
-    default List<EnvVar> getParameters() {
-        return getCustomResourceSpec().getParameters();
+    default List<EnvVar> getEnvironmentVariables() {
+        return getCustomResourceSpec().getEnvironmentVariables();
     }
 
     EntandoDeploymentSpec getCustomResourceSpec();
