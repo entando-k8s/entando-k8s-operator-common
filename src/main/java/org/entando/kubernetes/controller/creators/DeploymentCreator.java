@@ -18,6 +18,8 @@ package org.entando.kubernetes.controller.creators;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.PodSecurityContext;
 import io.fabric8.kubernetes.api.model.PodSecurityContextBuilder;
@@ -95,7 +97,8 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .withNewSelector()
                 .withMatchLabels(labelsFromResource(deployable.getNameQualifier()))
                 .endSelector()
-                .withReplicas(deployable.getReplicas())
+                //We don't support 0 because we will be waiting for a pod after this
+                .withReplicas(Math.max(1, deployable.getReplicas()))
                 .withNewTemplate()
                 .withNewMetadata()
                 .withName(resolveName(deployable.getNameQualifier(), "-pod"))
@@ -165,8 +168,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + CONTAINER_SUFFIX)
                 .withImage(imageResolver.determineImageUri(deployableContainer.determineImageToUse(), Optional.empty()))
                 .withImagePullPolicy("Always")
-                .addNewPort().withName(deployableContainer.getNameQualifier() + PORT_SUFFIX)
-                .withContainerPort(deployableContainer.getPort()).withProtocol("TCP").endPort()
+                .withPorts(buildPorts(deployableContainer))
                 .withReadinessProbe(buildReadinessProbe(deployableContainer))
                 .withVolumeMounts(buildVolumeMounts(deployableContainer))
                 .withEnv(determineEnvironmentVariables(deployableContainer))
@@ -175,6 +177,20 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .addToRequests(buildResourceRequests(deployableContainer))
                 .endResources()
                 .build();
+    }
+
+    private List<ContainerPort> buildPorts(DeployableContainer deployableContainer) {
+        List<ContainerPort> result = new ArrayList<>();
+        result.add(new ContainerPortBuilder().withName(deployableContainer.getNameQualifier() + PORT_SUFFIX)
+                .withContainerPort(deployableContainer.getPrimaryPort()).withProtocol("TCP").build());
+        result.addAll(deployableContainer.getAdditionalPorts().stream()
+                .map(portSpec -> new ContainerPortBuilder()
+                        .withName(portSpec.getName())
+                        .withContainerPort(portSpec.getPort())
+                        .withProtocol("TCP")
+                        .build())
+                .collect(Collectors.toList()));
+        return result;
     }
 
     private Map<String, Quantity> buildResourceRequests(DeployableContainer deployableContainer) {
@@ -243,7 +259,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         } else if (deployableContainer instanceof HasWebContext) {
             Optional<String> healthCheckPath = ((HasWebContext) deployableContainer).getHealthCheckPath();
             if (healthCheckPath.isPresent()) {
-                probe = new ProbeBuilder().withNewHttpGet().withNewPort(deployableContainer.getPort())
+                probe = new ProbeBuilder().withNewHttpGet().withNewPort(deployableContainer.getPrimaryPort())
                         .withPath(healthCheckPath.get()).endHttpGet()
                         .withPeriodSeconds(6)
                         .withInitialDelaySeconds(30)
@@ -252,7 +268,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                         .build();
             }
         } else {
-            probe = new ProbeBuilder().withNewTcpSocket().withNewPort(deployableContainer.getPort())
+            probe = new ProbeBuilder().withNewTcpSocket().withNewPort(deployableContainer.getPrimaryPort())
                     .withHost("localhost").endTcpSocket()
                     .build();
         }
@@ -278,15 +294,15 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         container.addEnvironmentVariables(vars);
         if (container instanceof ParameterizableContainer) {
             ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;
-            overrideFromParameters(vars, parameterizableContainer.getParameters());
+            overrideFromCustomResource(vars, parameterizableContainer.getEnvironmentVariables());
         }
         return vars;
     }
 
-    private void overrideFromParameters(List<EnvVar> vars, List<EnvVar> parameters) {
-        for (EnvVar parameter : parameters) {
-            vars.removeIf(envVar -> envVar.getName().equals(parameter.getName()));
-            vars.add(new EnvVar(parameter.getName(), parameter.getValue(), parameter.getValueFrom()));
+    private void overrideFromCustomResource(List<EnvVar> vars, List<EnvVar> envVars) {
+        for (EnvVar envVar : envVars) {
+            vars.removeIf(envVarToEvaluate -> envVarToEvaluate.getName().equals(envVar.getName()));
+            vars.add(new EnvVar(envVar.getName(), envVar.getValue(), envVar.getValueFrom()));
         }
     }
 

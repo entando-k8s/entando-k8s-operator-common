@@ -16,10 +16,20 @@
 
 package org.entando.kubernetes.controller.spi;
 
-public interface IngressingContainer extends ServiceBackingContainer, IngressingPathOnPort {
+public class PortSpec {
+    private final String name;
+    private final int port;
 
-    @Override
-    default int getPortForIngressPath() {
-        return getPrimaryPort();
+    public PortSpec(String name, int port) {
+        this.name = name;
+        this.port = port;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getPort() {
+        return port;
     }
 }

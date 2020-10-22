@@ -81,6 +81,7 @@ public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoB
         keycloakClientCreator = new KeycloakClientCreator(entandoCustomResource);
     }
 
+    @SuppressWarnings("unchecked")
     public T execute(SimpleK8SClient<?> k8sClient, Optional<SimpleKeycloakClient> keycloakClient) {
         EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
                 k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
@@ -119,7 +120,7 @@ public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoB
         if (status.hasFailed()) {
             throw new EntandoControllerException("Creation of Kubernetes resources has failed");
         }
-        return (T)deployable.createResult(getDeployment(), getService(), getIngress(), getPod()).withStatus(getStatus());
+        return (T) deployable.createResult(getDeployment(), getService(), getIngress(), getPod()).withStatus(getStatus());
     }
 
     private boolean shouldCreateService(Deployable<T, ?> deployable) {
@@ -138,7 +139,7 @@ public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoB
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private String resolveName(Deployable<T,C> deployable) {
+    private String resolveName(Deployable<T, C> deployable) {
         return entandoCustomResource.getMetadata().getName() + "-" + deployable.getNameQualifier();
     }
 

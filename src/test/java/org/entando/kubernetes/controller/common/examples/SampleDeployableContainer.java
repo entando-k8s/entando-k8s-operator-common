@@ -30,6 +30,7 @@ import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
+import org.entando.kubernetes.controller.spi.PortSpec;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
@@ -62,9 +63,10 @@ public class SampleDeployableContainer<T extends EntandoBaseCustomResource> impl
     }
 
     @Override
-    public int getPort() {
+    public int getPrimaryPort() {
         return 8080;
     }
+
 
     @Override
     public void addEnvironmentVariables(List<EnvVar> vars) {

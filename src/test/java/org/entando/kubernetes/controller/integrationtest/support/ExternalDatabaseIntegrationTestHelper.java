@@ -121,7 +121,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
         client.secrets().inNamespace(namespace).create(secret);
         EntandoDatabaseServiceSpec spec = new EntandoDatabaseServiceSpec(DbmsVendor.ORACLE, ORACLE_INTERNAL_HOST, ORACLE_INTERNAL_PORT,
                 ORACLE_DATABASE_NAME, null,
-                TEST_SECRET,
+                TEST_SECRET, false,
                 Collections.singletonMap("oracle.jdbc.timezoneAsRegion", "false"));
         String externalJdbcUrl = DbmsDockerVendorStrategy.ORACLE.getConnectionStringBuilder().toHost(ORACLE_EXTERNAL_HOST)
                 .onPort(ORACLE_EXTERNAL_PORT.toString()).usingDatabase(ORACLE_DATABASE_NAME).usingSchema(null)
@@ -139,7 +139,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
                 .withName(externalDatabase.getMetadata().getName()).get())
                 .execute(new DefaultSimpleK8SClient(client));
         await().atMost(60, SECONDS).until(
-                () -> client.services().inNamespace(namespace).withName(MY_EXTERNAL_DB + "-service").fromServer().get()
+                () -> client.services().inNamespace(namespace).withName(MY_EXTERNAL_DB + "-db-service").fromServer().get()
                         != null);
     }
 

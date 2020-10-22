@@ -71,9 +71,9 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
     private ServicePort newServicePort(ServiceBackingContainer deployableContainer) {
         return new ServicePortBuilder()
                 .withName(deployableContainer.getNameQualifier() + "-port")
-                .withPort(deployableContainer.getPort())
+                .withPort(deployableContainer.getPrimaryPort())
                 .withProtocol("TCP")
-                .withTargetPort(new IntOrString(deployableContainer.getPort()))
+                .withTargetPort(new IntOrString(deployableContainer.getPrimaryPort()))
                 .build();
     }
 

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.inprocesstest;
+package org.entando.kubernetes.controller.unittest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tags({@Tag("in-process"), @Tag("pre-deployment")})
-class ImageResolutionTest {
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
+class ImageResolverTest {
 
     private ConcurrentHashMap<Object, Object> storedProps = new ConcurrentHashMap<>();
 

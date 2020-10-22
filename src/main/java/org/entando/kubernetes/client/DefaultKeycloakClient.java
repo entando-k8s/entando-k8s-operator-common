@@ -53,7 +53,7 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
-public class DefaultKeycloakClient implements SimpleKeycloakClient {
+public class    DefaultKeycloakClient implements SimpleKeycloakClient {
 
     public static final String MASTER_REALM = "master";
     public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
@@ -164,6 +164,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
     @Override
     public void createPublicClient(String realm, String domain) {
+        ensureRealm(realm);
         RealmResource realmResource = keycloak.realm(realm);
         createPublicClient(realmResource, domain);
     }
@@ -215,6 +216,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     }
 
     private String findOrCreateClient(KeycloakClientConfig config) {
+        ensureRealm(config.getRealm());
         RealmResource realmResource = keycloak.realm(config.getRealm());
         Optional<ClientRepresentation> clientRepresentation = findClient(config);
         if (clientRepresentation.isPresent()) {

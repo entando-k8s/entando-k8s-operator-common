@@ -34,12 +34,17 @@ public class BareBonesDeployable<T extends EntandoBaseCustomResource> implements
 
     public static final String MY_SERVICE_ACCOUNT = "my-service-account";
     public static final String NAME_QUALIFIER = "db";
-    private List<DeployableContainer> containers = Arrays.asList(new BareBonesContainer());
+    private final List<DeployableContainer> containers;
     private T customResource;
     private DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.POSTGRESQL;
 
     public BareBonesDeployable(T customResource) {
+        this(customResource, new BareBonesContainer());
+    }
+
+    public BareBonesDeployable(T customResource, DeployableContainer... containers) {
         this.customResource = customResource;
+        this.containers = Arrays.asList(containers);
     }
 
     @Override

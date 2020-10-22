@@ -38,7 +38,7 @@ public class ExposedDeploymentResult<T extends ExposedDeploymentResult> extends 
         return thisAsT();
     }
 
-    @SuppressWarnings("gene")
+    @SuppressWarnings("unchecked")
     private T thisAsT() {
         return (T) this;
     }

@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -110,9 +109,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         NamespaceDouble namespace = getNamespace(resource);
         Optional<EntandoDatabaseService> first = namespace.getCustomResources(EntandoDatabaseService.class).values().stream()
                 .filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor).findFirst();
-        return first.map(edb -> new ExternalDatabaseDeployment(
-                namespace.getService(edb.getMetadata().getName() + "-" + KubeUtils.DEFAULT_SERVICE_SUFFIX),
-                namespace.getEndpoints(edb.getMetadata().getName() + "-endpoints"), edb));
+        return first.map(edb -> new ExternalDatabaseDeployment(namespace.getService(ExternalDatabaseDeployment.serviceName(edb)), edb));
     }
 
     @Override

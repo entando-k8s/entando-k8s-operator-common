@@ -39,7 +39,6 @@ import org.entando.kubernetes.controller.common.examples.springboot.SampleSpring
 import org.entando.kubernetes.controller.common.examples.springboot.SpringBootDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
@@ -62,14 +61,14 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController<?> controller;
+    private SampleController<EntandoPlugin, ExposedDeploymentResult> controller;
 
     @Test
     void testSelectingOneOfTwoExternalDatabase() {
         //Given I have a controller that processes EntandoPlugins
-        controller = new SampleController<EntandoPlugin>(getClient(), getKeycloakClient()) {
+        controller = new SampleController<EntandoPlugin, ExposedDeploymentResult>(getClient(), getKeycloakClient()) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected SpringBootDeployable<EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
@@ -132,7 +131,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
         assertThat(theVariableNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_URL.name())
                 .on(thePrimaryContainerOn(serverDeployment)), is(
-                "jdbc:postgresql://" + SAMPLE_NAME + "-postgresql-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/"
+                "jdbc:postgresql://" + SAMPLE_NAME + "-postgresql-db-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/"
                         + SAMPLE_NAME_DB));
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));

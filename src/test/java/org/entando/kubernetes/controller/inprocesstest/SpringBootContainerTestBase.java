@@ -57,12 +57,12 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController controller;
+    private SampleController<EntandoPlugin, ExposedDeploymentResult> controller;
 
     @Test
     void testBasicDeployment() {
         //Given I have a controller that processes EntandoPlugins
-        controller = new SampleController<EntandoPlugin>(getClient(), getKeycloakClient()) {
+        controller = new SampleController<EntandoPlugin, ExposedDeploymentResult>(getClient(), getKeycloakClient()) {
             @Override
             protected Deployable<ExposedDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,

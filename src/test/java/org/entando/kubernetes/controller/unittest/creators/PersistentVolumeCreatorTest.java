@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.unittest.creators;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import java.util.HashMap;
@@ -44,13 +43,15 @@ class PersistentVolumeCreatorTest implements InProcessTestUtil {
     @AfterEach
     @BeforeEach
     void cleanUp() {
-        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GC.getJvmSystemProperty());
+        System.getProperties()
+                .remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GARBAGE_COLLECTION.getJvmSystemProperty());
     }
 
     @Test
     void createPersistentVolumeClaimWithoutGarbageCollection() {
 
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GC.getJvmSystemProperty(), "false");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GARBAGE_COLLECTION.getJvmSystemProperty(),
+                "true");
 
         PersistentVolumeClaim persistentVolumeClaim = executeCreateDeploymentTest();
 
@@ -60,7 +61,8 @@ class PersistentVolumeCreatorTest implements InProcessTestUtil {
     @Test
     void createPersistentVolumeClaimWithGarbageCollection() {
 
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GC.getJvmSystemProperty(), "true");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DISABLE_PVC_GARBAGE_COLLECTION.getJvmSystemProperty(),
+                "false");
 
         PersistentVolumeClaim persistentVolumeClaim = executeCreateDeploymentTest();
 

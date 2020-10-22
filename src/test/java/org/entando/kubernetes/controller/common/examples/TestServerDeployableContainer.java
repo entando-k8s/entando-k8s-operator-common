@@ -60,7 +60,7 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
     }
 
     @Override
-    public int getPort() {
+    public int getPrimaryPort() {
         return 8080;
     }
 

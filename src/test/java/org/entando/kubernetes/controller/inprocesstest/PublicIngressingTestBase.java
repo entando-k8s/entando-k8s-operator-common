@@ -72,7 +72,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
     SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
-    private SampleController controller;
+    private SampleController<EntandoPlugin, ExposedDeploymentResult> controller;
 
     @BeforeEach
     void setIngressClass() {
@@ -89,7 +89,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //Given I have a PublicIngressingDeployment in the Sample Namespace
         testBasicDeployment();
         //And I have a plugin in another namespace to share the same Ingress
-        controller = new SampleController<EntandoPlugin>(k8sClient, mock) {
+        controller = new SampleController<EntandoPlugin, ExposedDeploymentResult>(k8sClient, mock) {
+
             @Override
             protected Deployable<ExposedDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin plugin,
                     DatabaseServiceResult databaseServiceResult,
@@ -110,7 +111,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                     protected List<DeployableContainer> createContainers(EntandoPlugin entandoResource) {
                         return Arrays.asList(new SampleDeployableContainer<EntandoPlugin>(entandoResource) {
                             @Override
-                            public int getPort() {
+                            public int getPrimaryPort() {
                                 return 8082;
                             }
 
@@ -154,7 +155,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //Given I have a controller that processes EntandoPlugins
         lenient().when(mock.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn("ASDFASDFASDfa");
         this.k8sClient = getClient();
-        controller = new SampleController<EntandoPlugin>(k8sClient, mock) {
+        controller = new SampleController<EntandoPlugin, ExposedDeploymentResult>(k8sClient, mock) {
+
             @Override
             protected Deployable<ExposedDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
@@ -256,7 +258,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         }
 
         @Override
-        public int getPort() {
+        public int getPrimaryPort() {
             return 8081;
         }
 

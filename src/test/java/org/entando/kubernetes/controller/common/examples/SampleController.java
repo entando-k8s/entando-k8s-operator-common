@@ -18,21 +18,20 @@ package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.quarkus.runtime.StartupEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import org.entando.kubernetes.controller.AbstractDbAwareController;
 import org.entando.kubernetes.controller.DeployCommand;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.Deployable;
+import org.entando.kubernetes.controller.spi.ServiceDeploymentResult;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class SampleController<T extends EntandoBaseCustomResource> extends AbstractDbAwareController<T> {
+public abstract class SampleController<T extends EntandoBaseCustomResource, R extends ServiceDeploymentResult> extends
+        AbstractDbAwareController<T> {
 
     public SampleController(KubernetesClient kubernetesClient) {
         super(kubernetesClient, false);
@@ -53,27 +52,20 @@ public class SampleController<T extends EntandoBaseCustomResource> extends Abstr
                 "db");
         // Create the Keycloak service using the provided database
         KeycloakConnectionConfig keycloakConnectionConfig = k8sClient.entandoResources().findKeycloak(() -> Optional.empty());
-        Deployable<ExposedDeploymentResult, T> keycloakDeployable = createDeployable(newEntandoResource, databaseServiceResult,
+        Deployable<R, T> deployable = createDeployable(newEntandoResource, databaseServiceResult,
                 keycloakConnectionConfig);
-        DeployCommand<ExposedDeploymentResult, T> keycloakCommand = new DeployCommand<>(keycloakDeployable);
-        ExposedService keycloakDeploymentResult = keycloakCommand.execute(k8sClient, Optional.of(keycloakClient));
-        k8sClient.entandoResources().updateStatus(newEntandoResource, keycloakCommand.getStatus());
+        DeployCommand<R, T> keycloakCommand = new DeployCommand<>(deployable);
+        R keycloakDeploymentResult = keycloakCommand.execute(k8sClient, Optional.of(keycloakClient));
+        k8sClient.entandoResources().updateStatus(newEntandoResource, keycloakDeploymentResult.getStatus());
     }
 
+    @SuppressWarnings("unchecked")
     private EntandoDeploymentSpec resolveSpec(T r) {
-        Object spec = null;
-        try {
-            spec = r.getClass().getMethod("getSpec").invoke(r);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new IllegalStateException(e);
-        }
-        return (EntandoDeploymentSpec) spec;
+        return ((EntandoBaseCustomResource<EntandoDeploymentSpec>) r).getSpec();
     }
 
-    protected Deployable<ExposedDeploymentResult, T> createDeployable(T newEntandoKeycloakServer,
+    protected abstract Deployable<R, T> createDeployable(T newEntandoKeycloakServer,
             DatabaseServiceResult databaseServiceResult,
-            KeycloakConnectionConfig keycloakConnectionConfig) {
-        return new SamplePublicIngressingDbAwareDeployable<>(newEntandoKeycloakServer, databaseServiceResult, keycloakConnectionConfig);
-    }
+            KeycloakConnectionConfig keycloakConnectionConfig);
 
 }

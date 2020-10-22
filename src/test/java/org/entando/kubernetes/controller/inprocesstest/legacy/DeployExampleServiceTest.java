@@ -54,17 +54,22 @@ import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.Map;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
+import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.creators.SecretCreator;
+import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.junit.jupiter.api.AfterEach;
@@ -79,7 +84,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 //in execute component test
-@Tags({@Tag("in-process"),@Tag("pre-deployment"),@Tag("component") })
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
 
     private static final String MY_KEYCLOAK_ADMIN_SECRET = MY_KEYCLOAK + "-admin-secret";
@@ -107,11 +112,19 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController sampleController;
+    private SampleController<EntandoKeycloakServer, ExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void prepareKeycloakCustomResource() {
-        this.sampleController = new SampleController<EntandoKeycloakServer>(client, keycloakClient) {
+        this.sampleController = new SampleController<EntandoKeycloakServer, ExposedDeploymentResult>(client, keycloakClient) {
+            @Override
+            protected Deployable<ExposedDeploymentResult, EntandoKeycloakServer> createDeployable(
+                    EntandoKeycloakServer newEntandoKeycloakServer,
+                    DatabaseServiceResult databaseServiceResult,
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoKeycloakServer, databaseServiceResult,
+                        keycloakConnectionConfig);
+            }
         };
         client.entandoResources().createOrPatchEntandoResource(keycloakServer);
         client.secrets().overwriteControllerSecret(buildKeycloakSecret());
