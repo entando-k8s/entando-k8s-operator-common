@@ -51,6 +51,10 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE);
     }
 
+    public static boolean isClusterScopedDeployment() {
+        return getNamespacesToObserve().stream().anyMatch("*"::equals);
+    }
+
     public static List<String> getNamespacesToObserve() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE).map(s -> s.split("\\,")).map(Arrays::asList)
                 .orElse(new ArrayList<>());

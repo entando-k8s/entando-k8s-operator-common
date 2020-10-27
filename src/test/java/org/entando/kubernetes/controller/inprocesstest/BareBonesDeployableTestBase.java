@@ -20,13 +20,18 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
+import static org.wildfly.common.Assert.assertNotNull;
 
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
@@ -48,6 +53,8 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions {
@@ -59,6 +66,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     protected SimpleK8SClient k8sClient;
 
     private SampleController<EntandoPlugin, BarebonesDeploymentResult> controller;
+    private Map<String, String> properties = new ConcurrentHashMap<>();
 
     @Test
     void testBasicDeploymentWithAdditionalPorts() {
@@ -97,6 +105,58 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
                 .getContainerPort(), is(5432));
         assertThat(thePortNamed("ping").on(theContainerNamed(BareBonesContainer.NAME_QUALIFIER + "-container").on(serverDeployment))
                 .getContainerPort(), is(8888));
+    }
+
+    @BeforeEach
+    public void stashNamespacesToObserve() {
+        this.properties.putAll((Map) System.getProperties());
+    }
+
+    @AfterEach
+    public void unstashNamespacesToObserve() {
+        System.getProperties().putAll(this.properties);
+    }
+
+    @Test
+    void testBasicDeploymentWithClusterScopedRoles() {
+        //Given I have a controller that processes EntandoPlugins
+        this.k8sClient = getClient();
+        controller = new SampleController<EntandoPlugin, BarebonesDeploymentResult>(k8sClient, mock(SimpleKeycloakClient.class)) {
+            @Override
+            protected Deployable<BarebonesDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
+                    DatabaseServiceResult databaseServiceResult,
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer());
+            }
+
+        };
+        //And the operator is deployed at cluster scope
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty(), "*");
+        //And we can observe the pod lifecycle
+        emulatePodWaitingBehaviour(plugin, plugin.getMetadata().getName());
+        //When I create a new EntandoPlugin
+        onAdd(plugin);
+
+        await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
+                k8sClient.entandoResources()
+                        .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
+                        .getStatus()
+                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
+        //Then I expect one deployment. This is where we can put all the assertions
+        RoleBinding editorRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-entando-editor");
+        assertNotNull(editorRoleBinding);
+        assertThat(editorRoleBinding.getRoleRef().getKind(), is("ClusterRole"));
+        assertThat(editorRoleBinding.getRoleRef().getName(), is("entando-editor"));
+        assertThat(editorRoleBinding.getSubjects().get(0).getName(), is("my-service-account"));
+        assertThat(editorRoleBinding.getSubjects().get(0).getKind(), is("ServiceAccount"));
+        assertThat(editorRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
+        RoleBinding viewRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-view");
+        assertNotNull(viewRoleBinding);
+        assertThat(viewRoleBinding.getRoleRef().getKind(), is("ClusterRole"));
+        assertThat(viewRoleBinding.getRoleRef().getName(), is("view"));
+        assertThat(viewRoleBinding.getSubjects().get(0).getName(), is("my-service-account"));
+        assertThat(viewRoleBinding.getSubjects().get(0).getKind(), is("ServiceAccount"));
+        assertThat(viewRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
     }
 
     protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource, String deploymentName) {
