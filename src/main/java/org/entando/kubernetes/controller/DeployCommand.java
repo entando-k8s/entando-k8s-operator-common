@@ -98,6 +98,9 @@ public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoB
         if (shouldCreateServiceAccount()) {
             serviceAccountCreator.prepareServiceAccount(k8sClient.serviceAccounts(), deployable);
         }
+        if (EntandoOperatorConfig.isClusterScopedDeployment()) {
+            serviceAccountCreator.createBindingsToClusterRoles(k8sClient.serviceAccounts(), deployable);
+        }
         if (shouldCreateService(deployable)) {
             createService(k8sClient);
         }

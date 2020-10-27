@@ -100,4 +100,24 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
+    public void createBindingsToClusterRoles(ServiceAccountClient serviceAccountClient, Deployable<?, ?> deployable) {
+        createRoleBindingForClusterRole(serviceAccountClient, deployable, "entando-editor");
+        createRoleBindingForClusterRole(serviceAccountClient, deployable, "view");
+    }
+
+    private void createRoleBindingForClusterRole(ServiceAccountClient serviceAccountClient, Deployable<?, ?> deployable, String roleName) {
+        serviceAccountClient.createRoleBindingIfAbsent(this.entandoCustomResource, new RoleBindingBuilder()
+                .withNewMetadata().withName(deployable.getServiceAccountName() + "-" + roleName)
+                .endMetadata()
+                .withNewRoleRef()
+                .withName(roleName)
+                .withKind("ClusterRole")
+                .endRoleRef()
+                .addNewSubject()
+                .withKind("ServiceAccount")
+                .withName(deployable.determineServiceAccountName())
+                .withNamespace(entandoCustomResource.getMetadata().getNamespace())
+                .endSubject()
+                .build());
+    }
 }
