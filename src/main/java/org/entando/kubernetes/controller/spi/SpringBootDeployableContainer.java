@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.KeycloakClientCreator;
+import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 
 public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, IngressingContainer, TlsAware {
@@ -58,13 +58,13 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
         KeycloakAware.super.addKeycloakVariables(vars);//Temporarily for backward compatibility
         KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
-                keycloakDeployment.getExternalBaseUrl() + "/realms/entando",
+                keycloakDeployment.getExternalBaseUrl() + "/realms/" + determineRealm(),
                 null));
-        String keycloakSecretName = KeycloakClientCreator.keycloakClientSecret(getKeycloakClientConfig());
+        String keycloakSecretName = KeycloakName.forTheClientSecret(getKeycloakClientConfig());
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name(), null,
-                KubeUtils.secretKeyRef(keycloakSecretName, KeycloakClientCreator.CLIENT_SECRET_KEY)));
+                KubeUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_SECRET_KEY)));
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name(), null,
-                KubeUtils.secretKeyRef(keycloakSecretName, KeycloakClientCreator.CLIENT_ID_KEY)));
+                KubeUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_ID_KEY)));
     }
 
     enum SpringProperty {

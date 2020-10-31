@@ -25,9 +25,11 @@ public class EntandoExecListener implements ExecListener {
     private boolean failed = false;
     boolean shouldStillWait = true;
     private Object mutex;
+    private int timeoutSeconds;
 
-    public EntandoExecListener(Object mutex) {
+    public EntandoExecListener(Object mutex, int timeoutSeconds) {
         this.mutex = mutex;
+        this.timeoutSeconds = timeoutSeconds;
     }
 
     @Override
@@ -53,7 +55,7 @@ public class EntandoExecListener implements ExecListener {
     }
 
     public boolean shouldStillWait() {
-        if (System.currentTimeMillis() - start > 20000) {
+        if (System.currentTimeMillis() - start > timeoutSeconds * 1000) {
             failed = true;
             shouldStillWait = false;
             return false;

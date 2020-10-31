@@ -28,12 +28,12 @@ import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 
-public class SamplePublicIngressingDbAwareDeployable<T extends EntandoBaseCustomResource> extends
+public class SamplePublicIngressingDbAwareDeployable<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec>> extends
         SampleIngressingDbAwareDeployable<T> implements PublicIngressingDeployable<ExposedDeploymentResult, T>,
         Secretive {
 
-    public static final String SAMPLE_PUBLIC_CLIENT = "sample-public-client";
     private final Secret sampleSecret;
     private KeycloakConnectionConfig keycloakConnectionConfig;
 
@@ -58,10 +58,6 @@ public class SamplePublicIngressingDbAwareDeployable<T extends EntandoBaseCustom
         return Arrays.asList(sampleSecret);
     }
 
-    @Override
-    public String getPublicKeycloakClientId() {
-        return SAMPLE_PUBLIC_CLIENT;
-    }
 
     @Override
     public KeycloakConnectionConfig getKeycloakDeploymentResult() {

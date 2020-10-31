@@ -25,22 +25,18 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.HashMap;
 import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.common.examples.barebones.BareBonesDeployable;
 import org.entando.kubernetes.controller.creators.DeploymentCreator;
-import org.entando.kubernetes.controller.database.DatabaseDeployable;
+import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.DeploymentClientDouble;
-import org.entando.kubernetes.controller.test.support.stubhelper.CustomResourceStubHelper;
-import org.entando.kubernetes.controller.test.support.stubhelper.DeployableStubHelper;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-class DeploymentCreatorTest {
-
-    private EntandoDatabaseService entandoDatabaseService = CustomResourceStubHelper.stubEntandoDatabaseService();
-    private DatabaseDeployable deployable = DeployableStubHelper.stubDatabaseDeployable();
+class DeploymentCreatorTest implements InProcessTestUtil {
 
     @AfterEach
     void cleanUp() {
@@ -52,9 +48,9 @@ class DeploymentCreatorTest {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty(), "true");
 
         ResourceRequirements resources = executeCreateDeploymentTest();
-        assertThat(resources.getLimits().get("cpu").getAmount(), is("500"));
+        assertThat(resources.getLimits().get("cpu").getAmount(), is("800"));
         assertThat(resources.getLimits().get("memory").getAmount(), is("256"));
-        assertThat(resources.getRequests().get("cpu").getAmount(), is("50"));
+        assertThat(resources.getRequests().get("cpu").getAmount(), is("80"));
         assertThat(resources.getRequests().get("memory").getAmount(), is("25.6"));
     }
 
@@ -77,12 +73,13 @@ class DeploymentCreatorTest {
     private ResourceRequirements executeCreateDeploymentTest() {
 
         DeploymentClientDouble deploymentClientDouble = new DeploymentClientDouble(new HashMap<>());
-        DeploymentCreator deploymentCreator = new DeploymentCreator(entandoDatabaseService);
+        EntandoApp testEntandoApp = newTestEntandoApp();
+        DeploymentCreator deploymentCreator = new DeploymentCreator(testEntandoApp);
 
         Deployment actual = deploymentCreator.createDeployment(
                 new EntandoImageResolver(null),
                 deploymentClientDouble,
-                deployable);
+                new BareBonesDeployable<>(testEntandoApp));
 
         return actual.getSpec().getTemplate().getSpec().getContainers().get(0).getResources();
     }

@@ -108,6 +108,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     }
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     public void stashNamespacesToObserve() {
         this.properties.putAll((Map) System.getProperties());
     }

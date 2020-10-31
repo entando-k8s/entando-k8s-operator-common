@@ -63,11 +63,16 @@ public class PodWatcher implements Watcher<Pod> {
     }
 
     public boolean shouldStillWait() {
-        return !(hasTimedOut() || lastPodFulfillsCondition());
+        return !(hasTimedOut() || podResourceFulfillsCondition());
     }
 
-    public boolean lastPodFulfillsCondition() {
-        return lastPod != null && podPredicate.test(lastPod);
+    public boolean podResourceFulfillsCondition() {
+        try {
+            return podPredicate.test(lastPod);
+        } catch (NullPointerException npe) {
+            //Ignore NPEs and treat them as false
+            return false;
+        }
     }
 
     private boolean hasTimedOut() {

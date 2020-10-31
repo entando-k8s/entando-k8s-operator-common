@@ -18,13 +18,16 @@ package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
@@ -49,6 +52,17 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
+    public void removeAndWait(String namespace, Map<String, String> labels) {
+        FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client
+                .pods().inNamespace(namespace).withLabels(labels);
+        podResource.delete();
+        watchPod(
+                pod -> podResource.list().getItems().isEmpty(),
+                EntandoOperatorConfig.getPodShutdownTimeoutSeconds(), podResource);
+        System.out.println("Removed successfully");
+    }
+
+    @Override
     public AtomicReference<PodWatcher> getPodWatcherHolder() {
         return podWatcherHolder;
     }
@@ -61,10 +75,10 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
-    public ExecWatch executeOnPod(Pod pod, String containerName, String... commands) {
+    public ExecWatch executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
         PodResource<Pod, DoneablePod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName());
-        return executeAndWait(podResource, containerName, commands);
+        return executeAndWait(podResource, containerName, timeoutSeconds, commands);
     }
 
     @Override

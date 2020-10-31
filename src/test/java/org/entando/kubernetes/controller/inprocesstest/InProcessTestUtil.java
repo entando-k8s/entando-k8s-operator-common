@@ -19,6 +19,8 @@ package org.entando.kubernetes.controller.inprocesstest;
 import static org.entando.kubernetes.controller.PodResult.RUNNING_PHASE;
 import static org.entando.kubernetes.controller.PodResult.SUCCEEDED_PHASE;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.PodStatus;
 import io.fabric8.kubernetes.api.model.PodStatusBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -26,9 +28,12 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.common.KeycloakName;
+import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.VolumeMatchAssertions;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.JeeServer;
+import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
@@ -51,7 +56,6 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
     String ENTANDO_CLUSTER_INFRASTRUCTURE_LABEL_NAME = "EntandoClusterInfrastructure";
     String KEYCLOAK_SERVER_LABEL_NAME = "EntandoKeycloakServer";
     String ENTANDO_APP_PLUGIN_LINK_LABEL_NAME = "EntandoAppPluginLink";
-    String ENTANDO_KEYCLOAK_REALM = KubeUtils.ENTANDO_KEYCLOAK_REALM;
     String KEYCLOAK_SECRET = "ASDFASDFAS";
     String TCP = "TCP";
     String MY_KEYCLOAK = "my-keycloak";
@@ -61,7 +65,6 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
     String MY_KEYCLOAK_TLS_SECRET = MY_KEYCLOAK + "-" + TLS_SECRET;
     String NAMESPACE = "namespace";
     String MY_KEYCLOAK_NAMESPACE = MY_KEYCLOAK + "-" + NAMESPACE;
-    String DEFAULT_KEYCLOAK_ADMIN_SECRET = EntandoOperatorConfig.getDefaultKeycloakSecretName();//Stick to the default
     String MY_CLUSTER_INFRASTRUCTURE = "my-eci";
     String MY_CLUSTER_INFRASTRUCTURE_TLS_SECRET = MY_CLUSTER_INFRASTRUCTURE + "-" + TLS_SECRET;
     String MY_CLUSTER_INFRASTRUCTURE_NAMESPACE = MY_CLUSTER_INFRASTRUCTURE + "-" + NAMESPACE;
@@ -98,7 +101,6 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .endMetadata()
                 .withNewSpec()
                 .withDbms(DbmsVendor.MYSQL)
-                .withKeycloakSecretToUse(DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .withIngressHostName("entando-infra.192.168.0.100.nip.io")
                 .withReplicas(3)
                 .withDefault(true)
@@ -119,7 +121,6 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .withIngressHostName("myapp.192.168.0.100.nip.io")
                 .withReplicas(1)
                 .withTlsSecretName(MY_APP_TLS_SECRET)
-                .withKeycloakSecretToUse(DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .endSpec()
                 .build();
     }
@@ -137,7 +138,6 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .withIngressPath("/myplugin")
                 .withHealthCheckPath("/actuator/health")
                 .withSecurityLevel(PluginSecurityLevel.STRICT)
-                .withKeycloakSecretToUse(DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .addNewRole("some-role", "role-name")
                 .addNewPermission("myplugin", "plugin-admin")
                 .addNewConnectionConfigName("pam-connection")
@@ -145,8 +145,17 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .build();
     }
 
-    default Secret newKeycloakAdminSecret() {
-        return new SecretBuilder().withNewMetadata().withName(DEFAULT_KEYCLOAK_ADMIN_SECRET).endMetadata()
+    default ConfigMap newKeycloakConnectionConfigMap(ResourceReference resourceReference) {
+        return new ConfigMapBuilder().withNewMetadata().withName(KeycloakName.forTheConnectionConfigMap(resourceReference))
+                .endMetadata()
+                .addToData(KubeUtils.URL_KEY, MY_KEYCLOAK_BASE_URL)
+                .addToData(KubeUtils.INTERNAL_URL_KEY, MY_KEYCLOAK_BASE_URL)
+                .build();
+    }
+
+    default Secret newKeycloakAdminSecret(ResourceReference resourceReference) {
+        return new SecretBuilder().withNewMetadata().withName(KeycloakName.forTheAdminSecret(resourceReference))
+                .endMetadata()
                 .addToStringData(KubeUtils.USERNAME_KEY, MY_KEYCLOAK_ADMIN_USERNAME)
                 .addToStringData(KubeUtils.PASSSWORD_KEY, MY_KEYCLOAK_ADMIN_PASSWORD)
                 .addToStringData(KubeUtils.URL_KEY, MY_KEYCLOAK_BASE_URL)
@@ -163,16 +172,12 @@ public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBased
                 .build();
     }
 
-    @SuppressWarnings("squid:S2068")
-    default Secret buildKeycloakSecret() {
-        return new SecretBuilder()
-                .withNewMetadata()
-                .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName())
-                .endMetadata()
-                .addToStringData(KubeUtils.URL_KEY, MY_KEYCLOAK_BASE_URL)
-                .addToStringData(KubeUtils.PASSSWORD_KEY, MY_KEYCLOAK_ADMIN_PASSWORD)
-                .addToStringData(KubeUtils.USERNAME_KEY, MY_KEYCLOAK_ADMIN_USERNAME)
-                .build();
+    default void emulateKeycloakDeployment(SimpleK8SClient<?> client) {
+        ResourceReference defaultKeycloakReference = new ResourceReference();
+        client.secrets().overwriteControllerSecret(newKeycloakAdminSecret(defaultKeycloakReference));
+        EntandoKeycloakServer dummyKeycloakServer = newEntandoKeycloakServer();
+        dummyKeycloakServer.getMetadata().setNamespace(client.entandoResources().getNamespace());
+        client.secrets().createConfigMapIfAbsent(dummyKeycloakServer, newKeycloakConnectionConfigMap(defaultKeycloakReference));
     }
 
     default PodStatus succeededPodStatus() {

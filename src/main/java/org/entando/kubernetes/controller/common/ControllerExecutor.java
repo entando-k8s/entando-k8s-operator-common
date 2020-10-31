@@ -28,6 +28,7 @@ import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -95,21 +96,41 @@ public class ControllerExecutor {
         return this.imageResolver.determineLatestVersionOf(imageName);
     }
 
-    public Pod startControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
+    public Pod startControllerFor(Action action, EntandoBaseCustomResource resource, String imageVersionToUse) {
+        removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
         return client.pods().start(pod);
     }
 
-    public Pod runControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
+    public Pod runControllerFor(Action action, EntandoBaseCustomResource resource, String imageVersionToUse) {
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
         return client.pods().runToCompletion(pod);
     }
 
-    private Pod buildControllerPod(Action action, EntandoCustomResource resource, String imageVersionToUse) {
+    private void removeObsoleteControllerPods(EntandoBaseCustomResource<?> resource) {
+        this.client.pods().removeAndWait(controllerNamespace, mapOf(
+                KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind(),
+                KubeUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace(),
+                resource.getKind(), resource.getMetadata().getName()));
+    }
+
+    private Map<String, String> mapOf(
+            String entandoResourceKindLabelName, String kind,
+            String entandoResourceNamespaceLabelName, String namespace,
+            String nameLabelName, String name) {
+        HashMap<String, String> result = new HashMap<>();
+        result.put(entandoResourceKindLabelName, kind);
+        result.put(entandoResourceNamespaceLabelName, namespace);
+        result.put(nameLabelName, name);
+        return result;
+    }
+
+    private Pod buildControllerPod(Action action, EntandoBaseCustomResource<?> resource, String imageVersionToUse) {
         return new PodBuilder().withNewMetadata()
                 .withName(resource.getMetadata().getName() + "-deployer-" + RandomStringUtils.randomAlphanumeric(10).toLowerCase())
                 .withNamespace(this.controllerNamespace)
                 .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind())
+                .addToLabels(KubeUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace())
                 .addToLabels(resource.getKind(), resource.getMetadata().getName())
                 .endMetadata()
                 .withNewSpec()

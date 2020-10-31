@@ -71,7 +71,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
             }
         };
         //And I have prepared the Standard KeycloakAdminSecert
-        getClient().secrets().overwriteControllerSecret(buildKeycloakSecret());
+        emulateKeycloakDeployment(getClient());
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
         //When I create a new EntandoPlugin

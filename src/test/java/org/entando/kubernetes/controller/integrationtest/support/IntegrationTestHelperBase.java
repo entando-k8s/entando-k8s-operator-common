@@ -29,6 +29,7 @@ import org.entando.kubernetes.client.OperationsSupplier;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
+import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
@@ -36,9 +37,11 @@ import org.entando.kubernetes.controller.integrationtest.support.ControllerStart
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.KeycloakToUse;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 
 public class IntegrationTestHelperBase<
-        R extends EntandoCustomResource,
+        R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
         D extends DoneableEntandoCustomResource<D, R>
         > implements FluentIntegrationTesting {
@@ -138,5 +141,8 @@ public class IntegrationTestHelperBase<
         containerStartingListener.listen(namespace, executor, versionToUse);
     }
 
+    public String determineRealm(KeycloakAwareSpec spec) {
+        return KeycloakName.ofTheRealm(spec);
+    }
 }
 

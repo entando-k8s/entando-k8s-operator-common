@@ -53,7 +53,7 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
-public class    DefaultKeycloakClient implements SimpleKeycloakClient {
+public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
     public static final String MASTER_REALM = "master";
     public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
@@ -163,18 +163,18 @@ public class    DefaultKeycloakClient implements SimpleKeycloakClient {
     }
 
     @Override
-    public void createPublicClient(String realm, String domain) {
+    public void createPublicClient(String realm, String clientId, String domain) {
         ensureRealm(realm);
         RealmResource realmResource = keycloak.realm(realm);
-        createPublicClient(realmResource, domain);
+        createPublicClient(realmResource, clientId, domain);
     }
 
-    private void createPublicClient(RealmResource realmResource, String domain) {
-        List<ClientRepresentation> existing = realmResource.clients().findByClientId(KubeUtils.PUBLIC_CLIENT_ID);
+    private void createPublicClient(RealmResource realmResource, String clientId, String domain) {
+        List<ClientRepresentation> existing = realmResource.clients().findByClientId(clientId);
         if (existing.isEmpty()) {
             ClientRepresentation client = new ClientRepresentation();
             client.setName("Entando WEB");
-            client.setClientId(KubeUtils.PUBLIC_CLIENT_ID);
+            client.setClientId(clientId);
             client.setEnabled(true);
             client.setServiceAccountsEnabled(false);
             client.setStandardFlowEnabled(true);

@@ -61,8 +61,8 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_DEFAULT_ROUTING_SUFFIX("entando.default.routing.suffix"),
     ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS("entando.pod.completion.timeout.seconds"),
     ENTANDO_POD_READINESS_TIMEOUT_SECONDS("entando.pod.readiness.timeout.seconds"),
+    ENTANDO_POD_SHUTDOWN_TIMEOUT_SECONDS("entando.pod.shutdown.timeout.seconds"),
     ENTANDO_CLUSTER_INFRASTRUCTURE_SECRET_NAME("entando.cluster.infrastructure.secret.name"),
-    ENTANDO_DEFAULT_KEYCLOAK_SECRET_NAME("entando.default.keycloak.secret.name"),
     ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE("entando.requires.filesystem.group.override"),
     ENTANDO_INGRESS_CLASS("entando.ingress.class"),
     ENTANDO_FORCE_EXTERNAL_ACCESS_TO_KEYCLOAK("entando.force.external.access.to.keycloak");

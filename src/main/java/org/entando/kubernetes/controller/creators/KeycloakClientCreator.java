@@ -25,38 +25,37 @@ import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.KeycloakAware;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 
 public class KeycloakClientCreator {
 
-    public static final String CLIENT_SECRET_KEY = "clientSecret";
-    public static final String CLIENT_ID_KEY = "clientId";
-    private final EntandoCustomResource entandoCustomResource;
+    private final EntandoBaseCustomResource<?> entandoCustomResource;
 
-    public KeycloakClientCreator(EntandoCustomResource entandoCustomResource) {
+    public KeycloakClientCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
         this.entandoCustomResource = entandoCustomResource;
     }
 
-    public static String keycloakClientSecret(KeycloakClientConfig keycloakConfig) {
-        return keycloakConfig.getClientId() + "-secret";
-    }
-
-    public boolean requiresKeycloakClients(Deployable<?,?> deployable) {
+    public boolean requiresKeycloakClients(Deployable<?, ?> deployable) {
         return deployable instanceof PublicIngressingDeployable
                 || deployable.getContainers().stream().anyMatch(KeycloakAware.class::isInstance);
     }
 
-    public void createKeycloakClients(SecretClient secrets, SimpleKeycloakClient keycloak, Deployable<?,?> deployable,
+    public void createKeycloakClients(SecretClient secrets, SimpleKeycloakClient keycloak, Deployable<?, ?> deployable,
             Optional<Ingress> ingress) {
         login(keycloak, deployable);
-        if (deployable instanceof PublicIngressingDeployable) {
-            //Create a single public keycloak
-            keycloak.createPublicClient(((PublicIngressingDeployable<?,?>) deployable).getPublicKeycloakClientId(), getIngressServerUrl(
-                    ingress.orElseThrow(IllegalStateException::new)));
+        if (deployable instanceof PublicIngressingDeployable && this.entandoCustomResource.getSpec() instanceof KeycloakAwareSpec) {
+            //Create a public keycloak client
+            KeycloakAwareSpec spec = (KeycloakAwareSpec) this.entandoCustomResource.getSpec();
+            PublicIngressingDeployable<?, ?> publicIngressingDeployable = (PublicIngressingDeployable<?, ?>) deployable;
+            keycloak.createPublicClient(KeycloakName.ofTheRealm(spec),
+                    KeycloakName.ofThePublicClient(publicIngressingDeployable.getCustomResource().getSpec()),
+                    getIngressServerUrl(ingress.orElseThrow(IllegalStateException::new)));
 
         }
         deployable.getContainers().stream()
@@ -65,7 +64,7 @@ public class KeycloakClientCreator {
                 .forEach(keycloakAware -> createClient(secrets, keycloak, keycloakAware, ingress));
     }
 
-    private void login(SimpleKeycloakClient client, Deployable<?,?> deployable) {
+    private void login(SimpleKeycloakClient client, Deployable<?, ?> deployable) {
         KeycloakConnectionConfig keycloakConnectionConfig;
         if (deployable instanceof PublicIngressingDeployable) {
             keycloakConnectionConfig = ((PublicIngressingDeployable) deployable).getKeycloakDeploymentResult();
@@ -96,14 +95,14 @@ public class KeycloakClientCreator {
                     .withWebOrigin(getIngressServerUrl(ingress.get()));
         }
         String keycloakClientSecret = client.prepareClientAndReturnSecret(keycloakClientConfig);
-        String secretName = keycloakClientSecret(keycloakConfig);
+        String secretName = KeycloakName.forTheClientSecret(keycloakConfig);
         secrets.createSecretIfAbsent(entandoCustomResource, new SecretBuilder()
                 .withNewMetadata()
                 .withOwnerReferences(KubeUtils.buildOwnerReference(entandoCustomResource))
                 .withName(secretName)
                 .endMetadata()
-                .addToStringData(CLIENT_ID_KEY, keycloakConfig.getClientId())
-                .addToStringData(CLIENT_SECRET_KEY, keycloakClientSecret)
+                .addToStringData(KeycloakName.CLIENT_ID_KEY, keycloakConfig.getClientId())
+                .addToStringData(KeycloakName.CLIENT_SECRET_KEY, keycloakClientSecret)
                 .build());
     }
 

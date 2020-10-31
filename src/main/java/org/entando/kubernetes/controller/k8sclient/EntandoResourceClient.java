@@ -16,21 +16,28 @@
 
 package org.entando.kubernetes.controller.k8sclient;
 
+import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import java.util.Optional;
 import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.common.InfrastructureConfig;
+import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.DbmsVendor;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.RequiresClusterInfrastructure;
-import org.entando.kubernetes.model.RequiresKeycloak;
+import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public interface EntandoResourceClient {
+
+    String getNamespace();
 
     EntandoCustomResource removeFinalizer(EntandoCustomResource r);
 
@@ -50,7 +57,9 @@ public interface EntandoResourceClient {
 
     Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor);
 
-    KeycloakConnectionConfig findKeycloak(RequiresKeycloak resource);
+    <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource);
+
+    Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoBaseCustomResource<?> peerInNamespace);
 
     InfrastructureConfig findInfrastructureConfig(RequiresClusterInfrastructure resource);
 
@@ -62,6 +71,32 @@ public interface EntandoResourceClient {
 
     default EntandoPlugin loadEntandoPlugin(String namespace, String name) {
         return load(EntandoPlugin.class, namespace, name);
+    }
+
+    DoneableConfigMap loadDefaultConfigMap();
+
+    default <T extends KeycloakAwareSpec> ResourceReference determineKeycloakToUse(EntandoBaseCustomResource<T> resource) {
+        ResourceReference resourceReference = null;
+        if (resource.getSpec().getKeycloakToUse().isPresent()) {
+            resourceReference = new ResourceReference(
+                    resource.getSpec().getKeycloakToUse().get().getNamespace(),
+                    resource.getSpec().getKeycloakToUse().get().getName());
+        } else {
+            Optional<EntandoKeycloakServer> keycloak = findKeycloakInNamespace(resource);
+            if (keycloak.isPresent()) {
+                resourceReference = new ResourceReference(
+                        keycloak.get().getMetadata().getNamespace(),
+                        keycloak.get().getMetadata().getName());
+            } else {
+                DoneableConfigMap configMapResource = loadDefaultConfigMap();
+                //Nulls are OK because the resulting reference will resolve to the backward compatible "keycloak-admin-secret"
+                resourceReference = new ResourceReference(
+                        configMapResource.getData().get(KeycloakName.DEFAULT_KEYCLOAK_NAMESPACE_KEY),
+                        configMapResource.getData().get(KeycloakName.DEFAULT_KEYCLOAK_NAME_KEY));
+
+            }
+        }
+        return resourceReference;
     }
 
 }

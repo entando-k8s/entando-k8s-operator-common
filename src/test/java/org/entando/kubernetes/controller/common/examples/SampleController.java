@@ -29,6 +29,8 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.ServiceDeploymentResult;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.app.EntandoAppBuilder;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 
 public abstract class SampleController<T extends EntandoBaseCustomResource, R extends ServiceDeploymentResult> extends
         AbstractDbAwareController<T> {
@@ -51,11 +53,19 @@ public abstract class SampleController<T extends EntandoBaseCustomResource, R ex
         DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newEntandoResource, spec.getDbms().get(),
                 "db");
         // Create the Keycloak service using the provided database
-        KeycloakConnectionConfig keycloakConnectionConfig = k8sClient.entandoResources().findKeycloak(() -> Optional.empty());
+        KeycloakConnectionConfig keycloakConnectionConfig = null;
+        if (newEntandoResource.getSpec() instanceof KeycloakAwareSpec) {
+            keycloakConnectionConfig = k8sClient.entandoResources().findKeycloak((EntandoBaseCustomResource<KeycloakAwareSpec>) newEntandoResource);
+        }else{
+            keycloakConnectionConfig = k8sClient.entandoResources().findKeycloak(new EntandoAppBuilder().withNewMetadata()
+                    .withNamespace(k8sClient.entandoResources().getNamespace())
+                    .endMetadata().build());
+
+        }
         Deployable<R, T> deployable = createDeployable(newEntandoResource, databaseServiceResult,
                 keycloakConnectionConfig);
-        DeployCommand<R, T> keycloakCommand = new DeployCommand<>(deployable);
-        R keycloakDeploymentResult = keycloakCommand.execute(k8sClient, Optional.of(keycloakClient));
+        DeployCommand<R, T> deployCommand = new DeployCommand<>(deployable);
+        R keycloakDeploymentResult = deployCommand.execute(k8sClient, Optional.of(keycloakClient));
         k8sClient.entandoResources().updateStatus(newEntandoResource, keycloakDeploymentResult.getStatus());
     }
 

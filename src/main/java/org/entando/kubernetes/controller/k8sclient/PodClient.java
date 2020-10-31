@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.ByteArrayInputStream;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.entando.kubernetes.client.EntandoExecListener;
 
@@ -36,10 +37,10 @@ public interface PodClient extends PodWaitingClient {
 
     Pod runToCompletion(Pod pod);
 
-    ExecWatch executeOnPod(Pod pod, String containerName, String... commands);
+    ExecWatch executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands);
 
     @SuppressWarnings({"java:S106"})
-    default ExecWatch executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, String... script) {
+    default ExecWatch executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, int timeoutSeconds, String... script) {
         StringBuilder sb = new StringBuilder();
         for (String s : script) {
             sb.append(s);
@@ -50,7 +51,7 @@ public interface PodClient extends PodWaitingClient {
         try {
             Object mutex = new Object();
             synchronized (mutex) {
-                EntandoExecListener listener = new EntandoExecListener(mutex);
+                EntandoExecListener listener = new EntandoExecListener(mutex,timeoutSeconds);
                 getExecListenerHolder().set(listener);
                 ExecWatch exec = podResource.inContainer(containerName)
                         .readingInput(in)
@@ -78,4 +79,5 @@ public interface PodClient extends PodWaitingClient {
      */
     AtomicReference<EntandoExecListener> getExecListenerHolder();
 
+    void removeAndWait(String namespace, Map<String, String> labels);
 }

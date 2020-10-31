@@ -17,80 +17,42 @@
 package org.entando.kubernetes.controller.integrationtest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.Is.is;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
-import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.DeployCommand;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.examples.MinimalKeycloakContainer;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrationTesting;
-import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixturePreparation;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.IngressingDeployable;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
+import org.entando.kubernetes.model.plugin.Permission;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 
-@Tags({@Tag("inter-process"), @Tag("pre-deployment")})
+@Tags({@Tag("inter-process"), @Tag("pre-deployment"), @Tag("integration")})
 class KeycloakClientTest implements FluentIntegrationTesting {
 
-    public static final String KC_TEST_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("kc-test-namespace");
-    public static final String MY_REALM = "my-realm";
+    public static final String MY_REALM = EntandoOperatorTestConfig.calculateNameSpace("my-realm");
     public static final String MY_CLIENT = "my-client";
     public static final String EXISTING_CLIENT = "existing-client";
     public static final String EXISTING_ROLE = "existing-role";
     private static DefaultKeycloakClient keycloakClient = null;
     private final DefaultKubernetesClient client = TestFixturePreparation.newClient();
-    private final DefaultSimpleK8SClient simpleK8SClient = new DefaultSimpleK8SClient(client);
-    private final KeycloakIntegrationTestHelper helper = new KeycloakIntegrationTestHelper(client) {
-        protected Optional<Secret> getAdminSecret() {
-            return Optional.ofNullable(
-                    new SecretBuilder()
-                            .addToStringData(KubeUtils.USERNAME_KEY, "test-admin")
-                            .addToStringData(KubeUtils.PASSSWORD_KEY, MinimalKeycloakContainer.KCP)
-                            .addToStringData(KubeUtils.URL_KEY,
-                                    HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth")
-                            .build());
-        }
-    };
-    private EntandoKeycloakServer keycloakServer = new EntandoKeycloakServerBuilder().editMetadata()
-            .withName("test-kc")
-            .withNamespace(KC_TEST_NAMESPACE)
-            .endMetadata()
-            .withNewSpec()
-            .withDbms(DbmsVendor.NONE)
-            .withIngressHostName("test-kc." + helper.getDomainSuffix())
-            .withImageName("docker.io/entando/entando-keycloak:6.1.1")//Keycloak 11
-            .withReplicas(1)
-            .endSpec()
-            .build();
+    private final KeycloakIntegrationTestHelper helper = new KeycloakIntegrationTestHelper(client);
+
+    @BeforeEach
+    void createDefaultKeycloakSecret() {
+        helper.prepareDefaultKeycloakSecretAndConfigMap();
+        helper.deleteRealm(MY_REALM);
+    }
 
     @Test
     void testCreatePublicClient() {
@@ -99,15 +61,35 @@ class KeycloakClientTest implements FluentIntegrationTesting {
         //And  I have ensured that a specific real is available
         kc.ensureRealm(MY_REALM);
         //When I create the public client in this realm
-        kc.createPublicClient(MY_REALM, "http://test.domain.com");
+        kc.createPublicClient(MY_REALM, MY_CLIENT, "http://test.domain.com");
         //Then a new Client should be available
-        Optional<ClientRepresentation> publicClient = helper.findClientInRealm(MY_REALM, KubeUtils.PUBLIC_CLIENT_ID);
+        Optional<ClientRepresentation> publicClient = helper.findClientInRealm(MY_REALM, MY_CLIENT);
         assertThat(publicClient.isPresent(), is(true));
         //With publicClient enabled
         assertThat(publicClient.get().isPublicClient(), is(true));
         //And the correct redirectUris and origins configured
         assertThat(publicClient.get().getRedirectUris().get(0), is("http://test.domain.com/*"));
         assertThat(publicClient.get().getWebOrigins().get(0), is("http://test.domain.com"));
+    }
+
+    @Test
+    void testCreatePublicClientTwice() {
+        //Given a Keycloak Server is available and I have logged int
+        DefaultKeycloakClient kc = prepareKeycloak();
+        //And  I have ensured that a specific real is available
+        kc.ensureRealm(MY_REALM);
+        //And I have created public client in this realm
+        kc.createPublicClient(MY_REALM, MY_CLIENT, "http://test.domain.com");
+        //When I create a second public client in this realm
+        kc.createPublicClient(MY_REALM, MY_CLIENT, "http://another.domain.com");
+        //Then a new Client should be available
+        Optional<ClientRepresentation> publicClient = helper.findClientInRealm(MY_REALM, MY_CLIENT);
+        assertThat(publicClient.isPresent(), is(true));
+        //With publicClient enabled
+        assertThat(publicClient.get().isPublicClient(), is(true));
+        //And the correct redirectUris and origins configured
+        assertThat(publicClient.get().getRedirectUris(), containsInAnyOrder("http://test.domain.com/*", "http://another.domain.com/*"));
+        assertThat(publicClient.get().getWebOrigins(), containsInAnyOrder("http://test.domain.com", "http://another.domain.com"));
     }
 
     @Test
@@ -143,76 +125,42 @@ class KeycloakClientTest implements FluentIntegrationTesting {
                 .retrieveServiceAccountRolesInRealm(MY_REALM, MY_CLIENT, EXISTING_CLIENT);
         assertThat(roleRepresentations.get(0).getName(), is(EXISTING_ROLE));
     }
+    @Test
+    void testAssignRoleToServiceAccount() {
+        //Given a Keycloak Server is available and I have logged int
+        DefaultKeycloakClient kc = prepareKeycloak();
+        //And  I have ensured that a specific real is available
+        kc.ensureRealm(MY_REALM);
+        //And I have created a client
+        kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, EXISTING_CLIENT, EXISTING_CLIENT)
+                .withRedirectUri("http://existingclient.domain.com/*")
+                .withRole(EXISTING_ROLE)
+                .withRole(EXISTING_ROLE)//To confirm there is no failure on duplicates
+                .withRole(EXISTING_ROLE)
+        );
+        //And I create another client in this realm
+        kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
+                .withRedirectUri("http://test.domain.com/*")
+                .withWebOrigin("http://test.domain.com")
+        );
+        //When I assign a role in the first client to the second client
+        kc.assignRoleToClientServiceAccount(MY_REALM,MY_CLIENT, new Permission(EXISTING_CLIENT, EXISTING_ROLE));
+        //Then a new client should be available
+        Optional<ClientRepresentation> publicClient = helper.findClientInRealm(MY_REALM, MY_CLIENT);
+        //With correct permissions
+        List<RoleRepresentation> roleRepresentations = helper
+                .retrieveServiceAccountRolesInRealm(MY_REALM, MY_CLIENT, EXISTING_CLIENT);
+        assertThat(roleRepresentations.get(0).getName(), is(EXISTING_ROLE));
+    }
 
     private DefaultKeycloakClient prepareKeycloak() {
         if (keycloakClient == null) {
-            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(), "true");
-            TestFixturePreparation.prepareTestFixture(this.client, deleteAll(EntandoKeycloakServer.class).fromNamespace(KC_TEST_NAMESPACE));
-            NonNamespaceOperation<EntandoKeycloakServer,
-                    EntandoKeycloakServerList,
-                    DoneableEntandoKeycloakServer,
-                    Resource<EntandoKeycloakServer,
-                            DoneableEntandoKeycloakServer>> operation = helper
-                    .getOperations().inNamespace(KC_TEST_NAMESPACE);
-            keycloakServer = operation.createOrReplace(keycloakServer);
-            ExposedService result = new DeployCommand<>(new TestKeycloakDeployable(keycloakServer))
-                    .execute(simpleK8SClient, Optional
-                            .empty());
-            Pod pod = simpleK8SClient.pods().waitForPod(KC_TEST_NAMESPACE, DeployCommand.DEPLOYMENT_LABEL_NAME, "test-kc-server");
-            simpleK8SClient.pods().executeOnPod(pod, "server-container",
-                    "cd /opt/jboss/keycloak/bin",
-                    "./kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user $KEYCLOAK_USER --password "
-                            + "$KEYCLOAK_PASSWORD",
-                    "./kcadm.sh update realms/master -s sslRequired=NONE"
-            );
             keycloakClient = new DefaultKeycloakClient();
-            keycloakClient
-                    .login(HttpTestHelper.getDefaultProtocol() + "://test-kc." + helper.getDomainSuffix() + "/auth", "test-admin",
-                            MinimalKeycloakContainer.KCP);
+            keycloakClient.login(EntandoOperatorTestConfig.getKeycloakBaseUrl(),
+                    EntandoOperatorTestConfig.getKeycloakUser(),
+                    EntandoOperatorTestConfig.getKeycloakPassword());
         }
         return keycloakClient;
-    }
-
-    private static class TestKeycloakDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServer> {
-
-        private final List<DeployableContainer> containers;
-        private final EntandoKeycloakServer keycloakServer;
-
-        private TestKeycloakDeployable(EntandoKeycloakServer keycloakServer) {
-            this.keycloakServer = keycloakServer;
-            this.containers = Arrays.asList(new MinimalKeycloakContainer(keycloakServer));
-        }
-
-        @Override
-        public List<DeployableContainer> getContainers() {
-            return containers;
-        }
-
-        @Override
-        public String getIngressName() {
-            return keycloakServer.getMetadata().getName() + "-ingress";
-        }
-
-        @Override
-        public String getIngressNamespace() {
-            return keycloakServer.getMetadata().getNamespace();
-        }
-
-        @Override
-        public String getNameQualifier() {
-            return "server";
-        }
-
-        @Override
-        public EntandoKeycloakServer getCustomResource() {
-            return keycloakServer;
-        }
-
-        @Override
-        public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-            return new ExposedDeploymentResult(pod, service, ingress);
-        }
-
     }
 
 }

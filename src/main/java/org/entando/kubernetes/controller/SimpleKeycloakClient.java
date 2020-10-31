@@ -24,7 +24,7 @@ public interface SimpleKeycloakClient {
 
     void ensureRealm(String realm);
 
-    void createPublicClient(String realm, String domain);
+    void createPublicClient(String realm, String clientId, String domain);
 
     String prepareClientAndReturnSecret(KeycloakClientConfig config);
 

@@ -54,6 +54,7 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.junit.jupiter.api.AfterEach;
@@ -173,7 +174,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
             }
         };
         //And I have prepared the Standard KeycloakAdminSecert
-        k8sClient.secrets().overwriteControllerSecret(buildKeycloakSecret());
+        emulateKeycloakDeployment(getClient());
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
         //When I create a new EntandoPlugin
@@ -279,7 +280,12 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
         @Override
         public KeycloakClientConfig getKeycloakClientConfig() {
-            return new KeycloakClientConfig(KubeUtils.ENTANDO_KEYCLOAK_REALM, "some-client", "Some Client");
+            return new KeycloakClientConfig(determineRealm(), "some-client", "Some Client");
+        }
+
+        @Override
+        public KeycloakAwareSpec getKeycloakAwareSpec() {
+            return (KeycloakAwareSpec) super.getCustomResourceSpec();
         }
     }
 }

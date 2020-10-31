@@ -16,9 +16,6 @@
 
 package org.entando.kubernetes.controller.integrationtest.support;
 
-import static org.entando.kubernetes.controller.KubeUtils.ENTANDO_KEYCLOAK_REALM;
-
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
 import java.util.Arrays;
@@ -26,18 +23,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.ClientErrorException;
+import org.entando.kubernetes.client.DefaultEntandoResourceClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
+import org.entando.kubernetes.controller.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.model.DbmsVendor;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.ResourceReference;
+import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
 import org.keycloak.OAuth2Constants;
@@ -55,32 +58,42 @@ public class KeycloakIntegrationTestHelper extends
 
     public static final String KEYCLOAK_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("keycloak-namespace");
     public static final String KEYCLOAK_NAME = EntandoOperatorTestConfig.calculateName("test-keycloak");
+    public static final String KEYCLOAK_REALM = EntandoOperatorTestConfig.calculateNameSpace("test-realm");
+    private final DefaultEntandoResourceClient entandoResourceClient;
 
     public KeycloakIntegrationTestHelper(DefaultKubernetesClient client) {
         super(client, EntandoKeycloakServerOperationFactory::produceAllEntandoKeycloakServers);
+        this.entandoResourceClient = new DefaultEntandoResourceClient(client);
     }
 
-    public boolean ensureKeycloak() {
-        EntandoKeycloakServer keycloakServer = getOperations()
-                .inNamespace(KEYCLOAK_NAMESPACE)
-                .withName(KEYCLOAK_NAME).get();
-        if (keycloakServer == null || keycloakServer.getStatus().getEntandoDeploymentPhase() != EntandoDeploymentPhase.SUCCESSFUL) {
-            setTestFixture(deleteAll(EntandoKeycloakServer.class).fromNamespace(KEYCLOAK_NAMESPACE));
-            createAndWaitForKeycloak(new EntandoKeycloakServerBuilder()
-                    .withNewMetadata().withNamespace(KEYCLOAK_NAMESPACE).withName(KEYCLOAK_NAME).endMetadata()
-                    .withNewSpec().withDefault(true)
-                    .withDbms(DbmsVendor.NONE)
-                    .withIngressHostName(KEYCLOAK_NAME + "." + getDomainSuffix())
-                    .withImageName("entando/entando-keycloak").endSpec()
-                    .build(), 30, true);
-            return true;
-        }
-        return false;
+    public void prepareDefaultKeycloakSecretAndConfigMap() {
+        client.configMaps().createOrReplaceWithNew()
+                .withNewMetadata()
+                .withNamespace(client.getNamespace())
+                .withName(KeycloakName
+                        .forTheConnectionConfigMap(new ResourceReference()))//should use the default "keycloak-admin-connection-config"
+                .endMetadata()
+                .addToData(KubeUtils.URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())
+                .addToData(KubeUtils.INTERNAL_URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())
+                .done();
+        client.secrets().createOrReplaceWithNew()
+                .withNewMetadata()
+                .withNamespace(client.getNamespace())
+                .withName(KeycloakName.forTheAdminSecret(new ResourceReference()))//should use the default "keycloak-admin-secret"
+                .endMetadata()
+                .addToStringData(KubeUtils.USERNAME_KEY, EntandoOperatorTestConfig.getKeycloakUser())
+                .addToStringData(KubeUtils.PASSSWORD_KEY, EntandoOperatorTestConfig.getKeycloakPassword())
+                .done();
     }
 
     public void deleteDefaultKeycloakAdminSecret() {
-        if (client.secrets().withName(EntandoOperatorConfig.getDefaultKeycloakSecretName()).get() != null) {
-            client.secrets().withName(EntandoOperatorConfig.getDefaultKeycloakSecretName()).delete();
+        String keycloakAdminSecretName = KeycloakName.forTheAdminSecret(new ResourceReference());
+        if (client.secrets().withName(keycloakAdminSecretName).get() != null) {
+            client.secrets().withName(keycloakAdminSecretName).delete();
+        }
+        String keycloakConnectionConfigMapName = KeycloakName.forTheConnectionConfigMap(new ResourceReference());
+        if (client.configMaps().withName(keycloakConnectionConfigMapName).get() != null) {
+            client.configMaps().withName(keycloakConnectionConfigMapName).delete();
         }
     }
 
@@ -107,61 +120,57 @@ public class KeycloakIntegrationTestHelper extends
                 });
     }
 
-    public void ensureKeycloakClient(String clientId, List<String> roles) {
-        KeycloakClientConfig config = new KeycloakClientConfig(ENTANDO_KEYCLOAK_REALM, clientId, clientId);
+    public void ensureKeycloakClient(KeycloakAwareSpec keycloakAwareSpec, String clientId,
+            List<String> roles) {
+        KeycloakClientConfig config = new KeycloakClientConfig(determineRealm(keycloakAwareSpec), clientId, clientId);
         for (String role : roles) {
             config = config.withRole(role);
         }
-        getDefaultKeycloakClient().orElseThrow(IllegalStateException::new).prepareClientAndReturnSecret(config);
+        getDefaultKeycloakClient().prepareClientAndReturnSecret(config);
     }
 
-    protected Optional<DefaultKeycloakClient> getDefaultKeycloakClient() {
-        return getKeycloak().map(DefaultKeycloakClient::new);
+    protected DefaultKeycloakClient getDefaultKeycloakClient() {
+        return new DefaultKeycloakClient(getKeycloak());
     }
 
-    private Optional<Keycloak> getKeycloak() {
-        return getAdminSecret()
-                .map(KeycloakConnectionSecret::new)
-                .map(connectionConfig -> KeycloakBuilder.builder()
-                        .serverUrl(connectionConfig.getExternalBaseUrl())
-                        .grantType(OAuth2Constants.PASSWORD)
-                        .realm("master")
-                        .clientId("admin-cli")
-                        .username(connectionConfig.getUsername())
-                        .password(connectionConfig.getPassword())
-                        .build());
+    private Keycloak getKeycloak() {
+        EntandoApp resource = new EntandoApp(new EntandoAppSpec());
+        return getKeycloakFor(resource);
     }
 
-    protected Optional<Secret> getAdminSecret() {
-        return Optional.ofNullable(client.secrets()
-                .inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE)
-                .withName(EntandoOperatorConfig.getDefaultKeycloakSecretName())
-                .fromServer().get());
+    public Keycloak getKeycloakFor(EntandoBaseCustomResource<? extends KeycloakAwareSpec> requiresKeycloak) {
+        KeycloakConnectionConfig keycloak = entandoResourceClient.findKeycloak(requiresKeycloak);
+        return KeycloakBuilder.builder()
+                .serverUrl(keycloak.getExternalBaseUrl())
+                .grantType(OAuth2Constants.PASSWORD)
+                .realm("master")
+                .clientId("admin-cli")
+                .username(keycloak.getUsername())
+                .password(keycloak.getPassword())
+                .build();
     }
 
     //Because we don't know the state of the Keycloak Client
-    public void deleteKeycloakClients(String... clientid) {
+    public <T extends KeycloakAwareSpec> void deleteKeycloakClients(EntandoBaseCustomResource<T> requiresKeycloak, String... clientid) {
         try {
-            getKeycloak().ifPresent(keycloak -> {
-                ClientsResource clients = keycloak.realm(ENTANDO_KEYCLOAK_REALM).clients();
-                Arrays.stream(clientid).forEach(s -> clients.findByClientId(s).stream().forEach(c -> {
-                    logWarning("Deleting KeycloakClient " + c.getClientId());
-                    clients.get(c.getId()).remove();
-                }));
-            });
+            ClientsResource clients = getKeycloakFor(requiresKeycloak).realm(determineRealm(requiresKeycloak.getSpec())).clients();
+            Arrays.stream(clientid).forEach(s -> clients.findByClientId(s).stream().forEach(c -> {
+                logWarning("Deleting KeycloakClient " + c.getClientId());
+                clients.get(c.getId()).remove();
+            }));
         } catch (Exception e) {
             logWarning(e.toString());
         }
 
     }
 
-    public List<RoleRepresentation> retrieveServiceAccountRoles(String serviceAccountClientId, String targetClientId) {
-        return retrieveServiceAccountRolesInRealm(ENTANDO_KEYCLOAK_REALM, serviceAccountClientId, targetClientId);
+    public List<RoleRepresentation> retrieveServiceAccountRoles(String realmName, String serviceAccountClientId, String targetClientId) {
+        return retrieveServiceAccountRolesInRealm(realmName, serviceAccountClientId, targetClientId);
     }
 
     public List<RoleRepresentation> retrieveServiceAccountRolesInRealm(String realmName, String serviceAccountClientId,
             String targetClientId) {
-        RealmResource realm = getKeycloak().orElseThrow(IllegalStateException::new).realm(realmName);
+        RealmResource realm = getKeycloak().realm(realmName);
         ClientsResource clients = realm.clients();
         ClientRepresentation serviceAccountClient = clients.findByClientId(serviceAccountClientId).get(0);
         ClientRepresentation targetClient = clients.findByClientId(targetClientId).get(0);
@@ -169,13 +178,13 @@ public class KeycloakIntegrationTestHelper extends
         return realm.users().get(serviceAccountUser.getId()).roles().clientLevel(targetClient.getId()).listAll();
     }
 
-    public Optional<ClientRepresentation> findClientById(String clientId) {
-        return findClientInRealm(ENTANDO_KEYCLOAK_REALM, clientId);
+    public Optional<ClientRepresentation> findClientById(String realmName, String clientId) {
+        return findClientInRealm(realmName, clientId);
     }
 
     public Optional<ClientRepresentation> findClientInRealm(String realmName, String clientId) {
         try {
-            RealmResource realm = getKeycloak().orElseThrow(IllegalStateException::new).realm(realmName);
+            RealmResource realm = getKeycloak().realm(realmName);
             ClientsResource clients = realm.clients();
             return clients.findByClientId(clientId).stream().findFirst();
         } catch (ClientErrorException e) {
@@ -185,5 +194,9 @@ public class KeycloakIntegrationTestHelper extends
             }
             throw e;
         }
+    }
+
+    public void deleteRealm(String realm) {
+        getKeycloak().realm(realm).remove();
     }
 }

@@ -31,6 +31,7 @@ import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 
 public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource> implements SpringBootDeployableContainer,
         ParameterizableContainer, PersistentVolumeAware, ConfigurableResourceContainer {
@@ -78,9 +79,14 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
 
     @Override
     public KeycloakClientConfig getKeycloakClientConfig() {
-        return new KeycloakClientConfig(KubeUtils.ENTANDO_KEYCLOAK_REALM,
+        return new KeycloakClientConfig(determineRealm(),
                 customResource.getMetadata().getName() + "-" + getNameQualifier(),
                 customResource.getMetadata().getName() + "-" + getNameQualifier());
+    }
+
+    @Override
+    public KeycloakAwareSpec getKeycloakAwareSpec() {
+        return (KeycloakAwareSpec) customResource.getSpec();
     }
 
     @Override

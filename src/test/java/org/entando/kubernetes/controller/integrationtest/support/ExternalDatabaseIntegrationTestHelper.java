@@ -61,7 +61,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
 
     @SuppressWarnings("unchecked")
     public void prepareExternalPostgresqlDatabase(String namespace, String resourceKind) {
-        delete(client.pods()).named("pg-test").fromNamespace(namespace).waitingAtMost(60, SECONDS);
+        deletePgTestPod(namespace);
         deleteCommonPreviousState(namespace);
         client.pods().inNamespace(namespace).createNew().withNewMetadata().withName("pg-test").addToLabels(resourceKind, null)
                 .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resourceKind).endMetadata()
@@ -104,6 +104,10 @@ public class ExternalDatabaseIntegrationTestHelper extends
         externalDatabase.getMetadata().setName(MY_EXTERNAL_DB);
         SampleWriter.writeSample(externalDatabase, "external-postgresql-db");
         createAndWaitForDbService(namespace, externalDatabase);
+    }
+
+    public void deletePgTestPod(String namespace) {
+        delete(client.pods()).named("pg-test").fromNamespace(namespace).waitingAtMost(60, SECONDS);
     }
 
     private void deleteCommonPreviousState(String namespace) {

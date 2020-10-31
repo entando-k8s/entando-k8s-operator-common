@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.common;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Optional;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
@@ -24,9 +25,11 @@ import org.entando.kubernetes.controller.KubeUtils;
 public class KeycloakConnectionSecret implements KeycloakConnectionConfig {
 
     private final Secret adminSecret;
+    private final ConfigMap configMap;
 
-    public KeycloakConnectionSecret(Secret adminSecret) {
+    public KeycloakConnectionSecret(Secret adminSecret, ConfigMap configMap) {
         this.adminSecret = adminSecret;
+        this.configMap = configMap;
     }
 
     @Override
@@ -36,11 +39,11 @@ public class KeycloakConnectionSecret implements KeycloakConnectionConfig {
 
     @Override
     public String getExternalBaseUrl() {
-        return decodeSecretValue(KubeUtils.URL_KEY);
+        return configMap.getData().get(KubeUtils.URL_KEY);
     }
 
     @Override
     public Optional<String> getInternalBaseUrl() {
-        return Optional.ofNullable(decodeSecretValue(KubeUtils.INTERNAL_URL_KEY));
+        return Optional.ofNullable(configMap.getData().get(KubeUtils.INTERNAL_URL_KEY));
     }
 }

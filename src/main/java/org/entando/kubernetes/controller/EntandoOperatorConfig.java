@@ -114,16 +114,16 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
                 "entando-cluster-infrastructure-secret");
     }
 
-    public static String getDefaultKeycloakSecretName() {
-        return getProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_KEYCLOAK_SECRET_NAME, "keycloak-admin-secret");
-    }
-
     public static long getPodCompletionTimeoutSeconds() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS).map(Long::valueOf).orElse(600L);
     }
 
     public static long getPodReadinessTimeoutSeconds() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS).map(Long::valueOf).orElse(600L);
+    }
+
+    public static long getPodShutdownTimeoutSeconds() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_POD_SHUTDOWN_TIMEOUT_SECONDS).map(Long::valueOf).orElse(120L);
     }
 
     public static boolean imposeResourceLimits() {
@@ -142,4 +142,5 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static boolean forceExternalAccessToKeycloak() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_FORCE_EXTERNAL_ACCESS_TO_KEYCLOAK).map(Boolean::valueOf).orElse(false);
     }
+
 }

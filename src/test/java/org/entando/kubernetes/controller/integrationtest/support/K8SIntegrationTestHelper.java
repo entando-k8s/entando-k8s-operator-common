@@ -101,36 +101,6 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
         return client;
     }
 
-    public void createAndWaitForPlugin(EntandoPlugin plugin, boolean isDbEmbedded) {
-        ensureKeycloakAndClusterInfrastructure();
-        String name = plugin.getMetadata().getName();
-        keycloak().deleteKeycloakClients(name + "-confsvc", name + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER, name + "-sidecar");
-        entandoPlugins().createAndWaitForPlugin(plugin, isDbEmbedded);
-    }
-
-    public void ensureKeycloakAndClusterInfrastructure() {
-        ensureKeycloak();
-        clusterInfrastructure().ensureClusterInfrastructure();
-    }
-
-    public void createAndWaitForApp(EntandoApp entandoApp, int waitOffset, boolean deployingDbContainers) {
-        ensureKeycloakAndClusterInfrastructure();
-        keycloak().deleteKeycloakClients("entando-web", EntandoAppIntegrationTestHelper.TEST_APP_NAME + "-de",
-                EntandoAppIntegrationTestHelper.TEST_APP_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER);
-        entandoApps().createAndWaitForApp(entandoApp, waitOffset, deployingDbContainers);
-    }
-
-    public void ensureKeycloak() {
-        if (keycloak().ensureKeycloak()) {
-            TestFixtureRequest testFixtureRequest = new TestFixtureRequest()
-                    .deleteAll(EntandoPlugin.class).fromNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
-                    .deleteAll(EntandoApp.class).fromNamespace(EntandoAppIntegrationTestHelper.TEST_NAMESPACE)
-                    .deleteAll(EntandoClusterInfrastructure.class)
-                    .fromNamespace(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
-            setTextFixture(testFixtureRequest);
-        }
-    }
-
     public void setTextFixture(TestFixtureRequest request) {
         this.releaseFinalizers(request);
         TestFixturePreparation.prepareTestFixture(this.client, request);
@@ -164,13 +134,6 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
         entandoApps().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
         entandoPlugins().releaseAllFinalizers(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE);
         appPluginLinks().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
-    }
-
-    public void createAndWaitForClusterInfrastructure(EntandoClusterInfrastructure clusterInfrastructure, int timeOffset,
-            boolean embbedDb) {
-        ensureKeycloak();
-        clusterInfrastructure().waitForClusterInfrastructure(clusterInfrastructure, timeOffset, embbedDb);
-
     }
 
     public String getDomainSuffix() {

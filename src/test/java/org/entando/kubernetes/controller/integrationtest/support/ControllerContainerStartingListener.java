@@ -24,10 +24,11 @@ import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.util.Optional;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ControllerContainerStartingListener<
-        R extends EntandoCustomResource,
+        R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
         D extends DoneableEntandoCustomResource<D, R>
         > {

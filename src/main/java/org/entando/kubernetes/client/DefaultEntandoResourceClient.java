@@ -19,13 +19,17 @@ package org.entando.kubernetes.client;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -35,18 +39,22 @@ import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.InfrastructureConfig;
 import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
+import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
 import org.entando.kubernetes.model.RequiresClusterInfrastructure;
-import org.entando.kubernetes.model.RequiresKeycloak;
+import org.entando.kubernetes.model.ResourceReference;
+import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
@@ -59,9 +67,47 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public KeycloakConnectionConfig findKeycloak(RequiresKeycloak resource) {
-        String secretName = resource.getKeycloakSecretToUse().orElse(EntandoOperatorConfig.getDefaultKeycloakSecretName());
-        return new KeycloakConnectionSecret(this.client.secrets().withName(secretName).fromServer().get());
+    public String getNamespace() {
+        return client.getNamespace();
+    }
+
+    @Override
+     public <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource) {
+        ResourceReference keycloakToUse = determineKeycloakToUse(resource);
+        String secretName = KeycloakName.forTheAdminSecret(keycloakToUse);
+        String configMapName = KeycloakName.forTheConnectionConfigMap(keycloakToUse);
+        return new KeycloakConnectionSecret(
+                this.client.secrets().withName(secretName).fromServer().get(),
+                this.client.configMaps().withName(configMapName).fromServer().get()
+
+        );
+    }
+
+    @Override
+    public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoBaseCustomResource<?> peerInNamespace) {
+        List<EntandoKeycloakServer> entandoKeycloakServers = entandoResourceRegistry.getOperations(EntandoKeycloakServer.class)
+                .inNamespace(peerInNamespace.getMetadata().getNamespace()).list().getItems();
+        List<EntandoKeycloakServer> items = entandoKeycloakServers;
+        if (items.size() == 1) {
+            return Optional.of(items.get(0));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public DoneableConfigMap loadDefaultConfigMap() {
+        Resource<ConfigMap, DoneableConfigMap> resource = client.configMaps().inNamespace(client.getNamespace())
+                .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME);
+        if (resource.get() == null) {
+            return client.configMaps().inNamespace(client.getNamespace()).createNew()
+                    .withNewMetadata()
+                    .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME)
+                    .withNamespace(client.getNamespace())
+                    .endMetadata()
+                    .addToData(new HashMap<>());
+
+        }
+        return resource.edit();
     }
 
     @Override

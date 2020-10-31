@@ -117,7 +117,7 @@ public class DummyBean {
         //And  I have ensured that a specific realm is available
         kc.ensureRealm(MY_REALM);
         //When I create the public client in this realm
-        kc.createPublicClient(MY_REALM, "http://test.domain.com");
+        kc.createPublicClient(MY_REALM, MY_CLIENT, "http://test.domain.com");
         //Then a new Client should be available
         Optional<ClientRepresentation> publicClient = findClientInRealm(MY_REALM, KubeUtils.PUBLIC_CLIENT_ID);
         assertThat(publicClient.isPresent(), is(true));

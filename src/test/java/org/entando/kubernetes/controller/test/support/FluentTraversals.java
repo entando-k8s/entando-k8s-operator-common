@@ -16,11 +16,11 @@
 
 package org.entando.kubernetes.controller.test.support;
 
-import static org.entando.kubernetes.controller.KubeUtils.ENTANDO_KEYCLOAK_REALM;
 import static org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil.MY_KEYCLOAK_BASE_URL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.EndpointPort;
@@ -41,14 +41,15 @@ import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
 import java.lang.reflect.Field;
 import java.util.List;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.KeycloakClientCreator;
+import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.hamcrest.Matchers;
 
 public interface FluentTraversals {
-
+    String ENTANDO_KEYCLOAK_REALM = KubeUtils.ENTANDO_DEFAULT_KEYCLOAK_REALM;
+    String ENTANDO_PUBLIC_CLIENT = KubeUtils.PUBLIC_CLIENT_ID;
     String DATABASE_ADMIN_USER = "DATABASE_ADMIN_USER";
     String DATABASE_ADMIN_PASSWORD = "DATABASE_ADMIN_PASSWORD";
     String DATABASE_USER = "DATABASE_USER";
@@ -127,12 +128,12 @@ public interface FluentTraversals {
         assertThat(theVariableReferenceNamed("KEYCLOAK_CLIENT_ID").on(container).getSecretKeyRef().getName(),
                 is(keycloakClientSecret));
         assertThat(theVariableReferenceNamed("KEYCLOAK_CLIENT_ID").on(container).getSecretKeyRef().getKey(),
-                is(KeycloakClientCreator.CLIENT_ID_KEY));
+                is(KeycloakName.CLIENT_ID_KEY));
         assertThat(theVariableReferenceNamed("KEYCLOAK_CLIENT_SECRET").on(container).getSecretKeyRef()
                 .getName(), is(keycloakClientSecret));
         assertThat(
                 theVariableReferenceNamed("KEYCLOAK_CLIENT_SECRET").on(container).getSecretKeyRef().getKey(),
-                is(KeycloakClientCreator.CLIENT_SECRET_KEY));
+                is(KeycloakName.CLIENT_SECRET_KEY));
     }
 
     default void verifySpringSecuritySettings(Container container, String keycloakClientSecret) {
@@ -145,7 +146,7 @@ public interface FluentTraversals {
                 Matchers.is(keycloakClientSecret));
         assertThat(theVariableReferenceNamed(
                 SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
-                .on(container).getSecretKeyRef().getKey(), Matchers.is(KeycloakClientCreator.CLIENT_ID_KEY));
+                .on(container).getSecretKeyRef().getKey(), Matchers.is(KeycloakName.CLIENT_ID_KEY));
         assertThat(theVariableReferenceNamed(
                 SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
                         .on(container).getSecretKeyRef().getName(),
@@ -153,7 +154,7 @@ public interface FluentTraversals {
         assertThat(theVariableReferenceNamed(
                 SpringBootDeployableContainer.SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
                         .on(container).getSecretKeyRef().getKey(),
-                Matchers.is(KeycloakClientCreator.CLIENT_SECRET_KEY));
+                Matchers.is(KeycloakName.CLIENT_SECRET_KEY));
     }
 
     default void verifyStandardSchemaCreationVariables(String adminSecret, String secretToMatch, Container resultingContainer,
@@ -372,6 +373,16 @@ public interface FluentTraversals {
             }
             return stringValue;
         }
+        public String on(ConfigMap secret) {
+            String stringValue = null;
+            if (secret.getData() != null && secret.getData().containsKey(key)) {
+                stringValue = secret.getData().get(key);
+            } else if (secret.getData() != null) {
+                stringValue = secret.getData().get(key);
+            }
+            return stringValue;
+        }
+
     }
 
     class LabelFinder {

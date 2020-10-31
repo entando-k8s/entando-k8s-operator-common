@@ -75,7 +75,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
             }
         };
         //And I have prepared the Standard KeycloakAdminSecert
-        getClient().secrets().overwriteControllerSecret(buildKeycloakSecret());
+        emulateKeycloakDeployment(getClient());
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
         //And we have two ExternalDatabases: one MySQL and one PostgreSQL
