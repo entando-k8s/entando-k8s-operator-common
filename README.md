@@ -146,3 +146,4 @@ TBD
 ## Examples
 
 Some examples are available in the test package at the location `org.entando.kubernetes.controller.common.examples`
+
