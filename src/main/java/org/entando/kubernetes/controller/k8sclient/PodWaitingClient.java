@@ -42,7 +42,7 @@ public interface PodWaitingClient {
                 try (Watch ignored = podResource.watch(watcher)) {
                     //Sonar seems to believe the JVM may not respect wait() with timeout due to 'Spurious wakeups'
                     while (watcher.shouldStillWait()) {
-                        mutex.wait( 1000);
+                        mutex.wait(1000);
                     }
                     if (watcher.podResourceFulfillsCondition()) {
                         return watcher.getLastPod();

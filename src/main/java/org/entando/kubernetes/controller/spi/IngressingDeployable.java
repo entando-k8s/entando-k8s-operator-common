@@ -20,10 +20,11 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.HasIngress;
 
-public interface IngressingDeployable<T extends ExposedDeploymentResult, C extends EntandoBaseCustomResource> extends Deployable<T, C>,
+public interface IngressingDeployable<T extends ExposedDeploymentResult, S extends EntandoIngressingDeploymentSpec> extends
+        Deployable<T, S>,
         Ingressing<IngressingContainer> {
 
     default boolean isTlsSecretSpecified() {

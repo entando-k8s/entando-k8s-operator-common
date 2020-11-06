@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.creators.DatabasePreparationPodCreator;
 import org.entando.kubernetes.controller.creators.DeploymentCreator;
-import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.creators.KeycloakClientCreator;
 import org.entando.kubernetes.controller.creators.PersistentVolumeClaimCreator;
 import org.entando.kubernetes.controller.creators.SecretCreator;
@@ -40,45 +39,41 @@ import org.entando.kubernetes.controller.spi.ServiceDeploymentResult;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.DbServerStatus;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.WebServerStatus;
 
-/**
- * On addition of an Entando CustomResource, the DeployCommand is invoked for every service and database that needs to be deployed.
- */
-public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoBaseCustomResource> {
+public class DeployCommand<T extends ServiceDeploymentResult, S extends EntandoDeploymentSpec> {
 
     public static final String DEPLOYMENT_LABEL_NAME = "deployment";
     private static final String DEFAULT = "default";
-    private final Deployable<T, C> deployable;
-    private final PersistentVolumeClaimCreator persistentVolumeClaimCreator;
-    private final ServiceCreator serviceCreator;
-    private final DeploymentCreator deploymentCreator;
-    private final IngressCreator ingressCreator;
-    private final SecretCreator secretCreator;
-    private final DatabasePreparationPodCreator databasePreparationJobCreator;
-    private final KeycloakClientCreator keycloakClientCreator;
-    private final ServiceAccountCreator serviceAccountCreator;
-    private final AbstractServerStatus status;
-    private final EntandoBaseCustomResource<?> entandoCustomResource;
+    protected final Deployable<T, S> deployable;
+    protected final PersistentVolumeClaimCreator<S> persistentVolumeClaimCreator;
+    protected final ServiceCreator<S> serviceCreator;
+    protected final DeploymentCreator<S> deploymentCreator;
+    protected final SecretCreator<S> secretCreator;
+    protected final DatabasePreparationPodCreator<S> databasePreparationJobCreator;
+    protected final KeycloakClientCreator keycloakClientCreator;
+    protected final ServiceAccountCreator<S> serviceAccountCreator;
+    protected final AbstractServerStatus status;
+    protected final EntandoBaseCustomResource<S> entandoCustomResource;
     private Pod pod;
 
-    public DeployCommand(Deployable<T, C> deployable) {
-        entandoCustomResource = deployable.getCustomResource();
-        serviceAccountCreator = new ServiceAccountCreator(entandoCustomResource);
-        persistentVolumeClaimCreator = new PersistentVolumeClaimCreator(entandoCustomResource);
-        serviceCreator = new ServiceCreator(entandoCustomResource);
-        ingressCreator = new IngressCreator(entandoCustomResource);
-        secretCreator = new SecretCreator(entandoCustomResource);
-        databasePreparationJobCreator = new DatabasePreparationPodCreator(entandoCustomResource);
-        deploymentCreator = new DeploymentCreator(entandoCustomResource);
+    public DeployCommand(Deployable<T, S> deployable) {
         this.deployable = deployable;
+        this.entandoCustomResource = deployable.getCustomResource();
+        persistentVolumeClaimCreator = new PersistentVolumeClaimCreator<>(entandoCustomResource);
+        serviceCreator = new ServiceCreator<>(entandoCustomResource);
+        deploymentCreator = new DeploymentCreator<>(entandoCustomResource);
+        secretCreator = new SecretCreator<>(entandoCustomResource);
+        databasePreparationJobCreator = new DatabasePreparationPodCreator<>(entandoCustomResource);
+        keycloakClientCreator = new KeycloakClientCreator(entandoCustomResource);
+        serviceAccountCreator = new ServiceAccountCreator<>(entandoCustomResource);
         if (deployable instanceof IngressingDeployable) {
             status = new WebServerStatus();
         } else {
             status = new DbServerStatus();
         }
         status.setQualifier(deployable.getNameQualifier());
-        keycloakClientCreator = new KeycloakClientCreator(entandoCustomResource);
     }
 
     @SuppressWarnings("unchecked")
@@ -95,44 +90,32 @@ public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoB
             createPersistentVolumeClaims(k8sClient);
         }
         secretCreator.createSecrets(k8sClient.secrets(), deployable);
-        if (shouldCreateServiceAccount()) {
-            serviceAccountCreator.prepareServiceAccount(k8sClient.serviceAccounts(), deployable);
-        }
-        if (EntandoOperatorConfig.isClusterScopedDeployment()) {
-            serviceAccountCreator.createBindingsToClusterRoles(k8sClient.serviceAccounts(), deployable);
-        }
+        serviceAccountCreator.prepareServiceAccountAccess(k8sClient.serviceAccounts(), deployable);
         if (shouldCreateService(deployable)) {
             createService(k8sClient);
         }
-        if (deployable instanceof IngressingDeployable) {
-            if (((IngressingDeployable) this.deployable).getIngressingContainers().isEmpty()) {
-                throw new IllegalStateException(
-                        deployable.getClass() + " implements IngressingDeployable but has no IngressingContainers.");
-            }
-            syncIngress(k8sClient, (IngressingDeployable) this.deployable);
-        }
+        Ingress ingress = maybeCreateIngress(k8sClient);
         if (keycloakClientCreator.requiresKeycloakClients(deployable)) {
             keycloakClientCreator.createKeycloakClients(
                     k8sClient.secrets(),
                     keycloakClient.orElseThrow(IllegalStateException::new),
                     deployable,
-                    Optional.ofNullable(getIngress()));
+                    Optional.ofNullable(ingress));
         }
         createDeployment(k8sClient, entandoImageResolver);
         waitForPod(k8sClient);
         if (status.hasFailed()) {
             throw new EntandoControllerException("Creation of Kubernetes resources has failed");
         }
-        return (T) deployable.createResult(getDeployment(), getService(), getIngress(), getPod()).withStatus(getStatus());
+        return (T) deployable.createResult(getDeployment(), getService(), ingress, getPod()).withStatus(getStatus());
     }
 
-    private boolean shouldCreateService(Deployable<T, ?> deployable) {
+    protected Ingress maybeCreateIngress(SimpleK8SClient<?> k8sClient) {
+        return null;
+    }
+
+    private boolean shouldCreateService(Deployable<T, S> deployable) {
         return deployable.getContainers().stream().anyMatch(ServiceBackingContainer.class::isInstance);
-    }
-
-    private boolean shouldCreateServiceAccount() {
-        return !DEFAULT.equals(deployable.determineServiceAccountName())
-                && EntandoOperatorConfig.getOperatorSecurityMode() == SecurityMode.LENIENT;
     }
 
     private void waitForPod(SimpleK8SClient<?> k8sClient) {
@@ -142,24 +125,13 @@ public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoB
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private String resolveName(Deployable<T, C> deployable) {
+    private String resolveName(Deployable<T, S> deployable) {
         return entandoCustomResource.getMetadata().getName() + "-" + deployable.getNameQualifier();
     }
 
     private void createDeployment(SimpleK8SClient<?> k8sClient, EntandoImageResolver entandoImageResolver) {
         deploymentCreator.createDeployment(entandoImageResolver, k8sClient.deployments(), deployable);
         status.setDeploymentStatus(deploymentCreator.reloadDeployment(k8sClient.deployments()));
-        k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
-    }
-
-    private void syncIngress(SimpleK8SClient<?> k8sClient, IngressingDeployable<?, ?> ingressingContainer) {
-        if (ingressCreator.requiresDelegatingService(serviceCreator.getService(), ingressingContainer)) {
-            Service newDelegatingService = serviceCreator.newDelegatingService(k8sClient.services(), ingressingContainer);
-            ingressCreator.createIngress(k8sClient.ingresses(), ingressingContainer, newDelegatingService);
-        } else {
-            ingressCreator.createIngress(k8sClient.ingresses(), ingressingContainer, serviceCreator.getService());
-        }
-        ((WebServerStatus) status).setIngressStatus(ingressCreator.reloadIngress(k8sClient.ingresses()));
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
@@ -202,10 +174,6 @@ public class DeployCommand<T extends ServiceDeploymentResult, C extends EntandoB
 
     public Deployment getDeployment() {
         return deploymentCreator.getDeployment();
-    }
-
-    public Ingress getIngress() {
-        return ingressCreator.getIngress();
     }
 
 }

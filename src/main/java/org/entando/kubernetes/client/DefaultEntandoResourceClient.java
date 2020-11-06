@@ -21,6 +21,7 @@ import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
@@ -28,12 +29,12 @@ import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -43,6 +44,7 @@ import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
 import org.entando.kubernetes.model.AbstractServerStatus;
+import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
@@ -50,10 +52,10 @@ import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
-import org.entando.kubernetes.model.RequiresClusterInfrastructure;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.ResourceReference;
-import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
@@ -72,15 +74,29 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-     public <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource) {
-        ResourceReference keycloakToUse = determineKeycloakToUse(resource);
-        String secretName = KeycloakName.forTheAdminSecret(keycloakToUse);
-        String configMapName = KeycloakName.forTheConnectionConfigMap(keycloakToUse);
-        return new KeycloakConnectionSecret(
-                this.client.secrets().withName(secretName).fromServer().get(),
-                this.client.configMaps().withName(configMapName).fromServer().get()
+    public <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource) {
+        Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource);
+        String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
+                .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
+        String configMapName = keycloakToUse.map(KeycloakName::forTheConnectionConfigMap)
+                .orElse(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG);
+        String configMapNamespace = keycloakToUse
+                .map(resourceReference -> resourceReference.getNamespace().orElseThrow(IllegalStateException::new))
+                .orElse(client.getNamespace());
+        //This secret is duplicated in the deployment namespace, but the controller can only read the one in its own namespace
+        Secret secret = this.client.secrets().withName(secretName).fromServer().get();
+        if (secret == null) {
+            throw new IllegalStateException(
+                    format("Could not find the Keycloak secret %s in namespace %s", secretName, client.getNamespace()));
+        }
+        //The configmap comes from the deployment namespace, unless it is a pre-configured keycloak
+        ConfigMap configMap = this.client.configMaps().inNamespace(configMapNamespace).withName(configMapName).fromServer().get();
+        if (configMap == null) {
+            throw new IllegalStateException(
+                    format("Could not find the Keycloak configMp %s in namespace %s", configMapName, configMapNamespace));
+        }
+        return new KeycloakConnectionSecret(secret, configMap);
 
-        );
     }
 
     @Override
@@ -107,14 +123,34 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                     .addToData(new HashMap<>());
 
         }
-        return resource.edit();
+        return resource.edit().editMetadata()
+                //to ensure there is a state change so that the patch request does not get rejected
+                .addToAnnotations(KubeUtils.UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+                .endMetadata();
     }
 
     @Override
-    public InfrastructureConfig findInfrastructureConfig(RequiresClusterInfrastructure resource) {
-        String secretName = resource.getClusterInfrastructureSecretToUse()
-                .orElse(EntandoOperatorConfig.getEntandoInfrastructureSecretName());
-        return new InfrastructureConfig(this.client.secrets().withName(secretName).get());
+    public <T extends ClusterInfrastructureAwareSpec> Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(
+            EntandoBaseCustomResource<T> resource) {
+        List<EntandoClusterInfrastructure> clusterInfrastructures = entandoResourceRegistry
+                .getOperations(EntandoClusterInfrastructure.class)
+                .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
+        List<EntandoClusterInfrastructure> items = clusterInfrastructures;
+        if (items.size() == 1) {
+            return Optional.of(items.get(0));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
+            EntandoBaseCustomResource<T> resource) {
+        Optional<ResourceReference> clusterInfrastructureToUse = determineClusterInfrastructureToUse(resource);
+        return clusterInfrastructureToUse.map(resourceReference -> new InfrastructureConfig(
+                this.client.configMaps()
+                        .inNamespace(resourceReference.getNamespace().orElseThrow(IllegalStateException::new))
+                        .withName(InfrastructureConfig.connectionConfigMapNameFor(resourceReference))
+                        .get()));
     }
 
     @Override
@@ -141,23 +177,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                         new ExternalDatabaseDeployment(
                                 loadService(externalDatabase, ExternalDatabaseDeployment.serviceName(externalDatabase)),
                                 externalDatabase));
-    }
-
-    @Override
-    public EntandoCustomResource removeFinalizer(EntandoCustomResource r) {
-        r.getMetadata().setFinalizers(Collections.emptyList());
-        return patchEntandoResource(r);
-    }
-
-    @Override
-    public EntandoCustomResource addFinalizer(EntandoCustomResource customResource) {
-        List<String> finalizers = Collections.singletonList("entando.org.finalizer");
-        EntandoCustomResource availableResource = getOperations(customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .require();
-        availableResource.getMetadata().setFinalizers(finalizers);
-        return patchEntandoResource(availableResource);
     }
 
     @Override

@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.spi;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
 public interface ParameterizableContainer extends DeployableContainer {
 
@@ -26,6 +26,6 @@ public interface ParameterizableContainer extends DeployableContainer {
         return getCustomResourceSpec().getEnvironmentVariables();
     }
 
-    EntandoDeploymentSpec getCustomResourceSpec();
+    EntandoIngressingDeploymentSpec getCustomResourceSpec();
 
 }

@@ -16,22 +16,23 @@
 
 package org.entando.kubernetes.controller.k8sclient;
 
-import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.DoneableServiceAccount;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public interface ServiceAccountClient {
 
-    String createServiceAccountIfAbsent(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount);
+    <T extends EntandoDeploymentSpec> String createRoleBindingIfAbsent(EntandoBaseCustomResource<T> peerInNamespace,
+            RoleBinding roleBinding);
 
-    ServiceAccount loadServiceAccount(EntandoCustomResource peerInNamespace, String name);
+    <T extends EntandoDeploymentSpec> RoleBinding loadRoleBinding(EntandoBaseCustomResource<T> peerInNamespace, String name);
 
-    String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding);
+    <T extends EntandoDeploymentSpec> String createRoleIfAbsent(EntandoBaseCustomResource<T> peerInNamespace, Role role);
 
-    RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name);
+    <T extends EntandoDeploymentSpec> Role loadRole(EntandoBaseCustomResource<T> peerInNamespace, String name);
 
-    String createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role);
-
-    Role loadRole(EntandoCustomResource peerInNamespace, String name);
+    <T extends EntandoDeploymentSpec> DoneableServiceAccount findOrCreateServiceAccount(EntandoBaseCustomResource<T> peerInNamespace,
+            String name);
 }

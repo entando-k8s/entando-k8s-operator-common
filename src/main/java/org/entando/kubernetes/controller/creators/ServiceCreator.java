@@ -35,16 +35,17 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.Ingressing;
 import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class ServiceCreator extends AbstractK8SResourceCreator {
+public class ServiceCreator<T extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<T> {
 
     private Service primaryService;
 
-    public ServiceCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public ServiceCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public ServiceCreator(EntandoBaseCustomResource<?> entandoCustomResource, Service primaryService) {
+    public ServiceCreator(EntandoBaseCustomResource<T> entandoCustomResource, Service primaryService) {
         super(entandoCustomResource);
         this.primaryService = primaryService;
     }
@@ -101,6 +102,8 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
                 .withPorts(new ArrayList<>(primaryService.getSpec().getPorts()))
                 .endSpec()
                 .build());
+        //This is just a workaround for Openshift where the DNS is not shared across namespaces. Joining the networks is an alternative
+        // solution
         services.createOrReplaceEndpoints(entandoCustomResource, new EndpointsBuilder()
                 .withMetadata(metaData)
                 .addNewSubset()

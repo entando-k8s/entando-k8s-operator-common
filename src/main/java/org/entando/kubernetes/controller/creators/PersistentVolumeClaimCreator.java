@@ -34,21 +34,22 @@ import org.entando.kubernetes.controller.spi.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
+public class PersistentVolumeClaimCreator<T extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<T> {
 
     private List<PersistentVolumeClaim> persistentVolumeClaims;
 
-    public PersistentVolumeClaimCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public PersistentVolumeClaimCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public boolean needsPersistentVolumeClaaims(Deployable<?,?> deployable) {
+    public boolean needsPersistentVolumeClaaims(Deployable<?, ?> deployable) {
         return deployable.getContainers().stream()
                 .anyMatch(PersistentVolumeAware.class::isInstance);
     }
 
-    public void createPersistentVolumeClaimsFor(PersistentVolumeClaimClient k8sClient, Deployable<?,?> deployable) {
+    public void createPersistentVolumeClaimsFor(PersistentVolumeClaimClient k8sClient, Deployable<?, ?> deployable) {
         this.persistentVolumeClaims = deployable.getContainers().stream()
                 .filter(PersistentVolumeAware.class::isInstance)
                 .map(PersistentVolumeAware.class::cast)
@@ -66,7 +67,7 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
                 .collect(Collectors.toList());
     }
 
-    private PersistentVolumeClaim newPersistentVolumeClaim(Deployable<?,?> deployable, PersistentVolumeAware container) {
+    private PersistentVolumeClaim newPersistentVolumeClaim(Deployable<?, ?> deployable, PersistentVolumeAware container) {
         StorageCalculator resourceCalculator = buildStorageCalculator(container);
         return new PersistentVolumeClaimBuilder()
                 .withMetadata(fromCustomResource(!EntandoOperatorConfig.disablePvcGarbageCollection(),

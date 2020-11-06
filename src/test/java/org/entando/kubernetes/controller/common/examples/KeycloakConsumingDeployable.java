@@ -29,8 +29,9 @@ import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 
-public class KeycloakConsumingDeployable implements PublicIngressingDeployable<ExposedDeploymentResult, EntandoApp>, DbAwareDeployable {
+public class KeycloakConsumingDeployable implements PublicIngressingDeployable<ExposedDeploymentResult, EntandoAppSpec>, DbAwareDeployable {
 
     public static final String TEST_INGRESS_NAMESPACE = "test-ingress-namespace";
     public static final String TEST_INGRESS_NAME = "test-ingress-name";

@@ -34,6 +34,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 
 public final class KubeUtils {
 
+    public static final String UPDATED_ANNOTATION_NAME = "entando.org/updated";//To avoid  http 400s
     public static final String PASSSWORD_KEY = "password";//Funny name because a variable named 'PASSWORD' is considered a vulnerability
     public static final String USERNAME_KEY = "username";
     public static final String DB_JOB_LABEL_NAME = "dbJob";
@@ -51,7 +52,7 @@ public final class KubeUtils {
     public static final String ENTANDO_DEFAULT_KEYCLOAK_REALM = "entando";
     public static final String ENTANDO_RESOURCE_KIND_LABEL_NAME = "EntandoResourceKind";
     public static final String ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME = "EntandoResourceNamespace";
-    public static final String ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME="entando-operator-default-config-map";
+    public static final String ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME = "entando-operator-default-config-map";
     public static final String DEFAULT_KEYCLOAK_NAME = "default";
 
     private static final Logger LOGGER = Logger.getLogger(KubeUtils.class.getName());

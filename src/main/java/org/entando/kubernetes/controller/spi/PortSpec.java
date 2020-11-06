@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.spi;
 
 public class PortSpec {
+
     private final String name;
     private final int port;
 

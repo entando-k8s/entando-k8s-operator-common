@@ -48,6 +48,7 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.hamcrest.Matchers;
 
 public interface FluentTraversals {
+
     String ENTANDO_KEYCLOAK_REALM = KubeUtils.ENTANDO_DEFAULT_KEYCLOAK_REALM;
     String ENTANDO_PUBLIC_CLIENT = KubeUtils.PUBLIC_CLIENT_ID;
     String DATABASE_ADMIN_USER = "DATABASE_ADMIN_USER";
@@ -373,6 +374,7 @@ public interface FluentTraversals {
             }
             return stringValue;
         }
+
         public String on(ConfigMap secret) {
             String stringValue = null;
             if (secret.getData() != null && secret.getData().containsKey(key)) {

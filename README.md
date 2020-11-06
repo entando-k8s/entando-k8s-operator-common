@@ -11,7 +11,7 @@
 
 This project provides a library that can be used to facilitate the development of run-to-completion style
 Kubernetes controllers. Most of the logic in this project is co-ordinated by the 
-`org.entando.kubernetes.controller.DeployCommand` class. Consumers of this project basically implement a set 
+`org.entando.kubernetes.controller.IngressingDeployCommand` class. Consumers of this project basically implement a set 
 of simple interfaces specified in the package `org.entando.kubernetes.controller.spi`. The pivitol
 interface here is the `org.entando.kubernetes.controller.spi.Deployable`, which can be passed as parameter to
 the constructor of the `DeployCommand`. The `DeployCommand` then uses the implementations of the various

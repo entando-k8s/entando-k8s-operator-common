@@ -17,6 +17,7 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.Doneable;
+import io.fabric8.kubernetes.api.model.DoneableServiceAccount;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.rbac.Role;
@@ -26,8 +27,12 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.OperationInfo;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import java.sql.Timestamp;
+import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.k8sclient.ServiceAccountClient;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 /**
  * <p>RBAC objects are extremely sensitive resources in Kubernetes. Generally we expect customers to prohibiting us from
@@ -52,32 +57,43 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @Override
-    public String createServiceAccountIfAbsent(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
-        return createIfAbsent(peerInNamespace, serviceAccount, client.serviceAccounts());
+    public <T extends EntandoDeploymentSpec> DoneableServiceAccount findOrCreateServiceAccount(EntandoBaseCustomResource<T> peerInNamespace,
+            String name) {
+        try {
+            Resource<ServiceAccount, DoneableServiceAccount> serviceAccountResource = client.serviceAccounts()
+                    .inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name);
+            if (serviceAccountResource.get() == null) {
+                return serviceAccountResource.createNew().withNewMetadata().withName(name).endMetadata();
+            } else {
+                return serviceAccountResource.edit().editMetadata()
+                        //to ensure there is a state change so that the patch request does not get rejected
+                        .addToAnnotations(KubeUtils.UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+                        .endMetadata();
+            }
+        } catch (KubernetesClientException e) {
+            throw KubernetesExceptionProcessor
+                    .processExceptionOnLoad(peerInNamespace, e, "ServiceAccount", name);
+        }
     }
 
     @Override
-    public ServiceAccount loadServiceAccount(EntandoCustomResource peerInNamespace, String name) {
-        return load(peerInNamespace, name, client.serviceAccounts());
-    }
-
-    @Override
-    public String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
+    public <T extends EntandoDeploymentSpec> String createRoleBindingIfAbsent(EntandoBaseCustomResource<T> peerInNamespace,
+            RoleBinding roleBinding) {
         return createIfAbsent(peerInNamespace, roleBinding, client.rbac().roleBindings());
     }
 
     @Override
-    public RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name) {
+    public <T extends EntandoDeploymentSpec> RoleBinding loadRoleBinding(EntandoBaseCustomResource<T> peerInNamespace, String name) {
         return load(peerInNamespace, name, client.rbac().roleBindings());
     }
 
     @Override
-    public String createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role) {
+    public <T extends EntandoDeploymentSpec> String createRoleIfAbsent(EntandoBaseCustomResource<T> peerInNamespace, Role role) {
         return createIfAbsent(peerInNamespace, role, client.rbac().roles());
     }
 
     @Override
-    public Role loadRole(EntandoCustomResource peerInNamespace, String name) {
+    public <T extends EntandoDeploymentSpec> Role loadRole(EntandoBaseCustomResource<T> peerInNamespace, String name) {
         return load(peerInNamespace, name, client.rbac().roles());
     }
 

@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.spi;
 
 public class SecretToMount {
+
     private String secretName;
     private String mountPath;
 

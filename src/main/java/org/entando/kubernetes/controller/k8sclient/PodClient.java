@@ -40,7 +40,8 @@ public interface PodClient extends PodWaitingClient {
     ExecWatch executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands);
 
     @SuppressWarnings({"java:S106"})
-    default ExecWatch executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, int timeoutSeconds, String... script) {
+    default ExecWatch executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, int timeoutSeconds,
+            String... script) {
         StringBuilder sb = new StringBuilder();
         for (String s : script) {
             sb.append(s);
@@ -51,7 +52,7 @@ public interface PodClient extends PodWaitingClient {
         try {
             Object mutex = new Object();
             synchronized (mutex) {
-                EntandoExecListener listener = new EntandoExecListener(mutex,timeoutSeconds);
+                EntandoExecListener listener = new EntandoExecListener(mutex, timeoutSeconds);
                 getExecListenerHolder().set(listener);
                 ExecWatch exec = podResource.inContainer(containerName)
                         .readingInput(in)

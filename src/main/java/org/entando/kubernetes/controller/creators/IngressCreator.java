@@ -39,15 +39,15 @@ import org.entando.kubernetes.controller.k8sclient.IngressClient;
 import org.entando.kubernetes.controller.spi.Ingressing;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.HasIngress;
 
-public class IngressCreator extends AbstractK8SResourceCreator {
+public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends AbstractK8SResourceCreator<S> {
 
     private final IngressPathCreator ingressPathCreator;
     private Ingress ingress;
 
-    public IngressCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public IngressCreator(EntandoBaseCustomResource<S> entandoCustomResource) {
         super(entandoCustomResource);
         this.ingressPathCreator = new IngressPathCreator(entandoCustomResource);
     }
@@ -94,7 +94,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         return !service.getMetadata().getNamespace().equals(ingressingContainer.getIngressNamespace());
     }
 
-    public void createIngress(IngressClient ingressClient, IngressingDeployable<?, ?> ingressingDeployable, Service service) {
+    public void createIngress(IngressClient ingressClient, IngressingDeployable<?, S> ingressingDeployable, Service service) {
         this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(), ingressingDeployable.getIngressName());
         if (this.ingress == null) {
             Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service));
@@ -144,8 +144,8 @@ public class IngressCreator extends AbstractK8SResourceCreator {
             //for cases where we have https available but the Keycloak redirect was specified as http
             result.put("nginx.ingress.kubernetes.io/force-ssl-redirect", "true");
         }
-        if (entandoCustomResource.getSpec() instanceof EntandoDeploymentSpec) {
-            EntandoDeploymentSpec spec = (EntandoDeploymentSpec) entandoCustomResource.getSpec();
+        if (entandoCustomResource.getSpec() instanceof EntandoIngressingDeploymentSpec) {
+            EntandoIngressingDeploymentSpec spec = (EntandoIngressingDeploymentSpec) entandoCustomResource.getSpec();
             spec.getResourceRequirements().ifPresent(resourceRequirements -> resourceRequirements.getFileUploadLimit()
                     .ifPresent(s -> result.put("nginx.ingress.kubernetes.io/proxy-body-size", s)));
         }

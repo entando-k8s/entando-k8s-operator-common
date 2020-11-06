@@ -24,7 +24,6 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import org.entando.kubernetes.client.DefaultIngressClient;
-import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig.TestTarget;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;

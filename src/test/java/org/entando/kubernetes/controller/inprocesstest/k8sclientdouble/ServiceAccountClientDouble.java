@@ -16,12 +16,15 @@
 
 package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 
+import io.fabric8.kubernetes.api.model.DoneableServiceAccount;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import java.util.Map;
 import org.entando.kubernetes.controller.k8sclient.ServiceAccountClient;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class ServiceAccountClientDouble extends AbstractK8SClientDouble implements ServiceAccountClient {
 
@@ -30,35 +33,45 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
     }
 
     @Override
-    public String createServiceAccountIfAbsent(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
-        getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
-        return serviceAccount.getMetadata().getName();
-    }
-
-    @Override
-    public String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
+    public <T extends EntandoDeploymentSpec> String createRoleBindingIfAbsent(EntandoBaseCustomResource<T> peerInNamespace,
+            RoleBinding roleBinding) {
         getNamespace(peerInNamespace).putRoleBinding(roleBinding);
         return roleBinding.getMetadata().getName();
     }
 
     @Override
-    public Role loadRole(EntandoCustomResource peerInNamespace, String name) {
-        return getNamespace(peerInNamespace).getRole(name);
-    }
-
-    @Override
-    public RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name) {
+    public <T extends EntandoDeploymentSpec> RoleBinding loadRoleBinding(EntandoBaseCustomResource<T> peerInNamespace, String name) {
         return getNamespace(peerInNamespace).getRoleBinding(name);
     }
 
     @Override
-    public String createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role) {
+    public <T extends EntandoDeploymentSpec> String createRoleIfAbsent(EntandoBaseCustomResource<T> peerInNamespace, Role role) {
         getNamespace(peerInNamespace).putRole(role);
         return role.getMetadata().getName();
     }
 
     @Override
-    public ServiceAccount loadServiceAccount(EntandoCustomResource peerInNamespace, String name) {
-        return getNamespace(peerInNamespace).getServiceAccount(name);
+    public <T extends EntandoDeploymentSpec> Role loadRole(EntandoBaseCustomResource<T> peerInNamespace, String name) {
+        return getNamespace(peerInNamespace).getRole(name);
+    }
+
+    @Override
+    public <T extends EntandoDeploymentSpec> DoneableServiceAccount findOrCreateServiceAccount(EntandoBaseCustomResource<T> peerInNamespace,
+            String name) {
+        ServiceAccount serviceAccount = getNamespace(peerInNamespace).getServiceAccount(name);
+        if (serviceAccount == null) {
+            serviceAccount = new ServiceAccountBuilder().withNewMetadata().withName(name)
+                    .withNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .endMetadata().build();
+            getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
+        }
+        return new DoneableServiceAccount(serviceAccount) {
+            @Override
+            public ServiceAccount done() {
+                ServiceAccount done = super.done();
+                getNamespace(peerInNamespace).putServiceAccount(done);
+                return done;
+            }
+        };
     }
 }

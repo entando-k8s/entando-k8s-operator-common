@@ -17,11 +17,9 @@
 package org.entando.kubernetes.controller.k8sclient;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public interface SecretClient {
 
@@ -45,9 +43,11 @@ public interface SecretClient {
 
     Secret loadControllerSecret(String secretName);
 
-    ConfigMap loadControllerConfigMap(String configMapName);
-
     void createConfigMapIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, ConfigMap configMap);
 
     ConfigMap loadConfigMap(EntandoBaseCustomResource<?> peerInNamespace, String name);
+
+    void overwriteControllerConfigMap(ConfigMap newKeycloakConnectionConfigMap);
+
+    ConfigMap loadControllerConfigMap(String configMapName);
 }

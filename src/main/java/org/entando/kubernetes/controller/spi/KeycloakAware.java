@@ -22,7 +22,7 @@ import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.model.app.KeycloakAwareSpec;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public interface KeycloakAware extends DeployableContainer, HasWebContext {
 

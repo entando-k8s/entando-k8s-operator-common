@@ -49,6 +49,7 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerSpec;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -269,7 +270,7 @@ public class DummyBean {
         ResteasyProviderFactory.setInstance(instance);
     }
 
-    private static class TestKeycloakDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServer> {
+    private static class TestKeycloakDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServerSpec> {
 
         private final List<DeployableContainer> containers = Arrays.asList(new TestKeycloakContainer());
         private final EntandoKeycloakServer keycloakServer;

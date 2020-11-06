@@ -32,15 +32,18 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class DatabaseDeployable<C extends EntandoBaseCustomResource> implements Deployable<DatabaseDeploymentResult, C>, Secretive {
+public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
+        Deployable<DatabaseDeploymentResult, S>, Secretive {
 
     private final DbmsDockerVendorStrategy dbmsVendor;
-    private final C customResource;
+    private final EntandoBaseCustomResource<S> customResource;
     private final String nameQualifier;
     protected List<DeployableContainer> containers;
 
-    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, C customResource, String nameQualifier, Integer portOverride) {
+    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoBaseCustomResource<S> customResource, String nameQualifier,
+            Integer portOverride) {
         this.dbmsVendor = dbmsVendor;
         this.customResource = customResource;
         this.nameQualifier = nameQualifier;
@@ -89,7 +92,7 @@ public class DatabaseDeployable<C extends EntandoBaseCustomResource> implements 
     }
 
     @Override
-    public C getCustomResource() {
+    public EntandoBaseCustomResource<S> getCustomResource() {
         return customResource;
     }
 

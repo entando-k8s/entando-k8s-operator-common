@@ -125,6 +125,7 @@ class KeycloakClientTest implements FluentIntegrationTesting {
                 .retrieveServiceAccountRolesInRealm(MY_REALM, MY_CLIENT, EXISTING_CLIENT);
         assertThat(roleRepresentations.get(0).getName(), is(EXISTING_ROLE));
     }
+
     @Test
     void testAssignRoleToServiceAccount() {
         //Given a Keycloak Server is available and I have logged int
@@ -144,7 +145,7 @@ class KeycloakClientTest implements FluentIntegrationTesting {
                 .withWebOrigin("http://test.domain.com")
         );
         //When I assign a role in the first client to the second client
-        kc.assignRoleToClientServiceAccount(MY_REALM,MY_CLIENT, new Permission(EXISTING_CLIENT, EXISTING_ROLE));
+        kc.assignRoleToClientServiceAccount(MY_REALM, MY_CLIENT, new Permission(EXISTING_CLIENT, EXISTING_ROLE));
         //Then a new client should be available
         Optional<ClientRepresentation> publicClient = helper.findClientInRealm(MY_REALM, MY_CLIENT);
         //With correct permissions

@@ -73,6 +73,7 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,13 +113,13 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<EntandoApp, ExposedDeploymentResult> sampleController;
+    private SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void prepareKeycloakCustomResource() {
-        this.sampleController = new SampleController<EntandoApp, ExposedDeploymentResult>(client, keycloakClient) {
+        this.sampleController = new SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult>(client, keycloakClient) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoApp> createDeployable(
+            protected Deployable<ExposedDeploymentResult, EntandoAppSpec> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
@@ -312,7 +313,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
     @Test
     void testDeployment() {
         //Given I have an EntandoApp custom resource with MySQL as database
-        EntandoApp newEntandoApp = entandoApp;
+        final EntandoApp newEntandoApp = entandoApp;
         emulateKeycloakDeployment(client);
         //And the trust cert has been configured correctly
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.getJvmSystemProperty(),

@@ -38,7 +38,7 @@ class PodClientTest {
         PodClientDouble podClientDouble = new PodClientDouble(new HashMap<>());
         PodResourceDouble podResource = new PodResourceDouble();
         ExecWatchDouble execWatchDouble = (ExecWatchDouble) podClientDouble
-                .executeAndWait(podResource, "some-container", 10,"echo hello world");
+                .executeAndWait(podResource, "some-container", 10, "echo hello world");
         assertThat(execWatchDouble.getPodResourceDouble().getContext().getContainerId(), is("some-container"));
         InputStream in = execWatchDouble.getPodResourceDouble().getContext().getIn();
         byte[] bytes = IOUtils.readFully(in, in.available());

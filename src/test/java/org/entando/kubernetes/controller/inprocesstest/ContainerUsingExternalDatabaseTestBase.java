@@ -45,12 +45,13 @@ import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
+import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
@@ -61,14 +62,14 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController<EntandoPlugin, ExposedDeploymentResult> controller;
+    private SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller;
 
     @Test
     void testSelectingOneOfTwoExternalDatabase() {
         //Given I have a controller that processes EntandoPlugins
-        controller = new SampleController<EntandoPlugin, ExposedDeploymentResult>(getClient(), getKeycloakClient()) {
+        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(getClient(), getKeycloakClient()) {
             @Override
-            protected SpringBootDeployable<EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected SpringBootDeployable<EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
@@ -100,7 +101,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         //And I an ingress paths
         Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(), standardIngressName(plugin1));
         assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
-                Matchers.is(8080));
+                Matchers.is(8084));
     }
 
     private void createExternalDatabaseService(DbmsVendor mysql, String s) {
@@ -142,12 +143,13 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                 .withNamespace(sampleNamespace)
                 .withName(sampleName).endMetadata().withNewSpec()
                 .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
-                .addNewParameter("MY_VAR", "MY_VAL")
+                .addToEnvironmentVariables("MY_VAR", "MY_VAL")
                 .withDbms(DbmsVendor.POSTGRESQL).withReplicas(2).withIngressHostName("myhost.name.com")
                 .endSpec().build();
     }
 
-    protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource, String deploymentName) {
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+            String deploymentName) {
         new Thread(() -> {
             try {
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);

@@ -30,21 +30,21 @@ import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
-import org.entando.kubernetes.controller.spi.PortSpec;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
-public class SampleDeployableContainer<T extends EntandoBaseCustomResource> implements IngressingContainer, DbAware, TlsAware,
+public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implements IngressingContainer, DbAware, TlsAware,
         PersistentVolumeAware, ParameterizableContainer {
 
     public static final String DEFAULT_IMAGE_NAME = "entando/entando-keycloak:6.0.0-SNAPSHOT";
     public static final String VAR_LIB_MYDATA = "/var/lib/mydata";
 
-    private final T entandoResource;
+    private final EntandoBaseCustomResource<S> entandoResource;
     private Map<String, DatabaseSchemaCreationResult> dbSchemas;
 
-    public SampleDeployableContainer(T entandoResource) {
+    public SampleDeployableContainer(EntandoBaseCustomResource<S> entandoResource) {
         this.entandoResource = entandoResource;
     }
 
@@ -66,7 +66,6 @@ public class SampleDeployableContainer<T extends EntandoBaseCustomResource> impl
     public int getPrimaryPort() {
         return 8080;
     }
-
 
     @Override
     public void addEnvironmentVariables(List<EnvVar> vars) {
@@ -120,7 +119,7 @@ public class SampleDeployableContainer<T extends EntandoBaseCustomResource> impl
     }
 
     @Override
-    public EntandoDeploymentSpec getCustomResourceSpec() {
-        return (EntandoDeploymentSpec) entandoResource.getSpec();
+    public EntandoIngressingDeploymentSpec getCustomResourceSpec() {
+        return (EntandoIngressingDeploymentSpec) entandoResource.getSpec();
     }
 }

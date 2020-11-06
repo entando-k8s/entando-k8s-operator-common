@@ -33,8 +33,9 @@ import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerSpec;
 
-public class TestServerDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServer>, DbAwareDeployable,
+public class TestServerDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServerSpec>, DbAwareDeployable,
         Secretive {
 
     private final EntandoKeycloakServer keycloakServer;

@@ -16,41 +16,59 @@
 
 package org.entando.kubernetes.controller.creators;
 
-import io.fabric8.kubernetes.api.model.ServiceAccount;
-import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
+import io.fabric8.kubernetes.api.model.DoneableServiceAccount;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.rbac.PolicyRule;
 import io.fabric8.kubernetes.api.model.rbac.PolicyRuleBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.EntandoRbacRole;
+import org.entando.kubernetes.controller.SecurityMode;
 import org.entando.kubernetes.controller.k8sclient.ServiceAccountClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.KubernetesPermission;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class ServiceAccountCreator extends AbstractK8SResourceCreator {
+public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<S> {
 
     public static final String ROLEBINDING_SUFFIX = "-rolebinding";
-    private String serviceAccount;
     private String role;
 
-    public ServiceAccountCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public ServiceAccountCreator(EntandoBaseCustomResource<S> entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public String prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?, ?> deployable) {
-        this.serviceAccount = serviceAccountClient.createServiceAccountIfAbsent(entandoCustomResource, newServiceAccount(deployable));
-        this.role = serviceAccountClient.createRoleIfAbsent(entandoCustomResource, newRole(deployable));
-        serviceAccountClient.createRoleBindingIfAbsent(entandoCustomResource, newRoleBinding());
-        return serviceAccount;
+    public void prepareServiceAccountAccess(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable) {
+        prepareServiceAccount(serviceAccountClient, deployable);
+        if (EntandoOperatorConfig.getOperatorSecurityMode() == SecurityMode.LENIENT) {
+            //TODO reevaluate this. Maybe we should just always create/sync the role. This is fairly safe as the operator will not
+            //be able to create a role that has more access than its own permissions
+            this.role = serviceAccountClient.createRoleIfAbsent(entandoCustomResource, newRole(deployable));
+            serviceAccountClient.createRoleBindingIfAbsent(entandoCustomResource, newRoleBinding(deployable));
+        }
+        Arrays.stream(EntandoRbacRole.values())
+                .forEach(entandoRbacRole -> createRoleBindingForClusterRole(serviceAccountClient, deployable, entandoRbacRole));
     }
 
-    private Role newRole(Deployable<?, ?> deployable) {
+    private void prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable) {
+        DoneableServiceAccount serviceAccount = serviceAccountClient
+                .findOrCreateServiceAccount(entandoCustomResource, deployable.determineServiceAccountName());
+        List<LocalObjectReference> pullSecrets = serviceAccount.buildImagePullSecrets();
+        serviceAccount.addAllToImagePullSecrets(EntandoOperatorConfig.getImagePullSecrets().stream()
+                .filter(s -> pullSecrets.stream().noneMatch(pullSecret -> pullSecret.getName().equals(s))).map(LocalObjectReference::new)
+                .collect(Collectors.toList())).done();
+    }
+
+    private Role newRole(Deployable<?, S> deployable) {
         return new RoleBuilder()
                 .withNewMetadata()
                 .withName(deployable.determineServiceAccountName())
@@ -59,16 +77,16 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private List<PolicyRule> forAllContainersIn(Deployable<?, ?> deployable) {
+    private List<PolicyRule> forAllContainersIn(Deployable<?, S> deployable) {
         return deployable.getContainers().stream()
                 .map(DeployableContainer::getKubernetesPermissions)
                 .flatMap(Collection::stream)
                 .map(this::newPolicyRule).collect(Collectors.toList());
     }
 
-    private RoleBinding newRoleBinding() {
+    private RoleBinding newRoleBinding(Deployable<?, S> deployable) {
         return new RoleBindingBuilder()
-                .withNewMetadata().withName(serviceAccount + ROLEBINDING_SUFFIX)
+                .withNewMetadata().withName(deployable.determineServiceAccountName() + ROLEBINDING_SUFFIX)
                 .endMetadata()
                 .withNewRoleRef()
                 //                .withApiGroup("rbac.authorization.k8s.io")
@@ -78,7 +96,7 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
                 .addNewSubject()
                 //                .withApiGroup("rbac.authorization.k8s.io")
                 .withKind("ServiceAccount")
-                .withName(serviceAccount)
+                .withName(deployable.determineServiceAccountName())
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .endSubject()
                 .build();
@@ -92,25 +110,13 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private ServiceAccount newServiceAccount(Deployable<?, ?> deployable) {
-        return new ServiceAccountBuilder()
-                .withNewMetadata()
-                .withName(deployable.determineServiceAccountName())
-                .endMetadata()
-                .build();
-    }
-
-    public void createBindingsToClusterRoles(ServiceAccountClient serviceAccountClient, Deployable<?, ?> deployable) {
-        createRoleBindingForClusterRole(serviceAccountClient, deployable, "entando-editor");
-        createRoleBindingForClusterRole(serviceAccountClient, deployable, "view");
-    }
-
-    private void createRoleBindingForClusterRole(ServiceAccountClient serviceAccountClient, Deployable<?, ?> deployable, String roleName) {
+    private void createRoleBindingForClusterRole(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable,
+            EntandoRbacRole role) {
         serviceAccountClient.createRoleBindingIfAbsent(this.entandoCustomResource, new RoleBindingBuilder()
-                .withNewMetadata().withName(deployable.getServiceAccountName() + "-" + roleName)
+                .withNewMetadata().withName(deployable.determineServiceAccountName() + "-" + role.getK8sName())
                 .endMetadata()
                 .withNewRoleRef()
-                .withName(roleName)
+                .withName(role.getK8sName())
                 .withKind("ClusterRole")
                 .endRoleRef()
                 .addNewSubject()

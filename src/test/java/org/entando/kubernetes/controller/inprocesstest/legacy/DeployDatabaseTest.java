@@ -59,6 +59,7 @@ import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.app.DoneableEntandoApp;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -86,14 +87,14 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<EntandoApp, ExposedDeploymentResult> sampleController;
+    private SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void before() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty(), "true");
-        this.sampleController = new SampleController<EntandoApp, ExposedDeploymentResult>(client, keycloakClient) {
+        this.sampleController = new SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult>(client, keycloakClient) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoApp> createDeployable(
+            protected Deployable<ExposedDeploymentResult, EntandoAppSpec> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SamplePublicIngressingDbAwareDeployable<>(newEntandoApp, databaseServiceResult,

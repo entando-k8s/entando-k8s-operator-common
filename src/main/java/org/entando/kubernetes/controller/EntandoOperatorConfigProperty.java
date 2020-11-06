@@ -35,6 +35,7 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_K8S_OPERATOR_CONFIGMAP_NAMESPACE("entando.k8s.operator.configmap.namespace"),
     ENTANDO_K8S_OPERATOR_SCOPE("entando.k8s.operator.scope"),
     ENTANDO_K8S_OPERATOR_SECURITY_MODE("entando.k8s.operator.security.mode"),
+    ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS("entando.k8s.operator.image.pull.secrets"),
     ENTANDO_K8S_OPERATOR_ID("entando.k8s.operator.id"),
     ENTANDO_K8S_OPERATOR_API_VERSION_RANGE("entando.k8s.operator.api.version.range"),
     ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE("entando.k8s.operator.namespace.to.observe"),
@@ -49,6 +50,7 @@ public enum EntandoOperatorConfigProperty {
     TLS config
      */
     ENTANDO_CA_CERT_PATHS("entando.ca.cert.paths"),
+    ENTANDO_CA_CERT_ROOT_FOLDER("entando.ca.cert.root.folder"),
     ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER("entando.assume.external.https.provider"),
     ENTANDO_USE_AUTO_CERT_GENERATION("entando.use.auto.cert.generation"),
     ENTANDO_PATH_TO_TLS_KEYPAIR("entando.path.to.tls.keypair"),

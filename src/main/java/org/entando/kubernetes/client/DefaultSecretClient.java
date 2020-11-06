@@ -95,4 +95,15 @@ public class DefaultSecretClient implements SecretClient {
             throw KubernetesExceptionProcessor.processExceptionOnLoad(e, "Configmap", peerInNamespace.getMetadata().getNamespace(), name);
         }
     }
+
+    @Override
+    public void overwriteControllerConfigMap(ConfigMap configMap) {
+        try {
+            configMap.getMetadata().setNamespace(client.getNamespace());
+            client.configMaps().inNamespace(client.getNamespace()).createOrReplace(configMap);
+        } catch (KubernetesClientException e) {
+            KubernetesExceptionProcessor.verifyDuplicateExceptionOnCreate(client.getNamespace(), configMap, e);
+        }
+    }
+
 }

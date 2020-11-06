@@ -30,7 +30,9 @@ import org.entando.kubernetes.controller.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.DeploymentClientDouble;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,7 @@ import org.junit.jupiter.api.Test;
 class DeploymentCreatorTest implements InProcessTestUtil {
 
     @AfterEach
+    @BeforeEach
     void cleanUp() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty());
     }
@@ -74,7 +77,7 @@ class DeploymentCreatorTest implements InProcessTestUtil {
 
         DeploymentClientDouble deploymentClientDouble = new DeploymentClientDouble(new HashMap<>());
         EntandoApp testEntandoApp = newTestEntandoApp();
-        DeploymentCreator deploymentCreator = new DeploymentCreator(testEntandoApp);
+        DeploymentCreator<EntandoAppSpec> deploymentCreator = new DeploymentCreator<>(testEntandoApp);
 
         Deployment actual = deploymentCreator.createDeployment(
                 new EntandoImageResolver(null),

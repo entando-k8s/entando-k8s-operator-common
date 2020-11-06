@@ -20,15 +20,16 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.controller.DeployCommand;
+import org.entando.kubernetes.controller.IngressingDeployCommand;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class AbstractK8SResourceCreator {
+public class AbstractK8SResourceCreator<T extends EntandoDeploymentSpec> {
 
-    protected final EntandoBaseCustomResource<?> entandoCustomResource;
+    protected final EntandoBaseCustomResource<T> entandoCustomResource;
 
-    public AbstractK8SResourceCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public AbstractK8SResourceCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         this.entandoCustomResource = entandoCustomResource;
     }
 
@@ -60,7 +61,7 @@ public class AbstractK8SResourceCreator {
 
     protected Map<String, String> labelsFromResource(String nameQualifier) {
         Map<String, String> labels = new ConcurrentHashMap<>();
-        labels.put(DeployCommand.DEPLOYMENT_LABEL_NAME, resolveName(nameQualifier, ""));
+        labels.put(IngressingDeployCommand.DEPLOYMENT_LABEL_NAME, resolveName(nameQualifier, ""));
         resourceKindLabels(labels);
         return labels;
     }

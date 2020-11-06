@@ -25,7 +25,6 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ControllerContainerStartingListener<
         R extends EntandoBaseCustomResource<?>,

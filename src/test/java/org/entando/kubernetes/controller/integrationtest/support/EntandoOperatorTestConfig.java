@@ -121,11 +121,13 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
     }
 
     public static String getKeycloakPassword() {
-        return lookupProperty(ENTANDO_TEST_KEYCLOAK_PASSWORD).orElseThrow(() -> new IllegalStateException("No test Keycloak password configured"));
+        return lookupProperty(ENTANDO_TEST_KEYCLOAK_PASSWORD)
+                .orElseThrow(() -> new IllegalStateException("No test Keycloak password configured"));
     }
 
     public static String getKeycloakBaseUrl() {
-        return lookupProperty(ENTANDO_TEST_KEYCLOAK_BASE_URL).orElseThrow(() -> new IllegalStateException("No test Keycloak baseUrl configured"));
+        return lookupProperty(ENTANDO_TEST_KEYCLOAK_BASE_URL)
+                .orElseThrow(() -> new IllegalStateException("No test Keycloak baseUrl configured"));
     }
 
     public enum TestTarget {

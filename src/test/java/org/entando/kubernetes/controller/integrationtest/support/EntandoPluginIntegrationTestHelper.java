@@ -17,10 +17,8 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
@@ -43,7 +41,7 @@ public class EntandoPluginIntegrationTestHelper extends
         super(client, EntandoPluginOperationFactory::produceAllEntandoPlugins);
     }
 
-    public void createAndWaitForPlugin(EntandoPlugin plugin, boolean isDbEmbedded) {
+    public void createAndWaitForPlugin(EntandoPlugin plugin, boolean hasContainerizedDb) {
         // And a secret named pam-connection
         client.secrets().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE).createOrReplace(new SecretBuilder()
                 .withNewMetadata()
@@ -61,10 +59,11 @@ public class EntandoPluginIntegrationTestHelper extends
         // Then I expect to see
         // 1. A deployment for the plugin, with a name that starts with the plugin name and ends with
         // "-deployment" and a single port for 8081
-        if (isDbEmbedded) {
+        if (hasContainerizedDb) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(120)),
                     TEST_PLUGIN_NAMESPACE, TEST_PLUGIN_NAME + "-db");
         }
+
         waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), TEST_PLUGIN_NAMESPACE,
                 TEST_PLUGIN_NAME + "-db-preparation-job");
         waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240)),
@@ -77,15 +76,6 @@ public class EntandoPluginIntegrationTestHelper extends
             return status.forServerQualifiedBy("server").isPresent()
                     && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
         });
-    }
-
-    @SuppressWarnings("unchecked")
-    private CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> entandoPluginsInAnyNamespace() {
-        CustomResourceDefinition entandoPluginCrd = client.customResourceDefinitions()
-                .withName(EntandoPlugin.CRD_NAME).get();
-        return (CustomResourceOperationsImpl<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin>) client
-                .customResources(entandoPluginCrd, EntandoPlugin.class, EntandoPluginList.class,
-                        DoneableEntandoPlugin.class).inAnyNamespace();
     }
 
 }

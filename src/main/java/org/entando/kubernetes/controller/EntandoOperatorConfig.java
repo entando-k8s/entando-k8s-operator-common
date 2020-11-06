@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ import java.util.List;
 import java.util.Optional;
 
 public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
+
+    public static final String SEPERATOR_PATTERN = "[\\s,:]+";
 
     private EntandoOperatorConfig() {
     }
@@ -56,7 +59,14 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     }
 
     public static List<String> getNamespacesToObserve() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE).map(s -> s.split("\\,")).map(Arrays::asList)
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE).map(s -> s.split(SEPERATOR_PATTERN))
+                .map(Arrays::asList)
+                .orElse(new ArrayList<>());
+    }
+
+    public static List<String> getImagePullSecrets() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS).map(s -> s.split(SEPERATOR_PATTERN))
+                .map(Arrays::asList)
                 .orElse(new ArrayList<>());
     }
 
@@ -78,12 +88,17 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static List<Path> getCertificateAuthorityCertPaths() {
         String[] paths = getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS,
-                "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").split("\\s+");
+                "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").split(SEPERATOR_PATTERN);
         List<Path> result = new ArrayList<>();
         for (String path : paths) {
             if (Paths.get(path).toFile().exists()) {
                 result.add(Paths.get(path));
             }
+        }
+        String s = getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_ROOT_FOLDER, "/etc/entando/ca");
+        File caCertRoot = Paths.get(s).toFile();
+        if (caCertRoot.exists() && caCertRoot.isDirectory()) {
+            Arrays.stream(caCertRoot.listFiles()).filter(File::isFile).forEach(file -> result.add(Paths.get(file.getAbsolutePath())));
         }
         return result;
     }
@@ -107,11 +122,6 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static Optional<String> getDefaultRoutingSuffix() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_ROUTING_SUFFIX);
-    }
-
-    public static String getEntandoInfrastructureSecretName() {
-        return getProperty(EntandoOperatorConfigProperty.ENTANDO_CLUSTER_INFRASTRUCTURE_SECRET_NAME,
-                "entando-cluster-infrastructure-secret");
     }
 
     public static long getPodCompletionTimeoutSeconds() {

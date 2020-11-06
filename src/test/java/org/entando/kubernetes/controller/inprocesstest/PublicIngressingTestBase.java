@@ -52,11 +52,12 @@ import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.app.KeycloakAwareSpec;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
+import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +74,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
     SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
-    private SampleController<EntandoPlugin, ExposedDeploymentResult> controller;
+    private SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller;
 
     @BeforeEach
     void setIngressClass() {
@@ -90,13 +91,14 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //Given I have a PublicIngressingDeployment in the Sample Namespace
         testBasicDeployment();
         //And I have a plugin in another namespace to share the same Ingress
-        controller = new SampleController<EntandoPlugin, ExposedDeploymentResult>(k8sClient, mock) {
+        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(k8sClient, mock) {
 
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin plugin,
+            protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin plugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<EntandoPlugin>(plugin, databaseServiceResult, keycloakConnectionConfig) {
+                return new SamplePublicIngressingDbAwareDeployable<EntandoPluginSpec>(plugin, databaseServiceResult,
+                        keycloakConnectionConfig) {
                     @Override
                     public String getIngressNamespace() {
                         return SAMPLE_NAMESPACE;
@@ -109,8 +111,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
                     @Override
                     @SuppressWarnings("unchecked")
-                    protected List<DeployableContainer> createContainers(EntandoPlugin entandoResource) {
-                        return Arrays.asList(new SampleDeployableContainer<EntandoPlugin>(entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource entandoResource) {
+                        return Arrays.asList(new SampleDeployableContainer<EntandoPluginSpec>(entandoResource) {
                             @Override
                             public int getPrimaryPort() {
                                 return 8082;
@@ -156,17 +158,17 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //Given I have a controller that processes EntandoPlugins
         lenient().when(mock.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn("ASDFASDFASDfa");
         this.k8sClient = getClient();
-        controller = new SampleController<EntandoPlugin, ExposedDeploymentResult>(k8sClient, mock) {
+        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(k8sClient, mock) {
 
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<EntandoPlugin>(newEntandoPlugin, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<EntandoPluginSpec>(newEntandoPlugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
                     @SuppressWarnings("unchecked")
-                    protected List<DeployableContainer> createContainers(EntandoPlugin entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
                         return Arrays.asList(new SampleDeployableContainer<>(entandoResource),
                                 new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig));
                     }
@@ -213,7 +215,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 .endSpec().build();
     }
 
-    protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource, String deploymentName) {
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+            String deploymentName) {
         new Thread(() -> {
             try {
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
@@ -248,11 +251,12 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         }).start();
     }
 
-    private static class EntandoPluginSampleDeployableContainer extends SampleDeployableContainer<EntandoPlugin> implements KeycloakAware {
+    private static class EntandoPluginSampleDeployableContainer extends SampleDeployableContainer<EntandoPluginSpec> implements
+            KeycloakAware {
 
         private KeycloakConnectionConfig keycloakConnectionConfig;
 
-        public EntandoPluginSampleDeployableContainer(EntandoPlugin entandoResource,
+        public EntandoPluginSampleDeployableContainer(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource,
                 KeycloakConnectionConfig keycloakConnectionConfig) {
             super(entandoResource);
             this.keycloakConnectionConfig = keycloakConnectionConfig;

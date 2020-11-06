@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotFoundException;
 import org.entando.kubernetes.client.DefaultEntandoResourceClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
@@ -35,10 +36,9 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.ResourceReference;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
-import org.entando.kubernetes.model.app.KeycloakAwareSpec;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
@@ -67,19 +67,19 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public void prepareDefaultKeycloakSecretAndConfigMap() {
+        String namespace = client.getNamespace();
         client.configMaps().createOrReplaceWithNew()
                 .withNewMetadata()
-                .withNamespace(client.getNamespace())
-                .withName(KeycloakName
-                        .forTheConnectionConfigMap(new ResourceReference()))//should use the default "keycloak-admin-connection-config"
+                .withNamespace(namespace)
+                .withName(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG)
                 .endMetadata()
                 .addToData(KubeUtils.URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())
                 .addToData(KubeUtils.INTERNAL_URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())
                 .done();
         client.secrets().createOrReplaceWithNew()
                 .withNewMetadata()
-                .withNamespace(client.getNamespace())
-                .withName(KeycloakName.forTheAdminSecret(new ResourceReference()))//should use the default "keycloak-admin-secret"
+                .withNamespace(namespace)
+                .withName(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .endMetadata()
                 .addToStringData(KubeUtils.USERNAME_KEY, EntandoOperatorTestConfig.getKeycloakUser())
                 .addToStringData(KubeUtils.PASSSWORD_KEY, EntandoOperatorTestConfig.getKeycloakPassword())
@@ -87,13 +87,11 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public void deleteDefaultKeycloakAdminSecret() {
-        String keycloakAdminSecretName = KeycloakName.forTheAdminSecret(new ResourceReference());
-        if (client.secrets().withName(keycloakAdminSecretName).get() != null) {
-            client.secrets().withName(keycloakAdminSecretName).delete();
+        if (client.secrets().withName(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET).get() != null) {
+            client.secrets().withName(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET).delete();
         }
-        String keycloakConnectionConfigMapName = KeycloakName.forTheConnectionConfigMap(new ResourceReference());
-        if (client.configMaps().withName(keycloakConnectionConfigMapName).get() != null) {
-            client.configMaps().withName(keycloakConnectionConfigMapName).delete();
+        if (client.configMaps().withName(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG).get() != null) {
+            client.configMaps().withName(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG).delete();
         }
     }
 
@@ -197,6 +195,10 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public void deleteRealm(String realm) {
-        getKeycloak().realm(realm).remove();
+        try {
+            getKeycloak().realm(realm).remove();
+        } catch (NotFoundException e) {
+            //can ignore this
+        }
     }
 }

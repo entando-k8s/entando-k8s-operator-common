@@ -28,16 +28,17 @@ import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.app.KeycloakAwareSpec;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public class SamplePublicIngressingDbAwareDeployable<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec>> extends
-        SampleIngressingDbAwareDeployable<T> implements PublicIngressingDeployable<ExposedDeploymentResult, T>,
+public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec> extends
+        SampleIngressingDbAwareDeployable<S> implements PublicIngressingDeployable<ExposedDeploymentResult, S>,
         Secretive {
 
     private final Secret sampleSecret;
     private KeycloakConnectionConfig keycloakConnectionConfig;
 
-    public SamplePublicIngressingDbAwareDeployable(T entandoResource, DatabaseServiceResult databaseServiceResult,
+    public SamplePublicIngressingDbAwareDeployable(EntandoBaseCustomResource<S> entandoResource,
+            DatabaseServiceResult databaseServiceResult,
             KeycloakConnectionConfig keycloakConnectionConfig) {
         super(entandoResource, databaseServiceResult);
         this.keycloakConnectionConfig = keycloakConnectionConfig;
@@ -49,7 +50,7 @@ public class SamplePublicIngressingDbAwareDeployable<T extends EntandoBaseCustom
         return resource.getMetadata().getName() + "-admin-secret";
     }
 
-    protected List<DeployableContainer> createContainers(T entandoResource) {
+    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<S> entandoResource) {
         return Arrays.asList(new SampleDeployableContainer<>(entandoResource));
     }
 
@@ -57,7 +58,6 @@ public class SamplePublicIngressingDbAwareDeployable<T extends EntandoBaseCustom
     public List<Secret> buildSecrets() {
         return Arrays.asList(sampleSecret);
     }
-
 
     @Override
     public KeycloakConnectionConfig getKeycloakDeploymentResult() {

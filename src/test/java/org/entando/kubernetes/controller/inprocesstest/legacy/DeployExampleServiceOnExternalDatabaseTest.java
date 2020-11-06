@@ -51,6 +51,7 @@ import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,13 +80,13 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<EntandoApp, ExposedDeploymentResult> sampleController;
+    private SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void prepareExternalDB() {
-        this.sampleController = new SampleController<EntandoApp, ExposedDeploymentResult>(client, keycloakClient) {
+        this.sampleController = new SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult>(client, keycloakClient) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoApp> createDeployable(
+            protected Deployable<ExposedDeploymentResult, EntandoAppSpec> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {

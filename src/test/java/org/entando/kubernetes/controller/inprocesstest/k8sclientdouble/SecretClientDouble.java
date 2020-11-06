@@ -63,4 +63,9 @@ public class SecretClientDouble extends AbstractK8SClientDouble implements Secre
     public ConfigMap loadConfigMap(EntandoBaseCustomResource<?> peerInNamespace, String name) {
         return getNamespace(peerInNamespace).getConfigMap(name);
     }
+
+    @Override
+    public void overwriteControllerConfigMap(ConfigMap configMap) {
+        getNamespace(CONTROLLER_NAMESPACE).putConfigMap(configMap);
+    }
 }

@@ -1,10 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Tags (inter-process )" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+  <configuration default="false" name="OperatorCommon (in-process )" type="JUnit" factoryName="JUnit">
     <module name="entando-k8s-operator-common" />
     <useClassPathOnly />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="org.entando.kubernetes.controller.common.examples.barebones.*" />
+        <option name="PATTERN" value="org.entando.kubernetes.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>
@@ -12,10 +12,9 @@
     <option name="MAIN_CLASS_NAME" value="" />
     <option name="METHOD_NAME" value="" />
     <option name="TEST_OBJECT" value="tags" />
-    <option name="VM_PARAMETERS" value="-ea -Dentando.default.routing.suffix=apps.serv.run -Dentando.test.namespace.override=ek8s-common -Dentando.test.keycloak.user=admin -Dentando.test.keycloak.password=P@ssword01 -Dentando.test.keycloak.base.url=http://keycloak.apps.serv.run/auth" />
     <option name="PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
-    <tag value="inter-process" />
+    <tag value="in-process" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

@@ -31,7 +31,7 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.KeycloakAware;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.app.KeycloakAwareSpec;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public class KeycloakClientCreator {
 

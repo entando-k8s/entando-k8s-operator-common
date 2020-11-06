@@ -167,12 +167,15 @@ public class ControllerExecutor {
                 .map(prop -> new EnvVar(prop.name(), EntandoOperatorConfigBase.lookupProperty(prop).get(), null))
                 .collect(Collectors.toList()));
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
+            //TODO no need to propagate the raw CA certs. But we do need to mount the resulting Java Truststore and override the
+            // _JAVA_OPTS variable
             StringBuilder sb = new StringBuilder();
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path ->
-                    sb.append("/etc/entando/ca/").append(path.getFileName().toString()).append(" "));
+                    sb.append(ETC_ENTANDO_CA).append("/").append(path.getFileName().toString()).append(" "));
             result.add(new EnvVar(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.name(), sb.toString().trim(), null));
         }
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
+            //TODO no need to propagate the Tls certs.
             result.add(new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), ETC_ENTANDO_TLS, null));
         }
         return result;
@@ -181,6 +184,8 @@ public class ControllerExecutor {
     private List<Volume> maybeCreateTlsVolumes(EntandoCustomResource resource) {
         List<Volume> result = new ArrayList<>();
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
+            //TODO no need to propagate the raw CA certs. But we do need to mount the resulting Java Truststore and override the
+            // _JAVA_OPTS var
             Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-controller-ca-cert-secret")
                     .endMetadata().withData(new ConcurrentHashMap<>()).build();
             //Add all available CA Certs. No need to map the trustStore itself - the controller will build this up internally
@@ -192,6 +197,7 @@ public class ControllerExecutor {
                     .build());
         }
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
+            //TODO no need to propagate the Tls certs. It can just be mounted in deployments
             Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-controller-tls-secret")
                     .endMetadata()
                     .withType("kubernetes.io/tls")

@@ -19,8 +19,8 @@ package org.entando.kubernetes.controller.inprocesstest;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
-import static org.wildfly.common.Assert.assertNotNull;
 
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
@@ -49,10 +49,11 @@ import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
+import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,16 +66,18 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     EntandoPlugin plugin = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     protected SimpleK8SClient k8sClient;
 
-    private SampleController<EntandoPlugin, BarebonesDeploymentResult> controller;
+    private SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult> controller;
     private Map<String, String> properties = new ConcurrentHashMap<>();
 
     @Test
     void testBasicDeploymentWithAdditionalPorts() {
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
-        controller = new SampleController<EntandoPlugin, BarebonesDeploymentResult>(k8sClient, mock(SimpleKeycloakClient.class)) {
+        emulateKeycloakDeployment(k8sClient);
+        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult>(k8sClient,
+                mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
@@ -122,9 +125,11 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     void testBasicDeploymentWithClusterScopedRoles() {
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
-        controller = new SampleController<EntandoPlugin, BarebonesDeploymentResult>(k8sClient, mock(SimpleKeycloakClient.class)) {
+        emulateKeycloakDeployment(k8sClient);
+        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult>(k8sClient,
+                mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer());
@@ -151,16 +156,17 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         assertThat(editorRoleBinding.getSubjects().get(0).getName(), is("my-service-account"));
         assertThat(editorRoleBinding.getSubjects().get(0).getKind(), is("ServiceAccount"));
         assertThat(editorRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
-        RoleBinding viewRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-view");
+        RoleBinding viewRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-pod-viewer");
         assertNotNull(viewRoleBinding);
         assertThat(viewRoleBinding.getRoleRef().getKind(), is("ClusterRole"));
-        assertThat(viewRoleBinding.getRoleRef().getName(), is("view"));
+        assertThat(viewRoleBinding.getRoleRef().getName(), is("pod-viewer"));
         assertThat(viewRoleBinding.getSubjects().get(0).getName(), is("my-service-account"));
         assertThat(viewRoleBinding.getSubjects().get(0).getKind(), is("ServiceAccount"));
         assertThat(viewRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
     }
 
-    protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource, String deploymentName) {
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+            String deploymentName) {
         new Thread(() -> {
             try {
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
@@ -189,7 +195,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
                 .withNamespace(sampleNamespace)
                 .withName(sampleName).endMetadata().withNewSpec()
                 .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
-                .addNewParameter("MY_VAR", "MY_VAL")
+                .addToEnvironmentVariables("MY_VAR", "MY_VAL")
                 .withDbms(DbmsVendor.EMBEDDED).withReplicas(2).withIngressHostName("myhost.name.com")
                 .endSpec().build();
     }

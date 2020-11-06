@@ -39,8 +39,9 @@ import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResource> {
+public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResource<?>> {
 
     protected final SimpleK8SClient<?> k8sClient;
     protected final SimpleKeycloakClient keycloakClient;
@@ -158,7 +159,8 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         }
     }
 
-    protected <C extends EntandoBaseCustomResource> DatabaseServiceResult prepareDatabaseService(C entandoCustomResource,
+    @SuppressWarnings("unchecked")
+    protected <S extends EntandoDeploymentSpec> DatabaseServiceResult prepareDatabaseService(T entandoCustomResource,
             DbmsVendor dbmsVendor,
             String nameQualifier) {
         Optional<ExternalDatabaseDeployment> externalDatabase = k8sClient.entandoResources()
@@ -166,9 +168,9 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         if (externalDatabase.isPresent()) {
             return externalDatabase.get();
         } else if (!(dbmsVendor == DbmsVendor.NONE || dbmsVendor == DbmsVendor.EMBEDDED)) {
-            final DatabaseDeployable<C> databaseDeployable = new DatabaseDeployable<>(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
+            final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
                     entandoCustomResource, nameQualifier, null);
-            final DeployCommand<DatabaseDeploymentResult, C> dbCommand = new DeployCommand<>(databaseDeployable);
+            final DeployCommand<DatabaseDeploymentResult, S> dbCommand = new DeployCommand<>(databaseDeployable);
             DatabaseDeploymentResult result = dbCommand.execute(k8sClient, empty());
             if (result.hasFailed()) {
                 throw new EntandoControllerException("Database deployment failed");

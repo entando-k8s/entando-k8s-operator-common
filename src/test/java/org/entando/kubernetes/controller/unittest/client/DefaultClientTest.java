@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.inprocesstest;
+package org.entando.kubernetes.controller.unittest.client;
 
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;

@@ -18,12 +18,10 @@ package org.entando.kubernetes.controller.spi;
 
 import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.app.KeycloakAwareSpec;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public interface PublicIngressingDeployable<T extends ExposedDeploymentResult, C extends EntandoBaseCustomResource<?
-        extends KeycloakAwareSpec>> extends
-        IngressingDeployable<T, C> {
+public interface PublicIngressingDeployable<T extends ExposedDeploymentResult, S extends KeycloakAwareSpec> extends
+        IngressingDeployable<T, S> {
 
     KeycloakConnectionConfig getKeycloakDeploymentResult();
 }

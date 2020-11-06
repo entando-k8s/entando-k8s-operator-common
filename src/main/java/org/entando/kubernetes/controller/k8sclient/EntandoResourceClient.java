@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.k8sclient;
 
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import java.util.Optional;
 import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
@@ -24,24 +25,21 @@ import org.entando.kubernetes.controller.common.InfrastructureConfig;
 import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.model.AbstractServerStatus;
+import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.RequiresClusterInfrastructure;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.model.app.KeycloakAwareSpec;
+import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public interface EntandoResourceClient {
 
     String getNamespace();
-
-    EntandoCustomResource removeFinalizer(EntandoCustomResource r);
-
-    EntandoCustomResource addFinalizer(EntandoCustomResource r);
 
     void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status);
 
@@ -61,7 +59,8 @@ public interface EntandoResourceClient {
 
     Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoBaseCustomResource<?> peerInNamespace);
 
-    InfrastructureConfig findInfrastructureConfig(RequiresClusterInfrastructure resource);
+    <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
+            EntandoBaseCustomResource<T> resource);
 
     ExposedService loadExposedService(EntandoCustomResource resource);
 
@@ -75,11 +74,11 @@ public interface EntandoResourceClient {
 
     DoneableConfigMap loadDefaultConfigMap();
 
-    default <T extends KeycloakAwareSpec> ResourceReference determineKeycloakToUse(EntandoBaseCustomResource<T> resource) {
+    default <T extends KeycloakAwareSpec> Optional<ResourceReference> determineKeycloakToUse(EntandoBaseCustomResource<T> resource) {
         ResourceReference resourceReference = null;
         if (resource.getSpec().getKeycloakToUse().isPresent()) {
             resourceReference = new ResourceReference(
-                    resource.getSpec().getKeycloakToUse().get().getNamespace(),
+                    resource.getSpec().getKeycloakToUse().get().getNamespace().orElse(null),
                     resource.getSpec().getKeycloakToUse().get().getName());
         } else {
             Optional<EntandoKeycloakServer> keycloak = findKeycloakInNamespace(resource);
@@ -89,14 +88,53 @@ public interface EntandoResourceClient {
                         keycloak.get().getMetadata().getName());
             } else {
                 DoneableConfigMap configMapResource = loadDefaultConfigMap();
-                //Nulls are OK because the resulting reference will resolve to the backward compatible "keycloak-admin-secret"
                 resourceReference = new ResourceReference(
                         configMapResource.getData().get(KeycloakName.DEFAULT_KEYCLOAK_NAMESPACE_KEY),
                         configMapResource.getData().get(KeycloakName.DEFAULT_KEYCLOAK_NAME_KEY));
 
             }
         }
-        return resourceReference;
+        return refineResourceReference(resourceReference, resource.getMetadata());
+    }
+
+    default <T extends ClusterInfrastructureAwareSpec> Optional<ResourceReference> determineClusterInfrastructureToUse(
+            EntandoBaseCustomResource<T> resource) {
+        ResourceReference resourceReference = null;
+        if (resource.getSpec().getClusterInfrastructureToUse().isPresent()) {
+            //Not ideal. GetName should not return null.
+            resourceReference = new ResourceReference(
+                    resource.getSpec().getClusterInfrastructureToUse().get().getNamespace().orElse(null),
+                    resource.getSpec().getClusterInfrastructureToUse().get().getName());
+        } else {
+            Optional<EntandoClusterInfrastructure> clusterInfrastructure = findClusterInfrastructureInNamespace(resource);
+            if (clusterInfrastructure.isPresent()) {
+                resourceReference = new ResourceReference(
+                        clusterInfrastructure.get().getMetadata().getNamespace(),
+                        clusterInfrastructure.get().getMetadata().getName());
+            } else {
+                DoneableConfigMap configMapResource = loadDefaultConfigMap();
+                resourceReference = new ResourceReference(
+                        configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAME_KEY),
+                        configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAMESPACE_KEY));
+
+            }
+        }
+        return refineResourceReference(resourceReference, resource.getMetadata());
+    }
+
+    <T extends ClusterInfrastructureAwareSpec> Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(
+            EntandoBaseCustomResource<T> resource);
+
+    default Optional<ResourceReference> refineResourceReference(ResourceReference resourceReference, ObjectMeta metadata) {
+        if (resourceReference.getName() == null) {
+            //no valid resource reference in any config anywhere. Return empty
+            return Optional.empty();
+        } else {
+            //Default an empty namespace to the resource's own namespace
+            return Optional.of(new ResourceReference(
+                    resourceReference.getNamespace().orElse(metadata.getNamespace()),
+                    resourceReference.getName()));
+        }
     }
 
 }

@@ -45,7 +45,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@Tags({@Tag("inter-process"),@Tag("pre-deployment") })
+@Tags({@Tag("inter-process"), @Tag("pre-deployment")})
 @ExtendWith(MockitoExtension.class)
 class PodWaiterTest {
 
