@@ -19,7 +19,6 @@ package org.entando.kubernetes.controller.common;
 import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 
@@ -52,14 +51,13 @@ public class InfrastructureConfig {
         return getInfrastructureConfigMap().getData().get(ENTANDO_K8S_SERVICE_CLIENT_ID_KEY);
     }
 
-    public static <T extends ClusterInfrastructureAwareSpec> String connectionConfigMapNameFor(ResourceReference rr) {
+    public static String connectionConfigMapNameFor(ResourceReference rr) {
         return connectionConfigMapNameFor(
                 rr.getNamespace().orElseThrow(IllegalArgumentException::new),
                 rr.getName());
     }
 
-    public static <T extends ClusterInfrastructureAwareSpec> String connectionConfigMapNameFor(
-            EntandoClusterInfrastructure infrastructure) {
+    public static String connectionConfigMapNameFor(EntandoClusterInfrastructure infrastructure) {
         return connectionConfigMapNameFor(infrastructure.getMetadata().getNamespace(), infrastructure.getMetadata().getName());
     }
 

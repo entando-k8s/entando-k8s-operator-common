@@ -134,10 +134,9 @@ public class IntegrationTestHelperBase<
         containerStartingListener.listen(namespace, executor, versionToUse);
     }
 
-    @SuppressWarnings("unchecked")
     public void listenAndRespondWithLatestImage(String namespace) {
-        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
-        String versionToUse = executor.resolveLatestImageFor((Class<? extends EntandoBaseCustomResource>) operations.getType())
+        ControllerExecutor executor = new  ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
+        String versionToUse = executor.resolveLatestImageFor(operations.getType())
                 .orElseThrow(() -> new IllegalStateException("No K8S Controller Image has been registered for " + operations.getType()));
         containerStartingListener.listen(namespace, executor, versionToUse);
     }

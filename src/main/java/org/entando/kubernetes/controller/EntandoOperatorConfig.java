@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
@@ -89,16 +90,16 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static List<Path> getCertificateAuthorityCertPaths() {
         String[] paths = getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS,
                 "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").split(SEPERATOR_PATTERN);
-        List<Path> result = new ArrayList<>();
-        for (String path : paths) {
-            if (Paths.get(path).toFile().exists()) {
-                result.add(Paths.get(path));
-            }
-        }
-        String s = getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_ROOT_FOLDER, "/etc/entando/ca");
-        File caCertRoot = Paths.get(s).toFile();
+        List<Path> result = Arrays.asList(paths).stream()
+                .map(Paths::get)
+                .filter(path -> path.toFile().exists())
+                .collect(Collectors.toList());
+        File caCertRoot = Paths.get(getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_ROOT_FOLDER, "/etc/entando/ca")).toFile();
         if (caCertRoot.exists() && caCertRoot.isDirectory()) {
-            Arrays.stream(caCertRoot.listFiles()).filter(File::isFile).forEach(file -> result.add(Paths.get(file.getAbsolutePath())));
+            result.addAll(Arrays.stream(caCertRoot.listFiles())
+                    .filter(File::isFile)
+                    .map(file -> Paths.get(file.getAbsolutePath()))
+                    .collect(Collectors.toList()));
         }
         return result;
     }

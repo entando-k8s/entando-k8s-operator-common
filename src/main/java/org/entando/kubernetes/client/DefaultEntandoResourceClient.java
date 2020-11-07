@@ -30,7 +30,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.sql.Timestamp;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -101,9 +100,8 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     @Override
     public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoBaseCustomResource<?> peerInNamespace) {
-        List<EntandoKeycloakServer> entandoKeycloakServers = entandoResourceRegistry.getOperations(EntandoKeycloakServer.class)
+        List<EntandoKeycloakServer> items = entandoResourceRegistry.getOperations(EntandoKeycloakServer.class)
                 .inNamespace(peerInNamespace.getMetadata().getNamespace()).list().getItems();
-        List<EntandoKeycloakServer> items = entandoKeycloakServers;
         if (items.size() == 1) {
             return Optional.of(items.get(0));
         }
@@ -132,10 +130,9 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     @Override
     public <T extends ClusterInfrastructureAwareSpec> Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(
             EntandoBaseCustomResource<T> resource) {
-        List<EntandoClusterInfrastructure> clusterInfrastructures = entandoResourceRegistry
+        List<EntandoClusterInfrastructure> items = entandoResourceRegistry
                 .getOperations(EntandoClusterInfrastructure.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
-        List<EntandoClusterInfrastructure> items = clusterInfrastructures;
         if (items.size() == 1) {
             return Optional.of(items.get(0));
         }
@@ -214,7 +211,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         return patch(r, r, this.getOperations(type));
     }
 
-    @SuppressWarnings("unchecked")
     private <T extends EntandoCustomResource, D extends DoneableEntandoCustomResource<D, T>> CustomResourceOperationsImpl<T,
             CustomResourceList<T>, D> getOperations(Class<T> c) {
         return entandoResourceRegistry.getOperations(c);

@@ -114,8 +114,8 @@ public interface EntandoResourceClient {
             } else {
                 DoneableConfigMap configMapResource = loadDefaultConfigMap();
                 resourceReference = new ResourceReference(
-                        configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAME_KEY),
-                        configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAMESPACE_KEY));
+                        configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAMESPACE_KEY),
+                        configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAME_KEY));
 
             }
         }
