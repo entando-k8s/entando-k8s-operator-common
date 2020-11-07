@@ -48,8 +48,6 @@ public interface EntandoResourceClient {
 
     <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
 
-    <T extends EntandoCustomResource> T patchEntandoResource(T r);
-
     void updatePhase(EntandoCustomResource entandoCustomResource, EntandoDeploymentPhase phase);
 
     void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason);

@@ -204,13 +204,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T patchEntandoResource(T r) {
-        Class<T> type = (Class<T>) r.getClass();
-        return patch(r, r, this.getOperations(type));
-    }
-
     private <T extends EntandoCustomResource, D extends DoneableEntandoCustomResource<D, T>> CustomResourceOperationsImpl<T,
             CustomResourceList<T>, D> getOperations(Class<T> c) {
         return entandoResourceRegistry.getOperations(c);

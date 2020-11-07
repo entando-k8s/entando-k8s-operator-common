@@ -70,11 +70,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         return r;
     }
 
-    @Override
-    public <T extends EntandoCustomResource> T patchEntandoResource(T r) {
-        return this.createOrPatchEntandoResource(r);
-    }
-
     public void putEntandoDatabaseService(EntandoDatabaseService externalDatabase) {
         createOrPatchEntandoResource(externalDatabase);
     }

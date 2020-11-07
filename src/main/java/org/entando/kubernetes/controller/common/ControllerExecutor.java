@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +45,7 @@ import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class ControllerExecutor {
 
@@ -78,7 +79,7 @@ public class ControllerExecutor {
         return map;
     }
 
-    public static String resolveControllerImageName(EntandoCustomResource resource) {
+    public static <T extends Serializable> String resolveControllerImageName(EntandoBaseCustomResource<T> resource) {
         return resolveControllerImageNameByKind(resource.getKind());
     }
 
@@ -96,13 +97,14 @@ public class ControllerExecutor {
         return this.imageResolver.determineLatestVersionOf(imageName);
     }
 
-    public Pod startControllerFor(Action action, EntandoBaseCustomResource resource, String imageVersionToUse) {
+    public <T extends Serializable> Pod startControllerFor(Action action, EntandoBaseCustomResource<T> resource, String imageVersionToUse) {
         removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
         return client.pods().start(pod);
     }
 
-    public Pod runControllerFor(Action action, EntandoBaseCustomResource resource, String imageVersionToUse) {
+    public <T extends EntandoDeploymentSpec> Pod runControllerFor(Action action, EntandoBaseCustomResource<T> resource,
+            String imageVersionToUse) {
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
         return client.pods().runToCompletion(pod);
     }
@@ -125,7 +127,8 @@ public class ControllerExecutor {
         return result;
     }
 
-    private Pod buildControllerPod(Action action, EntandoBaseCustomResource<?> resource, String imageVersionToUse) {
+    private <T extends Serializable> Pod buildControllerPod(Action action, EntandoBaseCustomResource<T> resource,
+            String imageVersionToUse) {
         return new PodBuilder().withNewMetadata()
                 .withName(resource.getMetadata().getName() + "-deployer-" + RandomStringUtils.randomAlphanumeric(10).toLowerCase())
                 .withNamespace(this.controllerNamespace)
@@ -152,12 +155,12 @@ public class ControllerExecutor {
         return EntandoOperatorConfig.getOperatorServiceAccount().orElse("default");
     }
 
-    private String determineControllerImage(EntandoCustomResource resource, String imageVersionToUse) {
+    private <T extends Serializable> String determineControllerImage(EntandoBaseCustomResource<T> resource, String imageVersionToUse) {
         return this.imageResolver.determineImageUri(
                 "entando/" + resolveControllerImageName(resource), Optional.ofNullable(imageVersionToUse));
     }
 
-    private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {
+    private <T extends Serializable> List<EnvVar> buildEnvVars(Action action, EntandoBaseCustomResource<T> resource) {
         ArrayList<EnvVar> result = new ArrayList<>();
         result.add(new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
         result.add(new EnvVar("ENTANDO_RESOURCE_NAMESPACE", resource.getMetadata().getNamespace(), null));
@@ -181,7 +184,7 @@ public class ControllerExecutor {
         return result;
     }
 
-    private List<Volume> maybeCreateTlsVolumes(EntandoCustomResource resource) {
+    private <T extends Serializable> List<Volume> maybeCreateTlsVolumes(EntandoBaseCustomResource<T> resource) {
         List<Volume> result = new ArrayList<>();
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             //TODO no need to propagate the raw CA certs. But we do need to mount the resulting Java Truststore and override the
