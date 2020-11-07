@@ -33,6 +33,10 @@ public class KeycloakName {
     public static final String DEFAULT_KEYCLOAK_ADMIN_SECRET = "keycloak-admin-secret";
     public static final String DEFAULT_KEYCLOAK_CONNECTION_CONFIG = "keycloak-connection-config";
 
+    private KeycloakName() {
+        //because this is a utility class
+    }
+
     public static String forTheClientSecret(KeycloakClientConfig keycloakConfig) {
         return keycloakConfig.getClientId() + "-secret";
     }
@@ -41,7 +45,7 @@ public class KeycloakName {
         return forTheConnectionConfigMap(keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName());
     }
 
-    public static <T extends KeycloakAwareSpec> String forTheConnectionConfigMap(ResourceReference resourceReference) {
+    public static String forTheConnectionConfigMap(ResourceReference resourceReference) {
         return forTheConnectionConfigMap(resourceReference.getNamespace().orElseThrow(IllegalArgumentException::new),
                 resourceReference.getName());
     }
@@ -53,7 +57,7 @@ public class KeycloakName {
         return format("keycloak-%s-%s-connection-config", namespace, name);
     }
 
-    public static <T extends KeycloakAwareSpec> String forTheAdminSecret(ResourceReference resourceReference) {
+    public static String forTheAdminSecret(ResourceReference resourceReference) {
         return forTheAdminSecret(resourceReference.getNamespace().orElseThrow(IllegalArgumentException::new),
                 resourceReference.getName());
     }

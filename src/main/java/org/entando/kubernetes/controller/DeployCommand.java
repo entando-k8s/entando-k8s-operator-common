@@ -45,7 +45,6 @@ import org.entando.kubernetes.model.WebServerStatus;
 public class DeployCommand<T extends ServiceDeploymentResult, S extends EntandoDeploymentSpec> {
 
     public static final String DEPLOYMENT_LABEL_NAME = "deployment";
-    private static final String DEFAULT = "default";
     protected final Deployable<T, S> deployable;
     protected final PersistentVolumeClaimCreator<S> persistentVolumeClaimCreator;
     protected final ServiceCreator<S> serviceCreator;
@@ -110,6 +109,7 @@ public class DeployCommand<T extends ServiceDeploymentResult, S extends EntandoD
         return (T) deployable.createResult(getDeployment(), getService(), ingress, getPod()).withStatus(getStatus());
     }
 
+    @SuppressWarnings("java:S1172")//because this parameter is required for the subclass
     protected Ingress maybeCreateIngress(SimpleK8SClient<?> k8sClient) {
         return null;
     }

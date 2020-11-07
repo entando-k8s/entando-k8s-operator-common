@@ -168,8 +168,8 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         if (externalDatabase.isPresent()) {
             return externalDatabase.get();
         } else if (!(dbmsVendor == DbmsVendor.NONE || dbmsVendor == DbmsVendor.EMBEDDED)) {
-            final DatabaseDeployable databaseDeployable = new DatabaseDeployable(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
-                    entandoCustomResource, nameQualifier, null);
+            final DatabaseDeployable<S> databaseDeployable = new DatabaseDeployable<S>(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
+                    (EntandoBaseCustomResource<S>) entandoCustomResource, nameQualifier, null);
             final DeployCommand<DatabaseDeploymentResult, S> dbCommand = new DeployCommand<>(databaseDeployable);
             DatabaseDeploymentResult result = dbCommand.execute(k8sClient, empty());
             if (result.hasFailed()) {

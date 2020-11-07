@@ -40,6 +40,7 @@ import org.entando.kubernetes.controller.spi.Ingressing;
 import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
+import org.entando.kubernetes.model.EntandoResourceRequirements;
 import org.entando.kubernetes.model.HasIngress;
 
 public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends AbstractK8SResourceCreator<S> {
@@ -144,11 +145,9 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
             //for cases where we have https available but the Keycloak redirect was specified as http
             result.put("nginx.ingress.kubernetes.io/force-ssl-redirect", "true");
         }
-        if (entandoCustomResource.getSpec() instanceof EntandoIngressingDeploymentSpec) {
-            EntandoIngressingDeploymentSpec spec = (EntandoIngressingDeploymentSpec) entandoCustomResource.getSpec();
-            spec.getResourceRequirements().ifPresent(resourceRequirements -> resourceRequirements.getFileUploadLimit()
-                    .ifPresent(s -> result.put("nginx.ingress.kubernetes.io/proxy-body-size", s)));
-        }
+        EntandoIngressingDeploymentSpec spec = entandoCustomResource.getSpec();
+        spec.getResourceRequirements().flatMap(EntandoResourceRequirements::getFileUploadLimit)
+                .ifPresent(s -> result.put("nginx.ingress.kubernetes.io/proxy-body-size", s));
         return result;
     }
 

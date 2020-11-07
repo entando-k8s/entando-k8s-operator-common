@@ -59,7 +59,6 @@ public class DefaultPodClient implements PodClient {
         watchPod(
                 pod -> podResource.list().getItems().isEmpty(),
                 EntandoOperatorConfig.getPodShutdownTimeoutSeconds(), podResource);
-        System.out.println("Removed successfully");
     }
 
     @Override

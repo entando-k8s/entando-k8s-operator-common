@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-public class SecretCreatorTest implements InProcessTestUtil {
+    class SecretCreatorTest implements InProcessTestUtil {
 
     private static final String MY_IMAGE_PULL_SECRET = "my-image-pull-secret";
     public static final String DOCKER_CONFIG_JSON = "{asdfasdfasd:asdfasdfasd}";
