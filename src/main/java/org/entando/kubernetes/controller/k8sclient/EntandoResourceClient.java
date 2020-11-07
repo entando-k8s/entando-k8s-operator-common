@@ -31,6 +31,7 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
+import org.entando.kubernetes.model.KeycloakToUse;
 import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
@@ -76,10 +77,11 @@ public interface EntandoResourceClient {
 
     default <T extends KeycloakAwareSpec> Optional<ResourceReference> determineKeycloakToUse(EntandoBaseCustomResource<T> resource) {
         ResourceReference resourceReference = null;
-        if (resource.getSpec().getKeycloakToUse().isPresent()) {
+        Optional<KeycloakToUse> keycloakToUse = resource.getSpec().getKeycloakToUse();
+        if (keycloakToUse.isPresent()) {
             resourceReference = new ResourceReference(
-                    resource.getSpec().getKeycloakToUse().get().getNamespace().orElse(null),
-                    resource.getSpec().getKeycloakToUse().get().getName());
+                    keycloakToUse.get().getNamespace().orElse(null),
+                    keycloakToUse.get().getName());
         } else {
             Optional<EntandoKeycloakServer> keycloak = findKeycloakInNamespace(resource);
             if (keycloak.isPresent()) {
@@ -100,11 +102,12 @@ public interface EntandoResourceClient {
     default <T extends ClusterInfrastructureAwareSpec> Optional<ResourceReference> determineClusterInfrastructureToUse(
             EntandoBaseCustomResource<T> resource) {
         ResourceReference resourceReference = null;
-        if (resource.getSpec().getClusterInfrastructureToUse().isPresent()) {
+        Optional<ResourceReference> clusterInfrastructureToUse = resource.getSpec().getClusterInfrastructureToUse();
+        if (clusterInfrastructureToUse.isPresent()) {
             //Not ideal. GetName should not return null.
             resourceReference = new ResourceReference(
-                    resource.getSpec().getClusterInfrastructureToUse().get().getNamespace().orElse(null),
-                    resource.getSpec().getClusterInfrastructureToUse().get().getName());
+                    clusterInfrastructureToUse.get().getNamespace().orElse(null),
+                    clusterInfrastructureToUse.get().getName());
         } else {
             Optional<EntandoClusterInfrastructure> clusterInfrastructure = findClusterInfrastructureInNamespace(resource);
             if (clusterInfrastructure.isPresent()) {
