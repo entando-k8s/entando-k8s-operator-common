@@ -25,8 +25,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
-
-@Tags({@Tag("in-process"),@Tag("pre-deployment"),@Tag("component") })
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 @EnableRuleMigrationSupport
 public class BareBonesDeployableMockServerTest extends BareBonesDeployableTestBase implements PodBehavior {
 

@@ -17,13 +17,15 @@
 package org.entando.kubernetes.controller.k8sclient;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public interface PersistentVolumeClaimClient {
 
-    PersistentVolumeClaim createPersistentVolumeClaimIfAbsent(EntandoCustomResource customResource,
+    <S extends EntandoDeploymentSpec> PersistentVolumeClaim createPersistentVolumeClaimIfAbsent(EntandoBaseCustomResource<S> customResource,
             PersistentVolumeClaim persistentVolumeClaim);
 
-    PersistentVolumeClaim loadPersistentVolumeClaim(EntandoCustomResource customResource, String name);
+    <S extends EntandoDeploymentSpec> PersistentVolumeClaim loadPersistentVolumeClaim(EntandoBaseCustomResource<S> customResource,
+            String name);
 
 }

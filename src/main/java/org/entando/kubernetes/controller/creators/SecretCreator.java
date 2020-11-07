@@ -31,8 +31,9 @@ import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.SecretToMount;
 import org.entando.kubernetes.controller.spi.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class SecretCreator extends AbstractK8SResourceCreator {
+public class SecretCreator<T extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<T> {
 
     public static final String DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME = "entando-default-ca-secret";
     public static final String CERT_SECRET_MOUNT_ROOT = "/etc/entando/certs";
@@ -42,15 +43,26 @@ public class SecretCreator extends AbstractK8SResourceCreator {
     public static final String TRUST_STORE_FILE = "store.jks";
     public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
 
-    public SecretCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public SecretCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         super(entandoCustomResource);
     }
 
     public static String standardCertPathOf(String filename) {
         return format("%s/%s/%s", CERT_SECRET_MOUNT_ROOT, DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, filename);
     }
+    //TODO simplify the secret creation. In each namespace, we really only need:
+    // 1. one secret for the TLS keypair
+    // 2. one TLS secret with and empty keypair
+    // 3. one secret for the Java truststore
+    // 4. one secret for the CA certs
+    // See ControllerExecutor for further complexity that can be eliminated
+    // Proposed approach:
+    // 1. Extract all CA and TLS info on Operator startup
+    // 2. Create all secrets with predefined names in operator namespace
+    // 3. ensure secrets are in deployment namespace
+    // 4. Bind all deployments to the correct standard certs as required
 
-    public void createSecrets(SecretClient client, Deployable<?,?> deployable) {
+    public void createSecrets(SecretClient client, Deployable<?, ?> deployable) {
         if (TlsHelper.getInstance().isTrustStoreAvailable()) {
             client.createSecretIfAbsent(entandoCustomResource, newCertificateAuthoritySecret());
         }
@@ -62,6 +74,9 @@ public class SecretCreator extends AbstractK8SResourceCreator {
                 createSecret(client, secret);
             }
         }
+        EntandoOperatorConfig.getImagePullSecrets().forEach(s -> client.createSecretIfAbsent(entandoCustomResource,
+                new SecretBuilder(client.loadControllerSecret(s)).editMetadata()
+                        .withNamespace(entandoCustomResource.getMetadata().getNamespace()).endMetadata().build()));
     }
 
     private void createIngressTlsSecret(SecretClient client) {
@@ -80,9 +95,9 @@ public class SecretCreator extends AbstractK8SResourceCreator {
         createSecret(client, tlsSecret);
     }
 
-    private boolean shouldCreateIngressTlsSecret(Deployable<?,?> deployable) {
+    private boolean shouldCreateIngressTlsSecret(Deployable<?, ?> deployable) {
         return deployable instanceof IngressingDeployable
-                && (!((IngressingDeployable<?,?>) deployable).isTlsSecretSpecified())
+                && (!((IngressingDeployable<?, ?>) deployable).isTlsSecretSpecified())
                 && TlsHelper.canAutoCreateTlsSecret();
     }
 

@@ -41,6 +41,7 @@ import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuild
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceList;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceOperationFactory;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpecBuilder;
 
 public class ExternalDatabaseIntegrationTestHelper extends
         IntegrationTestHelperBase<EntandoDatabaseService, EntandoDatabaseServiceList, DoneableEntandoDatabaseService> {
@@ -61,7 +62,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
 
     @SuppressWarnings("unchecked")
     public void prepareExternalPostgresqlDatabase(String namespace, String resourceKind) {
-        delete(client.pods()).named("pg-test").fromNamespace(namespace).waitingAtMost(60, SECONDS);
+        deletePgTestPod(namespace);
         deleteCommonPreviousState(namespace);
         client.pods().inNamespace(namespace).createNew().withNewMetadata().withName("pg-test").addToLabels(resourceKind, null)
                 .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resourceKind).endMetadata()
@@ -106,6 +107,10 @@ public class ExternalDatabaseIntegrationTestHelper extends
         createAndWaitForDbService(namespace, externalDatabase);
     }
 
+    public void deletePgTestPod(String namespace) {
+        delete(client.pods()).named("pg-test").fromNamespace(namespace).waitingAtMost(60, SECONDS);
+    }
+
     private void deleteCommonPreviousState(String namespace) {
         delete(getOperations()).named(MY_EXTERNAL_DB).fromNamespace(namespace).waitingAtMost(15, SECONDS);
         delete(client.secrets()).named(TEST_SECRET).fromNamespace(namespace).waitingAtMost(15, SECONDS);
@@ -119,10 +124,14 @@ public class ExternalDatabaseIntegrationTestHelper extends
                 .addToStringData("oracleTablespace", "USERS").build();
         SampleWriter.writeSample(secret, "oracle-secret");
         client.secrets().inNamespace(namespace).create(secret);
-        EntandoDatabaseServiceSpec spec = new EntandoDatabaseServiceSpec(DbmsVendor.ORACLE, ORACLE_INTERNAL_HOST, ORACLE_INTERNAL_PORT,
-                ORACLE_DATABASE_NAME, null,
-                TEST_SECRET, false,
-                Collections.singletonMap("oracle.jdbc.timezoneAsRegion", "false"));
+        EntandoDatabaseServiceSpec spec = new EntandoDatabaseServiceSpecBuilder().withDbms(DbmsVendor.ORACLE)
+                .withHost(ORACLE_INTERNAL_HOST)
+                .withPort(ORACLE_INTERNAL_PORT)
+                .withDatabaseName(ORACLE_DATABASE_NAME)
+                .withSecretName(TEST_SECRET)
+                .withCreateDeployment(false)
+                .withJdbcParameters(Collections.singletonMap("oracle.jdbc.timezoneAsRegion", "false"))
+                .build();
         String externalJdbcUrl = DbmsDockerVendorStrategy.ORACLE.getConnectionStringBuilder().toHost(ORACLE_EXTERNAL_HOST)
                 .onPort(ORACLE_EXTERNAL_PORT.toString()).usingDatabase(ORACLE_DATABASE_NAME).usingSchema(null)
                 .buildConnectionString();

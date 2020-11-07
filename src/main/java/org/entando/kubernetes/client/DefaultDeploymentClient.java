@@ -29,7 +29,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
 import org.entando.kubernetes.controller.k8sclient.PodWaitingClient;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClient {
 
@@ -41,7 +42,8 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
     }
 
     @Override
-    public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace, Deployment deployment) {
+    public <S extends EntandoDeploymentSpec> Deployment createOrPatchDeployment(EntandoBaseCustomResource<S> peerInNamespace,
+            Deployment deployment) {
         Deployment existingDeployment = getDeploymenResourceFor(peerInNamespace, deployment).get();
         if (existingDeployment == null) {
             return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(deployment);
@@ -59,7 +61,8 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
         }
     }
 
-    private RollableScalableResource<Deployment, DoneableDeployment> getDeploymenResourceFor(EntandoCustomResource peerInNamespace,
+    private <S extends EntandoDeploymentSpec> RollableScalableResource<Deployment, DoneableDeployment> getDeploymenResourceFor(
+            EntandoBaseCustomResource<S> peerInNamespace,
             Deployment deployment) {
         return client.apps()
                 .deployments()
@@ -68,7 +71,7 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
     }
 
     @Override
-    public Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {
+    public <S extends EntandoDeploymentSpec> Deployment loadDeployment(EntandoBaseCustomResource<S> peerInNamespace, String name) {
         return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name)
                 .get();
     }

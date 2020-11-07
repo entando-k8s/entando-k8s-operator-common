@@ -16,9 +16,12 @@
 
 package org.entando.kubernetes.controller.integrationtest.support;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.util.Collections;
 import java.util.List;
@@ -26,19 +29,20 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.OperationsSupplier;
-import org.entando.kubernetes.controller.DeployCommand;
+import org.entando.kubernetes.controller.IngressingDeployCommand;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
+import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public class IntegrationTestHelperBase<
-        R extends EntandoCustomResource,
+        R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
         D extends DoneableEntandoCustomResource<D, R>
         > implements FluentIntegrationTesting {
@@ -104,9 +108,9 @@ public class IntegrationTestHelperBase<
     @SuppressWarnings("unchecked")
     public ServicePodWaiter waitForServicePod(ServicePodWaiter mutex, String namespace, String deploymentName) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
-                () -> client.pods().inNamespace(namespace).withLabel(DeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
+                () -> client.pods().inNamespace(namespace).withLabel(IngressingDeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
                         .getItems().size() > 0);
-        Pod pod = client.pods().inNamespace(namespace).withLabel(DeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
+        Pod pod = client.pods().inNamespace(namespace).withLabel(IngressingDeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
                 .getItems().get(0);
         mutex.throwException(IllegalStateException.class)
                 .waitOn(client.pods().inNamespace(namespace).withName(pod.getMetadata().getName()));
@@ -130,13 +134,28 @@ public class IntegrationTestHelperBase<
         containerStartingListener.listen(namespace, executor, versionToUse);
     }
 
-    @SuppressWarnings("unchecked")
     public void listenAndRespondWithLatestImage(String namespace) {
-        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
-        String versionToUse = executor.resolveLatestImageFor((Class<? extends EntandoBaseCustomResource>) operations.getType())
+        ControllerExecutor executor = new  ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
+        String versionToUse = executor.resolveLatestImageFor(operations.getType())
                 .orElseThrow(() -> new IllegalStateException("No K8S Controller Image has been registered for " + operations.getType()));
         containerStartingListener.listen(namespace, executor, versionToUse);
     }
 
+    public String determineRealm(KeycloakAwareSpec spec) {
+        return KeycloakName.ofTheRealm(spec);
+    }
+
+    public DoneableConfigMap loadDefaultOperatorConfigMap() {
+        Resource<ConfigMap, DoneableConfigMap> resource = client.configMaps().inNamespace(client.getNamespace())
+                .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME);
+        DoneableConfigMap configMap;
+        if (resource.get() == null) {
+            configMap = resource.createNew().withNewMetadata().withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME)
+                    .withNamespace(client.getNamespace()).endMetadata();
+        } else {
+            configMap = resource.edit();
+        }
+        return configMap;
+    }
 }
 

@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractK8SClientDouble {
 
-    protected static final String CONTROLLER_NAMESPACE = "controller-namespace";
+    public static final String CONTROLLER_NAMESPACE = "controller-namespace";
     private final Map<String, NamespaceDouble> namespaces;
 
     public AbstractK8SClientDouble() {

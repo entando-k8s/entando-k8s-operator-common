@@ -23,12 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.DeployCommand;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class AbstractK8SResourceCreator {
+public class AbstractK8SResourceCreator<T extends EntandoDeploymentSpec> {
 
-    protected final EntandoBaseCustomResource<?> entandoCustomResource;
+    protected final EntandoBaseCustomResource<T> entandoCustomResource;
 
-    public AbstractK8SResourceCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public AbstractK8SResourceCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         this.entandoCustomResource = entandoCustomResource;
     }
 

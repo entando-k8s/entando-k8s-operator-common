@@ -66,6 +66,20 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
+    public void removeAndWait(String namespace, Map<String, String> labels) {
+        getNamespace(namespace).getPods().values().removeIf(
+                pod -> labels.entrySet().stream()
+                        .allMatch(labelEntry -> pod.getMetadata().getLabels().containsKey(labelEntry.getKey()) && pod.getMetadata()
+                                .getLabels().get(
+                                        labelEntry.getKey()).equals(labelEntry.getValue())));
+        if (emulatePodWatching) {
+            ///?? what to do here I wonder.
+
+        }
+
+    }
+
+    @Override
     public Pod runToCompletion(Pod pod) {
         if (pod != null) {
             getNamespace(pod).putPod(pod);
@@ -89,10 +103,10 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
-    public ExecWatch executeOnPod(Pod pod, String containerName, String... commands) {
+    public ExecWatch executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
         if (pod != null) {
             PodResource<Pod, DoneablePod> podResource = new PodResourceDouble();
-            return executeAndWait(podResource, containerName, commands);
+            return executeAndWait(podResource, containerName, timeoutSeconds, commands);
         }
         return null;
     }

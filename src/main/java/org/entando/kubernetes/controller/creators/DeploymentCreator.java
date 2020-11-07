@@ -59,8 +59,9 @@ import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.SecretToMount;
 import org.entando.kubernetes.controller.spi.TlsAware;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class DeploymentCreator extends AbstractK8SResourceCreator {
+public class DeploymentCreator<S extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<S> {
 
     public static final String VOLUME_SUFFIX = "-volume";
     public static final String DEPLOYMENT_SUFFIX = "-deployment";
@@ -68,11 +69,11 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     public static final String PORT_SUFFIX = "-port";
     private Deployment deployment;
 
-    public DeploymentCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public DeploymentCreator(EntandoBaseCustomResource<S> entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?, ?> deployable) {
+    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?, S> deployable) {
         deployment = deploymentClient
                 .createOrPatchDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
         return deployment;
@@ -90,8 +91,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return deployment;
     }
 
-    private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver,
-            Deployable<?, ?> deployable) {
+    private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver, Deployable<?, S> deployable) {
         return new DeploymentBuilder()
                 .withNewSpec()
                 .withNewSelector()
@@ -115,7 +115,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .endSpec().buildSpec();
     }
 
-    private PodSecurityContext buildSecurityContext(Deployable<?, ?> deployable) {
+    private PodSecurityContext buildSecurityContext(Deployable<?, S> deployable) {
         if (EntandoOperatorConfig.requiresFilesystemGroupOverride()) {
             return deployable.getFileSystemUserAndGroupId()
                     .map(useAndGroupId -> new PodSecurityContextBuilder().withFsGroup(useAndGroupId).build()).orElse(null);
@@ -123,7 +123,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return null;
     }
 
-    private List<Volume> buildVolumesForDeployable(Deployable<?, ?> deployable) {
+    private List<Volume> buildVolumesForDeployable(Deployable<?, S> deployable) {
         List<Volume> volumeList = deployable.getContainers().stream()
                 .map(this::buildVolumesForContainer)
                 .flatMap(Collection::stream)
@@ -158,7 +158,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?, ?> deployable) {
+    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?, S> deployable) {
         return deployable.getContainers().stream().map(deployableContainer -> this.newContainer(imageResolver, deployableContainer))
                 .collect(Collectors.toList());
     }
@@ -310,7 +310,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return resolveName(container.getNameQualifier(), VOLUME_SUFFIX);
     }
 
-    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?, ?> deployable) {
+    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?, S> deployable) {
         return new DeploymentBuilder()
                 .withMetadata(fromCustomResource(true, resolveName(deployable.getNameQualifier(), DEPLOYMENT_SUFFIX),
                         deployable.getNameQualifier()))

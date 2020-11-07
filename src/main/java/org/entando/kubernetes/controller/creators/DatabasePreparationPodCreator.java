@@ -42,10 +42,11 @@ import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
+public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<T> {
 
-    public DatabasePreparationPodCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public DatabasePreparationPodCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         super(entandoCustomResource);
     }
 

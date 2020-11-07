@@ -22,6 +22,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultSecretClient implements SecretClient {
@@ -44,7 +45,7 @@ public class DefaultSecretClient implements SecretClient {
     }
 
     @Override
-    public void createSecretIfAbsent(EntandoCustomResource peerInNamespace, Secret secret) {
+    public void createSecretIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, Secret secret) {
         try {
             client.secrets().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(secret);
         } catch (KubernetesClientException e) {
@@ -76,4 +77,33 @@ public class DefaultSecretClient implements SecretClient {
         return client.configMaps().inNamespace(EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace()))
                 .withName(configMapName).get();
     }
+
+    @Override
+    public void createConfigMapIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, ConfigMap configMap) {
+        try {
+            client.configMaps().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(configMap);
+        } catch (KubernetesClientException e) {
+            KubernetesExceptionProcessor.squashDuplicateExceptionOnCreate(peerInNamespace, configMap, e);
+        }
+    }
+
+    @Override
+    public ConfigMap loadConfigMap(EntandoBaseCustomResource<?> peerInNamespace, String name) {
+        try {
+            return client.configMaps().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
+        } catch (KubernetesClientException e) {
+            throw KubernetesExceptionProcessor.processExceptionOnLoad(e, "Configmap", peerInNamespace.getMetadata().getNamespace(), name);
+        }
+    }
+
+    @Override
+    public void overwriteControllerConfigMap(ConfigMap configMap) {
+        try {
+            configMap.getMetadata().setNamespace(client.getNamespace());
+            client.configMaps().inNamespace(client.getNamespace()).createOrReplace(configMap);
+        } catch (KubernetesClientException e) {
+            KubernetesExceptionProcessor.verifyDuplicateExceptionOnCreate(client.getNamespace(), configMap, e);
+        }
+    }
+
 }

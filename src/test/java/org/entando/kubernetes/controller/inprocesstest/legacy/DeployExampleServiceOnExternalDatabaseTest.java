@@ -49,10 +49,11 @@ import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.DbmsVendor;
+import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppBuilder;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -67,9 +68,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
-    public static final String MY_KEYCLOAK_SERVER_DEPLOYMENT = MY_KEYCLOAK + "-server-deployment";
-    private static final String MY_KEYCLOAK_DB_SECRET = MY_KEYCLOAK + "-db-secret";
-    private final EntandoKeycloakServer keycloakServer = new EntandoKeycloakServerBuilder(newEntandoKeycloakServer())
+    public static final String MY_APP_SERVER_DEPLOYMENT = MY_APP + "-server-deployment";
+    private static final String MY_APP_DB_SECRET = MY_APP + "-db-secret";
+    private final EntandoApp entandoApp = new EntandoAppBuilder(newTestEntandoApp())
             .editSpec()
             .withDbms(DbmsVendor.ORACLE)
             .endSpec()
@@ -79,41 +80,41 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<EntandoKeycloakServer, ExposedDeploymentResult> sampleController;
+    private SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void prepareExternalDB() {
-        this.sampleController = new SampleController<EntandoKeycloakServer, ExposedDeploymentResult>(client, keycloakClient) {
+        this.sampleController = new SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult>(client, keycloakClient) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoKeycloakServer> createDeployable(
-                    EntandoKeycloakServer newEntandoKeycloakServer,
+            protected Deployable<ExposedDeploymentResult, EntandoAppSpec> createDeployable(
+                    EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoKeycloakServer, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoApp, databaseServiceResult,
                         keycloakConnectionConfig);
             }
         };
-        client.secrets().overwriteControllerSecret(buildKeycloakSecret());
-        externalDatabase.getMetadata().setNamespace(keycloakServer.getMetadata().getNamespace());
+        emulateKeycloakDeployment(client);
+        externalDatabase.getMetadata().setNamespace(entandoApp.getMetadata().getNamespace());
         client.entandoResources().putEntandoDatabaseService(externalDatabase);
         new EntandoDatabaseServiceController(client).processEvent(Action.ADDED, externalDatabase);
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
+        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, entandoApp.getMetadata().getNamespace());
+        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, entandoApp.getMetadata().getName());
 
-        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
+        client.entandoResources().createOrPatchEntandoResource(entandoApp);
     }
 
     @Test
     void testSecrets() {
         //Given I have created an EntandoDatabaseService custom resource
-        //When I deploy a EntandoKeycloakServer
+        //When I deploy a EntandoApp
         sampleController.onStartup(new StartupEvent());
         //Then a K8S Secret was created with a name that reflects the EntandoApp and the fact that it is a secret
-        NamedArgumentCaptor<Secret> keycloakSecretCaptor = forResourceNamed(Secret.class, MY_KEYCLOAK_DB_SECRET);
-        verify(client.secrets()).createSecretIfAbsent(eq(keycloakServer), keycloakSecretCaptor.capture());
+        NamedArgumentCaptor<Secret> keycloakSecretCaptor = forResourceNamed(Secret.class, MY_APP_DB_SECRET);
+        verify(client.secrets()).createSecretIfAbsent(eq(entandoApp), keycloakSecretCaptor.capture());
         Secret keycloakSecret = keycloakSecretCaptor.getValue();
-        assertThat(keycloakSecret.getStringData().get(KubeUtils.USERNAME_KEY), is("my_keycloak_db"));
+        assertThat(keycloakSecret.getStringData().get(KubeUtils.USERNAME_KEY), is("my_app_db"));
         assertThat(keycloakSecret.getStringData().get(KubeUtils.PASSSWORD_KEY), is(not(emptyOrNullString())));
     }
 
@@ -122,22 +123,22 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
         //Given I have created an EntandoDatabaseService custom resource
         //And Keycloak is receiving requests
         lenient().when(keycloakClient.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn(KEYCLOAK_SECRET);
-        //When I deploy a EntandoKeycloakServer
+        //When I deploy a EntandoApp
         sampleController.onStartup(new StartupEvent());
 
         //Then a K8S deployment is created
         NamedArgumentCaptor<Deployment> keyclaokDeploymentCaptor = forResourceNamed(Deployment.class,
-                MY_KEYCLOAK_SERVER_DEPLOYMENT);
-        verify(client.deployments()).createOrPatchDeployment(eq(keycloakServer), keyclaokDeploymentCaptor.capture());
-        //Then a pod was created for Keycloak using the credentials and connection settings of the EntandoDatabaseService
-        LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabel(Pod.class, KEYCLOAK_SERVER_LABEL_NAME, MY_KEYCLOAK)
-                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_KEYCLOAK + "-db-preparation-job");
+                MY_APP_SERVER_DEPLOYMENT);
+        verify(client.deployments()).createOrPatchDeployment(eq(entandoApp), keyclaokDeploymentCaptor.capture());
+        //Then a pod was created for an Entandoapp using the credentials and connection settings of the EntandoDatabaseService
+        LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabel(Pod.class, ENTANDO_APP_LABEL_NAME, MY_APP)
+                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-db-preparation-job");
         verify(client.pods()).runToCompletion(keycloakSchemaJobCaptor.capture());
         Pod keycloakDbJob = keycloakSchemaJobCaptor.getValue();
-        Container theInitContainer = theInitContainerNamed(MY_KEYCLOAK + "-db-schema-creation-job").on(keycloakDbJob);
-        verifyStandardSchemaCreationVariables("my-secret", MY_KEYCLOAK_DB_SECRET, theInitContainer, DbmsVendor.ORACLE);
+        Container theInitContainer = theInitContainerNamed(MY_APP + "-db-schema-creation-job").on(keycloakDbJob);
+        verifyStandardSchemaCreationVariables("my-secret", MY_APP_DB_SECRET, theInitContainer, DbmsVendor.ORACLE);
         assertThat(theVariableNamed(DATABASE_SERVER_HOST).on(theInitContainer),
-                is("mydb-db-service." + MY_KEYCLOAK_NAMESPACE + ".svc.cluster.local"));
+                is("mydb-db-service." + MY_APP_NAMESPACE + ".svc.cluster.local"));
         //And it was instructed to create a schema reflecting the keycloakdb user
         assertThat(theVariableNamed(DATABASE_NAME).on(theInitContainer), is("my_db"));
     }

@@ -53,7 +53,7 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
-public class    DefaultKeycloakClient implements SimpleKeycloakClient {
+public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
     public static final String MASTER_REALM = "master";
     public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
@@ -61,6 +61,8 @@ public class    DefaultKeycloakClient implements SimpleKeycloakClient {
     private static final int MAX_RETRY_COUNT = 180;
     private Keycloak keycloak;
     private boolean isHttps = false;
+    private String currentUser;
+    private String currentBaseUrl;
 
     public DefaultKeycloakClient() {
     }
@@ -78,9 +80,14 @@ public class    DefaultKeycloakClient implements SimpleKeycloakClient {
 
     @Override
     public void login(String baseUrl, String username, String password) {
+        if (baseUrl.equals(currentBaseUrl) && username.equals(currentUser) && keycloak != null) {
+            return;
+        }
+        this.currentBaseUrl = baseUrl;
+        this.currentUser = username;
         isHttps = baseUrl.toLowerCase().startsWith("https");
 
-        keycloak = KeycloakBuilder.builder()
+        final Keycloak attemptedKeycloak = KeycloakBuilder.builder()
                 .serverUrl(baseUrl)
                 .grantType(OAuth2Constants.PASSWORD)
                 .realm(MASTER_REALM)
@@ -92,7 +99,7 @@ public class    DefaultKeycloakClient implements SimpleKeycloakClient {
         boolean connectionFailed = true;
         while (connectionFailed) {
             try {
-                if (isKeycloakAvailable()) {
+                if (isKeycloakAvailable(attemptedKeycloak)) {
                     connectionFailed = false;
                 } else {
                     count++;
@@ -107,9 +114,10 @@ public class    DefaultKeycloakClient implements SimpleKeycloakClient {
                 Thread.currentThread().interrupt();
             }
         }
+        this.keycloak = attemptedKeycloak;
     }
 
-    private boolean isKeycloakAvailable() {
+    private static boolean isKeycloakAvailable(Keycloak keycloak) {
         try {
             keycloak.realm(MASTER_REALM).toRepresentation();
             return true;
@@ -163,18 +171,18 @@ public class    DefaultKeycloakClient implements SimpleKeycloakClient {
     }
 
     @Override
-    public void createPublicClient(String realm, String domain) {
+    public void createPublicClient(String realm, String clientId, String domain) {
         ensureRealm(realm);
         RealmResource realmResource = keycloak.realm(realm);
-        createPublicClient(realmResource, domain);
+        createPublicClient(realmResource, clientId, domain);
     }
 
-    private void createPublicClient(RealmResource realmResource, String domain) {
-        List<ClientRepresentation> existing = realmResource.clients().findByClientId(KubeUtils.PUBLIC_CLIENT_ID);
+    private void createPublicClient(RealmResource realmResource, String clientId, String domain) {
+        List<ClientRepresentation> existing = realmResource.clients().findByClientId(clientId);
         if (existing.isEmpty()) {
             ClientRepresentation client = new ClientRepresentation();
             client.setName("Entando WEB");
-            client.setClientId(KubeUtils.PUBLIC_CLIENT_ID);
+            client.setClientId(clientId);
             client.setEnabled(true);
             client.setServiceAccountsEnabled(false);
             client.setStandardFlowEnabled(true);

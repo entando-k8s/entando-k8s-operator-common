@@ -24,8 +24,6 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PodClientDouble;
@@ -57,7 +55,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
         resource = newEntandoKeycloakServer();
-        emulatePodWaitingBehaviour();
+        emulatePodWaitingBehaviour(false);
         controllerExecutor.startControllerFor(Action.ADDED, resource, "6.0.0");
 
         Pod pod = this.client.pods()
@@ -77,7 +75,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
         resource = newEntandoKeycloakServer();
-        emulatePodWaitingBehaviour();
+        emulatePodWaitingBehaviour(false);
         Pod pod = controllerExecutor.runControllerFor(Action.ADDED, resource, "6.0.0");
         assertThat(pod, is(notNullValue()));
         assertThat(
@@ -88,13 +86,20 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
         //TODO check mounts for certs, etc
     }
 
-    protected void emulatePodWaitingBehaviour() {
+    protected void emulatePodWaitingBehaviour(boolean requiresDelete) {
         PodClientDouble.setEmulatePodWatching(true);
         new Thread(() -> {
-            AtomicReference<PodWatcher> podWatcherHolder = getClient().pods().getPodWatcherHolder();
-            await().atMost(30, TimeUnit.SECONDS).until(() -> podWatcherHolder.get() != null);
+            if (requiresDelete) {
+                //The delete watcher won't trigger events because the condition is true from the beginning
+                await().atMost(30, TimeUnit.SECONDS).pollInterval(10, TimeUnit.MILLISECONDS)
+                        .until(() -> getClient().pods().getPodWatcherHolder()
+                                .getAndSet(null) != null);
+            }
+            //The second watcher will trigger events
+            await().atMost(30, TimeUnit.SECONDS).pollDelay(100, TimeUnit.MILLISECONDS).until(() ->
+                    this.client.pods().loadPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName()) != null);
             Pod pod = this.client.pods().loadPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName());
-            podWatcherHolder.getAndSet(null).eventReceived(Action.MODIFIED, podWithSucceededStatus(pod));
+            getClient().pods().getPodWatcherHolder().getAndSet(null).eventReceived(Action.MODIFIED, podWithSucceededStatus(pod));
         }).start();
     }
 

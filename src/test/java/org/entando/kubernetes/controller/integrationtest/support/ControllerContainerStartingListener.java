@@ -24,10 +24,11 @@ import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.util.Optional;
 import org.entando.kubernetes.controller.common.ControllerExecutor;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class ControllerContainerStartingListener<
-        R extends EntandoCustomResource,
+        R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
         D extends DoneableEntandoCustomResource<D, R>
         > {
@@ -51,11 +52,13 @@ public class ControllerContainerStartingListener<
     public void listen(String namespace, ControllerExecutor executor, String imageVersionToUse) {
         this.watch = operations.inNamespace(namespace).watch(new Watcher<R>() {
             @Override
+            @SuppressWarnings("unchecked")
             public void eventReceived(Action action, R resource) {
                 if (shouldListen && action == Action.ADDED) {
                     try {
                         System.out.println("!!!!!!!On " + resource.getKind() + " add!!!!!!!!!");
-                        executor.startControllerFor(action, resource, imageVersionToUse);
+                        executor.startControllerFor(action, (EntandoBaseCustomResource<? extends EntandoDeploymentSpec>) resource,
+                                imageVersionToUse);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

@@ -30,13 +30,14 @@ import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource> implements SpringBootDeployableContainer,
         ParameterizableContainer, PersistentVolumeAware, ConfigurableResourceContainer {
 
     public static final String MY_IMAGE = "entando/entando-k8s-service";
-    public static final String MY_WEB_CONTEXT = "/my-context";
+    public static final String MY_WEB_CONTEXT = "/k8s";
     private final T customResource;
     private final KeycloakConnectionConfig keycloakConnectionConfig;
     private Map<String, DatabaseSchemaCreationResult> dbSchemas;
@@ -53,7 +54,7 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
 
     @Override
     public Optional<String> getHealthCheckPath() {
-        return Optional.of("/healthcheck");
+        return Optional.of(getWebContextPath() + "/actuator/health");
     }
 
     @Override
@@ -68,7 +69,7 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
 
     @Override
     public int getPrimaryPort() {
-        return 8080;
+        return 8084;
     }
 
     @Override
@@ -78,9 +79,14 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
 
     @Override
     public KeycloakClientConfig getKeycloakClientConfig() {
-        return new KeycloakClientConfig(KubeUtils.ENTANDO_KEYCLOAK_REALM,
+        return new KeycloakClientConfig(determineRealm(),
                 customResource.getMetadata().getName() + "-" + getNameQualifier(),
                 customResource.getMetadata().getName() + "-" + getNameQualifier());
+    }
+
+    @Override
+    public KeycloakAwareSpec getKeycloakAwareSpec() {
+        return (KeycloakAwareSpec) customResource.getSpec();
     }
 
     @Override
@@ -100,8 +106,9 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     }
 
     @Override
-    public EntandoDeploymentSpec getCustomResourceSpec() {
-        return customResource.getSpec() instanceof EntandoDeploymentSpec ? (EntandoDeploymentSpec) customResource.getSpec() : null;
+    public EntandoIngressingDeploymentSpec getCustomResourceSpec() {
+        return customResource.getSpec() instanceof EntandoIngressingDeploymentSpec ? (EntandoIngressingDeploymentSpec) customResource
+                .getSpec() : null;
     }
 
     @Override

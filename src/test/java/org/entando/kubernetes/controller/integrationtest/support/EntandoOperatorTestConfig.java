@@ -40,6 +40,9 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
     private static final String ENTANDO_ORACLE_ADMIN_USER = "entando.oracle.admin.user";
     private static final String ENTANDO_ORACLE_ADMIN_PASSWORD = "entando.oracle.admin.password";
     private static final String ENTANDO_ORACLE_DATABASE_NAME = "entando.oracle.database.name";
+    private static final String ENTANDO_TEST_KEYCLOAK_ADMIN_USER = "entando.test.keycloak.admin.user";
+    private static final String ENTANDO_TEST_KEYCLOAK_ADMIN_PASSWORD = "entando.test.keycloak.admin.password";
+    private static final String ENTANDO_TEST_KEYCLOAK_BASE_URL = "entando.test.keycloak.base.url";
 
     private EntandoOperatorTestConfig() {
     }
@@ -111,6 +114,21 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 
     public static Optional<String> getOracleDatabaseName() {
         return lookupProperty(ENTANDO_ORACLE_DATABASE_NAME);
+    }
+
+    public static String getKeycloakUser() {
+        return lookupProperty(ENTANDO_TEST_KEYCLOAK_ADMIN_USER)
+                .orElseThrow(() -> new IllegalStateException("No test Keycloak user configured"));
+    }
+
+    public static String getKeycloakPassword() {
+        return lookupProperty(ENTANDO_TEST_KEYCLOAK_ADMIN_PASSWORD)
+                .orElseThrow(() -> new IllegalStateException("No test Keycloak password configured"));
+    }
+
+    public static String getKeycloakBaseUrl() {
+        return lookupProperty(ENTANDO_TEST_KEYCLOAK_BASE_URL)
+                .orElseThrow(() -> new IllegalStateException("No test Keycloak baseUrl configured"));
     }
 
     public enum TestTarget {

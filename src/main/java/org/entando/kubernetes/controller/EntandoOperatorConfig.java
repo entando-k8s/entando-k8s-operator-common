@@ -16,14 +16,18 @@
 
 package org.entando.kubernetes.controller;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
+
+    public static final String SEPERATOR_PATTERN = "[\\s,:]+";
 
     private EntandoOperatorConfig() {
     }
@@ -56,7 +60,14 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     }
 
     public static List<String> getNamespacesToObserve() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE).map(s -> s.split("\\,")).map(Arrays::asList)
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE).map(s -> s.split(SEPERATOR_PATTERN))
+                .map(Arrays::asList)
+                .orElse(new ArrayList<>());
+    }
+
+    public static List<String> getImagePullSecrets() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS).map(s -> s.split(SEPERATOR_PATTERN))
+                .map(Arrays::asList)
                 .orElse(new ArrayList<>());
     }
 
@@ -78,12 +89,17 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static List<Path> getCertificateAuthorityCertPaths() {
         String[] paths = getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS,
-                "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").split("\\s+");
-        List<Path> result = new ArrayList<>();
-        for (String path : paths) {
-            if (Paths.get(path).toFile().exists()) {
-                result.add(Paths.get(path));
-            }
+                "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").split(SEPERATOR_PATTERN);
+        List<Path> result = Arrays.asList(paths).stream()
+                .map(Paths::get)
+                .filter(path -> path.toFile().exists())
+                .collect(Collectors.toList());
+        File caCertRoot = Paths.get(getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_ROOT_FOLDER, "/etc/entando/ca")).toFile();
+        if (caCertRoot.exists() && caCertRoot.isDirectory()) {
+            result.addAll(Arrays.stream(caCertRoot.listFiles())
+                    .filter(File::isFile)
+                    .map(file -> Paths.get(file.getAbsolutePath()))
+                    .collect(Collectors.toList()));
         }
         return result;
     }
@@ -109,21 +125,16 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_ROUTING_SUFFIX);
     }
 
-    public static String getEntandoInfrastructureSecretName() {
-        return getProperty(EntandoOperatorConfigProperty.ENTANDO_CLUSTER_INFRASTRUCTURE_SECRET_NAME,
-                "entando-cluster-infrastructure-secret");
-    }
-
-    public static String getDefaultKeycloakSecretName() {
-        return getProperty(EntandoOperatorConfigProperty.ENTANDO_DEFAULT_KEYCLOAK_SECRET_NAME, "keycloak-admin-secret");
-    }
-
     public static long getPodCompletionTimeoutSeconds() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS).map(Long::valueOf).orElse(600L);
     }
 
     public static long getPodReadinessTimeoutSeconds() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS).map(Long::valueOf).orElse(600L);
+    }
+
+    public static long getPodShutdownTimeoutSeconds() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_POD_SHUTDOWN_TIMEOUT_SECONDS).map(Long::valueOf).orElse(120L);
     }
 
     public static boolean imposeResourceLimits() {
@@ -142,4 +153,5 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static boolean forceExternalAccessToKeycloak() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_FORCE_EXTERNAL_ACCESS_TO_KEYCLOAK).map(Boolean::valueOf).orElse(false);
     }
+
 }

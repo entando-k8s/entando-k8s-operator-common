@@ -20,6 +20,7 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Map;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class SecretClientDouble extends AbstractK8SClientDouble implements SecretClient {
@@ -34,7 +35,7 @@ public class SecretClientDouble extends AbstractK8SClientDouble implements Secre
     }
 
     @Override
-    public void createSecretIfAbsent(EntandoCustomResource peerInNamespace, Secret secret) {
+    public void createSecretIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, Secret secret) {
         getNamespace(peerInNamespace).putSecret(secret);
     }
 
@@ -51,5 +52,20 @@ public class SecretClientDouble extends AbstractK8SClientDouble implements Secre
     @Override
     public ConfigMap loadControllerConfigMap(String configMapName) {
         return getNamespace(CONTROLLER_NAMESPACE).getConfigMap(configMapName);
+    }
+
+    @Override
+    public void createConfigMapIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, ConfigMap configMap) {
+        getNamespace(peerInNamespace).putConfigMap(configMap);
+    }
+
+    @Override
+    public ConfigMap loadConfigMap(EntandoBaseCustomResource<?> peerInNamespace, String name) {
+        return getNamespace(peerInNamespace).getConfigMap(name);
+    }
+
+    @Override
+    public void overwriteControllerConfigMap(ConfigMap configMap) {
+        getNamespace(CONTROLLER_NAMESPACE).putConfigMap(configMap);
     }
 }

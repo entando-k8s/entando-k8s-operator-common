@@ -21,7 +21,8 @@ import java.util.List;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.KeycloakClientCreator;
+import org.entando.kubernetes.controller.common.KeycloakName;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public interface KeycloakAware extends DeployableContainer, HasWebContext {
 
@@ -29,17 +30,30 @@ public interface KeycloakAware extends DeployableContainer, HasWebContext {
 
     KeycloakClientConfig getKeycloakClientConfig();
 
+    KeycloakAwareSpec getKeycloakAwareSpec();
+
+    default String determineRealm() {
+        KeycloakAwareSpec keycloakAwareSpec = getKeycloakAwareSpec();
+        return KeycloakName.ofTheRealm(keycloakAwareSpec);
+
+    }
+
     default void addKeycloakVariables(List<EnvVar> vars) {
         KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
         vars.add(new EnvVar("KEYCLOAK_ENABLED", "true", null));
-        vars.add(new EnvVar("KEYCLOAK_REALM", KubeUtils.ENTANDO_KEYCLOAK_REALM, null));
-        vars.add(new EnvVar("KEYCLOAK_PUBLIC_CLIENT_ID", KubeUtils.PUBLIC_CLIENT_ID, null));
+        vars.add(new EnvVar("KEYCLOAK_REALM", determineRealm(), null));
+        vars.add(new EnvVar("KEYCLOAK_PUBLIC_CLIENT_ID", determinePublicClient(), null));
         vars.add(new EnvVar("KEYCLOAK_AUTH_URL", keycloakDeployment.getExternalBaseUrl(), null));
-        String keycloakSecretName = KeycloakClientCreator.keycloakClientSecret(getKeycloakClientConfig());
+        String keycloakSecretName = KeycloakName.forTheClientSecret(getKeycloakClientConfig());
         vars.add(new EnvVar("KEYCLOAK_CLIENT_SECRET", null,
-                KubeUtils.secretKeyRef(keycloakSecretName, KeycloakClientCreator.CLIENT_SECRET_KEY)));
+                KubeUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_SECRET_KEY)));
         vars.add(new EnvVar("KEYCLOAK_CLIENT_ID", null,
-                KubeUtils.secretKeyRef(keycloakSecretName, KeycloakClientCreator.CLIENT_ID_KEY)));
+                KubeUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_ID_KEY)));
 
+    }
+
+    default String determinePublicClient() {
+        KeycloakAwareSpec keycloakAwareSpec = getKeycloakAwareSpec();
+        return KeycloakName.ofThePublicClient(keycloakAwareSpec);
     }
 }

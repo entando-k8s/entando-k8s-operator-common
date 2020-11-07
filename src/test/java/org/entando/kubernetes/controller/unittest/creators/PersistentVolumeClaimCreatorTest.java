@@ -26,7 +26,8 @@ import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingD
 import org.entando.kubernetes.controller.creators.PersistentVolumeClaimCreator;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PersistentVolumentClaimClientDouble;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -34,11 +35,11 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-class PersistentVolumeCreatorTest implements InProcessTestUtil {
+class PersistentVolumeClaimCreatorTest implements InProcessTestUtil {
 
-    private EntandoKeycloakServer entandoKeycloakServer = newEntandoKeycloakServer();
-    private SamplePublicIngressingDbAwareDeployable<EntandoKeycloakServer> deployable = new SamplePublicIngressingDbAwareDeployable<>(
-            entandoKeycloakServer, null, null);
+    private EntandoApp entandoApp = newTestEntandoApp();
+    private SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(
+            entandoApp, null, null);
 
     @AfterEach
     @BeforeEach
@@ -77,10 +78,10 @@ class PersistentVolumeCreatorTest implements InProcessTestUtil {
     private PersistentVolumeClaim executeCreateDeploymentTest() {
 
         PersistentVolumentClaimClientDouble persistentVolumentClaimClientDouble = new PersistentVolumentClaimClientDouble(new HashMap<>());
-        PersistentVolumeClaimCreator persistentVolumeClaimCreator = new PersistentVolumeClaimCreator(entandoKeycloakServer);
+        PersistentVolumeClaimCreator<EntandoAppSpec> persistentVolumeClaimCreator = new PersistentVolumeClaimCreator<>(entandoApp);
 
         persistentVolumeClaimCreator.createPersistentVolumeClaimsFor(persistentVolumentClaimClientDouble, deployable);
 
-        return persistentVolumentClaimClientDouble.loadPersistentVolumeClaim(entandoKeycloakServer, "my-keycloak-server-pvc");
+        return persistentVolumentClaimClientDouble.loadPersistentVolumeClaim(entandoApp, "my-app-server-pvc");
     }
 }

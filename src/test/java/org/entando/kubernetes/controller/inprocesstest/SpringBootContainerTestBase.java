@@ -43,10 +43,11 @@ import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
+import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
@@ -57,21 +58,21 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController<EntandoPlugin, ExposedDeploymentResult> controller;
+    private SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller;
 
     @Test
     void testBasicDeployment() {
         //Given I have a controller that processes EntandoPlugins
-        controller = new SampleController<EntandoPlugin, ExposedDeploymentResult>(getClient(), getKeycloakClient()) {
+        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(getClient(), getKeycloakClient()) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoPlugin> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
             }
         };
         //And I have prepared the Standard KeycloakAdminSecert
-        getClient().secrets().overwriteControllerSecret(buildKeycloakSecret());
+        emulateKeycloakDeployment(getClient());
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
         //When I create a new EntandoPlugin
@@ -97,7 +98,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         //And I an ingress paths
         Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(), standardIngressName(plugin1));
         assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
-                Matchers.is(8080));
+                Matchers.is(8084));
     }
 
     protected abstract SimpleKeycloakClient getKeycloakClient();
@@ -123,12 +124,13 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
                 .withNamespace(sampleNamespace)
                 .withName(sampleName).endMetadata().withNewSpec()
                 .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
-                .addNewParameter("MY_VAR", "MY_VAL")
+                .addToEnvironmentVariables("MY_VAR", "MY_VAL")
                 .withDbms(DbmsVendor.POSTGRESQL).withReplicas(2).withIngressHostName("myhost.name.com")
                 .endSpec().build();
     }
 
-    protected final void emulatePodWaitingBehaviour(EntandoCustomResource resource, String deploymentName) {
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+            String deploymentName) {
         new Thread(() -> {
             try {
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);

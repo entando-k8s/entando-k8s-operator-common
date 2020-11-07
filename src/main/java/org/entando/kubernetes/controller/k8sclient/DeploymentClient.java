@@ -17,11 +17,13 @@
 package org.entando.kubernetes.controller.k8sclient;
 
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public interface DeploymentClient {
 
-    Deployment createOrPatchDeployment(EntandoCustomResource customResource, Deployment deployment);
+    <S extends EntandoDeploymentSpec> Deployment createOrPatchDeployment(EntandoBaseCustomResource<S> customResource,
+            Deployment deployment);
 
-    Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name);
+    <S extends EntandoDeploymentSpec> Deployment loadDeployment(EntandoBaseCustomResource<S> peerInNamespace, String name);
 }

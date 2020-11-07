@@ -18,14 +18,13 @@ package org.entando.kubernetes.controller.integrationtest.support;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.common.InfrastructureConfig;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
-import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.infrastructure.DoneableEntandoClusterInfrastructure;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureBuilder;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureList;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureOperationFactory;
 
@@ -43,38 +42,27 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
         super(client, EntandoClusterInfrastructureOperationFactory::produceAllEntandoClusterInfrastructures);
     }
 
-    public void ensureInfrastructureSecret() {
-        delete(client.secrets())
-                .named(EntandoOperatorConfig.getEntandoInfrastructureSecretName())
-                .fromNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE)
+    public void ensureInfrastructureConnectionConfig() {
+        loadDefaultOperatorConfigMap()
+                .addToData(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAMESPACE_KEY, CLUSTER_INFRASTRUCTURE_NAMESPACE)
+                .addToData(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAME_KEY, CLUSTER_INFRASTRUCTURE_NAME)
+                .done();
+        ResourceReference infrastructureToUse = new ResourceReference(CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME);
+        delete(client.configMaps())
+                .named(InfrastructureConfig.connectionConfigMapNameFor(infrastructureToUse))
+                .fromNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
                 .waitingAtMost(20, SECONDS);
         String hostName = "http://" + CLUSTER_INFRASTRUCTURE_NAME + "." + getDomainSuffix();
-        client.secrets()
-                .inNamespace(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE)
+        client.configMaps()
+                .inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
                 .createNew()
                 .withNewMetadata()
-                .withName(EntandoOperatorConfig.getEntandoInfrastructureSecretName())
+                .withName(InfrastructureConfig.connectionConfigMapNameFor(infrastructureToUse))
                 .endMetadata()
-                .addToStringData("entandoK8SServiceClientId", CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc")
-                .addToStringData("entandoK8SServiceInternalUrl", hostName + "/k8s")
-                .addToStringData("entandoK8SServiceExternalUrl", hostName + "/k8s")
+                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_CLIENT_ID_KEY, CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc")
+                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_INTERNAL_URL_KEY, hostName + "/k8s")
+                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_EXTERNAL_URL_KEY, hostName + "/k8s")
                 .done();
-    }
-
-    boolean ensureClusterInfrastructure() {
-        EntandoClusterInfrastructure infrastructure = getOperations()
-                .inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
-                .withName(CLUSTER_INFRASTRUCTURE_NAME).get();
-        if (infrastructure == null || infrastructure.getStatus().getEntandoDeploymentPhase() != EntandoDeploymentPhase.SUCCESSFUL) {
-            setTestFixture(deleteAll(EntandoClusterInfrastructure.class).fromNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE));
-            waitForClusterInfrastructure(
-                    new EntandoClusterInfrastructureBuilder().withNewMetadata().withNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
-                            .withName(CLUSTER_INFRASTRUCTURE_NAME).endMetadata()
-                            .withNewSpec().withDbms(DbmsVendor.POSTGRESQL).withDefault(true).withReplicas(1)
-                            .withIngressHostName(CLUSTER_INFRASTRUCTURE_NAME + "." + getDomainSuffix()).endSpec().build(), 30, true);
-            return true;
-        }
-        return false;
     }
 
     public void waitForClusterInfrastructure(EntandoClusterInfrastructure infrastructure, int waitOffset, boolean deployingDbContainers) {

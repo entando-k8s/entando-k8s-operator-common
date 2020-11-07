@@ -29,10 +29,10 @@ import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 
-public class KeycloakConsumingDeployable implements PublicIngressingDeployable<ExposedDeploymentResult, EntandoApp>, DbAwareDeployable {
+public class KeycloakConsumingDeployable implements PublicIngressingDeployable<ExposedDeploymentResult, EntandoAppSpec>, DbAwareDeployable {
 
-    public static final String KEYCLOAK_PUBLIC_CLIENT_ID = "keycloak-public-client-id";
     public static final String TEST_INGRESS_NAMESPACE = "test-ingress-namespace";
     public static final String TEST_INGRESS_NAME = "test-ingress-name";
     public static final String ENTANDO_TEST_IMAGE_6_0_0 = "entando/test-image:6.0.0";
@@ -46,11 +46,6 @@ public class KeycloakConsumingDeployable implements PublicIngressingDeployable<E
         this.keycloakConnectionConfig = keycloakConnectionConfig;
         this.entandoApp = entandoApp;
         this.databaseServiceResult = databaseServiceResult;
-    }
-
-    @Override
-    public String getPublicKeycloakClientId() {
-        return KEYCLOAK_PUBLIC_CLIENT_ID;
     }
 
     @Override
