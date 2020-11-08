@@ -55,8 +55,10 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
             this.role = serviceAccountClient.createRoleIfAbsent(entandoCustomResource, newRole(deployable));
             serviceAccountClient.createRoleBindingIfAbsent(entandoCustomResource, newRoleBinding(deployable));
         }
-        Arrays.stream(EntandoRbacRole.values())
-                .forEach(entandoRbacRole -> createRoleBindingForClusterRole(serviceAccountClient, deployable, entandoRbacRole));
+        if (EntandoOperatorConfig.isClusterScopedDeployment()) {
+            Arrays.stream(EntandoRbacRole.values())
+                    .forEach(entandoRbacRole -> createRoleBindingForClusterRole(serviceAccountClient, deployable, entandoRbacRole));
+        }
     }
 
     private void prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable) {
