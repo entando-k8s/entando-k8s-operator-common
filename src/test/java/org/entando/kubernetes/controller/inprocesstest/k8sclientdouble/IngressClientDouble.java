@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 
+import io.fabric8.kubernetes.api.model.extensions.DoneableIngress;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Map;
@@ -36,6 +37,14 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
         }
         getNamespace(peerInNamespace).putIngress(ingress.getMetadata().getName(), ingress);
         return ingress;
+    }
+
+    @Override
+    public DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
+        return new DoneableIngress(getNamespace(peerInNamespace).getIngress(name), item -> {
+            getNamespace(peerInNamespace).putIngress(item.getMetadata().getName(), item);
+            return item;
+        });
     }
 
     @Override

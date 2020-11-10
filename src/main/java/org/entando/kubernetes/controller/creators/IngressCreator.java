@@ -101,6 +101,11 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
             Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service));
             this.ingress = ingressClient.createIngress(entandoCustomResource, newIngress);
         } else {
+            if (KubeUtils.customResourceOwns(entandoCustomResource, ingress)) {
+                this.ingress = ingressClient.editIngress(entandoCustomResource, ingressingDeployable.getIngressName())
+                        .editSpec().editFirstRule().withHost(determineIngressHost(ingressClient)).endRule()
+                        .withTls(maybeBuildTls(ingressClient)).endSpec().done();
+            }
             ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingDeployable, ingress, service);
         }
     }

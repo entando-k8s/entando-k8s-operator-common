@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller;
 
 import io.fabric8.kubernetes.api.model.EnvVarSource;
 import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -31,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public final class KubeUtils {
 
@@ -72,12 +74,14 @@ public final class KubeUtils {
         return in.replace("-", "_").replace(".", "_");
     }
 
-    public static Secret generateSecret(EntandoCustomResource resource, String secretName, String username) {
+    public static <S extends EntandoDeploymentSpec> Secret generateSecret(EntandoBaseCustomResource<S> resource, String secretName,
+            String username) {
         String password = RandomStringUtils.randomAlphanumeric(10);
         return buildSecret(resource, secretName, username, password);
     }
 
-    public static Secret buildSecret(EntandoCustomResource resource, String secretName, String username,
+    public static <S extends EntandoDeploymentSpec> Secret buildSecret(EntandoBaseCustomResource<S> resource, String secretName,
+            String username,
             String password) {
         return new SecretBuilder()
                 .withNewMetadata().withName(secretName)
@@ -97,7 +101,7 @@ public final class KubeUtils {
         }
     }
 
-    public static OwnerReference buildOwnerReference(EntandoCustomResource entandoCustomResource) {
+    public static <S extends EntandoDeploymentSpec> OwnerReference buildOwnerReference(EntandoBaseCustomResource<S> entandoCustomResource) {
         return new OwnerReferenceBuilder()
                 .withApiVersion(entandoCustomResource.getApiVersion())
                 .withBlockOwnerDeletion(true)
@@ -109,5 +113,12 @@ public final class KubeUtils {
 
     public static String standardIngressName(EntandoCustomResource entandoCustomResource) {
         return entandoCustomResource.getMetadata().getName() + "-" + DEFAULT_INGRESS_SUFFIX;
+    }
+
+    public static <S extends EntandoDeploymentSpec> boolean customResourceOwns(EntandoBaseCustomResource<S> customResource,
+            HasMetadata resource) {
+        return resource.getMetadata().getOwnerReferences().stream()
+                .anyMatch(ownerReference -> customResource.getMetadata().getName().equals(ownerReference.getName())
+                        && customResource.getKind().equals(ownerReference.getKind()));
     }
 }
