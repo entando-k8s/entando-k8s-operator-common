@@ -51,17 +51,17 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
     }
 
     public Pod runToCompletion(SimpleK8SClient<?> client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
-        return client.pods().runToCompletion(buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable));
+        String dbJobName = String.format("%s-db-preparation-job", entandoCustomResource.getMetadata().getName());
+        client.pods().removeAndWait(entandoCustomResource.getMetadata().getNamespace(), buildUniqueLabels(dbJobName));
+        return client.pods().runToCompletion(buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable, dbJobName));
     }
 
-    private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable dbAwareDeployable) {
-        String dbJobName = String
-                .format("%s-db-preparation-job", entandoCustomResource.getMetadata().getName());
+    private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable dbAwareDeployable,
+            String dbJobName) {
         return new PodBuilder().withNewMetadata()
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .withOwnerReferences(KubeUtils.buildOwnerReference(entandoCustomResource))
-                .withLabels(labelsFromResource())
-                .addToLabels(KubeUtils.DB_JOB_LABEL_NAME, dbJobName)
+                .withLabels(buildUniqueLabels(dbJobName))
                 .withName(dbJobName + "-" + UUID.randomUUID().toString().substring(0, 10))
                 .endMetadata()
                 .withNewSpec()
@@ -73,6 +73,12 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
                 .withRestartPolicy("Never")
                 .endSpec()
                 .build();
+    }
+
+    private Map<String, String> buildUniqueLabels(String dbJobName) {
+        Map<String, String> labelsFromResource = labelsFromResource();
+        labelsFromResource.put(KubeUtils.DB_JOB_LABEL_NAME, dbJobName);
+        return labelsFromResource;
     }
 
     private List<Container> buildContainers(EntandoImageResolver entandoImageResolver, SecretClient secretClient,

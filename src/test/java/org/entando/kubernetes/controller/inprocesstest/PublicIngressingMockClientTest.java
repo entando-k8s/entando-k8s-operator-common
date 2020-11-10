@@ -40,7 +40,7 @@ public class PublicIngressingMockClientTest extends PublicIngressingTestBase {
     }
 
     @Override
-    public SimpleK8SClient getClient() {
+    public SimpleK8SClient<?> getClient() {
         return simpleK8SClientDouble;
     }
 

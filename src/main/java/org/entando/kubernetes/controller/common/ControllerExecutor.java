@@ -105,6 +105,7 @@ public class ControllerExecutor {
 
     public <T extends EntandoDeploymentSpec> Pod runControllerFor(Action action, EntandoBaseCustomResource<T> resource,
             String imageVersionToUse) {
+        removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
         return client.pods().runToCompletion(pod);
     }

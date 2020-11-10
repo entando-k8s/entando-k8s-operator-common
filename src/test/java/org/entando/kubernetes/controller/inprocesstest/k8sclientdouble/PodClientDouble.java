@@ -32,6 +32,7 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import org.entando.kubernetes.client.EntandoExecListener;
 import org.entando.kubernetes.client.PodWatcher;
@@ -73,7 +74,8 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
                                 .getLabels().get(
                                         labelEntry.getKey()).equals(labelEntry.getValue())));
         if (emulatePodWatching) {
-            ///?? what to do here I wonder.
+            watchPod(Objects::isNull,
+                    EntandoOperatorConfig.getPodShutdownTimeoutSeconds(), new DummyWatchable());
 
         }
 
