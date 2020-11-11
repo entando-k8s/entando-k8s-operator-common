@@ -223,6 +223,10 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
                 getClient().pods().getPodWatcherHolder().getAndSet(null)
                         .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
+                //wait for deletion of db preparation pod
+                await().pollInterval(1, TimeUnit.MILLISECONDS).atMost(10, TimeUnit.SECONDS)
+                        .until(() -> getClient().pods().getPodWatcherHolder().getAndSet(null) != null);
+                //wait for db preparation pod
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
                 String dbJobName = String.format("%s-db-preparation-job", resource.getMetadata().getName());
                 Pod dbPreparationPod = getClient().pods()

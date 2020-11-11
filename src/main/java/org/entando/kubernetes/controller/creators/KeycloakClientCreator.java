@@ -31,13 +31,14 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.KeycloakAware;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public class KeycloakClientCreator {
+public class KeycloakClientCreator<S extends EntandoDeploymentSpec> {
 
-    private final EntandoBaseCustomResource<?> entandoCustomResource;
+    private final EntandoBaseCustomResource<S> entandoCustomResource;
 
-    public KeycloakClientCreator(EntandoBaseCustomResource<?> entandoCustomResource) {
+    public KeycloakClientCreator(EntandoBaseCustomResource<S> entandoCustomResource) {
         this.entandoCustomResource = entandoCustomResource;
     }
 

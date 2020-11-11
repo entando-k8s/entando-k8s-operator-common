@@ -18,6 +18,7 @@ package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.NodeAddress;
+import io.fabric8.kubernetes.api.model.extensions.DoneableIngress;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -80,6 +81,11 @@ public class DefaultIngressClient implements IngressClient {
     @Override
     public Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
         return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(ingress);
+    }
+
+    @Override
+    public DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
+        return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).edit();
     }
 
     @Override
