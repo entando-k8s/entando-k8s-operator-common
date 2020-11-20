@@ -44,10 +44,11 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
         }
         this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
                 TEST_NAMESPACE,
-                TEST_APP_NAME + "-db-preparation-job");
+                TEST_APP_NAME + "-server-db-preparation-job");
         //300 because there are 3 containers
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
                 TEST_NAMESPACE, TEST_APP_NAME + "-server");
+        this times out wait for the other pods first
         await().atMost(60, SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
