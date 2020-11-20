@@ -132,7 +132,7 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
         verify(client.deployments()).createOrPatchDeployment(eq(entandoApp), keyclaokDeploymentCaptor.capture());
         //Then a pod was created for an Entandoapp using the credentials and connection settings of the EntandoDatabaseService
         LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabel(Pod.class, ENTANDO_APP_LABEL_NAME, MY_APP)
-                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-db-preparation-job");
+                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-server-db-preparation-job");
         verify(client.pods()).runToCompletion(keycloakSchemaJobCaptor.capture());
         Pod keycloakDbJob = keycloakSchemaJobCaptor.getValue();
         Container theInitContainer = theInitContainerNamed(MY_APP + "-db-schema-creation-job").on(keycloakDbJob);

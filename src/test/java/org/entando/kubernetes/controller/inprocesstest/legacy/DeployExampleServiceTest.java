@@ -278,7 +278,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         // A DB preparation Pod is created with labels linking it to the EntandoApp
         LabeledArgumentCaptor<Pod> podCaptor = forResourceWithLabel(Pod.class, ENTANDO_APP_LABEL_NAME, MY_APP)
                 //And the fact that it is a DB JOB
-                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP_DB + "-preparation-job");
+                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-server-db-preparation-job");
         verify(client.pods()).runToCompletion(podCaptor.capture());
         Pod theDbJobPod = podCaptor.getValue();
         //With exactly 1 container

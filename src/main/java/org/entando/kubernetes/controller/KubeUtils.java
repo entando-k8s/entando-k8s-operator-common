@@ -25,6 +25,7 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -101,7 +102,7 @@ public final class KubeUtils {
         }
     }
 
-    public static <S extends EntandoDeploymentSpec> OwnerReference buildOwnerReference(EntandoBaseCustomResource<S> entandoCustomResource) {
+    public static <S extends Serializable> OwnerReference buildOwnerReference(EntandoBaseCustomResource<S> entandoCustomResource) {
         return new OwnerReferenceBuilder()
                 .withApiVersion(entandoCustomResource.getApiVersion())
                 .withBlockOwnerDeletion(true)
@@ -115,7 +116,7 @@ public final class KubeUtils {
         return entandoCustomResource.getMetadata().getName() + "-" + DEFAULT_INGRESS_SUFFIX;
     }
 
-    public static <S extends EntandoDeploymentSpec> boolean customResourceOwns(EntandoBaseCustomResource<S> customResource,
+    public static <S extends Serializable> boolean customResourceOwns(EntandoBaseCustomResource<S> customResource,
             HasMetadata resource) {
         return resource.getMetadata().getOwnerReferences().stream()
                 .anyMatch(ownerReference -> customResource.getMetadata().getName().equals(ownerReference.getName())

@@ -51,7 +51,8 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
     }
 
     public Pod runToCompletion(SimpleK8SClient<?> client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
-        String dbJobName = String.format("%s-db-preparation-job", entandoCustomResource.getMetadata().getName());
+        String dbJobName = String
+                .format("%s-%s-db-preparation-job", entandoCustomResource.getMetadata().getName(), dbAwareDeployable.getNameQualifier());
         client.pods().removeAndWait(entandoCustomResource.getMetadata().getNamespace(), buildUniqueLabels(dbJobName));
         return client.pods().runToCompletion(buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable, dbJobName));
     }
