@@ -22,7 +22,7 @@ import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
 public interface ParameterizableContainer extends DeployableContainer {
 
-    default List<EnvVar> getEnvironmentVariables() {
+    default List<EnvVar> getEnvironmentVariableOverrides() {
         return getCustomResourceSpec().getEnvironmentVariables();
     }
 

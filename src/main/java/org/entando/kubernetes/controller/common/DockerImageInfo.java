@@ -14,22 +14,27 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi;
+package org.entando.kubernetes.controller.common;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
-import java.util.ArrayList;
-import java.util.List;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.SecretCreator;
+import java.util.Optional;
 
-public interface TlsAware {
+public interface DockerImageInfo {
 
-    default List<EnvVar> getTlsVariables() {
-        List<EnvVar> vars = new ArrayList<>();
-        vars.add(new EnvVar("JAVA_TOOL_OPTIONS",
-                null,
-                KubeUtils.secretKeyRef(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, SecretCreator.TRUSTSTORE_SETTINGS_KEY)));
-        return vars;
+    String getRepository();
 
+    default Optional<String> getRegistry() {
+        return getRegistryHost().map(s -> s + getRegistryPort().map(integer -> ":" + integer).orElse(""));
     }
+
+    default String getOrganizationAwareRepository() {
+        return getOrganization().map(s -> s.replace("/", "-") + "-").orElse("") + getRepository();
+    }
+
+    Optional<String> getOrganization();
+
+    Optional<String> getRegistryHost();
+
+    Optional<Integer> getRegistryPort();
+
+    Optional<String> getVersion();
 }

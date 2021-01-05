@@ -177,13 +177,13 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
-        getOperations(customResource.getClass())
+    @SuppressWarnings("unchecked")
+    public <T extends EntandoCustomResource> void updateStatus(T customResource, AbstractServerStatus status) {
+        customResource.getStatus().putServerStatus(status);
+        getOperations((Class<T>) customResource.getClass())
                 .inNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())
-                .edit()
-                .withStatus(status)
-                .done();
+                .updateStatus(customResource);
     }
 
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {

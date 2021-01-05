@@ -16,28 +16,39 @@
 
 package org.entando.kubernetes.controller;
 
+import static java.util.Optional.ofNullable;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import java.util.Map;
 import java.util.Optional;
+import org.entando.kubernetes.controller.common.DockerImageInfo;
 
 public class PropertyResolution {
 
-    private final Optional<ConfigMap> imageVersionsConfigMap;
-    private final String imagename;
+    private final ConfigMap imageVersionsConfigMap;
+    private final String organizationAwareKey;
+    private final String imageRepostory;
     private EntandoOperatorConfigProperty overridingPropertyName;
     private String configMapKey;
-    private EntandoOperatorConfigProperty defaultPropertyName;
+    private EntandoOperatorConfigProperty fallbackPropertyName;
     private String defaultValue;
+    private String providedValue;
 
-    public PropertyResolution(ConfigMap imageVersionsConfigMap, String imagename) {
-        this.imageVersionsConfigMap = Optional.ofNullable(imageVersionsConfigMap);
-        this.imagename = imagename;
+    public PropertyResolution(ConfigMap imageVersionsConfigMap, DockerImageInfo dockerImageInfo) {
+        this.imageVersionsConfigMap = imageVersionsConfigMap;
+        this.organizationAwareKey = dockerImageInfo.getOrganizationAwareRepository();
+        this.imageRepostory = dockerImageInfo.getRepository();
     }
 
     public PropertyResolution withOverridingPropertyName(EntandoOperatorConfigProperty overridingPropertyName) {
         this.overridingPropertyName = overridingPropertyName;
+        return this;
+    }
+
+    public PropertyResolution withProvidedValue(String providedValue) {
+        this.providedValue = providedValue;
         return this;
     }
 
@@ -46,8 +57,8 @@ public class PropertyResolution {
         return this;
     }
 
-    public PropertyResolution withDefaultPropertyName(EntandoOperatorConfigProperty defaultPropertyName) {
-        this.defaultPropertyName = defaultPropertyName;
+    public PropertyResolution withFallbackPropertyName(EntandoOperatorConfigProperty fallbackPropertyName) {
+        this.fallbackPropertyName = fallbackPropertyName;
         return this;
     }
 
@@ -57,11 +68,14 @@ public class PropertyResolution {
     }
 
     public String resolvePropertyValue() {
-        return overridingPropertyValue().orElse(valueFromConfigMap().orElse(defaultPropertyValue().orElse(defaultValue)));
+        return overridingPropertyValue()
+                .orElse(valueFromConfigMap()
+                        .orElse(ofNullable(providedValue)
+                                .orElse(fallbackPropertyValue().orElse(defaultValue))));
     }
 
-    private Optional<String> defaultPropertyValue() {
-        return EntandoOperatorConfigBase.lookupProperty(defaultPropertyName);
+    private Optional<String> fallbackPropertyValue() {
+        return EntandoOperatorConfigBase.lookupProperty(fallbackPropertyName);
     }
 
     private Optional<String> overridingPropertyValue() {
@@ -69,17 +83,14 @@ public class PropertyResolution {
     }
 
     private Optional<String> valueFromConfigMap() {
-        Optional<String> result = Optional.empty();
-        if (this.imageVersionsConfigMap.isPresent()) {
-            Optional<Map<String, String>> data = Optional.ofNullable(this.imageVersionsConfigMap.get().getData());
-            if (data.isPresent()) {
-                Optional<String> configMapContent = Optional.ofNullable(data.get().get(imagename));
-                if (configMapContent.isPresent()) {
-                    result = extractValueFromContent(configMapContent.get());
-                }
-            }
-        }
-        return result;
+        return resolveDockerImageInfoFromConfigmapData(imageRepostory)
+                .or(() -> resolveDockerImageInfoFromConfigmapData(organizationAwareKey))
+                .flatMap(this::extractValueFromContent);
+
+    }
+
+    private Optional<String> resolveDockerImageInfoFromConfigmapData(String imageKey) {
+        return ofNullable(imageVersionsConfigMap).map(ConfigMap::getData).map(data -> data.get(imageKey));
     }
 
     @SuppressWarnings("unchecked")
@@ -87,7 +98,7 @@ public class PropertyResolution {
         try {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, String> imageConfig = mapper.readValue(content, Map.class);
-            return Optional.ofNullable(imageConfig.get(configMapKey));
+            return ofNullable(imageConfig.get(configMapKey));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }

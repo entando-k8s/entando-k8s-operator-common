@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -65,9 +66,16 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
     }
 
     @Override
-    public void addEnvironmentVariables(List<EnvVar> vars) {
+    public List<EnvVar> getEnvironmentVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         vars.add(new EnvVar("KEYCLOAK_USER", null, KubeUtils.secretKeyRef(secretName(keycloakServer), KubeUtils.USERNAME_KEY)));
         vars.add(new EnvVar("KEYCLOAK_PASSWORD", null, KubeUtils.secretKeyRef(secretName(keycloakServer), KubeUtils.PASSSWORD_KEY)));
+        return vars;
+    }
+
+    @Override
+    public List<EnvVar> getDatabaseConnectionVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         DatabaseSchemaCreationResult databaseSchemaCreationResult = dbSchemas.get("db");
         vars.add(new EnvVar("DB_ADDR", databaseSchemaCreationResult.getInternalServiceHostname(), null));
         vars.add(new EnvVar("DB_PORT", databaseSchemaCreationResult.getPort(), null));
@@ -77,10 +85,12 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
         vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databaseSchemaCreationResult), null));
         vars.add(new EnvVar("DB_SCHEMA", databaseSchemaCreationResult.getSchemaName(), null));
         vars.add(new EnvVar("PROXY_ADDRESS_FORWARDING", "true", null));
+        return vars;
     }
 
     @Override
-    public void addTlsVariables(List<EnvVar> vars) {
+    public List<EnvVar> getTlsVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         String certFiles = String.join(" ",
                 EntandoOperatorConfig.getCertificateAuthorityCertPaths().stream()
                         .map(path -> SecretCreator.standardCertPathOf(path.getFileName().toString()))
@@ -88,10 +98,11 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
         vars.add(new EnvVar("X509_CA_BUNDLE",
                 "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt /var/run/secrets/kubernetes.io/serviceaccount/ca.crt "
                         + certFiles, null));
+        return vars;
     }
 
     private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaCreationResult databaseSchemaCreationResult) {
-        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor() == DbmsDockerVendorStrategy.POSTGRESQL)
+        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor() == DbmsDockerVendorStrategy.CENTOS_POSTGRESQL)
                 .orElse(databaseSchemaCreationResult.getVendor().getName());
     }
 
@@ -114,11 +125,6 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
     public Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas) {
         this.dbSchemas = dbSchemas;
         return Optional.empty();
-    }
-
-    @Override
-    public void addDatabaseConnectionVariables(List<EnvVar> envVars) {
-
     }
 
 }

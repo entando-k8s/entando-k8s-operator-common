@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
@@ -42,7 +43,7 @@ public class MinimalKeycloakContainer implements IngressingContainer {
 
     @Override
     public String determineImageToUse() {
-        return keycloakServer.getSpec().getImageName().orElse("entando/entando-keycloak:6.0.0-SNAPSHOT");
+        return "entando/entando-keycloak:6.0.0-SNAPSHOT";
     }
 
     @Override
@@ -60,11 +61,12 @@ public class MinimalKeycloakContainer implements IngressingContainer {
         return "/auth";
     }
 
-    @Override
-    public void addEnvironmentVariables(List<EnvVar> vars) {
+    public List<EnvVar> getEnvironmentVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         vars.add(new EnvVar("DB_VENDOR", "h2", null));
         vars.add(new EnvVar("KEYCLOAK_USER", "test-admin", null));
         vars.add(new EnvVar("KEYCLOAK_PASSWORD", KCP, null));
+        return vars;
     }
 
     @Override

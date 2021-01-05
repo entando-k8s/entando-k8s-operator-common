@@ -28,5 +28,5 @@ public interface DbAware extends DeployableContainer {
 
     Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas);
 
-    void addDatabaseConnectionVariables(List<EnvVar> envVars);
+    List<EnvVar> getDatabaseConnectionVariables();
 }

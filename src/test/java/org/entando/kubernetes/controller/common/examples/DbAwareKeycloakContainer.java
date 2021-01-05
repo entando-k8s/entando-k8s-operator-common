@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,7 +44,8 @@ public class DbAwareKeycloakContainer extends MinimalKeycloakContainer implement
     }
 
     @Override
-    public void addDatabaseConnectionVariables(List<EnvVar> envVars) {
-
+    public List<EnvVar> getDatabaseConnectionVariables() {
+        return Collections.emptyList();
     }
+
 }

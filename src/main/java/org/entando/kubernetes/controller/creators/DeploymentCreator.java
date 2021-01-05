@@ -41,9 +41,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.ConfigurableResourceCalculator;
+import org.entando.kubernetes.controller.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.common.ResourceCalculator;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
@@ -166,7 +166,7 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
     private Container newContainer(EntandoImageResolver imageResolver,
             DeployableContainer deployableContainer) {
         return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + CONTAINER_SUFFIX)
-                .withImage(imageResolver.determineImageUri(deployableContainer.determineImageToUse(), Optional.empty()))
+                .withImage(imageResolver.determineImageUri(deployableContainer.getDockerImageInfo()))
                 .withImagePullPolicy("Always")
                 .withPorts(buildPorts(deployableContainer))
                 .withReadinessProbe(buildReadinessProbe(deployableContainer))
@@ -279,22 +279,22 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
         ArrayList<EnvVar> vars = new ArrayList<>();
         if (container instanceof KeycloakAware) {
             KeycloakAware keycloakAware = (KeycloakAware) container;
-            keycloakAware.addKeycloakVariables(vars);
+            vars.addAll(keycloakAware.getKeycloakVariables());
         }
         if (container instanceof DbAware) {
-            ((DbAware) container).addDatabaseConnectionVariables(vars);
+            vars.addAll(((DbAware) container).getDatabaseConnectionVariables());
         }
         if (container instanceof HasWebContext) {
             vars.add(new EnvVar("SERVER_SERVLET_CONTEXT_PATH", ((HasWebContext) container).getWebContextPath(), null));
         }
         if (container instanceof TlsAware && TlsHelper.getInstance().isTrustStoreAvailable()) {
-            ((TlsAware) container).addTlsVariables(vars);
+            vars.addAll(((TlsAware) container).getTlsVariables());
         }
         vars.add(new EnvVar("CONNECTION_CONFIG_ROOT", DeployableContainer.ENTANDO_SECRET_MOUNTS_ROOT, null));
-        container.addEnvironmentVariables(vars);
+        vars.addAll(container.getEnvironmentVariables());
         if (container instanceof ParameterizableContainer) {
             ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;
-            overrideFromCustomResource(vars, parameterizableContainer.getEnvironmentVariables());
+            overrideFromCustomResource(vars, parameterizableContainer.getEnvironmentVariableOverrides());
         }
         return vars;
     }

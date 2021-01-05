@@ -135,7 +135,7 @@ public class IntegrationTestHelperBase<
     }
 
     public void listenAndRespondWithLatestImage(String namespace) {
-        ControllerExecutor executor = new  ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
+        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
         String versionToUse = executor.resolveLatestImageFor(operations.getType())
                 .orElseThrow(() -> new IllegalStateException("No K8S Controller Image has been registered for " + operations.getType()));
         containerStartingListener.listen(namespace, executor, versionToUse);

@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.FluentTernary;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
-import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.database.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.IngressingContainer;
@@ -68,15 +69,17 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     }
 
     @Override
-    public void addEnvironmentVariables(List<EnvVar> vars) {
+    public List<EnvVar> getEnvironmentVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         vars.add(new EnvVar("KEYCLOAK_USER", null, KubeUtils.secretKeyRef(secretName(entandoResource), KubeUtils.USERNAME_KEY)));
         vars.add(new EnvVar("KEYCLOAK_PASSWORD", null, KubeUtils.secretKeyRef(secretName(entandoResource), KubeUtils.PASSSWORD_KEY)));
-        addDatabaseConnectionVariables(vars);
         vars.add(new EnvVar("PROXY_ADDRESS_FORWARDING", "true", null));
+        return vars;
     }
 
     @Override
-    public void addDatabaseConnectionVariables(List<EnvVar> vars) {
+    public List<EnvVar> getDatabaseConnectionVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         DatabaseSchemaCreationResult databaseSchemaCreationResult = dbSchemas.get("db");
         vars.add(new EnvVar("DB_ADDR", databaseSchemaCreationResult.getInternalServiceHostname(), null));
         vars.add(new EnvVar("DB_PORT", databaseSchemaCreationResult.getPort(), null));
@@ -85,11 +88,12 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
         vars.add(new EnvVar("DB_USER", null, databaseSchemaCreationResult.getUsernameRef()));
         vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databaseSchemaCreationResult), null));
         vars.add(new EnvVar("DB_SCHEMA", databaseSchemaCreationResult.getSchemaName(), null));
+        return vars;
     }
 
     private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaCreationResult databaseSchemaCreationResult) {
-        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor() == DbmsDockerVendorStrategy.POSTGRESQL)
-                .orElse(databaseSchemaCreationResult.getVendor().getName());
+        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor().getVendorConfig() == DbmsVendorConfig.POSTGRESQL)
+                .orElse(databaseSchemaCreationResult.getVendor().getVendorConfig().getName());
     }
 
     @Override

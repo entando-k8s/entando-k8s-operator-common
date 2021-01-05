@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.database;
 
+import java.util.Locale;
+
 public enum DbmsVendorConfig {
     MYSQL("org.hibernate.dialect.MySQL5InnoDBDialect", 3306, "root",
             "MYSQL_PWD=${MYSQL_ROOT_PASSWORD} mysql -h 127.0.0.1 -u root -e 'SELECT 1'") {
@@ -110,5 +112,9 @@ public enum DbmsVendorConfig {
 
     public String getHibernateDialect() {
         return hibernateDialect;
+    }
+
+    public String getName() {
+        return name().toLowerCase(Locale.getDefault());
     }
 }

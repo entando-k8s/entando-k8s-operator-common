@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.FluentTernary;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
@@ -80,7 +81,9 @@ public class CreateExternalServiceCommand {
 
     private Integer getPort() {
         return externalDatabase.getSpec().getPort()
-                .orElse(DbmsDockerVendorStrategy.forVendor(externalDatabase.getSpec().getDbms()).getPort());
+                .orElse(
+                        DbmsDockerVendorStrategy.forVendor(externalDatabase.getSpec().getDbms(), EntandoOperatorConfig.getComplianceMode())
+                                .getPort());
     }
 
     private Service newExternalService() {

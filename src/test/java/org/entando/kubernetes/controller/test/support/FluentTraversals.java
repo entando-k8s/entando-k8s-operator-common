@@ -40,6 +40,7 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
 import java.lang.reflect.Field;
 import java.util.List;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
@@ -163,7 +164,7 @@ public interface FluentTraversals {
         assertThat(theVariableNamed(DATABASE_VENDOR).on(resultingContainer), is(vendor.toValue()));
         assertThat(theVariableNamed(DATABASE_SCHEMA_COMMAND).on(resultingContainer), is("CREATE_SCHEMA"));
         assertThat(theVariableNamed(DATABASE_SERVER_PORT).on(resultingContainer),
-                is(String.valueOf(DbmsDockerVendorStrategy.forVendor(vendor).getPort())));
+                is(String.valueOf(DbmsDockerVendorStrategy.forVendor(vendor, EntandoOperatorConfig.getComplianceMode()).getPort())));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_USER).on(resultingContainer).getSecretKeyRef().getKey(),
                 is(KubeUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(resultingContainer).getSecretKeyRef().getKey(),

@@ -18,22 +18,31 @@ package org.entando.kubernetes.controller.database;
 
 import java.util.Locale;
 import java.util.Optional;
+import org.entando.kubernetes.controller.EntandoOperatorComplianceMode;
 import org.entando.kubernetes.model.DbmsVendor;
 
 public enum DbmsDockerVendorStrategy {
-    MYSQL(DbmsVendorConfig.MYSQL, "entando/mysql-57-centos7", "/var/lib/mysql/data", 27L),
-    POSTGRESQL(DbmsVendorConfig.POSTGRESQL, "entando/postgresql-96-centos7", "/var/lib/pgsql/data", 26L),
-    ORACLE(DbmsVendorConfig.ORACLE, "docker.io/store/oracle/database-enterprise:12.2.0.1", "/ORCL", null);
+    CENTOS_MYSQL(DbmsVendorConfig.MYSQL, "docker.io", "centos", "mysql-80-centos7", "/var/lib/mysql/data", 27L),
+    CENTOS_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, "docker.io", "centos", "postgresql-12-centos7", "/var/lib/pgsql/data", 26L),
+    RHEL_MYSQL(DbmsVendorConfig.MYSQL, "registry.redhat.io", "rhel8", "mysql-80", "/var/lib/mysql/data", 27L),
+    RHEL_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, "registry.redhat.io", "rhel8", "postgresql-12", "/var/lib/pgsql/data", 26L),
+    ORACLE(DbmsVendorConfig.ORACLE, "docker.io", "store/oracle", "database-enterprise:12.2.0.1", "/ORCL", null);
 
     public static final String DATABASE_IDENTIFIER_TYPE = "databaseIdentifierType";
     public static final String TABLESPACE_PARAMETER_NAME = "tablespace";
-    private String imageName;
+    private String imageRepository;
+    private String organization;
+    private String registry;
     private String volumeMountPath;
     private DbmsVendorConfig vendorConfig;
     private Long fsUserGroupId;
 
-    DbmsDockerVendorStrategy(DbmsVendorConfig vendorConfig, String imageName, String volumeMountPath, Long fsUserGroupId) {
-        this.imageName = imageName;
+    DbmsDockerVendorStrategy(DbmsVendorConfig vendorConfig, String registry, String organization, String imageRepository,
+            String volumeMountPath,
+            Long fsUserGroupId) {
+        this.registry = registry;
+        this.organization = organization;
+        this.imageRepository = imageRepository;
         this.volumeMountPath = volumeMountPath;
         this.vendorConfig = vendorConfig;
         this.fsUserGroupId = fsUserGroupId;
@@ -55,8 +64,16 @@ public enum DbmsDockerVendorStrategy {
         return this.vendorConfig.getHealthCheck();
     }
 
-    public String getImageName() {
-        return this.imageName;
+    public String getImageRepository() {
+        return this.imageRepository;
+    }
+
+    public String getOrganization() {
+        return organization;
+    }
+
+    public String getRegistry() {
+        return registry;
     }
 
     public int getPort() {
@@ -65,10 +82,6 @@ public enum DbmsDockerVendorStrategy {
 
     public String getVolumeMountPath() {
         return this.volumeMountPath;
-    }
-
-    public String toValue() {
-        return this.name().toLowerCase(Locale.getDefault());
     }
 
     public String getName() {
@@ -87,7 +100,20 @@ public enum DbmsDockerVendorStrategy {
         return this.vendorConfig.getHibernateDialect();
     }
 
-    public static DbmsDockerVendorStrategy forVendor(DbmsVendor vendor) {
+    public static DbmsDockerVendorStrategy forVendor(DbmsVendor vendor, EntandoOperatorComplianceMode complianceMode) {
+        if (complianceMode == EntandoOperatorComplianceMode.COMMUNITY) {
+            if (vendor == DbmsVendor.POSTGRESQL) {
+                return CENTOS_POSTGRESQL;
+            } else if (vendor == DbmsVendor.MYSQL) {
+                return CENTOS_MYSQL;
+            }
+        } else if (complianceMode == EntandoOperatorComplianceMode.REDHAT) {
+            if (vendor == DbmsVendor.POSTGRESQL) {
+                return RHEL_POSTGRESQL;
+            } else if (vendor == DbmsVendor.MYSQL) {
+                return RHEL_MYSQL;
+            }
+        }
         return valueOf(vendor.name());
     }
 }

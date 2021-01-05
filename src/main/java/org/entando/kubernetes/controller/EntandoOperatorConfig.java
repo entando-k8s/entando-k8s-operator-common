@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -152,6 +153,12 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static boolean forceExternalAccessToKeycloak() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_FORCE_EXTERNAL_ACCESS_TO_KEYCLOAK).map(Boolean::valueOf).orElse(false);
+    }
+
+    public static EntandoOperatorComplianceMode getComplianceMode() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE)
+                .map(s -> EntandoOperatorComplianceMode.valueOf(s.toLowerCase(
+                        Locale.getDefault()))).orElse(EntandoOperatorComplianceMode.COMMUNITY);
     }
 
 }

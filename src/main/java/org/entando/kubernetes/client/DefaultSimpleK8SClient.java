@@ -45,8 +45,10 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
 
     @Override
     public ServiceClient services() {
+
         if (this.serviceClient == null) {
             this.serviceClient = new DefaultServiceClient(kubernetesClient);
+
         }
         return this.serviceClient;
     }

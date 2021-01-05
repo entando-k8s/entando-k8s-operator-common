@@ -18,13 +18,14 @@ package org.entando.kubernetes.controller.spi;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;
+import org.entando.kubernetes.controller.common.DockerImageInfo;
 
 public interface DatabasePopulator {
 
-    String determineImageToUse();
+    DockerImageInfo getDockerImageInfo();
 
     String[] getCommand();
 
-    void addEnvironmentVariables(List<EnvVar> vars);
+    List<EnvVar> getEnvironmentVariables();
 
 }

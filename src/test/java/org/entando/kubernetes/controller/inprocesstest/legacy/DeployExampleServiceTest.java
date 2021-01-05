@@ -373,8 +373,8 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         //Exposing a port 8080
         assertThat(thePortNamed(SERVER_PORT).on(theServerContainer).getContainerPort(), is(8080));
         assertThat(thePortNamed(SERVER_PORT).on(theServerContainer).getProtocol(), is(TCP));
-        //And that uses the image reflecting the custom registry and Entando image version specified
-        assertThat(theServerContainer.getImage(), is("entando/entando-keycloak:6.0.0-SNAPSHOT"));
+        //And that uses the image reflecting the custom  Entando image version specified
+        assertThat(theServerContainer.getImage(), is("docker.io/entando/entando-keycloak:6.0.0-SNAPSHOT"));
         //And that is configured to point to the DB Service
         assertThat(theVariableReferenceNamed(KEYCLOAK_USER).on(theServerContainer).getSecretKeyRef().getName(),
                 is(MY_APP_ADMIN_SECRET));
@@ -404,7 +404,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(3306));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));
         //And that uses the image reflecting the custom registry and Entando image version specified
-        assertThat(theDbContainer.getImage(), is("docker.io/entando/mysql-57-centos7:latest"));
+        assertThat(theDbContainer.getImage(), is("docker.io/centos/mysql-80-centos7:latest"));
     }
 
     @Test

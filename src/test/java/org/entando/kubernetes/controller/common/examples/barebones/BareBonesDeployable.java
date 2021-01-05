@@ -37,7 +37,7 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     public static final String NAME_QUALIFIER = "db";
     private final List<DeployableContainer> containers;
     private EntandoBaseCustomResource<S> customResource;
-    private DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.POSTGRESQL;
+    private DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.CENTOS_POSTGRESQL;
 
     public BareBonesDeployable(EntandoBaseCustomResource<S> customResource) {
         this(customResource, new BareBonesContainer());

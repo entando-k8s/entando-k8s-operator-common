@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.spi;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.List;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
@@ -38,8 +39,14 @@ public interface KeycloakAware extends DeployableContainer, HasWebContext {
 
     }
 
-    default void addKeycloakVariables(List<EnvVar> vars) {
+    default String determinePublicClient() {
+        KeycloakAwareSpec keycloakAwareSpec = getKeycloakAwareSpec();
+        return KeycloakName.ofThePublicClient(keycloakAwareSpec);
+    }
+
+    default List<EnvVar> getKeycloakVariables() {
         KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
+        List<EnvVar> vars = new ArrayList<>();
         vars.add(new EnvVar("KEYCLOAK_ENABLED", "true", null));
         vars.add(new EnvVar("KEYCLOAK_REALM", determineRealm(), null));
         vars.add(new EnvVar("KEYCLOAK_PUBLIC_CLIENT_ID", determinePublicClient(), null));
@@ -49,11 +56,6 @@ public interface KeycloakAware extends DeployableContainer, HasWebContext {
                 KubeUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_SECRET_KEY)));
         vars.add(new EnvVar("KEYCLOAK_CLIENT_ID", null,
                 KubeUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_ID_KEY)));
-
-    }
-
-    default String determinePublicClient() {
-        KeycloakAwareSpec keycloakAwareSpec = getKeycloakAwareSpec();
-        return KeycloakName.ofThePublicClient(keycloakAwareSpec);
+        return vars;
     }
 }

@@ -14,23 +14,26 @@
  *
  */
 
-package org.entando.kubernetes.controller.unittest;
+package org.entando.kubernetes.controller.unittest.common;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.common.EntandoImageResolver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
 class ImageResolverTest {
@@ -51,20 +54,111 @@ class ImageResolverTest {
     }
 
     @Test
-    void testResolutionFromDefaultProperties() {
+    void testResolutionFromFallbackProperties() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "test.io");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "test-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "6.1.4");
+        //And there is no information in the ConfigMap
+        EntandoImageResolver entandoImageResolver = new EntandoImageResolver(null);
         //when I resolve an image
-        String imageUri = new EntandoImageResolver(null).determineImageUri("entando/test-image", Optional.empty());
+        String imageUri = entandoImageResolver.determineImageUri("test-image");
         //then it reflects the default properties
         assertThat(imageUri, is("test.io/test-entando/test-image:6.1.4"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"related.image.test-image", "RELATED_IMAGE_TEST_IMAGE", "related.image.test-entando.test-image",
+            "RELATED_IMAGE_TEST_ENTANDO_TEST_IMAGE"})
+    void testResolutionFromRelatedImageProperty(String variableName) {
+        try {
+            System.clearProperty(variableName);
+            //Given I have set overriding properties  for image resolution
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_OVERRIDE.getJvmSystemProperty(), "test.io");
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE.getJvmSystemProperty(), "test-entando");
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE.getJvmSystemProperty(), "6.1.4");
+            //And I have information in the Configmap
+            ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
+                    .addToData("test-image", "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.1.4\"}")
+                    .addToData("test-entando-test-image",
+                            "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.1.4\"}")
+                    .build();
+            //But I have an environment variable or property injected for the image in question
+            System.setProperty(variableName,
+                    "openshift/wildfly-101-centos7@sha256:7775d40f77e22897dc760b76f1656f67ef6bd5561b4d74fbb030b977f61d48e8");
+
+            //when I resolve the image
+            String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("test-entando/test-image");
+            //then it reflects the injected value
+            assertThat(imageUri,
+                    is("openshift/wildfly-101-centos7@sha256:7775d40f77e22897dc760b76f1656f67ef6bd5561b4d74fbb030b977f61d48e8"));
+        } finally {
+            System.clearProperty(variableName);
+        }
+    }
+
     @Test
-    void testResolutionFromDefaultPropertiesThatAreOverridden() {
-        //Given I have set default properties  for image resolution
+    void testResolutionFromCofigmapWithRepositoryKey() {
+        //Given I have information in the Configmap against a key reflecting the repository only
+        ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
+                .addToData("test-image", "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.1.4\"}")
+                .build();
+
+        //when I resolve the image
+        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("test-entando/test-image");
+        //then it reflects the injected value
+        assertThat(imageUri,
+                is("test.io/test-entando/test-image:6.1.4"));
+    }
+
+    @Test
+    void testResolutionFromCofigmapWithOrganizationAwareRepositoryKey() {
+        //Given I have information in the Configmap against a key reflecting the repository only
+        ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
+                .addToData("test-entando-test-image",
+                        "{\"registry\":\"test.io\",\"organization\":\"not-test-entando\",\"version\":\"6.1.4\"}")
+                .build();
+
+        //when I resolve the image
+        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("test-entando/test-image");
+        //then it reflects the injected value with the organization found in the configMap
+        assertThat(imageUri,
+                is("test.io/not-test-entando/test-image:6.1.4"));
+    }
+
+    @Test
+    void testResolutionFromCofigmapWithOrganizationAwareRepositoryKeyAndPort() {
+        //Given I have information in the Configmap against a key reflecting the repository only
+        ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
+                .addToData("test-entando-test-image",
+                        "{\"registry\":\"test.io:5000\",\"organization\":\"not-test-entando\",\"version\":\"6.1.4\"}")
+                .build();
+
+        //when I resolve the image
+        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("ampie.io:5001/test-entando/test-image");
+        //then it reflects the injected value with the values in the configMap
+        assertThat(imageUri,
+                is("test.io:5000/not-test-entando/test-image:6.1.4"));
+    }
+
+    @Test
+    void testResolutionFromCofigmapWithMultilevelOrganization() {
+        //Given I have information in the Configmap against a key reflecting the repository only
+        ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
+                .addToData("staging-test-entando-test-image",
+                        "{\"registry\":\"test.io\",\"organization\":\"not-staging-test-entando\",\"version\":\"6.1.4\"}")
+                .build();
+
+        //when I resolve the image
+        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("ampie.io/staging/test-entando/test-image");
+        //then it reflects the injected value with the values in the configMap
+        assertThat(imageUri,
+                is("test.io/not-staging-test-entando/test-image:6.1.4"));
+    }
+
+    @Test
+    void testResolutionFromOverridingPropertiesWhenThereAreFallbackProperties() {
+        //Given I have set fallback properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "default.io");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "default");
@@ -73,7 +167,7 @@ class ImageResolverTest {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE.getJvmSystemProperty(), "test-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE.getJvmSystemProperty(), "6.1.4");
         //when I resolve an image
-        String imageUri = new EntandoImageResolver(null).determineImageUri("entando/test-image", Optional.empty());
+        String imageUri = new EntandoImageResolver(null).determineImageUri("entando/test-image");
         //then it reflects the overriding property values
         assertThat(imageUri, is("test.io/test-entando/test-image:6.1.4"));
     }
@@ -85,18 +179,18 @@ class ImageResolverTest {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "default");
         //And I have a configMap
-        //when I resolve an image
         ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
                 .addToData("test-image", "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.1.4\"}")
                 .build();
-        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("entando/test-image", Optional.empty());
-        //then it reflects the overriding property values
+        //when I resolve an image
+        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("entando/test-image");
+        //then it reflects the property values from the configmap
         assertThat(imageUri, is("test.io/test-entando/test-image:6.1.4"));
     }
 
     @Test
-    void testResolutionFromDefaultPropertiesWhenThereIsAConfigMapButItIsOverridden() {
-        //Given I have set default properties  for image resolution
+    void testResolutionFromOverridingPropertiesWhenThereIsAConfigMap() {
+        //Given I have set fallback properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK.getJvmSystemProperty(), "default.io");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "default-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "default");
@@ -106,11 +200,11 @@ class ImageResolverTest {
                 "overridden-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE.getJvmSystemProperty(), "overridden");
         //And I have a configMap
-        //when I resolve an image
         ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
                 .addToData("test-image", "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.1.4\"}")
                 .build();
-        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("entando/test-image", Optional.empty());
+        //when I resolve an image
+        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("entando/test-image");
         //then it reflects the overriding property values
         assertThat(imageUri, is("overridden.io/overridden-entando/test-image:overridden"));
     }
@@ -136,8 +230,16 @@ class ImageResolverTest {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK.getJvmSystemProperty(), "test-entando");
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "6.1.4");
         //when I resolve an image
-        String imageUri = new EntandoImageResolver(null).determineImageUri("test.io/not-entando/test-image:1", Optional.empty());
+        String imageUri = new EntandoImageResolver(null).determineImageUri("test.io/not-entando/test-image:1");
         //then it reflects the default properties
         assertThat(imageUri, is("test.io/not-entando/test-image:1"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"docker.io:50:50/library/mysql", "docker.io:50/library/mysql:5:3", "docker.io:50/lib/ra/ry/mysql"})
+    void testInvalidImageUris(String invalidImageUri) {
+        assertThrows(IllegalArgumentException.class, () ->
+                new EntandoImageResolver(null).determineImageUri(invalidImageUri)
+        );
     }
 }

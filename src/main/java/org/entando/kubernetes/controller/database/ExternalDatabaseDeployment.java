@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.AbstractServiceResult;
+import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
@@ -73,7 +74,8 @@ public class ExternalDatabaseDeployment extends AbstractServiceResult implements
 
     @Override
     public DbmsDockerVendorStrategy getVendor() {
-        return DbmsDockerVendorStrategy.forVendor(getEntandoDatabaseService().getSpec().getDbms());
+        return DbmsDockerVendorStrategy
+                .forVendor(getEntandoDatabaseService().getSpec().getDbms(), EntandoOperatorConfig.getComplianceMode());
     }
 
     @Override

@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.common.examples.barebones;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -32,7 +33,7 @@ public class BareBonesContainer implements DeployableContainer {
     public static final String DATABASE_SECRET_NAME = "my-db-secret";
     public static final int MEMORY_LIMIT = 256;
     public static final int CPU_LIMIT = 800;
-    private final DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.POSTGRESQL;
+    private final DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.CENTOS_POSTGRESQL;
 
     public static String getDatabaseAdminSecretName() {
         return DATABASE_SECRET_NAME;
@@ -40,7 +41,7 @@ public class BareBonesContainer implements DeployableContainer {
 
     @Override
     public String determineImageToUse() {
-        return dbmsVendor.getImageName();
+        return dbmsVendor.getImageRepository();
     }
 
     @Override
@@ -54,7 +55,8 @@ public class BareBonesContainer implements DeployableContainer {
     }
 
     @Override
-    public void addEnvironmentVariables(List<EnvVar> vars) {
+    public List<EnvVar> getEnvironmentVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         vars.add(new EnvVar("POSTGRESQL_DATABASE", DATABASE_NAME, null));
         // This username will not be used, as we will be creating schema/user pairs,
         // but without it the DB isn't created.
@@ -63,6 +65,7 @@ public class BareBonesContainer implements DeployableContainer {
                 KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
         vars.add(new EnvVar("POSTGRESQL_ADMIN_PASSWORD", null,
                 KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
+        return vars;
     }
 
     @Override

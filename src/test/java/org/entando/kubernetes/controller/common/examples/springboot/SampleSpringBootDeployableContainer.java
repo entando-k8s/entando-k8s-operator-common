@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.common.examples.springboot;
 
+import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +72,11 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     @Override
     public int getPrimaryPort() {
         return 8084;
+    }
+
+    @Override
+    public List<EnvVar> getEnvironmentVariables() {
+        return new ArrayList<>();
     }
 
     @Override

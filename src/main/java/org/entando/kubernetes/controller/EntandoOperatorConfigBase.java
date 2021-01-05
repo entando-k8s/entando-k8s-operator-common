@@ -55,6 +55,6 @@ public abstract class EntandoOperatorConfigBase {
         }
         String name = n.toLowerCase(Locale.getDefault());
         String key = ((String) entry.getKey()).toLowerCase(Locale.getDefault());
-        return name.equals(key) || KubeUtils.snakeCaseOf(name).equals(key);
+        return KubeUtils.snakeCaseOf(name).equals(KubeUtils.snakeCaseOf(key));
     }
 }

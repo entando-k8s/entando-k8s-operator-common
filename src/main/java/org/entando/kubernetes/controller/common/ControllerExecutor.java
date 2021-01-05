@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.common;
 
+import static java.util.Optional.ofNullable;
+
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
@@ -29,7 +31,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +39,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
@@ -83,7 +83,7 @@ public class ControllerExecutor {
         return resolveControllerImageNameByKind(resource.getKind());
     }
 
-    public static String resolveControllerImageName(Class<? extends EntandoBaseCustomResource> type) {
+    public static <T extends EntandoBaseCustomResource<?>> String resolveControllerImageName(Class<T> type) {
         String kind = KubeUtils.getKindOf(type);
         return resolveControllerImageNameByKind(kind);
     }
@@ -92,7 +92,7 @@ public class ControllerExecutor {
         return resourceKindToImageNames.get(kind);
     }
 
-    public Optional<String> resolveLatestImageFor(Class<? extends EntandoBaseCustomResource> type) {
+    public <T extends EntandoBaseCustomResource<?>> Optional<String> resolveLatestImageFor(Class<T> type) {
         String imageName = resolveControllerImageName(type);
         return this.imageResolver.determineLatestVersionOf(imageName);
     }
@@ -111,21 +111,10 @@ public class ControllerExecutor {
     }
 
     private void removeObsoleteControllerPods(EntandoBaseCustomResource<?> resource) {
-        this.client.pods().removeAndWait(controllerNamespace, mapOf(
+        this.client.pods().removeAndWait(controllerNamespace, Map.of(
                 KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind(),
                 KubeUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace(),
                 resource.getKind(), resource.getMetadata().getName()));
-    }
-
-    private Map<String, String> mapOf(
-            String entandoResourceKindLabelName, String kind,
-            String entandoResourceNamespaceLabelName, String namespace,
-            String nameLabelName, String name) {
-        HashMap<String, String> result = new HashMap<>();
-        result.put(entandoResourceKindLabelName, kind);
-        result.put(entandoResourceNamespaceLabelName, namespace);
-        result.put(nameLabelName, name);
-        return result;
     }
 
     private <T extends Serializable> Pod buildControllerPod(Action action, EntandoBaseCustomResource<T> resource,
@@ -158,7 +147,7 @@ public class ControllerExecutor {
 
     private <T extends Serializable> String determineControllerImage(EntandoBaseCustomResource<T> resource, String imageVersionToUse) {
         return this.imageResolver.determineImageUri(
-                "entando/" + resolveControllerImageName(resource), Optional.ofNullable(imageVersionToUse));
+                "entando/" + resolveControllerImageName(resource) + ofNullable(imageVersionToUse).map(s -> ":" + s).orElse(""));
     }
 
     private <T extends Serializable> List<EnvVar> buildEnvVars(Action action, EntandoBaseCustomResource<T> resource) {

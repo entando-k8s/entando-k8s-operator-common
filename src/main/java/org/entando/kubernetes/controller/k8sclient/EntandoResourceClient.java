@@ -42,7 +42,7 @@ public interface EntandoResourceClient {
 
     String getNamespace();
 
-    void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status);
+    <T extends EntandoCustomResource> void updateStatus(T customResource, AbstractServerStatus status);
 
     <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 

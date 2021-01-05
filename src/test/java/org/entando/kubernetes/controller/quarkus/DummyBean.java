@@ -25,6 +25,7 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import io.quarkus.runtime.StartupEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -332,10 +333,12 @@ public class DummyBean {
             }
 
             @Override
-            public void addEnvironmentVariables(List<EnvVar> vars) {
+            public List<EnvVar> getEnvironmentVariables() {
+                List<EnvVar> vars = new ArrayList<>();
                 vars.add(new EnvVar("DB_VENDOR", "h2", null));
                 vars.add(new EnvVar("KEYCLOAK_USER", "test-admin", null));
                 vars.add(new EnvVar("KEYCLOAK_PASSWORD", KCP, null));
+                return vars;
             }
 
             @Override

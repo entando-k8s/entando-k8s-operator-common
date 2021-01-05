@@ -14,22 +14,8 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi;
+package org.entando.kubernetes.controller;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
-import java.util.ArrayList;
-import java.util.List;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.SecretCreator;
-
-public interface TlsAware {
-
-    default List<EnvVar> getTlsVariables() {
-        List<EnvVar> vars = new ArrayList<>();
-        vars.add(new EnvVar("JAVA_TOOL_OPTIONS",
-                null,
-                KubeUtils.secretKeyRef(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, SecretCreator.TRUSTSTORE_SETTINGS_KEY)));
-        return vars;
-
-    }
+public enum EntandoOperatorComplianceMode {
+    COMMUNITY, REDHAT;
 }

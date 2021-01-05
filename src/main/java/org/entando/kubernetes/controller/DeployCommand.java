@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.List;
 import java.util.Optional;
+import org.entando.kubernetes.controller.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.creators.DatabasePreparationPodCreator;
 import org.entando.kubernetes.controller.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.creators.KeycloakClientCreator;

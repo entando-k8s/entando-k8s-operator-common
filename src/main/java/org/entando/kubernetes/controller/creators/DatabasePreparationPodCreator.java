@@ -31,9 +31,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
@@ -69,7 +69,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
                 .withInitContainers(buildContainers(entandoImageResolver, secretClient, dbAwareDeployable))
                 .addNewContainer()
                 .withName("dummy")
-                .withImage(entandoImageResolver.determineImageUri("entando/busybox", Optional.of("latest")))
+                .withImage(entandoImageResolver.determineImageUri("entando/busybox"))
                 .endContainer()
                 .withRestartPolicy("Never")
                 .endSpec()
@@ -110,17 +110,11 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
             String nameQualifier) {
         String dbJobName = entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-db-population-job";
         return new ContainerBuilder()
-                .withImage(entandoImageResolver.determineImageUri(databasePopulator.determineImageToUse(), Optional.empty()))
+                .withImage(entandoImageResolver.determineImageUri(databasePopulator.getDockerImageInfo()))
                 .withImagePullPolicy("Always")
                 .withName(dbJobName)
                 .withCommand(databasePopulator.getCommand())
-                .withEnv(buildEnvironmentToConnectToDatabase(databasePopulator)).build();
-    }
-
-    private List<EnvVar> buildEnvironmentToConnectToDatabase(DatabasePopulator container) {
-        List<EnvVar> result = new ArrayList<>();
-        container.addEnvironmentVariables(result);
-        return result;
+                .withEnv(databasePopulator.getEnvironmentVariables()).build();
     }
 
     private String getSchemaName(String nameQualifier) {
@@ -145,7 +139,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
         String dbJobName = entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-schema-creation-job";
         return new ContainerBuilder()
                 .withImage(entandoImageResolver
-                        .determineImageUri("entando/entando-k8s-dbjob", Optional.empty()))
+                        .determineImageUri("entando/entando-k8s-dbjob"))
                 .withImagePullPolicy("Always")
                 .withName(dbJobName)
                 .withEnv(buildEnvironment(databaseDeployment, nameQualifier)).build();
@@ -160,7 +154,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
         result.add(new EnvVar("DATABASE_NAME", databaseDeployment.getDatabaseName(), null));
         lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET).ifPresent(s ->
                 result.add(new EnvVar("FORCE_PASSWORD_RESET", s, null)));
-        result.add(new EnvVar("DATABASE_VENDOR", databaseDeployment.getVendor().toValue(), null));
+        result.add(new EnvVar("DATABASE_VENDOR", databaseDeployment.getVendor().getVendorConfig().getName(), null));
         result.add(new EnvVar("DATABASE_SCHEMA_COMMAND", "CREATE_SCHEMA", null));
         result.add(new EnvVar("DATABASE_USER", null,
                 KubeUtils.secretKeyRef(getSchemaSecretName(nameQualifier), KubeUtils.USERNAME_KEY)));

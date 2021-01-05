@@ -20,12 +20,19 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.common.DockerImageInfo;
 
 public interface DeployableContainer {
 
     String ENTANDO_SECRET_MOUNTS_ROOT = "/etc/entando/connectionconfigs";
 
-    String determineImageToUse();
+    default DockerImageInfo getDockerImageInfo() {
+        return new DefaultDockerImageInfo(determineImageToUse());
+    }
+
+    default String determineImageToUse() {
+        return "busybox";
+    }
 
     String getNameQualifier();
 
@@ -35,9 +42,7 @@ public interface DeployableContainer {
         return Collections.emptyList();
     }
 
-    default void addEnvironmentVariables(List<EnvVar> vars) {
-        //to avoid the need for repeated empty implementations
-    }
+    List<EnvVar> getEnvironmentVariables();
 
     default int getMemoryLimitMebibytes() {
         return 256;

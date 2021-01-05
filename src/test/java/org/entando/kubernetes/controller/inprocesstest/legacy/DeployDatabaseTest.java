@@ -193,7 +193,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(3306));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));
         //And that uses the image reflecting the custom registry and Entando image version specified
-        assertThat(theDbContainer.getImage(), is("docker.io/entando/mysql-57-centos7:latest"));
+        assertThat(theDbContainer.getImage(), is("docker.io/centos/mysql-80-centos7:latest"));
         //With a Pod Template that has labels linking it to the previously created K8S Database Service
         assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_APP_DB));
         assertThat(theLabel(ENTANDO_APP_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_APP));
@@ -235,7 +235,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(5432));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));
         //And that uses the image reflecting the custom registry and Entando image version specified
-        assertThat(theDbContainer.getImage(), is("docker.io/entando/postgresql-96-centos7:latest"));
+        assertThat(theDbContainer.getImage(), is("docker.io/centos/postgresql-12-centos7:latest"));
         //With a Pod Template that has labels linking it to the previously created K8S Database Service
         assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_APP_DB));
         assertThat(theLabel(ENTANDO_APP_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_APP));

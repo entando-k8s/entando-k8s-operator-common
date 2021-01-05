@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.database.DatabaseDeploymentResult;
@@ -168,7 +169,8 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
         if (externalDatabase.isPresent()) {
             return externalDatabase.get();
         } else if (!(dbmsVendor == DbmsVendor.NONE || dbmsVendor == DbmsVendor.EMBEDDED)) {
-            final DatabaseDeployable<S> databaseDeployable = new DatabaseDeployable<>(DbmsDockerVendorStrategy.forVendor(dbmsVendor),
+            final DatabaseDeployable<S> databaseDeployable = new DatabaseDeployable<>(
+                    DbmsDockerVendorStrategy.forVendor(dbmsVendor, EntandoOperatorConfig.getComplianceMode()),
                     (EntandoBaseCustomResource<S>) entandoCustomResource, nameQualifier, null);
             final DeployCommand<DatabaseDeploymentResult, S> dbCommand = new DeployCommand<>(databaseDeployable);
             DatabaseDeploymentResult result = dbCommand.execute(k8sClient, empty());

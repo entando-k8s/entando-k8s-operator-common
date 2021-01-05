@@ -19,7 +19,9 @@ package org.entando.kubernetes.controller.database;
 import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.List;
+import org.entando.kubernetes.controller.common.DockerImageInfo;
 import org.entando.kubernetes.controller.database.DatabaseDeployable.VariableInitializer;
 import org.entando.kubernetes.controller.spi.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
@@ -27,22 +29,23 @@ import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 
 public class DatabaseContainer implements ServiceBackingContainer, PersistentVolumeAware, HasHealthCommand {
 
-    private final DbmsDockerVendorStrategy dbmsVendor;
+    private final DbmsDockerVendorStrategy dbmsVendorDockerStrategy;
     private final String nameQualifier;
     private final VariableInitializer variableInitializer;
     private final Integer portOverride;
 
-    public DatabaseContainer(VariableInitializer variableInitializer, DbmsDockerVendorStrategy dbmsVendor, String nameQualifier,
+    public DatabaseContainer(VariableInitializer variableInitializer, DbmsDockerVendorStrategy dbmsVendorDockerStrategy,
+            String nameQualifier,
             Integer portOverride) {
         this.variableInitializer = variableInitializer;
-        this.dbmsVendor = dbmsVendor;
+        this.dbmsVendorDockerStrategy = dbmsVendorDockerStrategy;
         this.nameQualifier = nameQualifier;
         this.portOverride = portOverride;
     }
 
     @Override
-    public String determineImageToUse() {
-        return dbmsVendor.getImageName();
+    public DockerImageInfo getDockerImageInfo() {
+        return new DatabaseDockerImageInfo(dbmsVendorDockerStrategy);
     }
 
     @Override
@@ -52,22 +55,24 @@ public class DatabaseContainer implements ServiceBackingContainer, PersistentVol
 
     @Override
     public int getPrimaryPort() {
-        return ofNullable(portOverride).orElse(dbmsVendor.getPort());
+        return ofNullable(portOverride).orElse(dbmsVendorDockerStrategy.getPort());
     }
 
     @Override
     public String getVolumeMountPath() {
-        return dbmsVendor.getVolumeMountPath();
+        return dbmsVendorDockerStrategy.getVolumeMountPath();
     }
 
     @Override
     public String getHealthCheckCommand() {
-        return dbmsVendor.getHealthCheck();
+        return dbmsVendorDockerStrategy.getHealthCheck();
     }
 
     @Override
-    public void addEnvironmentVariables(List<EnvVar> vars) {
+    public List<EnvVar> getEnvironmentVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         variableInitializer.addEnvironmentVariables(vars);
+        return vars;
     }
 
 }

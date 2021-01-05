@@ -25,6 +25,7 @@ import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
+import org.entando.kubernetes.model.keycloakserver.StandardKeycloakImage;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
@@ -66,7 +67,7 @@ public interface InProcessTestData {
                 .withNewSpec()
                 .withDefault(true)
                 .withReplicas(2)
-                .withImageName("entando/entando-keycloak")
+                .withStandardImage(StandardKeycloakImage.KEYCLOAK)
                 .withIngressHostName(MY_KEYCLOAK_HOSTNAME)
                 .withDbms(DbmsVendor.MYSQL)
                 //                .withTlsSecretName(MY_KEYCLOAK_TLS_SECRET)

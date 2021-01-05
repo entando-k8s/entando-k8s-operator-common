@@ -53,12 +53,14 @@ public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
 
     private VariableInitializer buildVariableInitializer(DbmsDockerVendorStrategy vendorStrategy) {
         switch (vendorStrategy) {
-            case MYSQL:
+            case CENTOS_MYSQL:
+            case RHEL_MYSQL:
                 return vars ->
                         //No DB creation. Dbs are created during schema creation
                         vars.add(new EnvVar("MYSQL_ROOT_PASSWORD", null,
                                 KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
-            case POSTGRESQL:
+            case CENTOS_POSTGRESQL:
+            case RHEL_POSTGRESQL:
                 return vars -> {
                     vars.add(new EnvVar("POSTGRESQL_DATABASE", getDatabaseName(), null));
                     // This username will not be used, as we will be creating schema/user pairs,

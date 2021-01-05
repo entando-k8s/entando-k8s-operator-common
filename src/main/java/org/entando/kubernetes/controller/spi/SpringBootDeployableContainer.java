@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.spi;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.List;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -38,7 +39,8 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
     }
 
     @Override
-    default void addDatabaseConnectionVariables(List<EnvVar> vars) {
+    default List<EnvVar> getDatabaseConnectionVariables() {
+        List<EnvVar> vars = new ArrayList<>();
         DatabaseSchemaCreationResult databaseSchema = getDatabaseSchema();
         if (databaseSchema != null) {
             vars.add(new EnvVar("DB_VENDOR", databaseSchema.getVendor().getName(), null));
@@ -51,11 +53,12 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
             TODO: Set SPRING_JPA_PROPERTIES_HIBERNATE_ID_NEW_GENERATOR_MAPPINGS to 'false' if we ever run into issues with ID Generation
             */
         }
+        return vars;
     }
 
     @Override
-    default void addKeycloakVariables(List<EnvVar> vars) {
-        KeycloakAware.super.addKeycloakVariables(vars);//Temporarily for backward compatibility
+    default List<EnvVar> getKeycloakVariables() {
+        List<EnvVar> vars = KeycloakAware.super.getKeycloakVariables();
         KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
                 keycloakDeployment.getExternalBaseUrl() + "/realms/" + determineRealm(),
@@ -65,6 +68,7 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
                 KubeUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_SECRET_KEY)));
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name(), null,
                 KubeUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_ID_KEY)));
+        return vars;
     }
 
     enum SpringProperty {

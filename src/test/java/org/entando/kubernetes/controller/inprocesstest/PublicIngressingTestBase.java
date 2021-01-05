@@ -228,7 +228,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                         .until(() -> getClient().pods().getPodWatcherHolder().getAndSet(null) != null);
                 //wait for db preparation pod
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-                String dbJobName = String.format("%s-server-db-preparation-job",  resource.getMetadata().getName());
+                String dbJobName = String.format("%s-server-db-preparation-job", resource.getMetadata().getName());
                 Pod dbPreparationPod = getClient().pods()
                         .loadPod(resource.getMetadata().getNamespace(), KubeUtils.DB_JOB_LABEL_NAME, dbJobName);
                 getClient().pods().getPodWatcherHolder().getAndSet(null)
