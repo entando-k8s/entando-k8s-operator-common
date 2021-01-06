@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -101,7 +102,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
         for (String dbSchemaQualifier : dbAware.getDbSchemaQualifiers()) {
             containerList.add(buildContainerToCreateSchema(entandoImageResolver, deployable.getDatabaseServiceResult(), dbSchemaQualifier));
             schemaResults.put(dbSchemaQualifier, createSchemaResult(deployable.getDatabaseServiceResult(), dbSchemaQualifier));
-            createSchemaSecret(secretClient, dbSchemaQualifier);
+            createSchemaSecret(secretClient, deployable.getDatabaseServiceResult(), dbSchemaQualifier);
         }
         return schemaResults;
     }
@@ -123,8 +124,13 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
         return result;
     }
 
-    private String getSchemaName(String nameQualifier) {
-        return KubeUtils.snakeCaseOf(entandoCustomResource.getMetadata().getName()) + "_" + nameQualifier;
+    private String getSchemaName(DatabaseServiceResult databaseDeployment, String nameQualifier) {
+        String schemaName = KubeUtils.snakeCaseOf(entandoCustomResource.getMetadata().getName()) + "_" + nameQualifier;
+        if (schemaName.length() > databaseDeployment.getVendor().getVendorConfig().getMaxNameLength()) {
+            schemaName = schemaName.substring(0, databaseDeployment.getVendor().getVendorConfig().getMaxNameLength() - 3)
+                    + RandomStringUtils.randomNumeric(3);
+        }
+        return schemaName;
     }
 
     private String getSchemaSecretName(String nameQualifier) {
@@ -132,12 +138,13 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
     }
 
     private DatabaseSchemaCreationResult createSchemaResult(DatabaseServiceResult databaseDeployment, String nameQualifier) {
-        return new DatabaseSchemaCreationResult(databaseDeployment, getSchemaName(nameQualifier), getSchemaSecretName(nameQualifier));
+        return new DatabaseSchemaCreationResult(databaseDeployment, getSchemaName(databaseDeployment, nameQualifier), getSchemaSecretName(nameQualifier));
     }
 
-    private void createSchemaSecret(SecretClient secretClient, String nameQualifier) {
+    private void createSchemaSecret(SecretClient secretClient, DatabaseServiceResult databaseDeployment, String nameQualifier) {
         secretClient.createSecretIfAbsent(entandoCustomResource,
-                KubeUtils.generateSecret(entandoCustomResource, getSchemaSecretName(nameQualifier), getSchemaName(nameQualifier)));
+                KubeUtils.generateSecret(entandoCustomResource, getSchemaSecretName(nameQualifier),
+                        getSchemaName(databaseDeployment, nameQualifier)));
     }
 
     private Container buildContainerToCreateSchema(EntandoImageResolver entandoImageResolver,

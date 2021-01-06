@@ -1,6 +1,9 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="OperatorCommon (inter-process )" type="JUnit" factoryName="JUnit">
     <module name="entando-k8s-operator-common" />
+    <selectedOptions>
+      <option name="environmentVariables" visible="false" />
+    </selectedOptions>
     <useClassPathOnly />
     <extension name="coverage">
       <pattern>
