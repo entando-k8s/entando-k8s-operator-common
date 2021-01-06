@@ -44,14 +44,14 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
         }
         this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
                 TEST_NAMESPACE,
-                TEST_APP_NAME + "-server-db-preparation-job");
+                TEST_APP_NAME + "-server-db-job");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(180 + waitOffset)),
                 TEST_NAMESPACE, TEST_APP_NAME + "-server");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
                 TEST_NAMESPACE, TEST_APP_NAME + "-ab");
         this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
                 TEST_NAMESPACE,
-                TEST_APP_NAME + "-cm-db-preparation-job");
+                TEST_APP_NAME + "-cm-db-job");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
                 TEST_NAMESPACE, TEST_APP_NAME + "-cm");
         //        this times out wait for the other pods first
