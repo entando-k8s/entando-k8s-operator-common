@@ -126,9 +126,9 @@ public final class KubeUtils {
     /**
      * Useful for labelvalues and container names.
      */
-    public static String shortenTo64Chars(String s) {
-        if (s.length() > 64) {
-            s = s.substring(0, 64 - 3) + RandomStringUtils.randomNumeric(3);
+    public static String shortenTo63Chars(String s) {
+        if (s.length() > 63) {
+            s = s.substring(0, 63 - 3) + RandomStringUtils.randomNumeric(3);
         }
         return s;
     }
