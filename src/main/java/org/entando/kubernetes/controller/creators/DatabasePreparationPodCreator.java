@@ -64,7 +64,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .withOwnerReferences(KubeUtils.buildOwnerReference(entandoCustomResource))
                 .withLabels(buildUniqueLabels(dbJobName))
-                .withName(dbJobName + "-" + UUID.randomUUID().toString().substring(0, 10))
+                .withName(dbJobName + "-" + UUID.randomUUID().toString().substring(0, 4))
                 .endMetadata()
                 .withNewSpec()
                 .withInitContainers(buildContainers(entandoImageResolver, secretClient, dbAwareDeployable))
@@ -109,7 +109,8 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
 
     private Container prepareContainerToPopulateSchemas(EntandoImageResolver entandoImageResolver, DatabasePopulator databasePopulator,
             String nameQualifier) {
-        String dbJobName = entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-db-population-job";
+        String dbJobName = KubeUtils
+                .shortenTo64Chars(entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-db-population-job");
         return new ContainerBuilder()
                 .withImage(entandoImageResolver.determineImageUri(databasePopulator.determineImageToUse(), Optional.empty()))
                 .withImagePullPolicy("Always")
@@ -150,7 +151,8 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
 
     private Container buildContainerToCreateSchema(EntandoImageResolver entandoImageResolver,
             DatabaseServiceResult databaseDeployment, String nameQualifier) {
-        String dbJobName = entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-schema-creation-job";
+        String dbJobName = KubeUtils
+                .shortenTo64Chars(entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-schema-creation-job");
         return new ContainerBuilder()
                 .withImage(entandoImageResolver
                         .determineImageUri("entando/entando-k8s-dbjob", Optional.empty()))
