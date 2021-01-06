@@ -21,7 +21,7 @@ import java.util.Optional;
 import org.entando.kubernetes.model.DbmsVendor;
 
 public enum DbmsDockerVendorStrategy {
-    MYSQL(DbmsVendorConfig.MYSQL, "entando/mysql-57-centos7", "/var/lib/mysql/data", 27L){
+    MYSQL(DbmsVendorConfig.MYSQL, "entando/mysql-57-centos7", "/var/lib/mysql/data", 27L) {
         @Override
         public boolean schemaIsDatabase() {
             return true;
