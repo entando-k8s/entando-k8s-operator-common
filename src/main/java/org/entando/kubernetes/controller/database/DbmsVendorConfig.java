@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.database;
 
 public enum DbmsVendorConfig {
     MYSQL("org.hibernate.dialect.MySQL5InnoDBDialect", 3306, "root",
-            "MYSQL_PWD=${MYSQL_ROOT_PASSWORD} mysql -h 127.0.0.1 -u root -e 'SELECT 1'") {
+            "MYSQL_PWD=${MYSQL_ROOT_PASSWORD} mysql -h 127.0.0.1 -u root -e 'SELECT 1'", 32) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
@@ -26,13 +26,9 @@ public enum DbmsVendorConfig {
                 }
             };
         }
-
-        public boolean schemaIsDatabase() {
-            return true;
-        }
     },
     POSTGRESQL("org.hibernate.dialect.PostgreSQLDialect", 5432, "postgres",
-            "psql -h 127.0.0.1 -U ${POSTGRESQL_USER} -q -d postgres -c '\\l'|grep ${POSTGRESQL_DATABASE}") {
+            "psql -h 127.0.0.1 -U ${POSTGRESQL_USER} -q -d postgres -c '\\l'|grep ${POSTGRESQL_DATABASE}", 64) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
@@ -41,7 +37,7 @@ public enum DbmsVendorConfig {
             };
         }
     },
-    ORACLE("org.hibernate.dialect.Oracle10gDialect", 1521, "sys", "sqlplus sys/Oradoc_db1:${DB_SID}") {
+    ORACLE("org.hibernate.dialect.Oracle10gDialect", 1521, "sys", "sqlplus sys/Oradoc_db1:${DB_SID}", 128) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
@@ -75,19 +71,25 @@ public enum DbmsVendorConfig {
     private String defaultUser;
     private String defaultPassword;
     private String healthCheck;
+    private int maxNameLength;
     private String hibernateDialect;
 
-    DbmsVendorConfig(String hibernateDialect, int port, String user, String healthCheck) {
+    DbmsVendorConfig(String hibernateDialect, int port, String user, String healthCheck, int maxNameLength) {
         this.hibernateDialect = hibernateDialect;
         this.defaultPort = port;
         this.defaultUser = user;
         this.healthCheck = healthCheck;
+        this.maxNameLength = maxNameLength;
     }
 
     DbmsVendorConfig(String hibernateDialect, String user, String password) {
         this.hibernateDialect = hibernateDialect;
         this.defaultUser = user;
         this.defaultPassword = password;
+    }
+
+    public int getMaxNameLength() {
+        return maxNameLength;
     }
 
     public abstract JdbcConnectionStringBuilder getConnectionStringBuilder();

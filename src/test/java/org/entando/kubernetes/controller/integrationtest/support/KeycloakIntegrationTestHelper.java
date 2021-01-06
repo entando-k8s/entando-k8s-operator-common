@@ -103,7 +103,7 @@ public class KeycloakIntegrationTestHelper extends
                         KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db");
             }
             this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
-                    KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server-db-preparation-job");
+                    KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server-db-job");
         }
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(270 + waitOffset)),
                 KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server");

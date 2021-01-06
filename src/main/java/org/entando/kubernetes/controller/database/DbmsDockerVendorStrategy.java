@@ -21,7 +21,12 @@ import java.util.Optional;
 import org.entando.kubernetes.model.DbmsVendor;
 
 public enum DbmsDockerVendorStrategy {
-    MYSQL(DbmsVendorConfig.MYSQL, "entando/mysql-57-centos7", "/var/lib/mysql/data", 27L),
+    MYSQL(DbmsVendorConfig.MYSQL, "entando/mysql-57-centos7", "/var/lib/mysql/data", 27L) {
+        @Override
+        public boolean schemaIsDatabase() {
+            return true;
+        }
+    },
     POSTGRESQL(DbmsVendorConfig.POSTGRESQL, "entando/postgresql-96-centos7", "/var/lib/pgsql/data", 26L),
     ORACLE(DbmsVendorConfig.ORACLE, "docker.io/store/oracle/database-enterprise:12.2.0.1", "/ORCL", null);
 

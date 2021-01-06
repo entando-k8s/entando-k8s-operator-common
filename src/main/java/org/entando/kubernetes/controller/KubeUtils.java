@@ -122,4 +122,14 @@ public final class KubeUtils {
                 .anyMatch(ownerReference -> customResource.getMetadata().getName().equals(ownerReference.getName())
                         && customResource.getKind().equals(ownerReference.getKind()));
     }
+
+    /**
+     * Useful for labelvalues and container names.
+     */
+    public static String shortenTo63Chars(String s) {
+        if (s.length() > 63) {
+            s = s.substring(0, 63 - 3) + RandomStringUtils.randomNumeric(3);
+        }
+        return s;
+    }
 }
