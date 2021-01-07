@@ -40,7 +40,8 @@ public final class KubeUtils {
     public static final String UPDATED_ANNOTATION_NAME = "entando.org/updated";//To avoid  http 400s
     public static final String PASSSWORD_KEY = "password";//Funny name because a variable named 'PASSWORD' is considered a vulnerability
     public static final String USERNAME_KEY = "username";
-    public static final String DB_JOB_LABEL_NAME = "dbJob";
+    public static final String JOB_KIND_LABEL_NAME = "jobKind";
+    public static final String DEPLOYMENT_QUALIFIER_LABEL_NAME = "deploymentQualifier";
     public static final String DEFAULT_SERVER_QUALIFIER = "server";
     public static final String URL_KEY = "url";
     public static final String INTERNAL_URL_KEY = "internalUrl";
@@ -57,6 +58,7 @@ public final class KubeUtils {
     public static final String ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME = "EntandoResourceNamespace";
     public static final String ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME = "entando-operator-default-config-map";
     public static final String DEFAULT_KEYCLOAK_NAME = "default";
+    public static final String JOB_KIND_DB_PREPARATION = "db-preparation-job";
 
     private static final Logger LOGGER = Logger.getLogger(KubeUtils.class.getName());
 
@@ -121,5 +123,15 @@ public final class KubeUtils {
         return resource.getMetadata().getOwnerReferences().stream()
                 .anyMatch(ownerReference -> customResource.getMetadata().getName().equals(ownerReference.getName())
                         && customResource.getKind().equals(ownerReference.getKind()));
+    }
+
+    /**
+     * Useful for labelvalues and container names.
+     */
+    public static String shortenTo63Chars(String s) {
+        if (s.length() > 63) {
+            s = s.substring(0, 63 - 3) + RandomStringUtils.randomNumeric(3);
+        }
+        return s;
     }
 }

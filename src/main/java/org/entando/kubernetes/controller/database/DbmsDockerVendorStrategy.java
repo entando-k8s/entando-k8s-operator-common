@@ -84,12 +84,12 @@ public enum DbmsDockerVendorStrategy {
         return this.volumeMountPath;
     }
 
-    public String getName() {
+    public String toValue() {
         return this.name().toLowerCase(Locale.getDefault());
     }
 
-    public boolean schemaIsDatabase() {
-        return false;
+    public String getName() {
+        return this.name().toLowerCase(Locale.getDefault());
     }
 
     public String getDefaultAdminUsername() {

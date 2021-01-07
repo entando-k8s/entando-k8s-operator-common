@@ -53,7 +53,6 @@ public class EntandoPluginIntegrationTestHelper extends
         await().atMost(30, TimeUnit.SECONDS)
                 .until(() -> client.secrets().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
                         .withName(PAM_CONNECTION_CONFIG).get() != null);
-        plugin.getMetadata().setName(TEST_PLUGIN_NAME);
         getOperations()
                 .inNamespace(TEST_PLUGIN_NAMESPACE).create(plugin);
         // Then I expect to see
@@ -61,15 +60,15 @@ public class EntandoPluginIntegrationTestHelper extends
         // "-deployment" and a single port for 8081
         if (hasContainerizedDb) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(120)),
-                    TEST_PLUGIN_NAMESPACE, TEST_PLUGIN_NAME + "-db");
+                    TEST_PLUGIN_NAMESPACE, plugin.getMetadata().getName() + "-db");
         }
 
         waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), TEST_PLUGIN_NAMESPACE,
-                TEST_PLUGIN_NAME + "-server-db-preparation-job");
+                plugin.getMetadata().getName() + "-server-db-job");
         waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240)),
-                TEST_PLUGIN_NAMESPACE, TEST_PLUGIN_NAME + "-server");
+                TEST_PLUGIN_NAMESPACE, plugin.getMetadata().getName() + "-server");
         Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getOperations()
-                .inNamespace(TEST_PLUGIN_NAMESPACE).withName(TEST_PLUGIN_NAME);
+                .inNamespace(TEST_PLUGIN_NAMESPACE).withName(plugin.getMetadata().getName());
         //Wait for widget registration too - sometimes we get 503's for about 3 attempts
         await().atMost(240, SECONDS).until(() -> {
             EntandoCustomResourceStatus status = pluginResource.fromServer().get().getStatus();

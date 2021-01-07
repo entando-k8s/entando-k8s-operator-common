@@ -37,15 +37,17 @@ import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public class IntegrationTestHelperBase<
         R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
         D extends DoneableEntandoCustomResource<D, R>
-        > implements FluentIntegrationTesting {
+        > implements FluentIntegrationTesting, CommonLabels {
 
     protected final DefaultKubernetesClient client;
     protected final CustomResourceOperationsImpl<R, L, D> operations;
@@ -95,13 +97,13 @@ public class IntegrationTestHelperBase<
     }
 
     @SuppressWarnings("unchecked")
-    public JobPodWaiter waitForJobPod(JobPodWaiter mutex, String namespace, String jobName) {
+    public <S extends EntandoDeploymentSpec> JobPodWaiter waitForJobPod(JobPodWaiter mutex, EntandoBaseCustomResource<S> resource, String deploymentQualifier) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
-                () -> client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems()
+                () -> client.pods().inNamespace(resource.getMetadata().getNamespace()).withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems()
                         .size() > 0);
-        Pod pod = client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems().get(0);
+        Pod pod = client.pods().inNamespace(resource.getMetadata().getNamespace()).withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems().get(0);
         mutex.throwException(IllegalStateException.class)
-                .waitOn(client.pods().inNamespace(namespace).withName(pod.getMetadata().getName()));
+                .waitOn(client.pods().inNamespace(resource.getMetadata().getNamespace()).withName(pod.getMetadata().getName()));
         return mutex;
     }
 

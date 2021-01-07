@@ -265,7 +265,7 @@ public class DummyBean {
                 .registerProviderInstance(new org.jboss.resteasy.plugins.interceptors.encoding.MessageSanitizerContainerResponseFilter());
         instance.registerProviderInstance(new org.jboss.resteasy.plugins.providers.sse.SseEventProvider());
         instance
-                .registerProviderInstance(new org.jboss.resteasy.plugins.providers.sse.SseEventOutputProvider());
+                .registerProviderInstance(new org.jboss.resteasy.plugins.providers.sse.SseEventProvider());
         instance
                 .registerProviderInstance(new org.jboss.resteasy.plugins.providers.sse.SseEventSinkInterceptor());
         ResteasyProviderFactory.setInstance(instance);

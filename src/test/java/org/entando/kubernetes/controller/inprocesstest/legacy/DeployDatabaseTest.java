@@ -82,7 +82,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     private static final String MY_APP_DB_SECRET = MY_APP_DB + "-secret";
     private static final String MY_APP_DB_ADMIN_SECRET = MY_APP_DB + "-admin-secret";
     private static final String MY_APP_DATABASE = "my_app_db";
-    private final EntandoApp keycloakServer = newTestEntandoApp();
+    private final EntandoApp entandoApp = newTestEntandoApp();
     @Spy
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
@@ -102,8 +102,8 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
             }
         };
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, keycloakServer.getMetadata().getNamespace());
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, keycloakServer.getMetadata().getName());
+        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, entandoApp.getMetadata().getNamespace());
+        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, entandoApp.getMetadata().getName());
         emulateKeycloakDeployment(client);
     }
 
@@ -116,8 +116,8 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     @Test
     void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
         //Given I have an EntandoApp custom resource with MySQL as database
-        final EntandoApp newEntandoApp = keycloakServer;
-        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
+        final EntandoApp newEntandoApp = entandoApp;
+        client.entandoResources().createOrPatchEntandoResource(entandoApp);
         // When I  deploy the EntandoApp
         sampleController.onStartup(new StartupEvent());
 
@@ -142,8 +142,8 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     @Test
     void testService() {
         //Given I have an EntandoApp custom resource with MySQL as database
-        EntandoApp newEntandoApp = keycloakServer;
-        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
+        EntandoApp newEntandoApp = entandoApp;
+        client.entandoResources().createOrPatchEntandoResource(entandoApp);
         //And that K8S is up and receiving Service requests
         ServiceStatus dbServiceStatus = new ServiceStatus();
         lenient().when(client.services().loadService(eq(newEntandoApp), eq(MY_APP_DB_SERVICE)))
@@ -173,45 +173,64 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     @Test
     void testMysqlDeployment() {
         //Given I have an EntandoApp custom resource with MySQL as database
-        EntandoApp newEntandoApp = keycloakServer;
-        client.entandoResources().createOrPatchEntandoResource(keycloakServer);
+        EntandoApp newEntandoApp = entandoApp;
+        //And a name longer than 32 chars
+        newEntandoApp.getMetadata().setName(MY_APP + "-name-longer-than-32-characters");
+        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, entandoApp.getMetadata().getName());
+        client.entandoResources().createOrPatchEntandoResource(entandoApp);
         //And K8S is receiving Deployment requests
         DeploymentStatus dbDeploymentStatus = new DeploymentStatus();
         //And K8S is receiving Deployment requests
-        lenient().when(client.deployments().loadDeployment(eq(newEntandoApp), eq(MY_APP_DB_DEPLOYMENT)))
+        lenient().when(client.deployments().loadDeployment(eq(newEntandoApp), eq(MY_APP + "-name-longer-than-32-characters-db-deployment")))
                 .then(respondWithDeploymentStatus(dbDeploymentStatus));
         //When the the EntandoAppController is notified that a new EntandoApp has been added
         sampleController.onStartup(new StartupEvent());
 
         //Then two K8S deployments are created with a name that reflects the EntandoApp name the
         NamedArgumentCaptor<Deployment> dbDeploymentCaptor = forResourceNamed(Deployment.class,
-                MY_APP_DB_DEPLOYMENT);
+                MY_APP + "-name-longer-than-32-characters-db-deployment");
         verify(client.deployments()).createOrPatchDeployment(eq(newEntandoApp), dbDeploymentCaptor.capture());
         Deployment dbDeployment = dbDeploymentCaptor.getValue();
         Container theDbContainer = theContainerNamed("db-container").on(dbDeployment);
+        NamedArgumentCaptor<Deployment> serverDeploymentCaptor = forResourceNamed(Deployment.class,
+                MY_APP + "-name-longer-than-32-characters-server-deployment");
+        verify(client.deployments()).createOrPatchDeployment(eq(newEntandoApp), serverDeploymentCaptor.capture());
+        Deployment serverDeployment = serverDeploymentCaptor.getValue();
+        String database = theVariableNamed("DB_DATABASE").on(thePrimaryContainerOn(serverDeployment));
+        assertThat(database.length(),is(32));
         //Exposing a port 3306
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(3306));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));
         //And that uses the image reflecting the custom registry and Entando image version specified
         assertThat(theDbContainer.getImage(), is("docker.io/centos/mysql-80-centos7:latest"));
         //With a Pod Template that has labels linking it to the previously created K8S Database Service
-        assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_APP_DB));
-        assertThat(theLabel(ENTANDO_APP_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()), is(MY_APP));
+        assertThat(theLabel(DEPLOYMENT_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()),
+                is(MY_APP + "-name-longer-than-32-characters-db"));
+        assertThat(theLabel(ENTANDO_APP_LABEL_NAME).on(dbDeployment.getSpec().getTemplate()),
+                is(MY_APP + "-name-longer-than-32-characters"));
         assertThat(dbDeployment.getSpec().getTemplate().getSpec().getSecurityContext().getFsGroup(), is(27L));
 
         //And the Deployment state was reloaded from K8S for both deployments
-        verify(client.deployments()).loadDeployment(eq(newEntandoApp), eq(MY_APP_DB_DEPLOYMENT));
+        verify(client.deployments()).loadDeployment(eq(newEntandoApp), eq(MY_APP + "-name-longer-than-32-characters-db-deployment"));
         //And K8S was instructed to update the status of the EntandoApp with the status of the service
         verify(client.entandoResources(), atLeastOnce())
                 .updateStatus(eq(newEntandoApp), argThat(matchesDeploymentStatus(dbDeploymentStatus)));
+
         //And all volumes have been mapped
         verifyThatAllVolumesAreMapped(newEntandoApp, client, dbDeployment);
+        //And a shortened username has been specified for the MySQL db
+        NamedArgumentCaptor<Secret> dbSecretCaptor = forResourceNamed(Secret.class,
+                MY_APP + "-name-longer-than-32-characters-db-secret");
+        verify(client.secrets()).createSecretIfAbsent(eq(newEntandoApp), dbSecretCaptor.capture());
+        Secret keycloakDbSecret = dbSecretCaptor.getValue();
+        assertThat(keycloakDbSecret.getStringData().get(KubeUtils.USERNAME_KEY).length(), is(32));
+
     }
 
     @Test
     void testPostgresqlDeployment() {
         //Given I have an EntandoApp custom resource with MySQL as database
-        EntandoApp newEntandoApp = new DoneableEntandoApp(keycloakServer, s -> s)
+        EntandoApp newEntandoApp = new DoneableEntandoApp(entandoApp, s -> s)
                 .editSpec()
                 .withDbms(DbmsVendor.POSTGRESQL)
                 .endSpec()
@@ -253,7 +272,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     @Test
     void testPersistentVolumeClaims() {
         //Given I have  a Keycloak server
-        EntandoApp newEntandoApp = this.keycloakServer;
+        EntandoApp newEntandoApp = this.entandoApp;
         client.entandoResources().createOrPatchEntandoResource(newEntandoApp);
         //And that K8S is up and receiving PVC requests
         PersistentVolumeClaimStatus dbPvcStatus = new PersistentVolumeClaimStatus();

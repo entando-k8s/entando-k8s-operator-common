@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.ByteArrayInputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.entando.kubernetes.client.EntandoExecListener;
@@ -33,7 +34,15 @@ public interface PodClient extends PodWaitingClient {
 
     Pod waitForPod(String namespace, String labelName, String labelValue);
 
-    Pod loadPod(String namespace, String labelName, String labelValue);
+    default Pod loadPod(String namespace, String... labelNamesAndValues) {
+        Map<String, String> labels = new HashMap<>();
+        for (int i = 0; i < labelNamesAndValues.length; i += 2) {
+            labels.put(labelNamesAndValues[i], labelNamesAndValues[i + 1]);
+        }
+        return loadPod(namespace, labels);
+    }
+
+    Pod loadPod(String namespace, Map<String, String> labels);
 
     Pod runToCompletion(Pod pod);
 

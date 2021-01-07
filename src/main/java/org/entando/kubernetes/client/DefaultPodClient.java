@@ -94,8 +94,8 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
-    public Pod loadPod(String namespace, String labelName, String labelValue) {
-        return client.pods().inNamespace(namespace).withLabel(labelName, labelValue).list().getItems().stream().findFirst().orElse(null);
+    public Pod loadPod(String namespace, Map<String, String> labels) {
+        return client.pods().inNamespace(namespace).withLabels(labels).list().getItems().stream().findFirst().orElse(null);
     }
 
     /**

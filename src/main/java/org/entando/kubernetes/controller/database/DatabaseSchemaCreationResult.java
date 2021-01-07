@@ -49,7 +49,7 @@ public class DatabaseSchemaCreationResult extends AbstractServiceResult {
     }
 
     public String getDatabase() {
-        if (getVendor().schemaIsDatabase()) {
+        if (getVendor().getVendorConfig().schemaIsDatabase()) {
             return getSchemaName();
         } else {
             return this.databaseServiceResult.getDatabaseName();

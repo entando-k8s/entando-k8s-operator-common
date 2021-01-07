@@ -120,9 +120,10 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
-    public Pod loadPod(String namespace, String labelName, String labelValue) {
+    public Pod loadPod(String namespace, Map<String, String> labels) {
         return getNamespace(namespace).getPods().values().stream()
-                .filter(pod -> labelValue.equals(pod.getMetadata().getLabels().get(labelName))).findFirst().orElse(null);
+                .filter(pod -> labels.entrySet().stream().allMatch(stringStringEntry -> stringStringEntry.getValue()
+                        .equals(pod.getMetadata().getLabels().get(stringStringEntry.getKey())))).findFirst().orElse(null);
     }
 
     @Override
