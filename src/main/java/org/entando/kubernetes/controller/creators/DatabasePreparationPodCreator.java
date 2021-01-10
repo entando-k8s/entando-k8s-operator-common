@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.entando.kubernetes.controller.EntandoControllerException;
 import org.entando.kubernetes.controller.EntandoImageResolver;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -47,8 +48,14 @@ import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<T> {
 
+    /**
+     * String used to distinguish resources in special cases like name shortening.
+     */
+    private final String resourceNameDiscriminator;
+
     public DatabasePreparationPodCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         super(entandoCustomResource);
+        this.resourceNameDiscriminator = RandomStringUtils.randomNumeric(3);    //NOSONAR
     }
 
     public Pod runToCompletion(SimpleK8SClient<?> client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
@@ -125,11 +132,13 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
         return result;
     }
 
-    private String getSchemaName(DatabaseServiceResult databaseDeployment, String nameQualifier) {
+    private String getSchemaName(DatabaseServiceResult databaseDeployment, String nameQualifier, String discriminator) {
         String schemaName = KubeUtils.snakeCaseOf(entandoCustomResource.getMetadata().getName()) + "_" + nameQualifier;
         if (schemaName.length() > databaseDeployment.getVendor().getVendorConfig().getMaxNameLength()) {
-            schemaName = schemaName.substring(0, databaseDeployment.getVendor().getVendorConfig().getMaxNameLength() - 3)
-                    + RandomStringUtils.randomNumeric(3);
+            if (discriminator == null) {
+                throw new EntandoControllerException("Null discriminator detected while shortening the schema name");
+            }
+            schemaName = schemaName.substring(0, databaseDeployment.getVendor().getVendorConfig().getMaxNameLength() - 3) + discriminator;
         }
         return schemaName;
     }
@@ -139,14 +148,18 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
     }
 
     private DatabaseSchemaCreationResult createSchemaResult(DatabaseServiceResult databaseDeployment, String nameQualifier) {
-        return new DatabaseSchemaCreationResult(databaseDeployment, getSchemaName(databaseDeployment, nameQualifier),
+        return new DatabaseSchemaCreationResult(
+                databaseDeployment,
+                getSchemaName(databaseDeployment, nameQualifier, resourceNameDiscriminator),
                 getSchemaSecretName(nameQualifier));
     }
 
     private void createSchemaSecret(SecretClient secretClient, DatabaseServiceResult databaseDeployment, String nameQualifier) {
         secretClient.createSecretIfAbsent(entandoCustomResource,
-                KubeUtils.generateSecret(entandoCustomResource, getSchemaSecretName(nameQualifier),
-                        getSchemaName(databaseDeployment, nameQualifier)));
+                KubeUtils.generateSecret(
+                        entandoCustomResource,
+                        getSchemaSecretName(nameQualifier),
+                        getSchemaName(databaseDeployment, nameQualifier, resourceNameDiscriminator)));
     }
 
     private Container buildContainerToCreateSchema(EntandoImageResolver entandoImageResolver,
