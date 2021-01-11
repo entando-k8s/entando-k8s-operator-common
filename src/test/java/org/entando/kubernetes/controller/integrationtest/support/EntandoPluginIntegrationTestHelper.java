@@ -63,8 +63,7 @@ public class EntandoPluginIntegrationTestHelper extends
                     TEST_PLUGIN_NAMESPACE, plugin.getMetadata().getName() + "-db");
         }
 
-        waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), TEST_PLUGIN_NAMESPACE,
-                plugin.getMetadata().getName() + "-server-db-job");
+        waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), plugin, "server");
         waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240)),
                 TEST_PLUGIN_NAMESPACE, plugin.getMetadata().getName() + "-server");
         Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getOperations()

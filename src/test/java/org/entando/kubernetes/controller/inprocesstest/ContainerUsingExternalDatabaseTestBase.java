@@ -40,6 +40,7 @@ import org.entando.kubernetes.controller.common.examples.springboot.SpringBootDe
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
@@ -56,7 +57,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior,
-        VariableReferenceAssertions {
+        VariableReferenceAssertions, CommonLabels {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
@@ -153,9 +154,8 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         new Thread(() -> {
             try {
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-                String dbJobName ="server-db-preparation-job";
                 Pod dbPreparationPod = getClient().pods()
-                        .loadPod(resource.getMetadata().getNamespace(), KubeUtils.DB_JOB_LABEL_NAME, dbJobName);
+                        .loadPod(resource.getMetadata().getNamespace(),dbPreparationJobLabels(resource, "server"));
                 getClient().pods().getPodWatcherHolder().getAndSet(null)
                         .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);

@@ -102,8 +102,7 @@ public class KeycloakIntegrationTestHelper extends
                 waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
                         KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db");
             }
-            this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
-                    KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server-db-job");
+            this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)), keycloakServer, "server");
         }
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(270 + waitOffset)),
                 KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server");

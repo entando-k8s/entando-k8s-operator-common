@@ -70,6 +70,7 @@ import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoRe
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.Deployable;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
@@ -88,7 +89,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
+class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, CommonLabels {
 
     private static final String MY_APP_ADMIN_SECRET = MY_APP + "-admin-secret";
     private static final String MY_APP_SERVER = MY_APP + "-server";
@@ -276,9 +277,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         //When the DeployCommand processes the addition request
         sampleController.onStartup(new StartupEvent());
         // A DB preparation Pod is created with labels linking it to the EntandoApp
-        LabeledArgumentCaptor<Pod> podCaptor = forResourceWithLabel(Pod.class, ENTANDO_APP_LABEL_NAME, MY_APP)
-                //And the fact that it is a DB JOB
-                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-server-db-job");
+        LabeledArgumentCaptor<Pod> podCaptor = forResourceWithLabels(Pod.class, dbPreparationJobLabels(newEntandoApp, "server"));
         verify(client.pods()).runToCompletion(podCaptor.capture());
         Pod theDbJobPod = podCaptor.getValue();
         //With exactly 1 container

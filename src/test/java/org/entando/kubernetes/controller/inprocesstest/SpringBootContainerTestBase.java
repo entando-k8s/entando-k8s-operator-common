@@ -38,6 +38,7 @@ import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
@@ -52,7 +53,8 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("java:S5786")
-public abstract class SpringBootContainerTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior, VariableReferenceAssertions {
+public abstract class SpringBootContainerTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior, VariableReferenceAssertions,
+        CommonLabels {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
@@ -138,9 +140,8 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
                 getClient().pods().getPodWatcherHolder().getAndSet(null)
                         .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-                String dbJobName = String.format("%s-server-db-job", resource.getMetadata().getName());
                 Pod dbPreparationPod = getClient().pods()
-                        .loadPod(resource.getMetadata().getNamespace(), KubeUtils.DB_JOB_LABEL_NAME, dbJobName);
+                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
                 getClient().pods().getPodWatcherHolder().getAndSet(null)
                         .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);

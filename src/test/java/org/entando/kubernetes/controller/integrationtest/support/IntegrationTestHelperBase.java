@@ -96,8 +96,7 @@ public class IntegrationTestHelperBase<
         return domainSuffix;
     }
 
-    @SuppressWarnings("unchecked")
-    public <S extends EntandoDeploymentSpec> JobPodWaiter waitForJobPod(JobPodWaiter mutex, EntandoBaseCustomResource<S> resource, String deploymentQualifier) {
+    public <S extends EntandoDeploymentSpec> JobPodWaiter waitForDbJobPod(JobPodWaiter mutex, EntandoBaseCustomResource<S> resource, String deploymentQualifier) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
                 () -> client.pods().inNamespace(resource.getMetadata().getNamespace()).withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems()
                         .size() > 0);
@@ -107,7 +106,6 @@ public class IntegrationTestHelperBase<
         return mutex;
     }
 
-    @SuppressWarnings("unchecked")
     public ServicePodWaiter waitForServicePod(ServicePodWaiter mutex, String namespace, String deploymentName) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
                 () -> client.pods().inNamespace(namespace).withLabel(IngressingDeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()

@@ -81,7 +81,6 @@ public enum DbmsVendorConfig {
         this.hibernateDialect = hibernateDialect;
         this.defaultUser = user;
         this.healthCheck = healthCheck;
-        this.maxNameLength = maxNameLength;
     }
 
     DbmsVendorConfig(String hibernateDialect, int port, String user, String password, int maxNameLength, boolean shemaIsDatabase) {

@@ -47,6 +47,7 @@ import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoRe
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.controller.spi.Deployable;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.app.EntandoApp;
@@ -66,7 +67,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals {
+class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals, CommonLabels {
 
     public static final String MY_APP_SERVER_DEPLOYMENT = MY_APP + "-server-deployment";
     private static final String MY_APP_DB_SECRET = MY_APP + "-db-secret";
@@ -131,8 +132,7 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
                 MY_APP_SERVER_DEPLOYMENT);
         verify(client.deployments()).createOrPatchDeployment(eq(entandoApp), keyclaokDeploymentCaptor.capture());
         //Then a pod was created for an Entandoapp using the credentials and connection settings of the EntandoDatabaseService
-        LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabel(Pod.class, ENTANDO_APP_LABEL_NAME, MY_APP)
-                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-server-db-job");
+        LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabels(Pod.class, dbPreparationJobLabels(entandoApp, "server"));
         verify(client.pods()).runToCompletion(keycloakSchemaJobCaptor.capture());
         Pod keycloakDbJob = keycloakSchemaJobCaptor.getValue();
         Container theInitContainer = theInitContainerNamed(MY_APP + "-db-schema-creation-job").on(keycloakDbJob);
