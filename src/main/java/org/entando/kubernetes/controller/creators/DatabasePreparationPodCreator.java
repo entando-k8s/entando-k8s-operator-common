@@ -47,8 +47,14 @@ import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<T> {
 
+    /**
+     * String used to distinguish resources in special cases like name shortening.
+     */
+    private final String resourceNameDiscriminator;
+
     public DatabasePreparationPodCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         super(entandoCustomResource);
+        this.resourceNameDiscriminator = RandomStringUtils.randomNumeric(3);    //NOSONAR
     }
 
     public Pod runToCompletion(SimpleK8SClient<?> client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
@@ -124,7 +130,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
         String schemaName = KubeUtils.snakeCaseOf(entandoCustomResource.getMetadata().getName()) + "_" + nameQualifier;
         if (schemaName.length() > databaseDeployment.getVendor().getVendorConfig().getMaxNameLength()) {
             schemaName = schemaName.substring(0, databaseDeployment.getVendor().getVendorConfig().getMaxNameLength() - 3)
-                    + RandomStringUtils.randomNumeric(3);
+                    + resourceNameDiscriminator;
         }
         return schemaName;
     }
