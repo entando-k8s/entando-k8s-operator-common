@@ -210,11 +210,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase) {
-        getOperations(customResource.getClass())
+    public <T extends EntandoCustomResource>  void updatePhase(T customResource, EntandoDeploymentPhase phase) {
+        customResource.getStatus().setEntandoDeploymentPhase(phase);
+        getOperations((Class<T>)customResource.getClass())
                 .inNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())
-                .edit().withPhase(phase).done();
+                .updateStatus(customResource);
 
     }
 

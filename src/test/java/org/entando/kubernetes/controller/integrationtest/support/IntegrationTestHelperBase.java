@@ -96,11 +96,14 @@ public class IntegrationTestHelperBase<
         return domainSuffix;
     }
 
-    public <S extends EntandoDeploymentSpec> JobPodWaiter waitForDbJobPod(JobPodWaiter mutex, EntandoBaseCustomResource<S> resource, String deploymentQualifier) {
+    public <S extends EntandoDeploymentSpec> JobPodWaiter waitForDbJobPod(JobPodWaiter mutex, EntandoBaseCustomResource<S> resource,
+            String deploymentQualifier) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
-                () -> client.pods().inNamespace(resource.getMetadata().getNamespace()).withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems()
+                () -> client.pods().inNamespace(resource.getMetadata().getNamespace())
+                        .withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems()
                         .size() > 0);
-        Pod pod = client.pods().inNamespace(resource.getMetadata().getNamespace()).withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems().get(0);
+        Pod pod = client.pods().inNamespace(resource.getMetadata().getNamespace())
+                .withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems().get(0);
         mutex.throwException(IllegalStateException.class)
                 .waitOn(client.pods().inNamespace(resource.getMetadata().getNamespace()).withName(pod.getMetadata().getName()));
         return mutex;

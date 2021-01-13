@@ -157,7 +157,7 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static EntandoOperatorComplianceMode getComplianceMode() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE)
-                .map(s -> EntandoOperatorComplianceMode.valueOf(s.toLowerCase(
+                .map(s -> EntandoOperatorComplianceMode.valueOf(s.toUpperCase(
                         Locale.getDefault()))).orElse(EntandoOperatorComplianceMode.COMMUNITY);
     }
 

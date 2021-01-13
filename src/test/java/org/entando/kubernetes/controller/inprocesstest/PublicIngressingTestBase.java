@@ -231,7 +231,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 //wait for db preparation pod
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
                 Pod dbPreparationPod = getClient().pods()
-                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels( resource, "server"));
+                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
                 getClient().pods().getPodWatcherHolder().getAndSet(null)
                         .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
