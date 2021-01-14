@@ -186,7 +186,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         getOperations((Class<T>) customResource.getClass())
                 .inNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())
-                .updateStatus(customResource);
+                .updateStatus(latest);
     }
 
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
