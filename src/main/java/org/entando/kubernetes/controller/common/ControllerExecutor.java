@@ -32,6 +32,7 @@ import io.fabric8.kubernetes.client.Watcher.Action;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -171,6 +172,15 @@ public class ControllerExecutor {
             //TODO no need to propagate the Tls certs.
             result.add(new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), ETC_ENTANDO_TLS, null));
         }
+        System.getProperties().entrySet().stream()
+                .filter(objectObjectEntry -> objectObjectEntry.getKey().toString().toLowerCase(Locale.ROOT).replaceAll("_", ".")
+                        .startsWith("related.image")).forEach(objectObjectEntry -> result
+                .add(new EnvVar(objectObjectEntry.getKey().toString().toUpperCase(Locale.ROOT).replaceAll(".", "_"),
+                        objectObjectEntry.getValue().toString(), null)));
+        System.getenv().entrySet().stream()
+                .filter(objectObjectEntry -> objectObjectEntry.getKey().startsWith("RELATED_IMAGE")).forEach(objectObjectEntry -> result
+                .add(new EnvVar(objectObjectEntry.getKey(),
+                        objectObjectEntry.getValue(), null)));
         return result;
     }
 
