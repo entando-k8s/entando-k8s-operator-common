@@ -179,7 +179,10 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     @Override
     @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> void updateStatus(T customResource, AbstractServerStatus status) {
-        customResource.getStatus().putServerStatus(status);
+        T latest = getOperations((Class<T>) customResource.getClass())
+                .inNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName()).get();
+        latest.getStatus().putServerStatus(status);
         getOperations((Class<T>) customResource.getClass())
                 .inNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())
@@ -210,9 +213,9 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <T extends EntandoCustomResource>  void updatePhase(T customResource, EntandoDeploymentPhase phase) {
+    public <T extends EntandoCustomResource> void updatePhase(T customResource, EntandoDeploymentPhase phase) {
         customResource.getStatus().setEntandoDeploymentPhase(phase);
-        getOperations((Class<T>)customResource.getClass())
+        getOperations((Class<T>) customResource.getClass())
                 .inNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())
                 .updateStatus(customResource);

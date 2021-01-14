@@ -110,7 +110,6 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                 .withNewKeycloakToUse().withRealm(KeycloakIntegrationTestHelper.KEYCLOAK_REALM).endKeycloakToUse()
                 .withDbms(dbmsVendor)
                 .endSpec().build();
-        SampleWriter.writeSample(entandoPlugin, "keycloak-with-embedded-postgresql-db");
         helper.entandoPlugins()
                 .listenAndRespondWithStartupEvent(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE, controller::onStartup);
         helper.entandoPlugins().createAndWaitForPlugin(entandoPlugin, true);
