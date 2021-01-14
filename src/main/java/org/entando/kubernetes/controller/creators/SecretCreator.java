@@ -76,8 +76,16 @@ public class SecretCreator<T extends EntandoDeploymentSpec> extends AbstractK8SR
         }
         EntandoOperatorConfig.getImagePullSecrets().forEach(s -> ofNullable(client.loadControllerSecret(s))
                 .ifPresent(secret -> client.createSecretIfAbsent(entandoCustomResource,
-                        new SecretBuilder(secret).editMetadata()
-                                .withNamespace(entandoCustomResource.getMetadata().getNamespace()).endMetadata().build())));
+                        new SecretBuilder()
+                                .withNewMetadata()
+                                .withName(secret.getMetadata().getName())
+                                .withNamespace(entandoCustomResource.getMetadata().getNamespace())
+                                .withLabels(secret.getMetadata().getLabels())
+                                .withAnnotations(secret.getMetadata().getAnnotations())
+                                .endMetadata()
+                                .withType(secret.getType())
+                                .withData(secret.getData())
+                                .build())));
     }
 
     private void createIngressTlsSecret(SecretClient client) {
