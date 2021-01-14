@@ -59,6 +59,11 @@ public class DatabaseContainer implements ServiceBackingContainer, PersistentVol
     }
 
     @Override
+    public int getMemoryLimitMebibytes() {
+        return dbmsVendorDockerStrategy.getDefaultMemoryLimitMebibytes();
+    }
+
+    @Override
     public String getVolumeMountPath() {
         return dbmsVendorDockerStrategy.getVolumeMountPath();
     }

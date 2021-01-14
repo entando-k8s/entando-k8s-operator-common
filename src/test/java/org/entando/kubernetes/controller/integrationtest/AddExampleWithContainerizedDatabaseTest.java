@@ -28,6 +28,9 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+import org.entando.kubernetes.controller.EntandoOperatorComplianceMode;
+import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.common.examples.SampleController;
@@ -41,7 +44,6 @@ import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrati
 import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.K8SIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
-import org.entando.kubernetes.controller.integrationtest.support.SampleWriter;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixtureRequest;
 import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
@@ -56,7 +58,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 @Tags({@Tag("inter-process"), @Tag("pre-deployment"), @Tag("component")})
 class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTesting, InProcessTestUtil {
@@ -94,13 +97,15 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         helper.releaseAllFinalizers();
         helper.afterTest();
         helper.keycloak().deleteDefaultKeycloakAdminSecret();
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"postgresql", "mysql"})
-    void create(String vendorName) {
+    @MethodSource("provideStringsForIsBlank")
+    void create(DbmsVendor dbmsVendor, EntandoOperatorComplianceMode complianceMode) {
         //When I create a EntandoPlugin and I specify it to use PostgreSQL
-        DbmsVendor dbmsVendor = DbmsVendor.valueOf(vendorName.toUpperCase());
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
+                complianceMode.name());
         EntandoPlugin entandoPlugin = new EntandoPluginBuilder().withNewMetadata()
                 .withName(TEST_PLUGIN_NAME)
                 .withNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
@@ -116,6 +121,15 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         //Then I expect to see
         verifyDatabaseDeployment(dbmsVendor);
         verifyPluginDeployment();
+    }
+
+    private static Stream<Arguments> provideStringsForIsBlank() {
+        return Stream.of(
+                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.COMMUNITY),
+                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.REDHAT),
+                Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.COMMUNITY),
+                Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.REDHAT)
+        );
     }
 
     private void verifyDatabaseDeployment(DbmsVendor dbmsVendor) {

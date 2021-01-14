@@ -23,30 +23,34 @@ import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
 
 public enum DbmsDockerVendorStrategy {
-    CENTOS_MYSQL(DbmsVendorConfig.MYSQL, KubeUtils.DOCKER_IO, "centos", "mysql-80-centos7", "/var/lib/mysql/data", 27L),
-    CENTOS_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, KubeUtils.DOCKER_IO, "centos", "postgresql-12-centos7", "/var/lib/pgsql/data", 26L),
-    RHEL_MYSQL(DbmsVendorConfig.MYSQL, KubeUtils.REGISTRY_REDHAT_IO, "rhel8", "mysql-80", "/var/lib/mysql/data", 27L),
-    RHEL_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, KubeUtils.REGISTRY_REDHAT_IO, "rhel8", "postgresql-12", "/var/lib/pgsql/data", 26L),
-    ORACLE(DbmsVendorConfig.ORACLE, KubeUtils.DOCKER_IO, "store/oracle", "database-enterprise:12.2.0.1", "/ORCL", null);
+    CENTOS_MYSQL(DbmsVendorConfig.MYSQL, KubeUtils.DOCKER_IO, "centos", "mysql-80-centos7", "/var/lib/mysql/data", 27L, 512),
+    CENTOS_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, KubeUtils.DOCKER_IO, "centos", "postgresql-12-centos7", "/var/lib/pgsql/data", 26L, 256),
+    RHEL_MYSQL(DbmsVendorConfig.MYSQL, KubeUtils.REGISTRY_REDHAT_IO, "rhel8", "mysql-80", "/var/lib/mysql/data", 27L, 512),
+    RHEL_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, KubeUtils.REGISTRY_REDHAT_IO, "rhel8", "postgresql-12", "/var/lib/pgsql/data", 26L, 256),
+    ORACLE(DbmsVendorConfig.ORACLE, KubeUtils.DOCKER_IO, "store/oracle", "database-enterprise:12.2.0.1", "/ORCL", null, 4096);
 
-    public static final String DATABASE_IDENTIFIER_TYPE = "databaseIdentifierType";
-    public static final String TABLESPACE_PARAMETER_NAME = "tablespace";
-    private String imageRepository;
-    private String organization;
-    private String registry;
-    private String volumeMountPath;
-    private DbmsVendorConfig vendorConfig;
-    private Long fsUserGroupId;
+    private final String imageRepository;
+    private final String organization;
+    private final String registry;
+    private final String volumeMountPath;
+    private final DbmsVendorConfig vendorConfig;
+    private final Long fsUserGroupId;
+    private final Integer defaultMemoryLimit;
 
-    DbmsDockerVendorStrategy(DbmsVendorConfig vendorConfig, String registry, String organization, String imageRepository,
+    DbmsDockerVendorStrategy(DbmsVendorConfig vendorConfig,
+            String registry,
+            String organization,
+            String imageRepository,
             String volumeMountPath,
-            Long fsUserGroupId) {
+            Long fsUserGroupId,
+            Integer defaultMemoryLimit) {
         this.registry = registry;
         this.organization = organization;
         this.imageRepository = imageRepository;
         this.volumeMountPath = volumeMountPath;
         this.vendorConfig = vendorConfig;
         this.fsUserGroupId = fsUserGroupId;
+        this.defaultMemoryLimit = defaultMemoryLimit;
     }
 
     public Optional<Long> getFileSystemUserGroupid() {
@@ -85,12 +89,12 @@ public enum DbmsDockerVendorStrategy {
         return this.volumeMountPath;
     }
 
-    public String toValue() {
+    public String getName() {
         return this.name().toLowerCase(Locale.getDefault());
     }
 
-    public String getName() {
-        return this.name().toLowerCase(Locale.getDefault());
+    public Integer getDefaultMemoryLimitMebibytes() {
+        return defaultMemoryLimit;
     }
 
     public String getDefaultAdminUsername() {
