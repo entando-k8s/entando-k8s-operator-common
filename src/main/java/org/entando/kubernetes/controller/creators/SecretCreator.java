@@ -85,6 +85,7 @@ public class SecretCreator<T extends EntandoDeploymentSpec> extends AbstractK8SR
                                 .endMetadata()
                                 .withType(secret.getType())
                                 .withData(secret.getData())
+                                .withStringData(secret.getStringData())
                                 .build())));
     }
 

@@ -154,8 +154,10 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         new Thread(() -> {
             try {
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                await().atMost(20, TimeUnit.SECONDS).until(() -> getClient().pods()
+                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server")) != null);
                 Pod dbPreparationPod = getClient().pods()
-                        .loadPod(resource.getMetadata().getNamespace(),dbPreparationJobLabels(resource, "server"));
+                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
                 getClient().pods().getPodWatcherHolder().getAndSet(null)
                         .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
                 await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
