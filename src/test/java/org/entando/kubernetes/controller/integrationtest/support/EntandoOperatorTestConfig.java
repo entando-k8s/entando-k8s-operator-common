@@ -43,6 +43,7 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
     private static final String ENTANDO_TEST_KEYCLOAK_ADMIN_USER = "entando.test.keycloak.admin.user";
     private static final String ENTANDO_TEST_KEYCLOAK_ADMIN_PASSWORD = "entando.test.keycloak.admin.password";
     private static final String ENTANDO_TEST_KEYCLOAK_BASE_URL = "entando.test.keycloak.base.url";
+    private static final String ENTANDO_TEST_REDHAT_REGISTRY_CREDENTIALS = "entando.test.redhat.registry.credentials";
 
     private EntandoOperatorTestConfig() {
     }
@@ -129,6 +130,10 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
     public static String getKeycloakBaseUrl() {
         return lookupProperty(ENTANDO_TEST_KEYCLOAK_BASE_URL)
                 .orElseThrow(() -> new IllegalStateException("No test Keycloak baseUrl configured"));
+    }
+
+    public static Optional<String> getRedhatRegistryCredentials() {
+        return lookupProperty(ENTANDO_TEST_REDHAT_REGISTRY_CREDENTIALS);
     }
 
     public enum TestTarget {

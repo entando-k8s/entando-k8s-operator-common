@@ -120,5 +120,12 @@ public final class TestFixturePreparation {
         client.namespaces().createNew().withNewMetadata().withName(namespace)
                 .addToLabels("testType", "end-to-end")
                 .endMetadata().done();
+        if (client.secrets().inNamespace(namespace).withName("redhat-registry").get() == null) {
+            EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s ->
+                    client.secrets().inNamespace(namespace).createNew().editMetadata().withName("redhat-registry").endMetadata()
+                            .addToData(".dockerconfigjson", s)
+                            .withType("kubernetes.io/dockerconfigjson")
+                            .done());
+        }
     }
 }

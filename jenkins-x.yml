@@ -9,3 +9,8 @@ pipelineConfig:
       value: "entando-docker-image-info-v6.1"
     - name: ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS
       value: redhat-registry
+    - name: ENTANDO_TEST_REDHAT_REGISTRY_CREDENTIALS
+      valueFrom:
+        secretKeyRef:
+          key: redhat.registry.credentials
+          name: entando-jx-common-secret
