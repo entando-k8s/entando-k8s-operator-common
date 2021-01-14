@@ -87,7 +87,19 @@ public final class TestFixturePreparation {
         }
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE.getJvmSystemProperty(),
                 ENTANDO_CONTROLLERS_NAMESPACE);
+        ensureRedHatRegistryCredentials(result);
         return result;
+    }
+
+    private static void ensureRedHatRegistryCredentials(AutoAdaptableKubernetesClient result) {
+        if (result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).withName("redhat-registry").get() == null) {
+            EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s ->
+                    result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).createNew().editMetadata().withName("redhat-registry")
+                            .endMetadata()
+                            .addToData(".dockerconfigjson", s)
+                            .withType("kubernetes.io/dockerconfigjson")
+                            .done());
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -120,12 +132,5 @@ public final class TestFixturePreparation {
         client.namespaces().createNew().withNewMetadata().withName(namespace)
                 .addToLabels("testType", "end-to-end")
                 .endMetadata().done();
-        if (client.secrets().inNamespace(namespace).withName("redhat-registry").get() == null) {
-            EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s ->
-                    client.secrets().inNamespace(namespace).createNew().editMetadata().withName("redhat-registry").endMetadata()
-                            .addToData(".dockerconfigjson", s)
-                            .withType("kubernetes.io/dockerconfigjson")
-                            .done());
-        }
     }
 }
