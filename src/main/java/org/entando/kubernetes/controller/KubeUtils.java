@@ -61,6 +61,8 @@ public final class KubeUtils {
     public static final String JOB_KIND_DB_PREPARATION = "db-preparation-job";
 
     private static final Logger LOGGER = Logger.getLogger(KubeUtils.class.getName());
+    public static final String DOCKER_IO = "docker.io";
+    public static final String REGISTRY_REDHAT_IO = "registry.redhat.io";
 
     private KubeUtils() {
     }

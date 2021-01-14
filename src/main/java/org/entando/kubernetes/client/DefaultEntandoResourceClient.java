@@ -33,6 +33,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
@@ -177,16 +178,13 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> void updateStatus(T customResource, AbstractServerStatus status) {
-        T latest = getOperations((Class<T>) customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName()).get();
-        latest.getStatus().putServerStatus(status);
-        getOperations((Class<T>) customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .updateStatus(latest);
+        performStatusUpdate(customResource, t -> t.getStatus().putServerStatus(status));
+    }
+
+    @Override
+    public <T extends EntandoCustomResource> void updatePhase(T customResource, EntandoDeploymentPhase phase) {
+        performStatusUpdate(customResource, t -> t.getStatus().setEntandoDeploymentPhase(phase));
     }
 
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
@@ -210,16 +208,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     private <T extends EntandoCustomResource, D extends DoneableEntandoCustomResource<D, T>> CustomResourceOperationsImpl<T,
             CustomResourceList<T>, D> getOperations(Class<T> c) {
         return entandoResourceRegistry.getOperations(c);
-    }
-
-    @Override
-    public <T extends EntandoCustomResource> void updatePhase(T customResource, EntandoDeploymentPhase phase) {
-        customResource.getStatus().setEntandoDeploymentPhase(phase);
-        getOperations((Class<T>) customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .updateStatus(customResource);
-
     }
 
     @Override
@@ -254,6 +242,17 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     protected Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {
         return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name)
                 .get();
+    }
+    @SuppressWarnings("unchecked")
+    private <T extends EntandoCustomResource> void performStatusUpdate(T customResource, Consumer<T> consumer) {
+        T latest = getOperations((Class<T>) customResource.getClass())
+                .inNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName()).get();
+        consumer.accept(latest);
+        getOperations((Class<T>) customResource.getClass())
+                .inNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName())
+                .updateStatus(latest);
     }
 
 }

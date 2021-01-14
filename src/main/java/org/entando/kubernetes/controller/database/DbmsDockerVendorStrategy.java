@@ -19,14 +19,15 @@ package org.entando.kubernetes.controller.database;
 import java.util.Locale;
 import java.util.Optional;
 import org.entando.kubernetes.controller.EntandoOperatorComplianceMode;
+import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
 
 public enum DbmsDockerVendorStrategy {
-    CENTOS_MYSQL(DbmsVendorConfig.MYSQL, "docker.io", "centos", "mysql-80-centos7", "/var/lib/mysql/data", 27L),
-    CENTOS_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, "docker.io", "centos", "postgresql-12-centos7", "/var/lib/pgsql/data", 26L),
-    RHEL_MYSQL(DbmsVendorConfig.MYSQL, "registry.redhat.io", "rhel8", "mysql-80", "/var/lib/mysql/data", 27L),
-    RHEL_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, "registry.redhat.io", "rhel8", "postgresql-12", "/var/lib/pgsql/data", 26L),
-    ORACLE(DbmsVendorConfig.ORACLE, "docker.io", "store/oracle", "database-enterprise:12.2.0.1", "/ORCL", null);
+    CENTOS_MYSQL(DbmsVendorConfig.MYSQL, KubeUtils.DOCKER_IO, "centos", "mysql-80-centos7", "/var/lib/mysql/data", 27L),
+    CENTOS_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, KubeUtils.DOCKER_IO, "centos", "postgresql-12-centos7", "/var/lib/pgsql/data", 26L),
+    RHEL_MYSQL(DbmsVendorConfig.MYSQL, KubeUtils.REGISTRY_REDHAT_IO, "rhel8", "mysql-80", "/var/lib/mysql/data", 27L),
+    RHEL_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, KubeUtils.REGISTRY_REDHAT_IO, "rhel8", "postgresql-12", "/var/lib/pgsql/data", 26L),
+    ORACLE(DbmsVendorConfig.ORACLE, KubeUtils.DOCKER_IO, "store/oracle", "database-enterprise:12.2.0.1", "/ORCL", null);
 
     public static final String DATABASE_IDENTIFIER_TYPE = "databaseIdentifierType";
     public static final String TABLESPACE_PARAMETER_NAME = "tablespace";

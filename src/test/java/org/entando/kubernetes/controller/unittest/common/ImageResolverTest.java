@@ -238,8 +238,11 @@ class ImageResolverTest {
     @ParameterizedTest
     @ValueSource(strings = {"docker.io:50:50/library/mysql", "docker.io:50/library/mysql:5:3", "docker.io:50/lib/ra/ry/mysql"})
     void testInvalidImageUris(String invalidImageUri) {
+        EntandoImageResolver imageResolver = new EntandoImageResolver(null);
         assertThrows(IllegalArgumentException.class, () ->
-                new EntandoImageResolver(null).determineImageUri(invalidImageUri)
+                {
+                    imageResolver.determineImageUri(invalidImageUri);
+                }
         );
     }
 }
