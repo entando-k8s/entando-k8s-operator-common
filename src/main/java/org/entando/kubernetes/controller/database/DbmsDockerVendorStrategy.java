@@ -94,7 +94,7 @@ public enum DbmsDockerVendorStrategy {
     }
 
     public String getDefaultAdminUsername() {
-        return this.vendorConfig.getDefaultUser();
+        return this.vendorConfig.getDefaultAdminUsername();
     }
 
     public String getHibernateDialect() {

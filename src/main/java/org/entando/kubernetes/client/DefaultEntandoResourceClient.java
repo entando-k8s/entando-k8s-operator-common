@@ -243,6 +243,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name)
                 .get();
     }
+
     @SuppressWarnings("unchecked")
     private <T extends EntandoCustomResource> void performStatusUpdate(T customResource, Consumer<T> consumer) {
         T latest = getOperations((Class<T>) customResource.getClass())

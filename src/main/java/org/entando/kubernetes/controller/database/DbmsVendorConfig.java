@@ -48,7 +48,7 @@ public enum DbmsVendorConfig {
             };
         }
     },
-    DERBY("org.hibernate.dialect.DerbyDialect", "agile", "agile") {
+    DERBY("org.hibernate.dialect.DerbyDialect", "agile") {
         @Override
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
@@ -58,7 +58,7 @@ public enum DbmsVendorConfig {
             };
         }
     },
-    H2("org.hibernate.dialect.H2Dialect", "sa", "") {
+    H2("org.hibernate.dialect.H2Dialect", "sa") {
         @Override
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
@@ -69,31 +69,29 @@ public enum DbmsVendorConfig {
         }
     };
 
+    private final String hibernateDialect;
+    private final String defaultUser;
     private int defaultPort;
-    private String defaultUser;
-    private String defaultPassword;
-    private boolean shemaIsDatabase;
+    private boolean schemaIsDatabase;
     private String healthCheck;
     private int maxNameLength;
-    private String hibernateDialect;
 
-    DbmsVendorConfig(String hibernateDialect, String user, String healthCheck) {
+    DbmsVendorConfig(String hibernateDialect, String user) {
         this.hibernateDialect = hibernateDialect;
         this.defaultUser = user;
-        this.healthCheck = healthCheck;
     }
 
-    DbmsVendorConfig(String hibernateDialect, int port, String user, String password, int maxNameLength, boolean shemaIsDatabase) {
+    DbmsVendorConfig(String hibernateDialect, int port, String user, String healthCheck, int maxNameLength, boolean schemaIsDatabase) {
         this.hibernateDialect = hibernateDialect;
         this.defaultUser = user;
         this.defaultPort = port;
-        this.defaultPassword = password;
+        this.healthCheck = healthCheck;
         this.maxNameLength = maxNameLength;
-        this.shemaIsDatabase = shemaIsDatabase;
+        this.schemaIsDatabase = schemaIsDatabase;
     }
 
     public boolean schemaIsDatabase() {
-        return this.shemaIsDatabase;
+        return this.schemaIsDatabase;
     }
 
     public int getMaxNameLength() {
@@ -106,12 +104,8 @@ public enum DbmsVendorConfig {
         return defaultPort;
     }
 
-    public String getDefaultUser() {
+    public String getDefaultAdminUsername() {
         return defaultUser;
-    }
-
-    public String getDefaultPassword() {
-        return defaultPassword;
     }
 
     public String getHealthCheck() {

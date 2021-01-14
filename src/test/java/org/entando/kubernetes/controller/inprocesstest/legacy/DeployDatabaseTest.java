@@ -197,7 +197,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         verify(client.deployments()).createOrPatchDeployment(eq(newEntandoApp), serverDeploymentCaptor.capture());
         Deployment serverDeployment = serverDeploymentCaptor.getValue();
         String database = theVariableNamed("DB_DATABASE").on(thePrimaryContainerOn(serverDeployment));
-        assertThat(database.length(),is(32));
+        assertThat(database.length(), is(32));
         //Exposing a port 3306
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(3306));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));
@@ -224,7 +224,8 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         verify(client.secrets()).createSecretIfAbsent(eq(newEntandoApp), dbSecretCaptor.capture());
         Secret keycloakDbSecret = dbSecretCaptor.getValue();
         assertThat(keycloakDbSecret.getStringData().get(KubeUtils.USERNAME_KEY).length(), is(32));
-
+        assertThat(thePrimaryContainerOn(dbDeployment).getReadinessProbe().getExec().getCommand().get(3),
+                is("MYSQL_PWD=${MYSQL_ROOT_PASSWORD} mysql -h 127.0.0.1 -u root -e 'SELECT 1'"));
     }
 
     @Test
@@ -267,6 +268,8 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
                 .updateStatus(eq(newEntandoApp), argThat(matchesDeploymentStatus(dbDeploymentStatus)));
         //And all volumes have been mapped
         verifyThatAllVolumesAreMapped(newEntandoApp, client, dbDeployment);
+        assertThat(thePrimaryContainerOn(dbDeployment).getReadinessProbe().getExec().getCommand().get(3), is("psql -h 127.0.0.1 -U "
+                + "${POSTGRESQL_USER} -q -d postgres -c '\\l'|grep ${POSTGRESQL_DATABASE}"));
     }
 
     @Test
