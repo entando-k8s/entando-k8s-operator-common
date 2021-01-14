@@ -17,12 +17,12 @@
 package org.entando.kubernetes.controller.creators;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.util.HashMap;
-import java.util.Optional;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.k8sclient.SecretClient;
@@ -74,9 +74,10 @@ public class SecretCreator<T extends EntandoDeploymentSpec> extends AbstractK8SR
                 createSecret(client, secret);
             }
         }
-        EntandoOperatorConfig.getImagePullSecrets().forEach(s -> client.createSecretIfAbsent(entandoCustomResource,
-                new SecretBuilder(client.loadControllerSecret(s)).editMetadata()
-                        .withNamespace(entandoCustomResource.getMetadata().getNamespace()).endMetadata().build()));
+        EntandoOperatorConfig.getImagePullSecrets().forEach(s -> ofNullable(client.loadControllerSecret(s))
+                .ifPresent(secret -> client.createSecretIfAbsent(entandoCustomResource,
+                        new SecretBuilder(secret).editMetadata()
+                                .withNamespace(entandoCustomResource.getMetadata().getNamespace()).endMetadata().build())));
     }
 
     private void createIngressTlsSecret(SecretClient client) {
@@ -120,7 +121,7 @@ public class SecretCreator<T extends EntandoDeploymentSpec> extends AbstractK8SR
 
     private void createSecret(SecretClient client, Secret secret) {
         ObjectMeta metadata = fromCustomResource(true, secret.getMetadata().getName());
-        Optional.ofNullable(secret.getMetadata().getLabels()).ifPresent(map -> metadata.getLabels().putAll(map));
+        ofNullable(secret.getMetadata().getLabels()).ifPresent(map -> metadata.getLabels().putAll(map));
         secret.setMetadata(metadata);
         client.createSecretIfAbsent(entandoCustomResource, secret);
     }
