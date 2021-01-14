@@ -94,7 +94,9 @@ public final class TestFixturePreparation {
     private static void ensureRedHatRegistryCredentials(AutoAdaptableKubernetesClient result) {
         if (result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).withName("redhat-registry").get() == null) {
             EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s ->
-                    result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).createNew().editMetadata().withName("redhat-registry")
+                    result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).createNew().withNewMetadata()
+                            .withNamespace(ENTANDO_CONTROLLERS_NAMESPACE)
+                            .withName("redhat-registry")
                             .endMetadata()
                             .addToData(".dockerconfigjson", s)
                             .withType("kubernetes.io/dockerconfigjson")

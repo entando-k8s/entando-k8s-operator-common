@@ -46,12 +46,22 @@ class SecretCreatorTest implements InProcessTestUtil {
             .editSpec()
             .endSpec()
             .build();
+    private String imagePullSecrets;
 
-    @AfterEach
     @BeforeEach
-    void cleanUp() {
+    void storeImagePullSecrets() {
+        this.imagePullSecrets = System
+                .getProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty());
         System.getProperties()
                 .remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty());
+    }
+
+    @AfterEach
+    void restoreImagePullSecrets() {
+        if (this.imagePullSecrets != null) {
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty(),
+                    imagePullSecrets);
+        }
     }
 
     @Test
