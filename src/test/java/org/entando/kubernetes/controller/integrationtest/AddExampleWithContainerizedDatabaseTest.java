@@ -98,6 +98,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         helper.afterTest();
         helper.keycloak().deleteDefaultKeycloakAdminSecret();
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty());
     }
 
     @ParameterizedTest
@@ -106,6 +107,8 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         //When I create a EntandoPlugin and I specify it to use PostgreSQL
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
                 complianceMode.name());
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty(),
+                "redhat-registry");
         EntandoPlugin entandoPlugin = new EntandoPluginBuilder().withNewMetadata()
                 .withName(TEST_PLUGIN_NAME)
                 .withNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)

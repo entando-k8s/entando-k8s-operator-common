@@ -98,7 +98,7 @@ public final class TestFixturePreparation {
                             .withNamespace(ENTANDO_CONTROLLERS_NAMESPACE)
                             .withName("redhat-registry")
                             .endMetadata()
-                            .addToData(".dockerconfigjson", s)
+                            .addToStringData(".dockerconfigjson", s)
                             .withType("kubernetes.io/dockerconfigjson")
                             .done());
         }

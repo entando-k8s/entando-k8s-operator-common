@@ -61,6 +61,8 @@ class ServiceAcountCreatorTest implements InProcessTestUtil {
     void cleanUp() {
         System.getProperties()
                 .remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty());
+        System.getProperties()
+                .remove(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty());
     }
 
     @Test
@@ -79,6 +81,8 @@ class ServiceAcountCreatorTest implements InProcessTestUtil {
 
     @Test
     void testStandardClusterRoles() {
+        System.getProperties()
+                .put(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty(), "*");
         //When the operator prepares the service account
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(entandoApp, null,
                 emulateKeycloakDeployment(client));
