@@ -72,7 +72,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 //in execute component test
-@Tags({@Tag("in-process"), @Tag("pre-deployment")})
+@Tags({@Tag("in-process"), @Tag("pre-deploymentt")})
 class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
 
     private static final String MY_APP_DB = MY_APP + "-db";
