@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -168,9 +167,9 @@ public class ControllerExecutor {
             result.add(new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), ETC_ENTANDO_TLS, null));
         }
         System.getProperties().entrySet().stream()
-                .filter(objectObjectEntry -> objectObjectEntry.getKey().toString().toLowerCase(Locale.ROOT).replaceAll("_", ".")
+                .filter(objectObjectEntry -> objectObjectEntry.getKey().toString().toLowerCase(Locale.ROOT).replace("_", ".")
                         .startsWith("related.image")).forEach(objectObjectEntry -> result
-                .add(new EnvVar(objectObjectEntry.getKey().toString().toUpperCase(Locale.ROOT).replaceAll(".", "_"),
+                .add(new EnvVar(objectObjectEntry.getKey().toString().toUpperCase(Locale.ROOT).replace(".", "_"),
                         objectObjectEntry.getValue().toString(), null)));
         System.getenv().entrySet().stream()
                 .filter(objectObjectEntry -> objectObjectEntry.getKey().startsWith("RELATED_IMAGE")).forEach(objectObjectEntry -> result

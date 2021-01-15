@@ -64,7 +64,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-@SuppressWarnings("java:S5786")
+@SuppressWarnings({"java:S6068", "java:S6073","java:S5786"})
 public abstract class PublicIngressingTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions,
         CommonLabels {
 

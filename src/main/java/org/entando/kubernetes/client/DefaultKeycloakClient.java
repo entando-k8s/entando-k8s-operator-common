@@ -42,10 +42,7 @@ import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.model.plugin.ExpectedRole;
 import org.entando.kubernetes.model.plugin.Permission;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider;
 import org.keycloak.OAuth2Constants;
-import org.keycloak.admin.client.ClientBuilderWrapper;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.ClientResource;
@@ -91,7 +88,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         this.currentBaseUrl = baseUrl;
         this.currentUser = username;
         isHttps = baseUrl.toLowerCase().startsWith("https");
-        ClientBuilder clientBuilder = ResteasyClientBuilder.newBuilder();
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         clientBuilder.register(EntandoJackson2Provider.class);
         final Keycloak attemptedKeycloak = KeycloakBuilder.builder()
                 .resteasyClient((ResteasyClient) clientBuilder.build())
