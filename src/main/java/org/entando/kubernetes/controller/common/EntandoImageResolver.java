@@ -33,10 +33,6 @@ public class EntandoImageResolver {
         this.imageVersionsConfigMap = imageVersionsConfigMap;
     }
 
-    public Optional<String> determineLatestVersionOf(String imagename) {
-        return determineVersion(new DefaultDockerImageInfo(imagename));
-    }
-
     public String determineImageUri(String imageUri) {
         return determineImageUri(new DefaultDockerImageInfo(imageUri));
     }
