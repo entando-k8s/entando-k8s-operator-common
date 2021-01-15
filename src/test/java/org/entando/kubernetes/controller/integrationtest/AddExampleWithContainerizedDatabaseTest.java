@@ -61,7 +61,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@Tags({@Tag("inter-processs"), @Tag("pre-deployment"), @Tag("component")})
+@Tags({@Tag("inter-process"), @Tag("pre-deployment"), @Tag("component")})
 class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTesting, InProcessTestUtil {
 
     public static final String TEST_PLUGIN_NAME = EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAME + "-name-longer-than-32";
