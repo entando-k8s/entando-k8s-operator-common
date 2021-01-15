@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.common.EntandoImageResolver;
+import org.entando.kubernetes.controller.database.DatabaseDockerImageInfo;
+import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -240,5 +242,33 @@ class ImageResolverTest {
     void testInvalidImageUris(String invalidImageUri) {
         EntandoImageResolver imageResolver = new EntandoImageResolver(null);
         assertThrows(IllegalArgumentException.class, () -> imageResolver.determineImageUri(invalidImageUri));
+    }
+    @Test
+    void testBug(){
+        try {
+            System.clearProperty("RELATED_IMAGE_RHEL8_POSTGRESQL_12");
+            //Given I have set overriding properties  for image resolution
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_OVERRIDE.getJvmSystemProperty(), "test.io");
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE.getJvmSystemProperty(), "test-entando");
+            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE.getJvmSystemProperty(), "6.1.4");
+            //And I have information in the Configmap
+            ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
+                    .addToData("test-image", "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.1.4\"}")
+                    .addToData("test-entando-test-image",
+                            "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.1.4\"}")
+                    .build();
+            //But I have an environment variable or property injected for the image in question
+            System.setProperty("RELATED_IMAGE_RHEL8_POSTGRESQL_12",
+                    "openshift/wildfly-101-centos7@sha256:7775d40f77e22897dc760b76f1656f67ef6bd5561b4d74fbb030b977f61d48e8");
+
+            //when I resolve the image
+            String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri(new DatabaseDockerImageInfo(
+                    DbmsDockerVendorStrategy.RHEL_POSTGRESQL));
+            //then it reflects the injected value
+            assertThat(imageUri,
+                    is("openshift/wildfly-101-centos7@sha256:7775d40f77e22897dc760b76f1656f67ef6bd5561b4d74fbb030b977f61d48e8"));
+        } finally {
+            System.clearProperty("RELATED_IMAGE_RHEL8_POSTGRESQL_12");
+        }
     }
 }

@@ -67,6 +67,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
+//Sonar doesn't recognize custom captors
+@SuppressWarnings({"java:S6068", "java:S6073"})
 class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals, CommonLabels {
 
     public static final String MY_APP_SERVER_DEPLOYMENT = MY_APP + "-server-deployment";

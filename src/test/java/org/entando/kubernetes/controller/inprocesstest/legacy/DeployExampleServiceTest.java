@@ -89,6 +89,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
+//Sonar doesn't recognize custom captors
+@SuppressWarnings({"java:S6068", "java:S6073"})
 class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, CommonLabels {
 
     private static final String MY_APP_ADMIN_SECRET = MY_APP + "-admin-secret";

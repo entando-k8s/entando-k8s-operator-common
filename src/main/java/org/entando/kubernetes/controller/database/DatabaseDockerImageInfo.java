@@ -49,6 +49,6 @@ public class DatabaseDockerImageInfo implements DockerImageInfo {
 
     @Override
     public Optional<String> getVersion() {
-        return Optional.empty();
+        return Optional.of("latest");//because these are vendor provided images and the versions of both the DB and OS is in the image name
     }
 }
