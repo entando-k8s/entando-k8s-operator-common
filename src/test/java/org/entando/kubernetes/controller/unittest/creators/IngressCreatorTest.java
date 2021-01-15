@@ -53,8 +53,8 @@ class IngressCreatorTest implements InProcessTestUtil {
     }
 
     @Test
-    public void testEdit() {
-        SpringBootDeployable deployable = new SpringBootDeployable(entandoApp, null, null);
+    void testEdit() {
+        SpringBootDeployable<EntandoAppSpec> deployable = new SpringBootDeployable<>(entandoApp, null, null);
         ServiceCreator<EntandoAppSpec> serviceCreator = new ServiceCreator<>(entandoApp);
         serviceCreator.createService(client.services(), deployable);
         IngressCreator<EntandoAppSpec> creator = new IngressCreator<>(entandoApp);
@@ -69,7 +69,8 @@ class IngressCreatorTest implements InProcessTestUtil {
                 .endSpec()
                 .build();
         IngressCreator<EntandoAppSpec> editingCreator = new IngressCreator<>(newEntandoApp);
-        editingCreator.createIngress(client.ingresses(), new SpringBootDeployable(newEntandoApp, null, null), serviceCreator.getService());
+        editingCreator
+                .createIngress(client.ingresses(), new SpringBootDeployable<>(newEntandoApp, null, null), serviceCreator.getService());
         assertThat(editingCreator.getIngress().getSpec().getRules().get(0).getHost(), is("newhost.com"));
         assertThat(editingCreator.getIngress().getSpec().getTls().get(0).getHosts().get(0), is("newhost.com"));
         assertThat(editingCreator.getIngress().getSpec().getTls().get(0).getSecretName(), is("new-tls-secret"));

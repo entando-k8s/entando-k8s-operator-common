@@ -16,8 +16,8 @@
 
 package org.entando.kubernetes.controller.unittest.creators;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import java.util.HashMap;

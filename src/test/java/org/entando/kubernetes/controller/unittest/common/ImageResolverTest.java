@@ -210,17 +210,17 @@ class ImageResolverTest {
     }
 
     @Test
-    void testVersionResolution() {
+    void testVersionResolutionWithProvidedValue() {
         //Given I have set default properties  for image resolution
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK.getJvmSystemProperty(), "default");
         //And I have a configMap
         ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
                 .addToData("test-image", "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.1.4\"}")
                 .build();
-        //when I resolve an image
-        Optional<String> version = new EntandoImageResolver(imageVersionsConfigMap).determineLatestVersionOf("test-image");
-        //then it reflects the overriding property values
-        assertThat(version.get(), is("6.1.4"));
+        //when I resolve an imageURi with the version already provided
+        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("test.io/org/test-image:6.3.0-SNAPSHOT");
+        //then it reflects the configmap values for everything except for the version, which reflects the provided version
+        assertThat(imageUri, is("test.io/test-entando/test-image:6.3.0-SNAPSHOT"));
     }
 
     @Test

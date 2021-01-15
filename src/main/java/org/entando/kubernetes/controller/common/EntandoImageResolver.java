@@ -76,12 +76,14 @@ public class EntandoImageResolver {
     }
 
     private Optional<String> determineVersion(DockerImageInfo dockerImageInfo) {
-        return Optional.ofNullable(new PropertyResolution(this.imageVersionsConfigMap, dockerImageInfo)
+        //For the version, we allow the dockerImageInfo to override it primarily for testing purposes
+        //It is extremely unlikely that any version will be provided for any context other than testing
+        return Optional.ofNullable(dockerImageInfo.getVersion().orElse(new PropertyResolution(this.imageVersionsConfigMap, dockerImageInfo)
                 .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE)
                 .withConfigMapKey("version")
-                .withProvidedValue(dockerImageInfo.getVersion().orElse(null))
+                .withProvidedValue(null)
                 .withFallbackPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK)
-                .withDefaultValue(null).resolvePropertyValue());
+                .withDefaultValue(null).resolvePropertyValue()));
     }
 
 }

@@ -66,7 +66,7 @@ public class DeployCommand<T extends ServiceDeploymentResult, S extends EntandoD
         deploymentCreator = new DeploymentCreator<>(entandoCustomResource);
         secretCreator = new SecretCreator<>(entandoCustomResource);
         databasePreparationJobCreator = new DatabasePreparationPodCreator<>(entandoCustomResource);
-        keycloakClientCreator = new KeycloakClientCreator(entandoCustomResource);
+        keycloakClientCreator = new KeycloakClientCreator<>(entandoCustomResource);
         serviceAccountCreator = new ServiceAccountCreator<>(entandoCustomResource);
         if (deployable instanceof IngressingDeployable) {
             status = new WebServerStatus();

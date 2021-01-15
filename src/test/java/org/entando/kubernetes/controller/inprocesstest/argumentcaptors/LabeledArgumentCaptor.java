@@ -60,7 +60,7 @@ public final class LabeledArgumentCaptor<T extends HasMetadata> {
 
     public static <U extends HasMetadata, S extends U> LabeledArgumentCaptor<U> forResourceWithLabels(Class<S> clazz,
             Map<String, String> labels) {
-        return new LabeledArgumentCaptor(clazz, labels);
+        return new LabeledArgumentCaptor<>(clazz, labels);
     }
 
     public LabeledArgumentCaptor<T> andWithLabel(String labelName, String labelValue) {

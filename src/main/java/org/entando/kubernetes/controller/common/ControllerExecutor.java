@@ -93,11 +93,6 @@ public class ControllerExecutor {
         return resourceKindToImageNames.get(kind);
     }
 
-    public <T extends EntandoBaseCustomResource<?>> Optional<String> resolveLatestImageFor(Class<T> type) {
-        String imageName = resolveControllerImageName(type);
-        return this.imageResolver.determineLatestVersionOf(imageName);
-    }
-
     public <T extends Serializable> Pod startControllerFor(Action action, EntandoBaseCustomResource<T> resource, String imageVersionToUse) {
         removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);

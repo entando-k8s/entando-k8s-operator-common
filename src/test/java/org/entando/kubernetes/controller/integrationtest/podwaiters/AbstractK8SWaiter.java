@@ -32,9 +32,10 @@ public abstract class AbstractK8SWaiter {
 
     }
 
-    public AbstractPodWaiter throwException(Class<? extends RuntimeException> exceptionClass) {
+    @SuppressWarnings("unchecked")
+    public <T extends AbstractPodWaiter<?>> AbstractPodWaiter<T> throwException(Class<? extends RuntimeException> exceptionClass) {
         this.exceptionClass = exceptionClass;
-        return (AbstractPodWaiter) this;
+        return (AbstractPodWaiter<T>) this;
     }
 
     protected void logStatus(String x) {
