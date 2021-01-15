@@ -65,12 +65,12 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
     }
 
     private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable dbAwareDeployable,
-            String dbJobName) {
+            String qualifier) {
         return new PodBuilder().withNewMetadata()
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .withOwnerReferences(KubeUtils.buildOwnerReference(entandoCustomResource))
-                .withLabels(buildUniqueLabels(dbJobName))
-                .withName(dbJobName + "-" + UUID.randomUUID().toString().substring(0, 4))
+                .withLabels(buildUniqueLabels(qualifier))
+                .withName(entandoCustomResource.getMetadata().getName() + "-dbprep-" + UUID.randomUUID().toString().substring(0, 4))
                 .endMetadata()
                 .withNewSpec()
                 .withInitContainers(buildContainers(entandoImageResolver, secretClient, dbAwareDeployable))
