@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.EntandoOperatorConfigBase;
@@ -115,7 +114,7 @@ public class ControllerExecutor {
     private <T extends Serializable> Pod buildControllerPod(Action action, EntandoBaseCustomResource<T> resource,
             String imageVersionToUse) {
         return new PodBuilder().withNewMetadata()
-                .withName(resource.getMetadata().getName() + "-deployer-" + RandomStringUtils.randomAlphanumeric(10).toLowerCase())
+                .withName(resource.getMetadata().getName() + "-deployer-" + KubeUtils.randomNumeric(4).toLowerCase())
                 .withNamespace(this.controllerNamespace)
                 .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind())
                 .addToLabels(KubeUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace())

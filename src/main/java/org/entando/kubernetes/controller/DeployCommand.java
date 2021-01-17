@@ -52,7 +52,7 @@ public class DeployCommand<T extends ServiceDeploymentResult, S extends EntandoD
     protected final DeploymentCreator<S> deploymentCreator;
     protected final SecretCreator<S> secretCreator;
     protected final DatabasePreparationPodCreator<S> databasePreparationJobCreator;
-    protected final KeycloakClientCreator keycloakClientCreator;
+    protected final KeycloakClientCreator<S> keycloakClientCreator;
     protected final ServiceAccountCreator<S> serviceAccountCreator;
     protected final AbstractServerStatus status;
     protected final EntandoBaseCustomResource<S> entandoCustomResource;

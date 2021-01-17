@@ -20,6 +20,7 @@ import static org.entando.kubernetes.controller.creators.IngressCreator.getIngre
 
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import java.io.Serializable;
 import java.util.Optional;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
@@ -31,10 +32,9 @@ import org.entando.kubernetes.controller.spi.Deployable;
 import org.entando.kubernetes.controller.spi.KeycloakAware;
 import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public class KeycloakClientCreator<S extends EntandoDeploymentSpec> {
+public class KeycloakClientCreator<S extends Serializable> {
 
     private final EntandoBaseCustomResource<S> entandoCustomResource;
 

@@ -27,10 +27,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
@@ -63,6 +64,7 @@ public final class KubeUtils {
     private static final Logger LOGGER = Logger.getLogger(KubeUtils.class.getName());
     public static final String DOCKER_IO = "docker.io";
     public static final String REGISTRY_REDHAT_IO = "registry.redhat.io";
+    private static SecureRandom secureRandom = new SecureRandom();
 
     private KubeUtils() {
     }
@@ -81,7 +83,7 @@ public final class KubeUtils {
 
     public static <S extends EntandoDeploymentSpec> Secret generateSecret(EntandoBaseCustomResource<S> resource, String secretName,
             String username) {
-        String password = RandomStringUtils.randomAlphanumeric(10);
+        String password = randomAlphanumeric(16);
         return buildSecret(resource, secretName, username, password);
     }
 
@@ -132,8 +134,21 @@ public final class KubeUtils {
      */
     public static String shortenTo63Chars(String s) {
         if (s.length() > 63) {
-            s = s.substring(0, 63 - 3) + RandomStringUtils.randomNumeric(3);
+            int size = 3;
+            s = s.substring(0, 63 - 3) + randomNumeric(size);
         }
         return s;
+    }
+
+    public static String randomNumeric(int size) {
+        String suffix;
+        do {
+            suffix = String.valueOf(secureRandom.nextLong());
+        } while (suffix.length() < size);
+        return suffix.substring(0, size);
+    }
+
+    public static String randomAlphanumeric(int length) {
+        return UUID.randomUUID().toString().replace("-", "").substring(0, length);
     }
 }

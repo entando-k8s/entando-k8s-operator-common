@@ -30,6 +30,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 
 public interface PodBehavior {
@@ -68,7 +69,7 @@ public interface PodBehavior {
                 .withNewMetadata()
                 .withLabels(template.getMetadata().getLabels())
                 .withNamespace(deployment.getMetadata().getNamespace())
-                .withName(deployment.getMetadata().getName() + "-" + RandomStringUtils.randomAlphanumeric(8))
+                .withName(deployment.getMetadata().getName() + "-" + KubeUtils.randomAlphanumeric(8))
                 .endMetadata()
                 .withNewSpec()
                 .withContainers(template.getSpec().getContainers())

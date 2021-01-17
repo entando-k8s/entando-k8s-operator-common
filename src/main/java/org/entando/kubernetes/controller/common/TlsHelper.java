@@ -36,15 +36,15 @@ import java.util.Optional;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.controller.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.KubeUtils;
 
 public final class TlsHelper {
 
     public static final String TLS_KEY = "tls.key";
     public static final String TLS_CRT = "tls.crt";
     private static final TlsHelper INSTANCE = new TlsHelper();
-    private final char[] trustStorePassword = RandomStringUtils.randomAlphanumeric(20).toCharArray();
+    private final char[] trustStorePassword = KubeUtils.randomAlphanumeric(20).toCharArray();
     private Optional<KeyStore> trustStore = Optional.empty();
     private Optional<String> trustStoreBase64 = Optional.empty();
 

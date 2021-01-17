@@ -31,7 +31,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.EntandoImageResolver;
@@ -54,7 +53,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
 
     public DatabasePreparationPodCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
         super(entandoCustomResource);
-        this.resourceNameDiscriminator = RandomStringUtils.randomNumeric(3);    //NOSONAR
+        this.resourceNameDiscriminator = KubeUtils.randomNumeric(3);
     }
 
     public Pod runToCompletion(SimpleK8SClient<?> client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {

@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
@@ -243,8 +242,9 @@ class ImageResolverTest {
         EntandoImageResolver imageResolver = new EntandoImageResolver(null);
         assertThrows(IllegalArgumentException.class, () -> imageResolver.determineImageUri(invalidImageUri));
     }
+
     @Test
-    void testBug(){
+    void testBug() {
         try {
             System.clearProperty("RELATED_IMAGE_RHEL8_POSTGRESQL_12");
             //Given I have set overriding properties  for image resolution

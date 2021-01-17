@@ -23,6 +23,7 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public interface CommonLabels {
+
     default <S extends EntandoDeploymentSpec> Map<String, String> dbPreparationJobLabels(EntandoBaseCustomResource<S> resource,
             String deploymentQualifier) {
         Map<String, String> labelsFromResource = labelsFromResource(resource);
