@@ -144,7 +144,7 @@ public final class KubeUtils {
     public static String randomNumeric(int size) {
         String suffix;
         do {
-            suffix = String.valueOf(secureRandom.nextLong());
+            suffix = String.valueOf(Math.abs(secureRandom.nextLong()));
         } while (suffix.length() < size);
         return suffix.substring(0, size);
     }
