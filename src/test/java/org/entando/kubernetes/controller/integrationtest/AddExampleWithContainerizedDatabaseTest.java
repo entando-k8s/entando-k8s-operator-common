@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -76,7 +76,8 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                     return new SampleIngressingDbAwareDeployable<EntandoPluginSpec>(newEntandoPlugin, databaseServiceResult) {
                         @Override
                         protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
-                            return Arrays.asList(new SampleSpringBootDeployableContainer<>(entandoResource, keycloakConnectionConfig));
+                            return Collections
+                                    .singletonList(new SampleSpringBootDeployableContainer<>(entandoResource, keycloakConnectionConfig));
                         }
                     };
                 }

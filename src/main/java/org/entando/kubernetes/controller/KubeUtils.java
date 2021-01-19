@@ -144,7 +144,8 @@ public final class KubeUtils {
     public static String randomNumeric(int size) {
         String suffix;
         do {
-            suffix = String.valueOf(Math.abs(secureRandom.nextLong()));
+            //+1 to avoid Long.MIN_VALUE that stays negative after Math.abs
+            suffix = String.valueOf(Math.abs(secureRandom.nextLong() + 1));
         } while (suffix.length() < size);
         return suffix.substring(0, size);
     }
@@ -152,4 +153,5 @@ public final class KubeUtils {
     public static String randomAlphanumeric(int length) {
         return UUID.randomUUID().toString().replace("-", "").substring(0, length);
     }
+
 }

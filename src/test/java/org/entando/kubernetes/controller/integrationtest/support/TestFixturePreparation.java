@@ -85,8 +85,6 @@ public final class TestFixturePreparation {
             config.setNamespace(ENTANDO_CONTROLLERS_NAMESPACE);
             result = new AutoAdaptableKubernetesClient(HttpClientUtils.createHttpClient(config), config);
         }
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE.getJvmSystemProperty(),
-                ENTANDO_CONTROLLERS_NAMESPACE);
         ensureRedHatRegistryCredentials(result);
         return result;
     }

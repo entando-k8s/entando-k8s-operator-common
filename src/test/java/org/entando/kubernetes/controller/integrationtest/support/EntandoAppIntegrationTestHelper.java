@@ -37,30 +37,30 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
     }
 
     public void createAndWaitForApp(EntandoApp entandoApp, int waitOffset, boolean deployingDbContainers) {
-        getOperations().inNamespace(TEST_NAMESPACE).create(entandoApp);
+        getOperations().inNamespace(entandoApp.getMetadata().getNamespace()).create(entandoApp);
         if (deployingDbContainers) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
-                    TEST_NAMESPACE, TEST_APP_NAME + "-db");
+                    entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-db");
         }
         this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
                 entandoApp,
                 "server");
 
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(180 + waitOffset)),
-                TEST_NAMESPACE, TEST_APP_NAME + "-server");
+                entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-server");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
-                TEST_NAMESPACE, TEST_APP_NAME + "-ab");
+                entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-ab");
         this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
                 entandoApp,
                 "cm");
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
-                TEST_NAMESPACE, TEST_APP_NAME + "-cm");
+                entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-cm");
         //        this times out wait for the other pods first
         await().atMost(60, SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
-                            .inNamespace(TEST_NAMESPACE)
-                            .withName(TEST_APP_NAME)
+                            .inNamespace(entandoApp.getMetadata().getNamespace())
+                            .withName(entandoApp.getMetadata().getName())
                             .fromServer().get().getStatus();
                     return status.forServerQualifiedBy("server").isPresent()
                             && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;

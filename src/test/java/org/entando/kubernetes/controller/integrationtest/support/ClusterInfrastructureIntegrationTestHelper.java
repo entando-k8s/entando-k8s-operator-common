@@ -66,14 +66,14 @@ public class ClusterInfrastructureIntegrationTestHelper extends IntegrationTestH
     }
 
     public void waitForClusterInfrastructure(EntandoClusterInfrastructure infrastructure, int waitOffset, boolean deployingDbContainers) {
-        getOperations().inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE).create(infrastructure);
+        getOperations().inNamespace(infrastructure.getMetadata().getNamespace()).create(infrastructure);
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
-                CLUSTER_INFRASTRUCTURE_NAMESPACE, CLUSTER_INFRASTRUCTURE_NAME + "-k8s-svc");
+                infrastructure.getMetadata().getNamespace(), infrastructure.getMetadata().getName() + "-k8s-svc");
         await().atMost(30, SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
-                            .inNamespace(CLUSTER_INFRASTRUCTURE_NAMESPACE)
-                            .withName(CLUSTER_INFRASTRUCTURE_NAME)
+                            .inNamespace(infrastructure.getMetadata().getNamespace())
+                            .withName(infrastructure.getMetadata().getName())
                             .fromServer().get().getStatus();
                     return status.forServerQualifiedBy("k8s-svc").isPresent()
                             && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;

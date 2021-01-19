@@ -96,20 +96,20 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public void createAndWaitForKeycloak(EntandoKeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
-        getOperations().inNamespace(KEYCLOAK_NAMESPACE).create(keycloakServer);
+        getOperations().inNamespace(keycloakServer.getMetadata().getNamespace()).create(keycloakServer);
         if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsVendor.NONE && v != DbmsVendor.EMBEDDED).orElse(false)) {
             if (deployingDbContainers) {
                 waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
-                        KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db");
+                        keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName() + "-db");
             }
             this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)), keycloakServer, "server");
         }
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(270 + waitOffset)),
-                KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server");
+                keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName() + "-server");
         await().atMost(90, TimeUnit.SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
-                            .inNamespace(KEYCLOAK_NAMESPACE)
+                            .inNamespace(keycloakServer.getMetadata().getNamespace())
                             .withName(KEYCLOAK_NAME)
                             .fromServer().get().getStatus();
                     return status.forServerQualifiedBy("server").isPresent()
