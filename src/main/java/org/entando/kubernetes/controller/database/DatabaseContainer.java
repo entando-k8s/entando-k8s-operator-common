@@ -21,6 +21,7 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.List;
+import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.DockerImageInfo;
 import org.entando.kubernetes.controller.database.DatabaseDeployable.VariableInitializer;
 import org.entando.kubernetes.controller.spi.HasHealthCommand;
@@ -30,16 +31,13 @@ import org.entando.kubernetes.controller.spi.ServiceBackingContainer;
 public class DatabaseContainer implements ServiceBackingContainer, PersistentVolumeAware, HasHealthCommand {
 
     private final DbmsDockerVendorStrategy dbmsVendorDockerStrategy;
-    private final String nameQualifier;
     private final VariableInitializer variableInitializer;
     private final Integer portOverride;
 
     public DatabaseContainer(VariableInitializer variableInitializer, DbmsDockerVendorStrategy dbmsVendorDockerStrategy,
-            String nameQualifier,
             Integer portOverride) {
         this.variableInitializer = variableInitializer;
         this.dbmsVendorDockerStrategy = dbmsVendorDockerStrategy;
-        this.nameQualifier = nameQualifier;
         this.portOverride = portOverride;
     }
 
@@ -50,7 +48,7 @@ public class DatabaseContainer implements ServiceBackingContainer, PersistentVol
 
     @Override
     public String getNameQualifier() {
-        return nameQualifier;
+        return KubeUtils.DB_NAME_QUALIFIER;
     }
 
     @Override

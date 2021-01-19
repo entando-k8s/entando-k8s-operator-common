@@ -25,6 +25,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -39,16 +40,12 @@ public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
 
     private final DbmsDockerVendorStrategy dbmsVendor;
     private final EntandoBaseCustomResource<S> customResource;
-    private final String nameQualifier;
     protected List<DeployableContainer> containers;
 
-    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoBaseCustomResource<S> customResource, String nameQualifier,
-            Integer portOverride) {
+    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoBaseCustomResource<S> customResource, Integer portOverride) {
         this.dbmsVendor = dbmsVendor;
         this.customResource = customResource;
-        this.nameQualifier = nameQualifier;
-        this.containers = Arrays
-                .asList(new DatabaseContainer(buildVariableInitializer(dbmsVendor), dbmsVendor, nameQualifier, portOverride));
+        this.containers = Collections.singletonList(new DatabaseContainer(buildVariableInitializer(dbmsVendor), dbmsVendor, portOverride));
     }
 
     private VariableInitializer buildVariableInitializer(DbmsDockerVendorStrategy vendorStrategy) {
@@ -90,7 +87,7 @@ public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
 
     @Override
     public String getNameQualifier() {
-        return nameQualifier;
+        return KubeUtils.DB_NAME_QUALIFIER;
     }
 
     @Override

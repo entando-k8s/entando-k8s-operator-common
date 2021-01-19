@@ -119,16 +119,9 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
 
     protected void processCommand() {
         try {
-            Action action = Action.valueOf(
-                    EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_ACTION).orElseThrow(IllegalArgumentException::new));
             TlsHelper.getInstance().init();
-            if (actionToProcess(action)) {
-                String resourceName = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAME)
-                        .orElseThrow(IllegalArgumentException::new);
-                String resourceNamespace = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE)
-                        .orElseThrow(IllegalArgumentException::new);
-                T newResource = k8sClient.entandoResources().load(resourceType, resourceNamespace, resourceName);
-                processAction(action, newResource);
+            if (actionRequiresSync(resolveAction())) {
+                performSync(resolveResource());
             }
         } finally {
             new Thread(autoExit).start();
@@ -136,20 +129,28 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
 
     }
 
-    private boolean actionToProcess(Action action) {
+    private Action resolveAction() {
+        return Action.valueOf(
+                EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_ACTION).orElseThrow(IllegalArgumentException::new));
+    }
+
+    private T resolveResource() {
+        String resourceName = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAME)
+                .orElseThrow(IllegalArgumentException::new);
+        String resourceNamespace = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE)
+                .orElseThrow(IllegalArgumentException::new);
+        return k8sClient.entandoResources().load(resourceType, resourceNamespace, resourceName);
+    }
+
+    protected boolean actionRequiresSync(Action action) {
         return action == Action.ADDED || action == Action.MODIFIED;
     }
 
-    protected void processAction(Action action, T resource) {
+    protected void performSync(T resource) {
         try {
-            if (action == Action.ADDED || action == Action.MODIFIED) {
-                EntandoDeploymentPhase initialPhase = resource.getStatus().getEntandoDeploymentPhase();
-                k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.STARTED);
-                if (action == Action.ADDED || initialPhase == EntandoDeploymentPhase.REQUESTED) {
-                    synchronizeDeploymentState(resource);
-                }
-                k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.SUCCESSFUL);
-            }
+            k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.STARTED);
+            synchronizeDeploymentState(resource);
+            k8sClient.entandoResources().updatePhase(resource, EntandoDeploymentPhase.SUCCESSFUL);
         } catch (Exception e) {
             autoExit.withCode(-1);
             logger.log(Level.SEVERE, e, () -> format("Unexpected exception occurred while adding %s %s/%s",
@@ -162,17 +163,16 @@ public abstract class AbstractDbAwareController<T extends EntandoBaseCustomResou
 
     @SuppressWarnings("unchecked")
     protected <S extends EntandoDeploymentSpec> DatabaseServiceResult prepareDatabaseService(T entandoCustomResource,
-            DbmsVendor dbmsVendor,
-            String nameQualifier) {
+            DbmsVendor dbmsVendor) {
         Optional<ExternalDatabaseDeployment> externalDatabase = k8sClient.entandoResources()
                 .findExternalDatabase(entandoCustomResource, dbmsVendor);
         if (externalDatabase.isPresent()) {
             return externalDatabase.get();
         } else if (!(dbmsVendor == DbmsVendor.NONE || dbmsVendor == DbmsVendor.EMBEDDED)) {
-            final DatabaseDeployable<S> databaseDeployable = new DatabaseDeployable<>(
+            DatabaseDeployable<S> databaseDeployable = new DatabaseDeployable<>(
                     DbmsDockerVendorStrategy.forVendor(dbmsVendor, EntandoOperatorConfig.getComplianceMode()),
-                    (EntandoBaseCustomResource<S>) entandoCustomResource, nameQualifier, null);
-            final DeployCommand<DatabaseDeploymentResult, S> dbCommand = new DeployCommand<>(databaseDeployable);
+                    (EntandoBaseCustomResource<S>) entandoCustomResource, null);
+            DeployCommand<DatabaseDeploymentResult, S> dbCommand = new DeployCommand<>(databaseDeployable);
             DatabaseDeploymentResult result = dbCommand.execute(k8sClient, empty());
             if (result.hasFailed()) {
                 throw new EntandoControllerException("Database deployment failed");

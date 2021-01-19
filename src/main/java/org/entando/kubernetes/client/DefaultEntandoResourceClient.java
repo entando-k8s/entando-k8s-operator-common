@@ -184,7 +184,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     @Override
     public <T extends EntandoCustomResource> void updatePhase(T customResource, EntandoDeploymentPhase phase) {
-        performStatusUpdate(customResource, t -> t.getStatus().setEntandoDeploymentPhase(phase));
+        performStatusUpdate(customResource, t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()));
     }
 
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
@@ -212,23 +212,11 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     @Override
     public void deploymentFailed(EntandoCustomResource customResource, Exception reason) {
-        Optional<AbstractServerStatus> currentServerStatus = getOperations(customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName()).get().getStatus().findCurrentServerStatus();
-        if (currentServerStatus.isPresent()) {
-            AbstractServerStatus newStatus = currentServerStatus.get();
-            newStatus.finishWith(new EntandoControllerFailureBuilder().withException(reason).build());
-            getOperations(customResource.getClass())
-                    .inNamespace(customResource.getMetadata().getNamespace())
-                    .withName(customResource.getMetadata().getName())
-                    .edit().withStatus(newStatus).withPhase(EntandoDeploymentPhase.FAILED).done();
-        } else {
-            getOperations(customResource.getClass())
-                    .inNamespace(customResource.getMetadata().getNamespace())
-                    .withName(customResource.getMetadata().getName())
-                    .edit().withPhase(EntandoDeploymentPhase.FAILED).done();
-
-        }
+        performStatusUpdate(customResource, t -> {
+            t.getStatus().findCurrentServerStatus()
+                    .ifPresent(newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
+            t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());
+        });
     }
 
     private Service loadService(EntandoCustomResource peerInNamespace, String name) {
@@ -240,20 +228,17 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     protected Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {
-        return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name)
-                .get();
+        return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
     }
 
     @SuppressWarnings("unchecked")
     private <T extends EntandoCustomResource> void performStatusUpdate(T customResource, Consumer<T> consumer) {
-        T latest = getOperations((Class<T>) customResource.getClass())
+        Resource<T, ?> resource = getOperations((Class<T>) customResource.getClass())
                 .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName()).get();
+                .withName(customResource.getMetadata().getName());
+        T latest = resource.fromServer().get();
         consumer.accept(latest);
-        getOperations((Class<T>) customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .updateStatus(latest);
+        resource.updateStatus(latest);
     }
 
 }

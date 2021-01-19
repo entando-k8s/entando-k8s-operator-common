@@ -60,6 +60,7 @@ public final class KubeUtils {
     public static final String ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME = "entando-operator-default-config-map";
     public static final String DEFAULT_KEYCLOAK_NAME = "default";
     public static final String JOB_KIND_DB_PREPARATION = "db-preparation-job";
+    public static final String DB_NAME_QUALIFIER = "db";
 
     private static final Logger LOGGER = Logger.getLogger(KubeUtils.class.getName());
     public static final String DOCKER_IO = "docker.io";

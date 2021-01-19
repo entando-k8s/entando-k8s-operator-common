@@ -92,7 +92,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @Override
     public <T extends EntandoCustomResource> void updatePhase(T entandoCustomResource, EntandoDeploymentPhase phase) {
-        entandoCustomResource.getStatus().setEntandoDeploymentPhase(phase);
+        entandoCustomResource.getStatus().updateDeploymentPhase(phase, entandoCustomResource.getMetadata().getGeneration());
     }
 
     @Override

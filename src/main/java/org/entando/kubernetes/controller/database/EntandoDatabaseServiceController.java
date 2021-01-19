@@ -40,7 +40,9 @@ public class EntandoDatabaseServiceController extends AbstractDbAwareController<
     }
 
     public void processEvent(Action action, EntandoDatabaseService db) {
-        super.processAction(action, db);
+        if (actionRequiresSync(action)) {
+            super.performSync(db);
+        }
     }
 
     @Override
