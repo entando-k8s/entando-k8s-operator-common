@@ -106,9 +106,9 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
     }
 
     public void releaseFinalizers(TestFixtureRequest request) {
-        for (Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry : request.getRequiredDeletions().entrySet()) {
+        for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?>>>> entry : request.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
-                for (Class<? extends EntandoBaseCustomResource> type : entry.getValue()) {
+                for (Class<? extends EntandoBaseCustomResource<?>> type : entry.getValue()) {
                     if (type.equals(EntandoKeycloakServer.class)) {
                         this.keycloak().releaseAllFinalizers(entry.getKey());
                     } else if (type.equals(EntandoApp.class)) {

@@ -52,8 +52,18 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SERVICEACCOUNT);
     }
 
+    public static OperatorDeploymentType getOperatorDeploymentType() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SERVICEACCOUNT)
+                .map(s -> OperatorDeploymentType.valueOf(s.toLowerCase(Locale.ROOT)))
+                .orElse(OperatorDeploymentType.HELM);
+    }
+
     public static boolean isClusterScopedDeployment() {
-        return getNamespacesToObserve().isEmpty() || getNamespacesToObserve().stream().anyMatch("*"::equals);
+        if (getOperatorDeploymentType() == OperatorDeploymentType.OLM) {
+            return getNamespacesToObserve().isEmpty();
+        } else {
+            return getNamespacesToObserve().stream().anyMatch("*"::equals);
+        }
     }
 
     public static List<String> getNamespacesToObserve() {

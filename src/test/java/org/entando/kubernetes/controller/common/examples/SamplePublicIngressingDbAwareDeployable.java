@@ -21,7 +21,6 @@ import static org.entando.kubernetes.controller.KubeUtils.generateSecret;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Arrays;
 import java.util.List;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
@@ -31,7 +30,7 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec> extends
-        SampleIngressingDbAwareDeployable<S> implements PublicIngressingDeployable<ExposedDeploymentResult, S>,
+        SampleIngressingDbAwareDeployable<S> implements PublicIngressingDeployable<SampleExposedDeploymentResult, S>,
         Secretive {
 
     private final Secret sampleSecret;

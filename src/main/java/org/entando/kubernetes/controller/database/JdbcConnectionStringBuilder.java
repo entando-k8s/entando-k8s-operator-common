@@ -25,6 +25,7 @@ public abstract class JdbcConnectionStringBuilder {
     private String port;
     private String database;
     private String schema;
+    private String dataFolder;
     private Map<String, String> parameters;
 
     protected JdbcConnectionStringBuilder() {
@@ -42,6 +43,11 @@ public abstract class JdbcConnectionStringBuilder {
 
     public JdbcConnectionStringBuilder usingDatabase(String database) {
         this.database = database;
+        return this;
+    }
+
+    public JdbcConnectionStringBuilder inFolder(String folder) {
+        this.dataFolder = folder;
         return this;
     }
 
@@ -65,6 +71,10 @@ public abstract class JdbcConnectionStringBuilder {
 
     public String getDatabase() {
         return this.database;
+    }
+
+    public String getDataFolder() {
+        return dataFolder;
     }
 
     public String getSchema() {

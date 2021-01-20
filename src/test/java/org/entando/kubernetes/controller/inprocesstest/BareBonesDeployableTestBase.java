@@ -26,6 +26,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     EntandoPlugin plugin = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     protected SimpleK8SClient k8sClient;
 
-    private SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult> controller;
+    private SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult> controller;
     private Map<String, String> properties = new ConcurrentHashMap<>();
 
     @Test
@@ -74,7 +75,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
         emulateKeycloakDeployment(k8sClient);
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult>(k8sClient,
+        controller = new SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult>(k8sClient,
                 mock(SimpleKeycloakClient.class)) {
             @Override
             protected Deployable<BarebonesDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
@@ -126,7 +127,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
         emulateKeycloakDeployment(k8sClient);
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult>(k8sClient,
+        controller = new SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult>(k8sClient,
                 mock(SimpleKeycloakClient.class)) {
             @Override
             protected Deployable<BarebonesDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
@@ -180,7 +181,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         }).start();
     }
 
-    public <T extends EntandoBaseCustomResource> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
         new Thread(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());

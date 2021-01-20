@@ -33,7 +33,7 @@ public interface FluentIntegrationTesting extends FluentTraversals {
     TimeUnit SECONDS = TimeUnit.SECONDS;
     TimeUnit MINUTES = TimeUnit.MINUTES;
 
-    default DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource> type) {
+    default DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource<?>> type) {
         return new TestFixtureRequest().deleteAll(type);
     }
 

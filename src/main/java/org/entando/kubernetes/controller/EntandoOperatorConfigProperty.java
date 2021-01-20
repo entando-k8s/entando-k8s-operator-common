@@ -45,6 +45,7 @@ public enum EntandoOperatorConfigProperty {
     ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS("entando.k8s.operator.impose.default.limits"),
     ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO("entando.k8s.operator.request.to.limit.ratio"),
     ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET("entando.k8s.operator.force.db.password.reset"),
+    ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE("entando.k8s.operator.deployment.type"),
 
     /*
     TLS config

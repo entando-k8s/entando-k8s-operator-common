@@ -54,12 +54,12 @@ import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.Map;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.creators.SecretCreator;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
@@ -116,13 +116,13 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, C
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult> sampleController;
+    private SampleController<EntandoAppSpec, EntandoApp, SampleExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void prepareKeycloakCustomResource() {
-        this.sampleController = new SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult>(client, keycloakClient) {
+        this.sampleController = new SampleController<>(client, keycloakClient) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoAppSpec> createDeployable(
+            protected Deployable<SampleExposedDeploymentResult, EntandoAppSpec> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {

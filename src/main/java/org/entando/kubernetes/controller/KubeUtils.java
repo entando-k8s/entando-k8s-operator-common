@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller;
 
+import static java.util.Optional.ofNullable;
+
 import io.fabric8.kubernetes.api.model.EnvVarSource;
 import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -28,10 +30,13 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
+import org.entando.kubernetes.controller.common.OperatorProcessingInstruction;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
@@ -39,6 +44,7 @@ import org.entando.kubernetes.model.EntandoDeploymentSpec;
 public final class KubeUtils {
 
     public static final String UPDATED_ANNOTATION_NAME = "entando.org/updated";//To avoid  http 400s
+    public static final String PROCESSING_INSTRUCTION_ANNOTATION_NAME = "entando.org/processing-instruction";
     public static final String PASSSWORD_KEY = "password";//Funny name because a variable named 'PASSWORD' is considered a vulnerability
     public static final String USERNAME_KEY = "username";
     public static final String JOB_KIND_LABEL_NAME = "jobKind";
@@ -70,7 +76,7 @@ public final class KubeUtils {
     private KubeUtils() {
     }
 
-    public static String getKindOf(Class<? extends EntandoBaseCustomResource> c) {
+    public static String getKindOf(Class<? extends EntandoBaseCustomResource<?>> c) {
         return c.getSimpleName();
     }
 
@@ -135,8 +141,7 @@ public final class KubeUtils {
      */
     public static String shortenTo63Chars(String s) {
         if (s.length() > 63) {
-            int size = 3;
-            s = s.substring(0, 63 - 3) + randomNumeric(size);
+            s = s.substring(0, 63 - 4) + randomNumeric(4);
         }
         return s;
     }
@@ -148,6 +153,16 @@ public final class KubeUtils {
             suffix = String.valueOf(Math.abs(secureRandom.nextLong() + 1));
         } while (suffix.length() < size);
         return suffix.substring(0, size);
+    }
+
+    public static OperatorProcessingInstruction resolveProcessingInstruction(EntandoBaseCustomResource<?> resource) {
+        return resolveAnnotation(resource, PROCESSING_INSTRUCTION_ANNOTATION_NAME)
+                .map(value -> OperatorProcessingInstruction.valueOf(value.toUpperCase(Locale.ROOT).replace("-", "_")))
+                .orElse(OperatorProcessingInstruction.NONE);
+    }
+
+    public static Optional<String> resolveAnnotation(EntandoBaseCustomResource<?> resource, String name) {
+        return ofNullable(resource.getMetadata().getAnnotations()).map(map -> map.get(name));
     }
 
     public static String randomAlphanumeric(int length) {

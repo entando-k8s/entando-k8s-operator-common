@@ -18,9 +18,11 @@ package org.entando.kubernetes.controller.k8sclient;
 
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import java.io.Serializable;
 import java.util.Optional;
 import org.entando.kubernetes.controller.ExposedService;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.InfrastructureConfig;
 import org.entando.kubernetes.controller.common.KeycloakName;
 import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
@@ -28,7 +30,6 @@ import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.KeycloakToUse;
@@ -42,17 +43,18 @@ public interface EntandoResourceClient {
 
     String getNamespace();
 
-    <T extends EntandoCustomResource> void updateStatus(T customResource, AbstractServerStatus status);
+    <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updateStatus(T customResource, AbstractServerStatus status);
 
-    <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
+    <S extends Serializable, T extends EntandoBaseCustomResource<S>> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
-    <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
+    <S extends Serializable, T extends EntandoBaseCustomResource<S>> T createOrPatchEntandoResource(T r);
 
-    <T extends EntandoCustomResource> void updatePhase(T customResource, EntandoDeploymentPhase phase);
+    <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updatePhase(T customResource, EntandoDeploymentPhase phase);
 
-    void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason);
+    <S extends Serializable, T extends EntandoBaseCustomResource<S>> void deploymentFailed(T entandoCustomResource, Exception reason);
 
-    Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor);
+    <S extends Serializable, T extends EntandoBaseCustomResource<S>> Optional<ExternalDatabaseDeployment> findExternalDatabase(T resource,
+            DbmsVendor vendor);
 
     <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource);
 
@@ -61,7 +63,7 @@ public interface EntandoResourceClient {
     <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
             EntandoBaseCustomResource<T> resource);
 
-    ExposedService loadExposedService(EntandoCustomResource resource);
+    <S extends Serializable, T extends EntandoBaseCustomResource<S>> ExposedService loadExposedService(T resource);
 
     default EntandoApp loadEntandoApp(String namespace, String name) {
         return load(EntandoApp.class, namespace, name);

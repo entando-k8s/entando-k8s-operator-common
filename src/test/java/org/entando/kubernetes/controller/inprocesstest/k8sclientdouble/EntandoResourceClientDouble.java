@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +41,6 @@ import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.ResourceReference;
@@ -65,7 +65,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> T createOrPatchEntandoResource(T r) {
         this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
         return r;
     }
@@ -80,30 +80,34 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updateStatus(T customResource,
+            AbstractServerStatus status) {
         customResource.getStatus().putServerStatus(status);
     }
 
     @Override
-    public <T extends EntandoCustomResource> T load(Class<T> clzz, String namespace, String name) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> T load(Class<T> clzz, String namespace, String name) {
         Map<String, T> customResources = getNamespace(namespace).getCustomResources(clzz);
         return customResources.get(name);
     }
 
     @Override
-    public <T extends EntandoCustomResource> void updatePhase(T entandoCustomResource, EntandoDeploymentPhase phase) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updatePhase(T entandoCustomResource,
+            EntandoDeploymentPhase phase) {
         entandoCustomResource.getStatus().updateDeploymentPhase(phase, entandoCustomResource.getMetadata().getGeneration());
     }
 
     @Override
-    public void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void deploymentFailed(T entandoCustomResource,
+            Exception reason) {
         entandoCustomResource.getStatus().findCurrentServerStatus()
                 .orElseThrow(() -> new IllegalStateException("No server status recorded yet!"))
                 .finishWith(new EntandoControllerFailureBuilder().withException(reason).build());
     }
 
     @Override
-    public Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> Optional<ExternalDatabaseDeployment> findExternalDatabase(
+            T resource, DbmsVendor vendor) {
         NamespaceDouble namespace = getNamespace(resource);
         Optional<EntandoDatabaseService> first = namespace.getCustomResources(EntandoDatabaseService.class).values().stream()
                 .filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor).findFirst();
@@ -154,7 +158,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public ExposedService loadExposedService(EntandoCustomResource resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> ExposedService loadExposedService(T resource) {
         NamespaceDouble namespace = getNamespace(resource);
         Service service = namespace.getService(
                 resource.getMetadata().getName() + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-" + KubeUtils.DEFAULT_SERVICE_SUFFIX);

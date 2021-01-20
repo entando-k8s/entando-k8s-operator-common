@@ -31,12 +31,12 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.database.EntandoDatabaseServiceController;
@@ -83,13 +83,13 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult> sampleController;
+    private SampleController<EntandoAppSpec, EntandoApp, SampleExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void prepareExternalDB() {
-        this.sampleController = new SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult>(client, keycloakClient) {
+        this.sampleController = new SampleController<>(client, keycloakClient) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoAppSpec> createDeployable(
+            protected Deployable<SampleExposedDeploymentResult, EntandoAppSpec> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {

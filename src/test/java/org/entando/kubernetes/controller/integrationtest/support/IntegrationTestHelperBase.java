@@ -46,7 +46,7 @@ import org.entando.kubernetes.model.KeycloakAwareSpec;
 public class IntegrationTestHelperBase<
         R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<D, R>
+        D extends DoneableEntandoCustomResource<R, D>
         > implements FluentIntegrationTesting, CommonLabels {
 
     protected final DefaultKubernetesClient client;

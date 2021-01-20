@@ -53,7 +53,7 @@ public enum DbmsVendorConfig {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
-                    return String.format("jdbc:derby:%s/%s;create=true", this.getHost(), this.getDatabase());
+                    return String.format("jdbc:derby:%s/%s;create=true", this.getDataFolder(), this.getDatabase());
                 }
             };
         }
@@ -63,7 +63,7 @@ public enum DbmsVendorConfig {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
-                    return String.format("jdbc:h2:file:%s/%s;DB_CLOSE_ON_EXIT=FALSE", this.getHost(), this.getDatabase());
+                    return String.format("jdbc:h2:file:%s/%s;DB_CLOSE_ON_EXIT=FALSE", this.getDataFolder(), this.getDatabase());
                 }
             };
         }

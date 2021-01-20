@@ -30,7 +30,7 @@ import org.entando.kubernetes.model.EntandoDeploymentSpec;
 public class ControllerContainerStartingListener<
         R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<D, R>
+        D extends DoneableEntandoCustomResource<R, D>
         > {
 
     protected final CustomResourceOperationsImpl<R, L, D> operations;

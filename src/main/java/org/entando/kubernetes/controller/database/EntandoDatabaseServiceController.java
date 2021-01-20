@@ -22,8 +22,9 @@ import org.entando.kubernetes.controller.AbstractDbAwareController;
 import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 
-public class EntandoDatabaseServiceController extends AbstractDbAwareController<EntandoDatabaseService> {
+public class EntandoDatabaseServiceController extends AbstractDbAwareController<EntandoDatabaseServiceSpec, EntandoDatabaseService> {
 
     /**
      * Constructor for integration tests where we would need to override the auto exit behaviour.

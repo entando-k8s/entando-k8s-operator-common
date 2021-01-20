@@ -28,17 +28,18 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleDeployableContainer;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
@@ -72,11 +73,11 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String OTHER_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("other-namespace");
     public static final String OTHER_NAME = EntandoOperatorTestConfig.calculateName("other-name");
-    protected SimpleK8SClient k8sClient;
+    protected SimpleK8SClient<?> k8sClient;
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
     SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
-    private SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller;
+    private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
 
     @BeforeEach
     void setIngressClass() {
@@ -93,13 +94,13 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //Given I have a PublicIngressingDeployment in the Sample Namespace
         testBasicDeployment();
         //And I have a plugin in another namespace to share the same Ingress
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(k8sClient, mock) {
+        controller = new SampleController<>(k8sClient, mock) {
 
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin plugin,
+            protected Deployable<SampleExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin plugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<EntandoPluginSpec>(plugin, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<>(plugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
                     public String getIngressNamespace() {
@@ -113,7 +114,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
                     @Override
                     @SuppressWarnings("unchecked")
-                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
                         return Arrays.asList(new SampleDeployableContainer<EntandoPluginSpec>(entandoResource) {
                             @Override
                             public int getPrimaryPort() {
@@ -160,13 +161,13 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //Given I have a controller that processes EntandoPlugins
         lenient().when(mock.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn("ASDFASDFASDfa");
         this.k8sClient = getClient();
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(k8sClient, mock) {
+        controller = new SampleController<>(k8sClient, mock) {
 
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<SampleExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<EntandoPluginSpec>(newEntandoPlugin, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
                     @SuppressWarnings("unchecked")
@@ -246,7 +247,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntandoBaseCustomResource> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
         new Thread(() -> {
             T createResource = k8sClient.entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());

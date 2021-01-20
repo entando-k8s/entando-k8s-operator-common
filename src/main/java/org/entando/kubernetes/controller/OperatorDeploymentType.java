@@ -14,18 +14,9 @@
  *
  */
 
-package org.entando.kubernetes.client;
+package org.entando.kubernetes.controller;
 
-import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import javax.enterprise.inject.Produces;
-
-public class KubernetesClientProducer {
-
-    @Produces
-    public KubernetesClient produce() {
-        ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withRequestTimeout(30000).withConnectionTimeout(30000);
-        return new DefaultKubernetesClient(configBuilder.build());
-    }
+public enum OperatorDeploymentType {
+    OLM,
+    HELM
 }

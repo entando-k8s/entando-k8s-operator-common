@@ -23,7 +23,7 @@ import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface OperationsSupplier<R extends EntandoCustomResource, L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<D, R>> {
+        D extends DoneableEntandoCustomResource<R, D>> {
 
     CustomResourceOperationsImpl<R, L, D> get(KubernetesClient client);
 }

@@ -44,7 +44,6 @@ import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class ControllerExecutor {
 
@@ -82,22 +81,18 @@ public class ControllerExecutor {
         return resolveControllerImageNameByKind(resource.getKind());
     }
 
-    public static <T extends EntandoBaseCustomResource<?>> String resolveControllerImageName(Class<T> type) {
-        String kind = KubeUtils.getKindOf(type);
-        return resolveControllerImageNameByKind(kind);
-    }
-
     private static String resolveControllerImageNameByKind(String kind) {
         return resourceKindToImageNames.get(kind);
     }
 
-    public <T extends Serializable> Pod startControllerFor(Action action, EntandoBaseCustomResource<T> resource, String imageVersionToUse) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> Pod startControllerFor(Action action, T resource,
+            String imageVersionToUse) {
         removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
         return client.pods().start(pod);
     }
 
-    public <T extends EntandoDeploymentSpec> Pod runControllerFor(Action action, EntandoBaseCustomResource<T> resource,
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> Pod runControllerFor(Action action, T resource,
             String imageVersionToUse) {
         removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);

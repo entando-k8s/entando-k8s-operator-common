@@ -14,18 +14,17 @@
  *
  */
 
-package org.entando.kubernetes.client;
+package org.entando.kubernetes.controller.common.examples;
 
-import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import javax.enterprise.inject.Produces;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import org.entando.kubernetes.controller.ExposedDeploymentResult;
 
-public class KubernetesClientProducer {
+public class SampleExposedDeploymentResult extends ExposedDeploymentResult<SampleExposedDeploymentResult> {
 
-    @Produces
-    public KubernetesClient produce() {
-        ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withRequestTimeout(30000).withConnectionTimeout(30000);
-        return new DefaultKubernetesClient(configBuilder.build());
+    public SampleExposedDeploymentResult(Pod pod, Service service,
+            Ingress ingress) {
+        super(pod, service, ingress);
     }
 }

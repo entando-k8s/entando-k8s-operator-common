@@ -33,9 +33,9 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public abstract class SampleController<C extends EntandoBaseCustomResource<S>, S extends KeycloakAwareSpec,
-        R extends ServiceDeploymentResult> extends
-        AbstractDbAwareController<C> {
+public abstract class SampleController<S extends KeycloakAwareSpec, C extends EntandoBaseCustomResource<S>,
+        R extends ServiceDeploymentResult<R>> extends
+        AbstractDbAwareController<S, C> {
 
     public SampleController(KubernetesClient kubernetesClient) {
         super(kubernetesClient, false);

@@ -55,7 +55,7 @@ public class EntandoExecListener implements ExecListener {
     }
 
     public boolean shouldStillWait() {
-        if (System.currentTimeMillis() - start > timeoutSeconds * 1000) {
+        if (System.currentTimeMillis() - start > timeoutSeconds * 1000L) {
             failed = true;
             shouldStillWait = false;
             return false;

@@ -104,9 +104,10 @@ public final class TestFixturePreparation {
 
     @SuppressWarnings("unchecked")
     public static void prepareTestFixture(KubernetesClient client, TestFixtureRequest testFixtureRequest) {
-        for (Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry : testFixtureRequest.getRequiredDeletions().entrySet()) {
+        for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?>>>> entry :
+                testFixtureRequest.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
-                for (Class<? extends EntandoBaseCustomResource> type : entry.getValue()) {
+                for (Class<? extends EntandoBaseCustomResource<?>> type : entry.getValue()) {
                     //This is a bit heavy-handed, but we need  to make absolutely sure the pods are deleted before the test starts
                     //Pods are considered 'deleted' even if they are still gracefully shutting down and the second or two
                     // it takes to shut down can interfere with subsequent pod watchers.

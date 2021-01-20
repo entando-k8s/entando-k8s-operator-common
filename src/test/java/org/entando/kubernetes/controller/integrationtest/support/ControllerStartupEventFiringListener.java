@@ -30,7 +30,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 public class ControllerStartupEventFiringListener<
         R extends EntandoCustomResource,
         L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<D, R>
+        D extends DoneableEntandoCustomResource<R, D>
         > {
 
     private final CustomResourceOperationsImpl<R, L, D> operations;

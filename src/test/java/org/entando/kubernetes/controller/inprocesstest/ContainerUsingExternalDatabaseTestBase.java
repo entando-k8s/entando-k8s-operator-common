@@ -28,13 +28,14 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.common.examples.springboot.SpringBootDeployable;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
@@ -63,12 +64,12 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller;
+    private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
 
     @Test
     void testSelectingOneOfTwoExternalDatabase() {
         //Given I have a controller that processes EntandoPlugins
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(getClient(), getKeycloakClient()) {
+        controller = new SampleController<>(getClient(), getKeycloakClient()) {
             @Override
             protected SpringBootDeployable<EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
@@ -172,7 +173,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntandoBaseCustomResource> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
         new Thread(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());

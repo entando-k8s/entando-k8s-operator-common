@@ -22,9 +22,9 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.DeployableContainer;
@@ -32,7 +32,8 @@ import org.entando.kubernetes.controller.spi.IngressingDeployable;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
-public class SpringBootDeployable<S extends EntandoIngressingDeploymentSpec> implements IngressingDeployable<ExposedDeploymentResult, S>,
+public class SpringBootDeployable<S extends EntandoIngressingDeploymentSpec> implements
+        IngressingDeployable<SampleExposedDeploymentResult, S>,
         DbAwareDeployable {
 
     private final EntandoBaseCustomResource<S> customResource;
@@ -81,8 +82,8 @@ public class SpringBootDeployable<S extends EntandoIngressingDeploymentSpec> imp
     }
 
     @Override
-    public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new ExposedDeploymentResult(pod, service, ingress);
+    public SampleExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+        return new SampleExposedDeploymentResult(pod, service, ingress);
     }
 
 }

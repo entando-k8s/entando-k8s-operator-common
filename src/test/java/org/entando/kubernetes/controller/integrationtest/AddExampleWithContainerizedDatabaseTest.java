@@ -31,9 +31,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.entando.kubernetes.controller.EntandoOperatorComplianceMode;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SampleIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
@@ -66,14 +66,14 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
 
     public static final String TEST_PLUGIN_NAME = EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAME + "-name-longer-than-32";
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
-    private final SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller =
-            new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(
+    private final SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller =
+            new SampleController<>(
                     helper.getClient()) {
                 @Override
-                protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(
+                protected Deployable<SampleExposedDeploymentResult, EntandoPluginSpec> createDeployable(
                         EntandoPlugin newEntandoPlugin,
                         DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
-                    return new SampleIngressingDbAwareDeployable<EntandoPluginSpec>(newEntandoPlugin, databaseServiceResult) {
+                    return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult) {
                         @Override
                         protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
                             return Collections
