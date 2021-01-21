@@ -53,8 +53,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     }
 
     public static OperatorDeploymentType getOperatorDeploymentType() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SERVICEACCOUNT)
-                .map(s -> OperatorDeploymentType.valueOf(s.toLowerCase(Locale.ROOT)))
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE)
+                .map(s -> OperatorDeploymentType.valueOf(s.toLowerCase(Locale.ROOT).replace("-", "_")))
                 .orElse(OperatorDeploymentType.HELM);
     }
 
