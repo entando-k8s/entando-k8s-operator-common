@@ -16,7 +16,21 @@
 
 package org.entando.kubernetes.controller;
 
+import java.util.Locale;
+
 public enum OperatorDeploymentType {
     OLM,
-    HELM
+    HELM;
+
+    public static OperatorDeploymentType resolve(String s) {
+        try {
+            return valueOf(s.toUpperCase(Locale.ROOT).replace("-", "_"));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    public String getName() {
+        return name().toLowerCase(Locale.ROOT);
+    }
 }

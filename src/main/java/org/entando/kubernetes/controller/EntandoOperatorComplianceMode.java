@@ -16,6 +16,20 @@
 
 package org.entando.kubernetes.controller;
 
+import java.util.Locale;
+
 public enum EntandoOperatorComplianceMode {
     COMMUNITY, REDHAT;
+
+    public String getName() {
+        return name().toLowerCase(Locale.ROOT);
+    }
+
+    public static EntandoOperatorComplianceMode resolve(String s) {
+        try {
+            return valueOf(s.toUpperCase(Locale.ROOT).replace("-", "_"));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 }

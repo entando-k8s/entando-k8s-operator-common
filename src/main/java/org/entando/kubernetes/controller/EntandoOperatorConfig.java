@@ -22,7 +22,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -54,7 +54,7 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static OperatorDeploymentType getOperatorDeploymentType() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE)
-                .map(s -> OperatorDeploymentType.valueOf(s.toLowerCase(Locale.ROOT).replace("-", "_")))
+                .map(OperatorDeploymentType::resolve)
                 .orElse(OperatorDeploymentType.HELM);
     }
 
@@ -79,8 +79,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     }
 
     public static SecurityMode getOperatorSecurityMode() {
-        return SecurityMode
-                .caseInsensitiveValueOf(getProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SECURITY_MODE, "lenient"));
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SECURITY_MODE)
+                .map(SecurityMode::resolve).orElse(SecurityMode.LENIENT);
     }
 
     /*
@@ -97,13 +97,13 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static List<Path> getCertificateAuthorityCertPaths() {
         String[] paths = getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS,
                 "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").split(SEPERATOR_PATTERN);
-        List<Path> result = Arrays.asList(paths).stream()
+        List<Path> result = Arrays.stream(paths)
                 .map(Paths::get)
                 .filter(path -> path.toFile().exists())
                 .collect(Collectors.toList());
         File caCertRoot = Paths.get(getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_ROOT_FOLDER, "/etc/entando/ca")).toFile();
         if (caCertRoot.exists() && caCertRoot.isDirectory()) {
-            result.addAll(Arrays.stream(caCertRoot.listFiles())
+            result.addAll(Arrays.stream(Objects.requireNonNull(caCertRoot.listFiles()))
                     .filter(File::isFile)
                     .map(file -> Paths.get(file.getAbsolutePath()))
                     .collect(Collectors.toList()));
@@ -163,8 +163,7 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static EntandoOperatorComplianceMode getComplianceMode() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE)
-                .map(s -> EntandoOperatorComplianceMode.valueOf(s.toUpperCase(
-                        Locale.getDefault()))).orElse(EntandoOperatorComplianceMode.COMMUNITY);
+                .map(EntandoOperatorComplianceMode::resolve).orElse(EntandoOperatorComplianceMode.COMMUNITY);
     }
 
 }

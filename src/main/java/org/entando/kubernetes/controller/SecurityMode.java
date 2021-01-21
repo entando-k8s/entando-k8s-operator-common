@@ -21,7 +21,15 @@ import java.util.Locale;
 public enum SecurityMode {
     STRICT, LENIENT;
 
-    public static SecurityMode caseInsensitiveValueOf(String securityMode) {
-        return valueOf(securityMode.toUpperCase(Locale.getDefault()));
+    public static SecurityMode resolve(String securityMode) {
+        try {
+            return valueOf(securityMode.toUpperCase(Locale.getDefault()));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    public String getName() {
+        return name().toLowerCase(Locale.ROOT);
     }
 }
