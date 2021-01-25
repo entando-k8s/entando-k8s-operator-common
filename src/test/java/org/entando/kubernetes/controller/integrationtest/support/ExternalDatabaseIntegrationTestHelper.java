@@ -132,7 +132,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
                 .withCreateDeployment(false)
                 .withJdbcParameters(Collections.singletonMap("oracle.jdbc.timezoneAsRegion", "false"))
                 .build();
-        String externalJdbcUrl = DbmsDockerVendorStrategy.ORACLE.getConnectionStringBuilder().toHost(ORACLE_EXTERNAL_HOST)
+        String externalJdbcUrl = DbmsDockerVendorStrategy.ORACLE.getVendorConfig().getConnectionStringBuilder().toHost(ORACLE_EXTERNAL_HOST)
                 .onPort(ORACLE_EXTERNAL_PORT.toString()).usingDatabase(ORACLE_DATABASE_NAME).usingSchema(null)
                 .buildConnectionString();
         dropUsers(externalJdbcUrl, usersToDrop);

@@ -43,12 +43,11 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
         List<EnvVar> vars = new ArrayList<>();
         DatabaseSchemaCreationResult databaseSchema = getDatabaseSchema();
         if (databaseSchema != null) {
-            vars.add(new EnvVar("DB_VENDOR", databaseSchema.getVendor().getName(), null));
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_USERNAME.name(), null, databaseSchema.getUsernameRef()));
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_PASSWORD.name(), null, databaseSchema.getPasswordRef()));
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_URL.name(), databaseSchema.getJdbcUrl(), null));
             vars.add(
-                    new EnvVar(SpringProperty.SPRING_JPA_DATABASE_PLATFORM.name(), databaseSchema.getVendor().getHibernateDialect(), null));
+                    new EnvVar(SpringProperty.SPRING_JPA_DATABASE_PLATFORM.name(), databaseSchema.getVendor().getVendorConfig().getHibernateDialect(), null));
             /*
             TODO: Set SPRING_JPA_PROPERTIES_HIBERNATE_ID_NEW_GENERATOR_MAPPINGS to 'false' if we ever run into issues with ID Generation
             */

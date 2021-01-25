@@ -57,16 +57,12 @@ public enum DbmsDockerVendorStrategy {
         return Optional.ofNullable(fsUserGroupId);
     }
 
-    public JdbcConnectionStringBuilder getConnectionStringBuilder() {
-        return this.vendorConfig.getConnectionStringBuilder();
-    }
-
     public DbmsVendorConfig getVendorConfig() {
         return vendorConfig;
     }
 
     public String getHealthCheck() {
-        return this.vendorConfig.getHealthCheck();
+        return this.getVendorConfig().getHealthCheck();
     }
 
     public String getImageRepository() {
@@ -82,7 +78,7 @@ public enum DbmsDockerVendorStrategy {
     }
 
     public int getPort() {
-        return this.vendorConfig.getDefaultPort();
+        return this.getVendorConfig().getDefaultPort();
     }
 
     public String getVolumeMountPath() {
@@ -98,11 +94,7 @@ public enum DbmsDockerVendorStrategy {
     }
 
     public String getDefaultAdminUsername() {
-        return this.vendorConfig.getDefaultAdminUsername();
-    }
-
-    public String getHibernateDialect() {
-        return this.vendorConfig.getHibernateDialect();
+        return this.getVendorConfig().getDefaultAdminUsername();
     }
 
     public static DbmsDockerVendorStrategy forVendor(DbmsVendor vendor, EntandoOperatorComplianceMode complianceMode) {
