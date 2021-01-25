@@ -48,7 +48,7 @@ public enum DbmsVendorConfig {
             };
         }
     },
-    DERBY("org.hibernate.dialect.DerbyDialect", "agile") {
+    DERBY("org.hibernate.dialect.DerbyDialect", "agile", "agile") {
         @Override
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
@@ -58,7 +58,7 @@ public enum DbmsVendorConfig {
             };
         }
     },
-    H2("org.hibernate.dialect.H2Dialect", "sa") {
+    H2("org.hibernate.dialect.H2Dialect", "sa", "") {
         @Override
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
@@ -70,24 +70,30 @@ public enum DbmsVendorConfig {
     };
 
     private final String hibernateDialect;
-    private final String defaultUser;
+    private final String defaultAdminUsername;
+    private String defaultAdminPassword;
     private int defaultPort;
     private boolean schemaIsDatabase;
     private String healthCheck;
     private int maxNameLength;
 
-    DbmsVendorConfig(String hibernateDialect, String user) {
+    DbmsVendorConfig(String hibernateDialect, String defaultAdminUsername, String defaultAdminPassword) {
         this.hibernateDialect = hibernateDialect;
-        this.defaultUser = user;
+        this.defaultAdminUsername = defaultAdminUsername;
+        this.defaultAdminPassword = defaultAdminPassword;
     }
 
     DbmsVendorConfig(String hibernateDialect, int port, String user, String healthCheck, int maxNameLength, boolean schemaIsDatabase) {
         this.hibernateDialect = hibernateDialect;
-        this.defaultUser = user;
+        this.defaultAdminUsername = user;
         this.defaultPort = port;
         this.healthCheck = healthCheck;
         this.maxNameLength = maxNameLength;
         this.schemaIsDatabase = schemaIsDatabase;
+    }
+
+    public String getDefaultAdminPassword() {
+        return defaultAdminPassword;
     }
 
     public boolean schemaIsDatabase() {
@@ -105,7 +111,7 @@ public enum DbmsVendorConfig {
     }
 
     public String getDefaultAdminUsername() {
-        return defaultUser;
+        return defaultAdminUsername;
     }
 
     public String getHealthCheck() {
