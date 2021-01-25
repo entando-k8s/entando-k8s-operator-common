@@ -46,7 +46,7 @@ public class TestServerDeployable implements IngressingDeployable<ExposedDeploym
     public TestServerDeployable(EntandoKeycloakServer keycloakServer, DatabaseDeploymentResult databaseServiceResult) {
         this.keycloakServer = keycloakServer;
         this.databaseServiceResult = databaseServiceResult;
-        containers = Arrays.asList(new TestServerDeployableContainer(keycloakServer));
+        containers = Arrays.asList(new TestServerDeployableContainer(keycloakServer, databaseServiceResult));
         keycloakAdminSecret = generateSecret(this.keycloakServer, TestServerDeployableContainer.secretName(this.keycloakServer),
                 "entando_keycloak_admin");
     }
@@ -54,11 +54,6 @@ public class TestServerDeployable implements IngressingDeployable<ExposedDeploym
     @Override
     public List<DeployableContainer> getContainers() {
         return containers;
-    }
-
-    @Override
-    public DatabaseDeploymentResult getDatabaseServiceResult() {
-        return databaseServiceResult;
     }
 
     @Override
@@ -87,7 +82,7 @@ public class TestServerDeployable implements IngressingDeployable<ExposedDeploym
     }
 
     @Override
-    public List<Secret> buildSecrets() {
+    public List<Secret> getSecrets() {
         return Arrays.asList(keycloakAdminSecret);
     }
 

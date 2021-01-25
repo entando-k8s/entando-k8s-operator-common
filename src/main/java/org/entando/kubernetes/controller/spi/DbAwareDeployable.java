@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.spi;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 
 public interface DbAwareDeployable {
 
@@ -36,5 +35,4 @@ public interface DbAwareDeployable {
 
     }
 
-    DatabaseServiceResult getDatabaseServiceResult();
 }

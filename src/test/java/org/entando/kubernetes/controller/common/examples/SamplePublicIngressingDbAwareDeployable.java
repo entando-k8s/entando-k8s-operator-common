@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.common.examples;
 import static org.entando.kubernetes.controller.KubeUtils.generateSecret;
 
 import io.fabric8.kubernetes.api.model.Secret;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.database.DatabaseServiceResult;
@@ -43,19 +43,20 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
         this.keycloakConnectionConfig = keycloakConnectionConfig;
         sampleSecret = generateSecret(this.entandoResource, secretName(this.entandoResource),
                 "entando_keycloak_admin");
+
     }
 
-    public static <T extends EntandoBaseCustomResource> String secretName(T resource) {
+    public static <T extends EntandoBaseCustomResource<?>> String secretName(T resource) {
         return resource.getMetadata().getName() + "-admin-secret";
     }
 
     protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<S> entandoResource) {
-        return Arrays.asList(new SampleDeployableContainer<>(entandoResource));
+        return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult));
     }
 
     @Override
-    public List<Secret> buildSecrets() {
-        return Arrays.asList(sampleSecret);
+    public List<Secret> getSecrets() {
+        return Collections.singletonList(sampleSecret);
     }
 
     @Override

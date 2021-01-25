@@ -30,6 +30,7 @@ import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
@@ -113,9 +114,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                     }
 
                     @Override
-                    @SuppressWarnings("unchecked")
                     protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
-                        return Arrays.asList(new SampleDeployableContainer<EntandoPluginSpec>(entandoResource) {
+                        return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult) {
                             @Override
                             public int getPrimaryPort() {
                                 return 8082;
@@ -172,8 +172,9 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                     @Override
                     @SuppressWarnings("unchecked")
                     protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
-                        return Arrays.asList(new SampleDeployableContainer<>(entandoResource),
-                                new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig));
+                        return Arrays.asList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult),
+                                new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig,
+                                        databaseServiceResult));
                     }
                 };
             }
@@ -263,8 +264,9 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         private KeycloakConnectionConfig keycloakConnectionConfig;
 
         public EntandoPluginSampleDeployableContainer(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource,
-                KeycloakConnectionConfig keycloakConnectionConfig) {
-            super(entandoResource);
+                KeycloakConnectionConfig keycloakConnectionConfig,
+                DatabaseServiceResult databaseServiceResult) {
+            super(entandoResource, databaseServiceResult);
             this.keycloakConnectionConfig = keycloakConnectionConfig;
         }
 

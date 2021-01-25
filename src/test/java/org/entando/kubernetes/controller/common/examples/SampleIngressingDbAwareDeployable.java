@@ -38,8 +38,8 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
 
     public SampleIngressingDbAwareDeployable(EntandoBaseCustomResource<S> entandoResource, DatabaseServiceResult databaseServiceResult) {
         this.entandoResource = entandoResource;
-        this.containers = createContainers(entandoResource);
         this.databaseServiceResult = databaseServiceResult;
+        this.containers = createContainers(entandoResource);
     }
 
     protected abstract List<DeployableContainer> createContainers(EntandoBaseCustomResource<S> entandoResource);
@@ -79,8 +79,4 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
         return entandoResource.getMetadata().getNamespace();
     }
 
-    @Override
-    public DatabaseServiceResult getDatabaseServiceResult() {
-        return databaseServiceResult;
-    }
 }

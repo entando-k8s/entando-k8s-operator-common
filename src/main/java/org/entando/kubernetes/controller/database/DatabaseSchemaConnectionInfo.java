@@ -17,24 +17,25 @@
 package org.entando.kubernetes.controller.database;
 
 import io.fabric8.kubernetes.api.model.EnvVarSource;
+import io.fabric8.kubernetes.api.model.Secret;
 import org.entando.kubernetes.controller.AbstractServiceResult;
 import org.entando.kubernetes.controller.KubeUtils;
 
-public class DatabaseSchemaCreationResult extends AbstractServiceResult {
+public class DatabaseSchemaConnectionInfo extends AbstractServiceResult {
 
     private final DatabaseServiceResult databaseServiceResult;
-    private final String schemaSecretName;
     private final String schemaName;
+    private final Secret schemaSecret;
 
-    public DatabaseSchemaCreationResult(DatabaseServiceResult databaseServiceResult, String schemaName, String schemaSecretName) {
+    public DatabaseSchemaConnectionInfo(DatabaseServiceResult databaseServiceResult, String schemaName, Secret schemaSecret) {
         super(databaseServiceResult.getService());
         this.databaseServiceResult = databaseServiceResult;
         this.schemaName = schemaName;
-        this.schemaSecretName = schemaSecretName;
+        this.schemaSecret = schemaSecret;
     }
 
     public String getSchemaSecretName() {
-        return schemaSecretName;
+        return schemaSecret.getMetadata().getName();
     }
 
     public String getJdbcUrl() {
@@ -56,6 +57,10 @@ public class DatabaseSchemaCreationResult extends AbstractServiceResult {
         }
     }
 
+    public DatabaseServiceResult getDatabaseServiceResult() {
+        return databaseServiceResult;
+    }
+
     public String getSchemaName() {
         return schemaName;
     }
@@ -67,4 +72,9 @@ public class DatabaseSchemaCreationResult extends AbstractServiceResult {
     public EnvVarSource getUsernameRef() {
         return KubeUtils.secretKeyRef(getSchemaSecretName(), KubeUtils.USERNAME_KEY);
     }
+
+    public Secret getSchemaSecret() {
+        return this.schemaSecret;
+    }
+
 }

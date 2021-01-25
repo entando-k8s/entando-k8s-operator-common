@@ -38,14 +38,12 @@ public class SpringBootDeployable<S extends EntandoIngressingDeploymentSpec> imp
 
     private final EntandoBaseCustomResource<S> customResource;
     private final DeployableContainer container;
-    private final DatabaseServiceResult databaseServiceResult;
 
     public SpringBootDeployable(EntandoBaseCustomResource<S> customResource,
             KeycloakConnectionConfig keycloakConnectionConfig,
             DatabaseServiceResult databaseServiceResult) {
         this.customResource = customResource;
-        this.databaseServiceResult = databaseServiceResult;
-        container = new SampleSpringBootDeployableContainer<>(customResource, keycloakConnectionConfig);
+        container = new SampleSpringBootDeployableContainer<>(customResource, keycloakConnectionConfig, databaseServiceResult);
     }
 
     /**
@@ -54,11 +52,6 @@ public class SpringBootDeployable<S extends EntandoIngressingDeploymentSpec> imp
     @Override
     public List<DeployableContainer> getContainers() {
         return Arrays.asList(container);
-    }
-
-    @Override
-    public DatabaseServiceResult getDatabaseServiceResult() {
-        return databaseServiceResult;
     }
 
     @Override

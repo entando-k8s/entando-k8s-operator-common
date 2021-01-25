@@ -49,7 +49,7 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     }
 
     @Override
-    public List<Secret> buildSecrets() {
+    public List<Secret> getSecrets() {
         Secret secret = KubeUtils.generateSecret(customResource, BareBonesContainer.getDatabaseAdminSecretName(),
                 dbmsVendor.getDefaultAdminUsername());
         return Arrays.asList(secret);

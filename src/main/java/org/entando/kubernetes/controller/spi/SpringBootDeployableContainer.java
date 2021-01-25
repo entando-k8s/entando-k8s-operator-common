@@ -19,14 +19,15 @@ package org.entando.kubernetes.controller.spi;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
 import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
+import org.entando.kubernetes.controller.database.DatabaseSchemaConnectionInfo;
 
 public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, IngressingContainer, TlsAware {
 
-    DatabaseSchemaCreationResult getDatabaseSchema();
+    Optional<DatabaseSchemaConnectionInfo> getDatabaseSchema();
 
     @Override
     default int getCpuLimitMillicores() {
@@ -41,8 +42,7 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
     @Override
     default List<EnvVar> getDatabaseConnectionVariables() {
         List<EnvVar> vars = new ArrayList<>();
-        DatabaseSchemaCreationResult databaseSchema = getDatabaseSchema();
-        if (databaseSchema != null) {
+        getDatabaseSchema().ifPresent(databaseSchema -> {
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_USERNAME.name(), null, databaseSchema.getUsernameRef()));
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_PASSWORD.name(), null, databaseSchema.getPasswordRef()));
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_URL.name(), databaseSchema.getJdbcUrl(), null));
@@ -51,7 +51,7 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
             /*
             TODO: Set SPRING_JPA_PROPERTIES_HIBERNATE_ID_NEW_GENERATOR_MAPPINGS to 'false' if we ever run into issues with ID Generation
             */
-        }
+        });
         return vars;
     }
 

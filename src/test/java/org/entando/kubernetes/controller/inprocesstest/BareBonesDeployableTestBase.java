@@ -58,7 +58,8 @@ import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+//Because Sonar doesn't pick up that this class is subclassed in other packages
+@SuppressWarnings("java:S5786")
 public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");

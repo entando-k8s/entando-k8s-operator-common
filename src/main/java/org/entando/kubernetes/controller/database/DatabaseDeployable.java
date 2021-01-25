@@ -101,7 +101,7 @@ public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
     }
 
     @Override
-    public List<Secret> buildSecrets() {
+    public List<Secret> getSecrets() {
         Secret secret = KubeUtils.generateSecret(customResource, getDatabaseAdminSecretName(),
                 dbmsVendor.getDefaultAdminUsername());
         return Arrays.asList(secret);

@@ -21,5 +21,5 @@ import java.util.List;
 
 public interface Secretive {
 
-    List<Secret> buildSecrets();
+    List<Secret> getSecrets();
 }

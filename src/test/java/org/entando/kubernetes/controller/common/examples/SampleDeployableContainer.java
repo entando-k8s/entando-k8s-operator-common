@@ -18,13 +18,13 @@ package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.FluentTernary;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
+import org.entando.kubernetes.controller.database.DatabaseSchemaConnectionInfo;
+import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.database.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.DbAware;
@@ -43,10 +43,16 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     public static final String VAR_LIB_MYDATA = "/var/lib/mydata";
 
     private final EntandoBaseCustomResource<S> entandoResource;
-    private Map<String, DatabaseSchemaCreationResult> dbSchemas;
+    private final List<DatabaseSchemaConnectionInfo> databaseSchemaInfo;
 
-    public SampleDeployableContainer(EntandoBaseCustomResource<S> entandoResource) {
+    public SampleDeployableContainer(EntandoBaseCustomResource<S> entandoResource, DatabaseServiceResult databaseServiceResult) {
         this.entandoResource = entandoResource;
+        if (databaseServiceResult == null) {
+            this.databaseSchemaInfo = Collections.emptyList();
+        } else {
+            this.databaseSchemaInfo = DbAware
+                    .buildDatabaseSchemaConnectionInfo(entandoResource, databaseServiceResult, Collections.singletonList("db"));
+        }
     }
 
     public static <T extends EntandoBaseCustomResource> String secretName(T entandoResource) {
@@ -77,23 +83,29 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
         return vars;
     }
 
+
     @Override
     public List<EnvVar> getDatabaseConnectionVariables() {
         List<EnvVar> vars = new ArrayList<>();
-        DatabaseSchemaCreationResult databaseSchemaCreationResult = dbSchemas.get("db");
-        vars.add(new EnvVar("DB_ADDR", databaseSchemaCreationResult.getInternalServiceHostname(), null));
-        vars.add(new EnvVar("DB_PORT", databaseSchemaCreationResult.getPort(), null));
-        vars.add(new EnvVar("DB_DATABASE", databaseSchemaCreationResult.getDatabase(), null));
-        vars.add(new EnvVar("DB_PASSWORD", null, databaseSchemaCreationResult.getPasswordRef()));
-        vars.add(new EnvVar("DB_USER", null, databaseSchemaCreationResult.getUsernameRef()));
-        vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databaseSchemaCreationResult), null));
-        vars.add(new EnvVar("DB_SCHEMA", databaseSchemaCreationResult.getSchemaName(), null));
+        DatabaseSchemaConnectionInfo databseSchemaConnectionInfo = databaseSchemaInfo.get(0);
+        vars.add(new EnvVar("DB_ADDR", databseSchemaConnectionInfo.getInternalServiceHostname(), null));
+        vars.add(new EnvVar("DB_PORT", databseSchemaConnectionInfo.getPort(), null));
+        vars.add(new EnvVar("DB_DATABASE", databseSchemaConnectionInfo.getDatabase(), null));
+        vars.add(new EnvVar("DB_PASSWORD", null, databseSchemaConnectionInfo.getPasswordRef()));
+        vars.add(new EnvVar("DB_USER", null, databseSchemaConnectionInfo.getUsernameRef()));
+        vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databseSchemaConnectionInfo), null));
+        vars.add(new EnvVar("DB_SCHEMA", databseSchemaConnectionInfo.getSchemaName(), null));
         return vars;
     }
 
-    private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaCreationResult databaseSchemaCreationResult) {
-        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor().getVendorConfig() == DbmsVendorConfig.POSTGRESQL)
-                .orElse(databaseSchemaCreationResult.getVendor().getVendorConfig().getName());
+    @Override
+    public List<DatabaseSchemaConnectionInfo> getSchemaConnectionInfo() {
+        return this.databaseSchemaInfo;
+    }
+
+    private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaConnectionInfo databseSchemaConnectionInfo) {
+        return FluentTernary.use("postgres").when(databseSchemaConnectionInfo.getVendor().getVendorConfig() == DbmsVendorConfig.POSTGRESQL)
+                .orElse(databseSchemaConnectionInfo.getVendor().getVendorConfig().getName());
     }
 
     @Override
@@ -104,17 +116,6 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     @Override
     public Optional<String> getHealthCheckPath() {
         return Optional.of(getWebContextPath());
-    }
-
-    @Override
-    public List<String> getDbSchemaQualifiers() {
-        return Arrays.asList("db");
-    }
-
-    @Override
-    public Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas) {
-        this.dbSchemas = dbSchemas;
-        return Optional.empty();
     }
 
     @Override

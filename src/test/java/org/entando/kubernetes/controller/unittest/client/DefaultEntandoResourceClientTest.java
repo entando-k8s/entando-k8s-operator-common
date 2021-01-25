@@ -51,7 +51,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
-public class DefaultEntandoResourceClientTest implements InProcessTestUtil {
+class DefaultEntandoResourceClientTest implements InProcessTestUtil {
 
     public static final String APP_NAMESPACE = "app-namespace";
     public static final String HTTP_TEST_COM = "http://test.com";

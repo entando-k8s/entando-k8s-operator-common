@@ -43,7 +43,7 @@ class ConfigurableStorageCalculatorTest {
     @Test
     void calculateRequestsWithDefaultRatioAndNoOverride() {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
-                new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null));
+                new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));
         assertThat(resourceCalculator.getStorageRequest(), is("204.8Mi"));
     }
@@ -52,7 +52,7 @@ class ConfigurableStorageCalculatorTest {
     void calculateRequestsWithProvidedRatioNoOverride() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
-                new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null));
+                new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));
         assertThat(resourceCalculator.getStorageRequest(), is("409.6Mi"));
     }
@@ -62,7 +62,7 @@ class ConfigurableStorageCalculatorTest {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withStorageLimit("4096Mi")
-                        .endResourceRequirements().build()), null));
+                        .endResourceRequirements().build()), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("4096Mi"));
         assertThat(resourceCalculator.getStorageRequest(), is("409.6Mi"));
     }
@@ -73,7 +73,7 @@ class ConfigurableStorageCalculatorTest {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withStorageLimit("4096Mi")
-                        .endResourceRequirements().build()), null));
+                        .endResourceRequirements().build()), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("4096Mi"));
         assertThat(resourceCalculator.getStorageRequest(), is("819.2Mi"));
     }
@@ -84,7 +84,7 @@ class ConfigurableStorageCalculatorTest {
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
                         .withStorageLimit("4096Mi")
                         .withStorageRequest("256Mi")
-                        .endResourceRequirements().build()), null));
+                        .endResourceRequirements().build()), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("4096Mi"));
         assertThat(resourceCalculator.getStorageRequest(), is("256Mi"));
     }

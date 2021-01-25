@@ -108,7 +108,7 @@ class ServiceAcountCreatorTest implements InProcessTestUtil {
                 emulateKeycloakDeployment(client)) {
             @Override
             protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec> entandoResource) {
-                return Arrays.asList(new SampleDeployableContainer<EntandoAppSpec>(entandoResource) {
+                return Arrays.asList(new SampleDeployableContainer<EntandoAppSpec>(entandoResource, databaseServiceResult) {
                     @Override
                     public List<KubernetesPermission> getKubernetesPermissions() {
                         return Arrays.asList(new KubernetesPermission("route.openshift.io", "routes", "delete"));

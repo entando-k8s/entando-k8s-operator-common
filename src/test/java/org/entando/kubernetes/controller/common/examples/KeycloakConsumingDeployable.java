@@ -59,11 +59,6 @@ public class KeycloakConsumingDeployable implements PublicIngressingDeployable<E
     }
 
     @Override
-    public DatabaseDeploymentResult getDatabaseServiceResult() {
-        return databaseServiceResult;
-    }
-
-    @Override
     public String getIngressName() {
         return TEST_INGRESS_NAME;
     }

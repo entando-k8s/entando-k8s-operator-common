@@ -17,35 +17,33 @@
 package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
-import org.entando.kubernetes.controller.spi.DatabasePopulator;
+import org.entando.kubernetes.controller.database.DatabaseSchemaConnectionInfo;
+import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DbAwareKeycloakContainer extends MinimalKeycloakContainer implements DbAware {
 
-    public DbAwareKeycloakContainer(EntandoKeycloakServer entandoResource) {
+    private final List<DatabaseSchemaConnectionInfo> dbSchemaInfo;
+
+    public DbAwareKeycloakContainer(EntandoKeycloakServer entandoResource,
+            DatabaseServiceResult databaseServiceResult) {
         super(entandoResource);
-    }
+        this.dbSchemaInfo = DbAware
+                .buildDatabaseSchemaConnectionInfo(entandoResource, databaseServiceResult, Collections.singletonList("db"));
 
-    @Override
-    public List<String> getDbSchemaQualifiers() {
-        return Arrays.asList("db");
-    }
-
-    @Override
-    public Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas) {
-        return Optional.empty();
     }
 
     @Override
     public List<EnvVar> getDatabaseConnectionVariables() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public List<DatabaseSchemaConnectionInfo> getSchemaConnectionInfo() {
+        return dbSchemaInfo;
     }
 
 }

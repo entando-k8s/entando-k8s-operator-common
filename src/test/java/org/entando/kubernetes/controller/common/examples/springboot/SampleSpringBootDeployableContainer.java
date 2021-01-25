@@ -18,35 +18,44 @@ package org.entando.kubernetes.controller.common.examples.springboot;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
+import org.entando.kubernetes.controller.database.DatabaseSchemaConnectionInfo;
+import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.ConfigurableResourceContainer;
-import org.entando.kubernetes.controller.spi.DatabasePopulator;
+import org.entando.kubernetes.controller.spi.DbAware;
 import org.entando.kubernetes.controller.spi.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource> implements SpringBootDeployableContainer,
+public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends EntandoDeploymentSpec>> implements
+        SpringBootDeployableContainer,
         ParameterizableContainer, PersistentVolumeAware, ConfigurableResourceContainer {
 
     public static final String MY_IMAGE = "entando/entando-k8s-service";
     public static final String MY_WEB_CONTEXT = "/k8s";
     private final T customResource;
     private final KeycloakConnectionConfig keycloakConnectionConfig;
-    private Map<String, DatabaseSchemaCreationResult> dbSchemas;
+    private final List<DatabaseSchemaConnectionInfo> dbSchemaInfo;
 
-    public SampleSpringBootDeployableContainer(T customResource, KeycloakConnectionConfig keycloakConnectionConfig) {
+    public SampleSpringBootDeployableContainer(T customResource, KeycloakConnectionConfig keycloakConnectionConfig,
+            DatabaseServiceResult databaseServiceResult) {
         this.customResource = customResource;
         this.keycloakConnectionConfig = keycloakConnectionConfig;
+        if (databaseServiceResult == null) {
+            this.dbSchemaInfo = Collections.emptyList();
+        } else {
+            this.dbSchemaInfo = DbAware
+                    .buildDatabaseSchemaConnectionInfo(customResource, databaseServiceResult, Collections.singletonList("serverdb"));
+        }
     }
 
     @Override
@@ -97,19 +106,8 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     }
 
     @Override
-    public List<String> getDbSchemaQualifiers() {
-        return Arrays.asList(getNameQualifier() + "db");
-    }
-
-    @Override
-    public Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas) {
-        this.dbSchemas = dbSchemas;
-        return Optional.empty();
-    }
-
-    @Override
-    public DatabaseSchemaCreationResult getDatabaseSchema() {
-        return this.dbSchemas.get(getNameQualifier() + "db");
+    public Optional<DatabaseSchemaConnectionInfo> getDatabaseSchema() {
+        return Optional.of(this.dbSchemaInfo.get(0));
     }
 
     @Override
@@ -121,5 +119,10 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     @Override
     public String getVolumeMountPath() {
         return "/entando-data";
+    }
+
+    @Override
+    public List<DatabaseSchemaConnectionInfo> getSchemaConnectionInfo() {
+        return this.dbSchemaInfo;
     }
 }

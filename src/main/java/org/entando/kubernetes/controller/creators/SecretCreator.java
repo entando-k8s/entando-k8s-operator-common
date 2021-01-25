@@ -70,7 +70,7 @@ public class SecretCreator<T extends EntandoDeploymentSpec> extends AbstractK8SR
             createIngressTlsSecret(client);
         }
         if (deployable instanceof Secretive) {
-            for (Secret secret : ((Secretive) deployable).buildSecrets()) {
+            for (Secret secret : ((Secretive) deployable).getSecrets()) {
                 createSecret(client, secret);
             }
         }
