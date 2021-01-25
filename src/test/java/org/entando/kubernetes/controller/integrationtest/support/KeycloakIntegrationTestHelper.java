@@ -24,8 +24,10 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.ClientBuilder;
 import org.entando.kubernetes.client.DefaultEntandoResourceClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
+import org.entando.kubernetes.client.EntandoJackson2Provider;
 import org.entando.kubernetes.controller.KeycloakClientConfig;
 import org.entando.kubernetes.controller.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.KubeUtils;
@@ -43,6 +45,7 @@ import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -137,7 +140,10 @@ public class KeycloakIntegrationTestHelper extends
 
     public Keycloak getKeycloakFor(EntandoBaseCustomResource<? extends KeycloakAwareSpec> requiresKeycloak) {
         KeycloakConnectionConfig keycloak = entandoResourceClient.findKeycloak(requiresKeycloak);
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        clientBuilder.register(EntandoJackson2Provider.class);
         return KeycloakBuilder.builder()
+                .resteasyClient((ResteasyClient) clientBuilder.build())
                 .serverUrl(keycloak.getExternalBaseUrl())
                 .grantType(OAuth2Constants.PASSWORD)
                 .realm("master")
