@@ -38,10 +38,12 @@ public interface Deployable<T extends ServiceDeploymentResult, S extends Entando
 
     T createResult(Deployment deployment, Service service, Ingress ingress, Pod pod);
 
+    //TODO rename to getServiceAccountToUse
     default String determineServiceAccountName() {
         return getCustomResource().getSpec().getServiceAccountToUse().orElse(getServiceAccountName());
     }
 
+    //TODO rename to getDefaultServiceAccount
     default String getServiceAccountName() {
         return "default";
     }
