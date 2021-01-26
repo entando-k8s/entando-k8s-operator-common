@@ -31,11 +31,11 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
@@ -142,37 +142,49 @@ public class ControllerExecutor {
                 "entando/" + resolveControllerImageName(resource) + ofNullable(imageVersionToUse).map(s -> ":" + s).orElse(""));
     }
 
+    private void addTo(Map<String, EnvVar> result, EnvVar envVar) {
+        result.put(envVar.getName(), envVar);
+    }
+
     private <T extends Serializable> List<EnvVar> buildEnvVars(Action action, EntandoBaseCustomResource<T> resource) {
-        ArrayList<EnvVar> result = new ArrayList<>();
-        result.add(new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
-        result.add(new EnvVar("ENTANDO_RESOURCE_NAMESPACE", resource.getMetadata().getNamespace(), null));
-        result.add(new EnvVar("ENTANDO_RESOURCE_NAME", resource.getMetadata().getName(), null));
-        result.addAll(Stream.of(EntandoOperatorConfigProperty.values())
+        Map<String, EnvVar> result = new HashMap<>();
+        addTo(result, new EnvVar(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name(), null));
+        addTo(result, new EnvVar(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, resource.getMetadata().getNamespace(), null));
+        addTo(result, new EnvVar(KubeUtils.ENTANDO_RESOURCE_NAME, resource.getMetadata().getName(), null));
+        //TODO test if we can remove this line now.
+        Stream.of(EntandoOperatorConfigProperty.values())
                 .filter(prop -> EntandoOperatorConfigBase.lookupProperty(prop).isPresent())
-                .map(prop -> new EnvVar(prop.name(), EntandoOperatorConfigBase.lookupProperty(prop).get(), null))
-                .collect(Collectors.toList()));
+                .forEach(prop -> addTo(result, new EnvVar(prop.name(), EntandoOperatorConfigBase.lookupProperty(prop).get(), null)));
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             //TODO no need to propagate the raw CA certs. But we do need to mount the resulting Java Truststore and override the
             // _JAVA_OPTS variable
             StringBuilder sb = new StringBuilder();
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path ->
                     sb.append(ETC_ENTANDO_CA).append("/").append(path.getFileName().toString()).append(" "));
-            result.add(new EnvVar(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.name(), sb.toString().trim(), null));
+            addTo(result, new EnvVar(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.name(), sb.toString().trim(), null));
         }
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
             //TODO no need to propagate the Tls certs.
-            result.add(new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), ETC_ENTANDO_TLS, null));
+            addTo(result, new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), ETC_ENTANDO_TLS, null));
         }
         System.getProperties().entrySet().stream()
-                .filter(objectObjectEntry -> objectObjectEntry.getKey().toString().toLowerCase(Locale.ROOT).replace("_", ".")
-                        .startsWith("related.image")).forEach(objectObjectEntry -> result
-                .add(new EnvVar(objectObjectEntry.getKey().toString().toUpperCase(Locale.ROOT).replace(".", "_"),
+                .filter(this::matchesKnownSystemProperty).forEach(objectObjectEntry -> addTo(result,
+                new EnvVar(objectObjectEntry.getKey().toString().toUpperCase(Locale.ROOT).replace(".", "_").replace("-", "_"),
                         objectObjectEntry.getValue().toString(), null)));
         System.getenv().entrySet().stream()
-                .filter(objectObjectEntry -> objectObjectEntry.getKey().startsWith("RELATED_IMAGE")).forEach(objectObjectEntry -> result
-                .add(new EnvVar(objectObjectEntry.getKey(),
+                .filter(this::matchesKnownEnvironmentVariable)
+                .forEach(objectObjectEntry -> addTo(result, new EnvVar(objectObjectEntry.getKey(),
                         objectObjectEntry.getValue(), null)));
-        return result;
+        return new ArrayList<>(result.values());
+    }
+
+    private boolean matchesKnownEnvironmentVariable(Map.Entry<String, String> objectObjectEntry) {
+        return objectObjectEntry.getKey().startsWith("RELATED_IMAGE") || objectObjectEntry.getKey().startsWith("ENTANDO_");
+    }
+
+    private boolean matchesKnownSystemProperty(Map.Entry<Object, Object> objectObjectEntry) {
+        String propertyName = objectObjectEntry.getKey().toString().toLowerCase(Locale.ROOT).replace("_", ".");
+        return propertyName.startsWith("related.image") || propertyName.startsWith("entando.");
     }
 
     private <T extends Serializable> List<Volume> maybeCreateTlsVolumes(EntandoBaseCustomResource<T> resource) {
