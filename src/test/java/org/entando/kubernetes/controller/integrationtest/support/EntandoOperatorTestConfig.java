@@ -17,7 +17,7 @@
 package org.entando.kubernetes.controller.integrationtest.support;
 
 import java.util.Optional;
-import org.entando.kubernetes.controller.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 
 public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 

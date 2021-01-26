@@ -36,14 +36,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.entando.kubernetes.controller.ExposedService;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.InfrastructureConfig;
-import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
-import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
-import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.spi.result.ExposedService;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
+import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
@@ -95,7 +95,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
             throw new IllegalStateException(
                     format("Could not find the Keycloak configMp %s in namespace %s", configMapName, configMapNamespace));
         }
-        return new KeycloakConnectionSecret(secret, configMap);
+        return new KeycloakConnectionConfig(secret, configMap);
 
     }
 
@@ -163,7 +163,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> String standardIngressName(T resource) {
-        return resource.getMetadata().getName() + "-" + KubeUtils.DEFAULT_INGRESS_SUFFIX;
+        return resource.getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX;
     }
 
     @Override

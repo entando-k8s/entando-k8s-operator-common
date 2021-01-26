@@ -20,10 +20,10 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.KubernetesPermission;
+import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
 
 public class BareBonesContainer implements DeployableContainer {
 
@@ -62,9 +62,9 @@ public class BareBonesContainer implements DeployableContainer {
         // but without it the DB isn't created.
         vars.add(new EnvVar("POSTGRESQL_USER", DATABASE_USER, null));
         vars.add(new EnvVar("POSTGRESQL_PASSWORD", null,
-                KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
+                SecretUtils.secretKeyRef(getDatabaseAdminSecretName(), SecretUtils.PASSSWORD_KEY)));
         vars.add(new EnvVar("POSTGRESQL_ADMIN_PASSWORD", null,
-                KubeUtils.secretKeyRef(getDatabaseAdminSecretName(), KubeUtils.PASSSWORD_KEY)));
+                SecretUtils.secretKeyRef(getDatabaseAdminSecretName(), SecretUtils.PASSSWORD_KEY)));
         return vars;
     }
 

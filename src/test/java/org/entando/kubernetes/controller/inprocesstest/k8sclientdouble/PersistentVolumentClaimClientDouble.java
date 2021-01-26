@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import java.util.Map;
-import org.entando.kubernetes.controller.k8sclient.PersistentVolumeClaimClient;
+import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 

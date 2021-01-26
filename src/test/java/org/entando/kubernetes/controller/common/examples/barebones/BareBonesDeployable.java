@@ -23,11 +23,11 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.Deployable;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.Secretive;
+import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
@@ -50,7 +50,7 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
 
     @Override
     public List<Secret> getSecrets() {
-        Secret secret = KubeUtils.generateSecret(customResource, BareBonesContainer.getDatabaseAdminSecretName(),
+        Secret secret = SecretUtils.generateSecret(customResource, BareBonesContainer.getDatabaseAdminSecretName(),
                 dbmsVendor.getDefaultAdminUsername());
         return Arrays.asList(secret);
     }

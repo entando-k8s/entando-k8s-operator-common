@@ -19,9 +19,9 @@ package org.entando.kubernetes.controller.common.examples;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Collections;
 import java.util.List;
-import org.entando.kubernetes.controller.database.DatabaseSchemaConnectionInfo;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
-import org.entando.kubernetes.controller.spi.DbAware;
+import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
+import org.entando.kubernetes.controller.spi.container.DbAware;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DbAwareKeycloakContainer extends MinimalKeycloakContainer implements DbAware {

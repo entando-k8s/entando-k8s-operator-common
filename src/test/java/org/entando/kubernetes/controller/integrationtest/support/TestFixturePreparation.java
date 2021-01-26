@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.TlsHelper;
-import org.entando.kubernetes.controller.creators.IngressCreator;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.creators.IngressCreator;
+import org.entando.kubernetes.controller.support.creators.TlsHelper;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public final class TestFixturePreparation {

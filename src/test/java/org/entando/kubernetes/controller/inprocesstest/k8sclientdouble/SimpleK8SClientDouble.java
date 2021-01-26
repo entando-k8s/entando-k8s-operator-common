@@ -16,14 +16,14 @@
 
 package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 
-import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
-import org.entando.kubernetes.controller.k8sclient.IngressClient;
-import org.entando.kubernetes.controller.k8sclient.PersistentVolumeClaimClient;
-import org.entando.kubernetes.controller.k8sclient.PodClient;
-import org.entando.kubernetes.controller.k8sclient.SecretClient;
-import org.entando.kubernetes.controller.k8sclient.ServiceAccountClient;
-import org.entando.kubernetes.controller.k8sclient.ServiceClient;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.DeploymentClient;
+import org.entando.kubernetes.controller.support.client.IngressClient;
+import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
+import org.entando.kubernetes.controller.support.client.PodClient;
+import org.entando.kubernetes.controller.support.client.SecretClient;
+import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
+import org.entando.kubernetes.controller.support.client.ServiceClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.mockito.Mockito;
 
 public class SimpleK8SClientDouble extends AbstractK8SClientDouble implements SimpleK8SClient<EntandoResourceClientDouble> {

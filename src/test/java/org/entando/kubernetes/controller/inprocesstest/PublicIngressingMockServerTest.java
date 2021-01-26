@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.inprocesstest;
 
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.junit.Rule;
 import org.junit.jupiter.api.Tag;

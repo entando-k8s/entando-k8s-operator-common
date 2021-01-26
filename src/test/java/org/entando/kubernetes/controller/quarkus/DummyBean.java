@@ -35,15 +35,15 @@ import javax.ws.rs.ClientErrorException;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.IngressingContainer;
-import org.entando.kubernetes.controller.spi.IngressingDeployable;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.container.IngressingContainer;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
+import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -121,7 +121,7 @@ public class DummyBean {
         //When I create the public client in this realm
         kc.createPublicClient(MY_REALM, MY_CLIENT, "http://test.domain.com");
         //Then a new Client should be available
-        Optional<ClientRepresentation> publicClient = findClientInRealm(MY_REALM, KubeUtils.PUBLIC_CLIENT_ID);
+        Optional<ClientRepresentation> publicClient = findClientInRealm(MY_REALM, KeycloakName.PUBLIC_CLIENT_ID);
         assertThat(publicClient.isPresent(), is(true));
         //With publicClient enabled
         assertThat(publicClient.get().isPublicClient(), is(true));

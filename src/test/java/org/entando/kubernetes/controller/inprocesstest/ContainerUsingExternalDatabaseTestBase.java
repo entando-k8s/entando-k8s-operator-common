@@ -17,7 +17,7 @@
 package org.entando.kubernetes.controller.inprocesstest;
 
 import static org.awaitility.Awaitility.await;
-import static org.entando.kubernetes.controller.KubeUtils.standardIngressName;
+import static org.entando.kubernetes.controller.spi.common.NameUtils.standardIngressName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
@@ -30,17 +30,19 @@ import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.common.examples.springboot.SpringBootDeployable;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
@@ -62,7 +64,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
-    public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
+    public static final String SAMPLE_NAME_DB = NameUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
 
@@ -94,7 +96,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect a server deployment
         Deployment serverDeployment = getClient().deployments()
-                .loadDeployment(plugin1, SAMPLE_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
+                .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
         assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), Matchers.is(1));
         verifySpringDatasource(serverDeployment);
         //Then  no db deployment
@@ -117,7 +119,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         getClient().entandoResources().createOrPatchEntandoResource(databaseService);
         getClient().secrets().createSecretIfAbsent(databaseService,
                 new SecretBuilder().withNewMetadata().withNamespace(SAMPLE_NAMESPACE).withName(secretName).endMetadata()
-                        .addToData(KubeUtils.USERNAME_KEY, "username").addToData(KubeUtils.PASSSWORD_KEY, "asdf123").build());
+                        .addToData(SecretUtils.USERNAME_KEY, "username").addToData(SecretUtils.PASSSWORD_KEY, "asdf123").build());
         new CreateExternalServiceCommand(databaseService).execute(getClient());
     }
 
@@ -125,11 +127,11 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
 
     void verifySpringDatasource(Deployment serverDeployment) {
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
-                .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KubeUtils.USERNAME_KEY));
+                .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_PASSWORD.name())
-                .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KubeUtils.PASSSWORD_KEY));
+                .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(SecretUtils.PASSSWORD_KEY));
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_PASSWORD.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
         assertThat(theVariableNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_URL.name())

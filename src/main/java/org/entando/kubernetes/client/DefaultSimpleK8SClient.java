@@ -17,15 +17,15 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
-import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
-import org.entando.kubernetes.controller.k8sclient.IngressClient;
-import org.entando.kubernetes.controller.k8sclient.PersistentVolumeClaimClient;
-import org.entando.kubernetes.controller.k8sclient.PodClient;
-import org.entando.kubernetes.controller.k8sclient.SecretClient;
-import org.entando.kubernetes.controller.k8sclient.ServiceAccountClient;
-import org.entando.kubernetes.controller.k8sclient.ServiceClient;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.DeploymentClient;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
+import org.entando.kubernetes.controller.support.client.IngressClient;
+import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
+import org.entando.kubernetes.controller.support.client.PodClient;
+import org.entando.kubernetes.controller.support.client.SecretClient;
+import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
+import org.entando.kubernetes.controller.support.client.ServiceClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 
 public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceClient> {
 

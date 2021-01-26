@@ -21,11 +21,11 @@ import static org.hamcrest.core.Is.is;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import java.util.HashMap;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.creators.PersistentVolumeClaimCreator;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PersistentVolumentClaimClientDouble;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.creators.PersistentVolumeClaimCreator;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.junit.jupiter.api.AfterEach;

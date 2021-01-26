@@ -17,7 +17,7 @@
 package org.entando.kubernetes.controller.inprocesstest;
 
 import static org.awaitility.Awaitility.await;
-import static org.entando.kubernetes.controller.KubeUtils.standardIngressName;
+import static org.entando.kubernetes.controller.spi.common.NameUtils.standardIngressName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,22 +33,23 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleDeployableContainer;
 import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.entando.kubernetes.controller.spi.Deployable;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.KeycloakAware;
-import org.entando.kubernetes.controller.spi.KubernetesPermission;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.container.KeycloakAware;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
@@ -110,7 +111,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
                     @Override
                     public String getIngressName() {
-                        return KubeUtils.standardIngressName(plugin1);
+                        return NameUtils.standardIngressName(plugin1);
                     }
 
                     @Override
@@ -142,7 +143,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect two deployments. This is where we can put all the assertions
         Deployment serverDeployment = k8sClient.deployments()
-                .loadDeployment(plugin2, OTHER_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
+                .loadDeployment(plugin2, OTHER_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
         verifyThatAllVariablesAreMapped(plugin2, k8sClient, serverDeployment);
         verifyThatAllVolumesAreMapped(plugin2, k8sClient, serverDeployment);
         assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(1));
@@ -193,7 +194,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect two deployments. This is where we can put all the assertions
         Deployment serverDeployment = k8sClient.deployments()
-                .loadDeployment(plugin1, SAMPLE_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
+                .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
         verifyThatAllVariablesAreMapped(plugin1, k8sClient, serverDeployment);
         verifyThatAllVolumesAreMapped(plugin1, k8sClient, serverDeployment);
         assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(2));

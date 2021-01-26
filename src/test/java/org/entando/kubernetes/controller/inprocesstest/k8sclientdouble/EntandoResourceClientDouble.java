@@ -28,14 +28,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.entando.kubernetes.controller.ExposedService;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.InfrastructureConfig;
-import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
-import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
-import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.spi.result.ExposedService;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
+import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
@@ -135,7 +135,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
             throw new IllegalStateException(
                     format("Could not find the Keycloak configMap %s in namespace %s", configMapName, configMapNamespace));
         }
-        return new KeycloakConnectionSecret(secret, configMap);
+        return new KeycloakConnectionConfig(secret, configMap);
     }
 
     @Override
@@ -161,8 +161,8 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> ExposedService loadExposedService(T resource) {
         NamespaceDouble namespace = getNamespace(resource);
         Service service = namespace.getService(
-                resource.getMetadata().getName() + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-" + KubeUtils.DEFAULT_SERVICE_SUFFIX);
-        Ingress ingress = namespace.getIngress(KubeUtils.standardIngressName(resource));
+                resource.getMetadata().getName() + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-" + NameUtils.DEFAULT_SERVICE_SUFFIX);
+        Ingress ingress = namespace.getIngress(NameUtils.standardIngressName(resource));
         return new ExposedService(service, ingress);
     }
 

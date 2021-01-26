@@ -26,8 +26,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.OperatorProcessingInstruction;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.common.OperatorProcessingInstruction;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -43,7 +44,7 @@ class KubeUtilsTest {
         Set<String> existing = new HashSet<>();
         //We are unlikely to have more than 10 resources with similar names in a namespace
         for (int i = 0; i < 10; i++) {
-            String found = KubeUtils.shortenTo63Chars(FIFTY_NINE_CHARS + "asdfasdfasdfasdfasdfasdfasdfasdfasdf");
+            String found = NameUtils.shortenTo63Chars(FIFTY_NINE_CHARS + "asdfasdfasdfasdfasdfasdfasdfasdfasdf");
             assertThat(found, startsWith(FIFTY_NINE_CHARS));
             assertThat(found.length(), is(63));
             String suffix = found.substring(59);

@@ -24,15 +24,16 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.Optional;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
-import org.entando.kubernetes.controller.common.InfrastructureConfig;
-import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
-import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
-import org.entando.kubernetes.controller.k8sclient.SecretClient;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
+import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
+import org.entando.kubernetes.controller.support.client.SecretClient;
+import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
@@ -104,14 +105,14 @@ class DefaultEntandoResourceClientTest implements InProcessTestUtil {
         secretClient.createConfigMapIfAbsent(r, new ConfigMapBuilder()
                 .withNewMetadata().withName(KeycloakName.forTheConnectionConfigMap(r))
                 .endMetadata()
-                .addToData(KubeUtils.URL_KEY, HTTP_TEST_COM)
-                .addToData(KubeUtils.INTERNAL_URL_KEY, HTTP_TEST_SVC_CLUSTER_LOCAL)
+                .addToData(NameUtils.URL_KEY, HTTP_TEST_COM)
+                .addToData(NameUtils.INTERNAL_URL_KEY, HTTP_TEST_SVC_CLUSTER_LOCAL)
                 .build());
         secretClient.overwriteControllerSecret(new SecretBuilder()
                 .withNewMetadata().withName(KeycloakName.forTheAdminSecret(r))
                 .endMetadata()
-                .addToStringData(KubeUtils.USERNAME_KEY, ADMIN)
-                .addToStringData(KubeUtils.PASSSWORD_KEY, PASSWORD_01)
+                .addToStringData(SecretUtils.USERNAME_KEY, ADMIN)
+                .addToStringData(SecretUtils.PASSSWORD_KEY, PASSWORD_01)
                 .build());
     }
 

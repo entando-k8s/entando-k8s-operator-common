@@ -24,10 +24,10 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.common.EntandoImageResolver;
-import org.entando.kubernetes.controller.database.DatabaseDockerImageInfo;
-import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.container.DockerImageInfo;
+import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -262,7 +262,7 @@ class ImageResolverTest {
                     "openshift/wildfly-101-centos7@sha256:7775d40f77e22897dc760b76f1656f67ef6bd5561b4d74fbb030b977f61d48e8");
 
             //when I resolve the image
-            String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri(new DatabaseDockerImageInfo(
+            String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri(new DockerImageInfo(
                     DbmsDockerVendorStrategy.RHEL_POSTGRESQL));
             //then it reflects the injected value
             assertThat(imageUri,

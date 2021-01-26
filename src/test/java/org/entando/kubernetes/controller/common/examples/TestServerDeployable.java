@@ -16,7 +16,7 @@
 
 package org.entando.kubernetes.controller.common.examples;
 
-import static org.entando.kubernetes.controller.KubeUtils.generateSecret;
+import static org.entando.kubernetes.controller.spi.common.SecretUtils.generateSecret;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -25,13 +25,13 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.database.DatabaseDeploymentResult;
-import org.entando.kubernetes.controller.spi.DbAwareDeployable;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.IngressingDeployable;
-import org.entando.kubernetes.controller.spi.Secretive;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.database.DatabaseDeploymentResult;
+import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
+import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
+import org.entando.kubernetes.controller.spi.deployable.Secretive;
+import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerSpec;
 
@@ -58,7 +58,7 @@ public class TestServerDeployable implements IngressingDeployable<ExposedDeploym
 
     @Override
     public String getNameQualifier() {
-        return KubeUtils.DEFAULT_SERVER_QUALIFIER;
+        return NameUtils.DEFAULT_SERVER_QUALIFIER;
     }
 
     @Override
@@ -73,7 +73,7 @@ public class TestServerDeployable implements IngressingDeployable<ExposedDeploym
 
     @Override
     public String getIngressName() {
-        return KubeUtils.standardIngressName(keycloakServer);
+        return NameUtils.standardIngressName(keycloakServer);
     }
 
     @Override

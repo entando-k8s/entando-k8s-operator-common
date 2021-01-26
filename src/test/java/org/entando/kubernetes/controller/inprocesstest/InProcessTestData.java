@@ -16,7 +16,7 @@
 
 package org.entando.kubernetes.controller.inprocesstest;
 
-import org.entando.kubernetes.controller.IngressingDeployCommand;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.JeeServer;
 import org.entando.kubernetes.model.app.EntandoApp;
@@ -32,7 +32,7 @@ import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
 
 public interface InProcessTestData {
 
-    String DEPLOYMENT_LABEL_NAME = IngressingDeployCommand.DEPLOYMENT_LABEL_NAME;
+    String DEPLOYMENT_LABEL_NAME = KubeUtils.DEPLOYMENT_LABEL_NAME;
     String ENTANDO_PLUGIN_LABEL_NAME = "EntandoPlugin";
     String ENTANDO_APP_LABEL_NAME = "EntandoApp";
     String ENTANDO_CLUSTER_INFRASTRUCTURE_LABEL_NAME = "EntandoClusterInfrastructure";

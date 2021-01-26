@@ -36,11 +36,11 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import org.entando.kubernetes.client.EntandoExecListener;
 import org.entando.kubernetes.client.PodWatcher;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.PodResult;
-import org.entando.kubernetes.controller.PodResult.State;
 import org.entando.kubernetes.controller.integrationtest.support.PodResourceDouble;
-import org.entando.kubernetes.controller.k8sclient.PodClient;
+import org.entando.kubernetes.controller.spi.common.PodResult;
+import org.entando.kubernetes.controller.spi.common.PodResult.State;
+import org.entando.kubernetes.controller.support.client.PodClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 
 public class PodClientDouble extends AbstractK8SClientDouble implements PodClient {
 

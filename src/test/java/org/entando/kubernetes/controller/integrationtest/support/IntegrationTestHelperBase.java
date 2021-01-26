@@ -29,14 +29,13 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.OperationsSupplier;
-import org.entando.kubernetes.controller.IngressingDeployCommand;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.ControllerExecutor;
-import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.controller.ControllerExecutor;
+import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
@@ -111,9 +110,9 @@ public class IntegrationTestHelperBase<
 
     public ServicePodWaiter waitForServicePod(ServicePodWaiter mutex, String namespace, String deploymentName) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
-                () -> client.pods().inNamespace(namespace).withLabel(IngressingDeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
+                () -> client.pods().inNamespace(namespace).withLabel(KubeUtils.DEPLOYMENT_LABEL_NAME, deploymentName).list()
                         .getItems().size() > 0);
-        Pod pod = client.pods().inNamespace(namespace).withLabel(IngressingDeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
+        Pod pod = client.pods().inNamespace(namespace).withLabel(KubeUtils.DEPLOYMENT_LABEL_NAME, deploymentName).list()
                 .getItems().get(0);
         mutex.throwException(IllegalStateException.class)
                 .waitOn(client.pods().inNamespace(namespace).withName(pod.getMetadata().getName()));

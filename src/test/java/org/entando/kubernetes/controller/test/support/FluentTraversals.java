@@ -40,18 +40,18 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
 import java.lang.reflect.Field;
 import java.util.List;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.hamcrest.Matchers;
 
 public interface FluentTraversals {
 
-    String ENTANDO_KEYCLOAK_REALM = KubeUtils.ENTANDO_DEFAULT_KEYCLOAK_REALM;
-    String ENTANDO_PUBLIC_CLIENT = KubeUtils.PUBLIC_CLIENT_ID;
+    String ENTANDO_KEYCLOAK_REALM = KeycloakName.ENTANDO_DEFAULT_KEYCLOAK_REALM;
+    String ENTANDO_PUBLIC_CLIENT = KeycloakName.PUBLIC_CLIENT_ID;
     String DATABASE_ADMIN_USER = "DATABASE_ADMIN_USER";
     String DATABASE_ADMIN_PASSWORD = "DATABASE_ADMIN_PASSWORD";
     String DATABASE_USER = "DATABASE_USER";
@@ -164,19 +164,19 @@ public interface FluentTraversals {
         assertThat(theVariableNamed(DATABASE_VENDOR).on(resultingContainer), is(vendor.toValue()));
         assertThat(theVariableNamed(DATABASE_SCHEMA_COMMAND).on(resultingContainer), is("CREATE_SCHEMA"));
         assertThat(theVariableNamed(DATABASE_SERVER_PORT).on(resultingContainer),
-                is(String.valueOf(DbmsDockerVendorStrategy.forVendor(vendor, EntandoOperatorConfig.getComplianceMode()).getPort())));
+                is(String.valueOf(DbmsDockerVendorStrategy.forVendor(vendor, EntandoOperatorSpiConfig.getComplianceMode()).getPort())));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_USER).on(resultingContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.USERNAME_KEY));
+                is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(resultingContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.PASSSWORD_KEY));
+                is(SecretUtils.PASSSWORD_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_USER).on(resultingContainer).getSecretKeyRef().getName(),
                 is(secretToMatch));
         assertThat(theVariableReferenceNamed(DATABASE_PASSWORD).on(resultingContainer).getSecretKeyRef().getName(),
                 is(secretToMatch));
         assertThat(theVariableReferenceNamed(DATABASE_USER).on(resultingContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.USERNAME_KEY));
+                is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_PASSWORD).on(resultingContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.PASSSWORD_KEY));
+                is(SecretUtils.PASSSWORD_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_USER).on(resultingContainer).getSecretKeyRef().getName(),
                 is(adminSecret));
         assertThat(

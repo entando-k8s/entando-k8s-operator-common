@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
 import java.util.Map;
-import org.entando.kubernetes.controller.k8sclient.ServiceClient;
+import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class ServiceClientDouble extends AbstractK8SClientDouble implements ServiceClient {

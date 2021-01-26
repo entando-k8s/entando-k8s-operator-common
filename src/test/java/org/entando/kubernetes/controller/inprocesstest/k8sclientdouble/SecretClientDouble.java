@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Map;
-import org.entando.kubernetes.controller.k8sclient.SecretClient;
+import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 

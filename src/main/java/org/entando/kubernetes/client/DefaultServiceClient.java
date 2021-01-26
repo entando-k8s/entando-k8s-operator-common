@@ -21,7 +21,7 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.entando.kubernetes.controller.k8sclient.ServiceClient;
+import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class DefaultServiceClient implements ServiceClient {

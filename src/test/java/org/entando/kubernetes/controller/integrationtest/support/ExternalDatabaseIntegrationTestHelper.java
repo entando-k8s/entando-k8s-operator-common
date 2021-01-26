@@ -30,10 +30,11 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.util.Collections;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
-import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.DoneableEntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
@@ -85,7 +86,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
                 .waitOn(podResource);
         String podIP = podResource.fromServer().get().getStatus().getPodIP();
         Secret secret = new SecretBuilder().withNewMetadata().withName(TEST_SECRET).endMetadata()
-                .addToStringData(KubeUtils.USERNAME_KEY, "postgres").addToStringData(KubeUtils.PASSSWORD_KEY, "postgres")
+                .addToStringData(SecretUtils.USERNAME_KEY, "postgres").addToStringData(SecretUtils.PASSSWORD_KEY, "postgres")
                 .build();
         SampleWriter.writeSample(secret, "postgresql-secret");
         client.secrets().inNamespace(namespace).create(secret);
@@ -119,8 +120,8 @@ public class ExternalDatabaseIntegrationTestHelper extends
     public void prepareExternalOracleDatabase(String namespace, String... usersToDrop) {
         deleteCommonPreviousState(namespace);
         Secret secret = new SecretBuilder().withNewMetadata().withName(TEST_SECRET).endMetadata()
-                .addToStringData(KubeUtils.USERNAME_KEY, ORACLE_ADMIN_USER)
-                .addToStringData(KubeUtils.PASSSWORD_KEY, ORACLE_ADMIN_PASSWORD)
+                .addToStringData(SecretUtils.USERNAME_KEY, ORACLE_ADMIN_USER)
+                .addToStringData(SecretUtils.PASSSWORD_KEY, ORACLE_ADMIN_PASSWORD)
                 .addToStringData("oracleTablespace", "USERS").build();
         SampleWriter.writeSample(secret, "oracle-secret");
         client.secrets().inNamespace(namespace).create(secret);

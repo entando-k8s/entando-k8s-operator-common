@@ -18,8 +18,8 @@ package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import org.entando.kubernetes.controller.k8sclient.DuplicateExcepion;
-import org.entando.kubernetes.controller.k8sclient.UnauthorizedExcepion;
+import org.entando.kubernetes.controller.support.client.DuplicateExcepion;
+import org.entando.kubernetes.controller.support.client.UnauthorizedExcepion;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public final class KubernetesExceptionProcessor {

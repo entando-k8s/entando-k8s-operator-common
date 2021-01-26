@@ -41,20 +41,21 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Map;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.entando.kubernetes.controller.spi.Deployable;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.app.DoneableEntandoApp;
@@ -127,16 +128,16 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         NamedArgumentCaptor<Secret> adminSecretCaptor = forResourceNamed(Secret.class, MY_APP_DB_ADMIN_SECRET);
         verify(client.secrets()).createSecretIfAbsent(eq(newEntandoApp), adminSecretCaptor.capture());
         Secret theDbAdminSecret = adminSecretCaptor.getValue();
-        assertThat(theKey(KubeUtils.USERNAME_KEY).on(theDbAdminSecret), is("root"));
-        assertThat(theKey(KubeUtils.PASSSWORD_KEY).on(theDbAdminSecret), is(not(emptyOrNullString())));
+        assertThat(theKey(SecretUtils.USERNAME_KEY).on(theDbAdminSecret), is("root"));
+        assertThat(theKey(SecretUtils.PASSSWORD_KEY).on(theDbAdminSecret), is(not(emptyOrNullString())));
         assertThat(theLabel(ENTANDO_APP_LABEL_NAME).on(theDbAdminSecret), is(MY_APP));
 
         //And a K8S Secret was created with a name that reflects the EntandoApp and the fact that it is the keycloakd db secret
         NamedArgumentCaptor<Secret> keycloakDbSecretCaptor = forResourceNamed(Secret.class, MY_APP_DB_SECRET);
         verify(client.secrets()).createSecretIfAbsent(eq(newEntandoApp), keycloakDbSecretCaptor.capture());
         Secret keycloakDbSecret = keycloakDbSecretCaptor.getValue();
-        assertThat(theKey(KubeUtils.USERNAME_KEY).on(keycloakDbSecret), is(MY_APP_DATABASE));
-        assertThat(theKey(KubeUtils.PASSSWORD_KEY).on(keycloakDbSecret), is(not(emptyOrNullString())));
+        assertThat(theKey(SecretUtils.USERNAME_KEY).on(keycloakDbSecret), is(MY_APP_DATABASE));
+        assertThat(theKey(SecretUtils.PASSSWORD_KEY).on(keycloakDbSecret), is(not(emptyOrNullString())));
         assertThat(theLabel(ENTANDO_APP_LABEL_NAME).on(keycloakDbSecret), is(MY_APP));
 
     }
@@ -225,7 +226,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
                 MY_APP + "-name-longer-than-32-characters-db-secret");
         verify(client.secrets()).createSecretIfAbsent(eq(newEntandoApp), dbSecretCaptor.capture());
         Secret keycloakDbSecret = dbSecretCaptor.getValue();
-        assertThat(keycloakDbSecret.getStringData().get(KubeUtils.USERNAME_KEY).length(), is(32));
+        assertThat(keycloakDbSecret.getStringData().get(SecretUtils.USERNAME_KEY).length(), is(32));
         assertThat(thePrimaryContainerOn(dbDeployment).getReadinessProbe().getExec().getCommand().get(3),
                 is("MYSQL_PWD=${MYSQL_ROOT_PASSWORD} mysql -h 127.0.0.1 -u root -e 'SELECT 1'"));
     }

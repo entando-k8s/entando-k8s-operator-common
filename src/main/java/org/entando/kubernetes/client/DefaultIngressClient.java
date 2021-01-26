@@ -24,7 +24,7 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.Map;
 import java.util.Optional;
-import org.entando.kubernetes.controller.k8sclient.IngressClient;
+import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultIngressClient implements IngressClient {

@@ -19,11 +19,12 @@ package org.entando.kubernetes.controller.unittest;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import org.entando.kubernetes.controller.EntandoOperatorComplianceMode;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.OperatorDeploymentType;
-import org.entando.kubernetes.controller.SecurityMode;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorComplianceMode;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.common.OperatorDeploymentType;
+import org.entando.kubernetes.controller.support.common.SecurityMode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -55,15 +56,15 @@ class EntandoOperatorConfigTest {
     @Test
     void testComplianceMode() {
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
-        assertThat(EntandoOperatorConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
+        assertThat(EntandoOperatorSpiConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
                 EntandoOperatorComplianceMode.REDHAT.getName());
-        assertThat(EntandoOperatorConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.REDHAT));
+        assertThat(EntandoOperatorSpiConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.REDHAT));
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
                 EntandoOperatorComplianceMode.COMMUNITY.getName());
-        assertThat(EntandoOperatorConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
+        assertThat(EntandoOperatorSpiConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(), "invalid");
-        assertThat(EntandoOperatorConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
+        assertThat(EntandoOperatorSpiConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
     }
 
     @Test

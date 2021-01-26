@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.IngressingContainer;
+import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class MinimalKeycloakContainer implements IngressingContainer {

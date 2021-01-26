@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.unittest.database;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import org.entando.kubernetes.controller.database.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;

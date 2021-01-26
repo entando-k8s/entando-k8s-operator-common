@@ -16,16 +16,16 @@
 
 package org.entando.kubernetes.controller.common.examples;
 
-import static org.entando.kubernetes.controller.KubeUtils.generateSecret;
+import static org.entando.kubernetes.controller.spi.common.SecretUtils.generateSecret;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Collections;
 import java.util.List;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.PublicIngressingDeployable;
-import org.entando.kubernetes.controller.spi.Secretive;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
+import org.entando.kubernetes.controller.spi.deployable.Secretive;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 

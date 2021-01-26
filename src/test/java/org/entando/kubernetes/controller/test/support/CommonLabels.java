@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.test.support;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
