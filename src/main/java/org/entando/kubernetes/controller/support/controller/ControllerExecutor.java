@@ -148,9 +148,6 @@ public class ControllerExecutor {
 
     private <T extends Serializable> List<EnvVar> buildEnvVars(Action action, EntandoBaseCustomResource<T> resource) {
         Map<String, EnvVar> result = new HashMap<>();
-        addTo(result, new EnvVar(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name(), null));
-        addTo(result, new EnvVar(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, resource.getMetadata().getNamespace(), null));
-        addTo(result, new EnvVar(KubeUtils.ENTANDO_RESOURCE_NAME, resource.getMetadata().getName(), null));
         //TODO test if we can remove this line now.
         Stream.of(EntandoOperatorConfigProperty.values())
                 .filter(prop -> EntandoOperatorConfigBase.lookupProperty(prop).isPresent())
@@ -175,6 +172,10 @@ public class ControllerExecutor {
                 .filter(this::matchesKnownEnvironmentVariable)
                 .forEach(objectObjectEntry -> addTo(result, new EnvVar(objectObjectEntry.getKey(),
                         objectObjectEntry.getValue(), null)));
+        //Make sure we overwrite previously set resource info
+        addTo(result, new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
+        addTo(result, new EnvVar("ENTANDO_RESOURCE_NAMESPACE", resource.getMetadata().getNamespace(), null));
+        addTo(result, new EnvVar("ENTANDO_RESOURCE_NAME", resource.getMetadata().getName(), null));
         return new ArrayList<>(result.values());
     }
 
