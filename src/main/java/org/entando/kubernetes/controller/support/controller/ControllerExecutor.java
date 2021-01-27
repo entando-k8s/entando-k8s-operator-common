@@ -148,10 +148,18 @@ public class ControllerExecutor {
 
     private <T extends Serializable> List<EnvVar> buildEnvVars(Action action, EntandoBaseCustomResource<T> resource) {
         Map<String, EnvVar> result = new HashMap<>();
-        //TODO test if we can remove this line now.
+        //TODO test if we can remove this line now given that we are copying all system properties and environment variables.
         Stream.of(EntandoOperatorConfigProperty.values())
                 .filter(prop -> EntandoOperatorConfigBase.lookupProperty(prop).isPresent())
                 .forEach(prop -> addTo(result, new EnvVar(prop.name(), EntandoOperatorConfigBase.lookupProperty(prop).get(), null)));
+        System.getProperties().entrySet().stream()
+                .filter(this::matchesKnownSystemProperty).forEach(objectObjectEntry -> addTo(result,
+                new EnvVar(objectObjectEntry.getKey().toString().toUpperCase(Locale.ROOT).replace(".", "_").replace("-", "_"),
+                        objectObjectEntry.getValue().toString(), null)));
+        System.getenv().entrySet().stream()
+                .filter(this::matchesKnownEnvironmentVariable)
+                .forEach(objectObjectEntry -> addTo(result, new EnvVar(objectObjectEntry.getKey(),
+                        objectObjectEntry.getValue(), null)));
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             //TODO no need to propagate the raw CA certs. But we do need to mount the resulting Java Truststore and override the
             // _JAVA_OPTS variable
@@ -164,14 +172,6 @@ public class ControllerExecutor {
             //TODO no need to propagate the Tls certs.
             addTo(result, new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), ETC_ENTANDO_TLS, null));
         }
-        System.getProperties().entrySet().stream()
-                .filter(this::matchesKnownSystemProperty).forEach(objectObjectEntry -> addTo(result,
-                new EnvVar(objectObjectEntry.getKey().toString().toUpperCase(Locale.ROOT).replace(".", "_").replace("-", "_"),
-                        objectObjectEntry.getValue().toString(), null)));
-        System.getenv().entrySet().stream()
-                .filter(this::matchesKnownEnvironmentVariable)
-                .forEach(objectObjectEntry -> addTo(result, new EnvVar(objectObjectEntry.getKey(),
-                        objectObjectEntry.getValue(), null)));
         //Make sure we overwrite previously set resource info
         addTo(result, new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
         addTo(result, new EnvVar("ENTANDO_RESOURCE_NAMESPACE", resource.getMetadata().getNamespace(), null));
