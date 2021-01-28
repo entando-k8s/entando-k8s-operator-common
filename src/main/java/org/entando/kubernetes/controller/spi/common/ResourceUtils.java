@@ -23,6 +23,10 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class ResourceUtils {
 
+    private ResourceUtils() {
+
+    }
+
     public static <S extends Serializable> OwnerReference buildOwnerReference(EntandoBaseCustomResource<S> entandoCustomResource) {
         return new OwnerReferenceBuilder()
                 .withApiVersion(entandoCustomResource.getApiVersion())

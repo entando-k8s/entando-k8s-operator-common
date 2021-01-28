@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.spi.container.TlsAware;
 
 public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
@@ -96,13 +97,15 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     }
 
     public static List<Path> getCertificateAuthorityCertPaths() {
+        //TODO get rid of this. We can always assume a CA cert rootFolder.
         String[] paths = getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS,
                 "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").split(SEPERATOR_PATTERN);
         List<Path> result = Arrays.stream(paths)
                 .map(Paths::get)
                 .filter(path -> path.toFile().exists())
                 .collect(Collectors.toList());
-        File caCertRoot = Paths.get(getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_ROOT_FOLDER, "/etc/entando/ca")).toFile();
+        File caCertRoot = Paths.get(getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_ROOT_FOLDER, TlsAware.ETC_ENTANDO_CA))
+                .toFile();
         if (caCertRoot.exists() && caCertRoot.isDirectory()) {
             result.addAll(Arrays.stream(Objects.requireNonNull(caCertRoot.listFiles()))
                     .filter(File::isFile)

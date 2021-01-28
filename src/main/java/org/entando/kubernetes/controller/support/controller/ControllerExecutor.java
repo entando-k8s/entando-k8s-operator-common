@@ -40,6 +40,7 @@ import java.util.stream.Stream;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.TlsAware;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
@@ -49,9 +50,9 @@ import org.entando.kubernetes.controller.support.creators.TlsHelper;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class ControllerExecutor {
+    public static final String ETC_ENTANDO_TLS = TlsAware.ETC_ENTANDO_TLS;
+    public static final String ETC_ENTANDO_CA = TlsAware.ETC_ENTANDO_CA;
 
-    public static final String ETC_ENTANDO_TLS = "/etc/entando/tls";
-    public static final String ETC_ENTANDO_CA = "/etc/entando/ca";
     private static final Map<String, String> resourceKindToImageNames = buildImageMap();
     private final SimpleK8SClient<?> client;
     private final EntandoImageResolver imageResolver;
@@ -165,12 +166,12 @@ public class ControllerExecutor {
             // _JAVA_OPTS variable
             StringBuilder sb = new StringBuilder();
             EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path ->
-                    sb.append(ETC_ENTANDO_CA).append("/").append(path.getFileName().toString()).append(" "));
+                    sb.append(TlsAware.ETC_ENTANDO_CA).append("/").append(path.getFileName().toString()).append(" "));
             addTo(result, new EnvVar(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.name(), sb.toString().trim(), null));
         }
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
             //TODO no need to propagate the Tls certs.
-            addTo(result, new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), ETC_ENTANDO_TLS, null));
+            addTo(result, new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), TlsAware.ETC_ENTANDO_TLS, null));
         }
         //Make sure we overwrite previously set resource info
         addTo(result, new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
@@ -222,10 +223,10 @@ public class ControllerExecutor {
     private List<VolumeMount> maybeCreateTlsVolumeMounts() {
         List<VolumeMount> result = new ArrayList<>();
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
-            result.add(new VolumeMountBuilder().withName("ca-cert-volume").withMountPath(ETC_ENTANDO_CA).build());
+            result.add(new VolumeMountBuilder().withName("ca-cert-volume").withMountPath(TlsAware.ETC_ENTANDO_CA).build());
         }
         if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            result.add(new VolumeMountBuilder().withName("tls-volume").withMountPath(ETC_ENTANDO_TLS).build());
+            result.add(new VolumeMountBuilder().withName("tls-volume").withMountPath(TlsAware.ETC_ENTANDO_TLS).build());
         }
         return result;
     }

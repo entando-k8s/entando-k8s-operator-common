@@ -25,6 +25,8 @@ public interface TlsAware {
 
     String DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME = "entando-default-ca-secret";
     String TRUSTSTORE_SETTINGS_KEY = "TRUSTSTORE_SETTINGS";
+    String ETC_ENTANDO_TLS = "/etc/entando/tls";
+    String ETC_ENTANDO_CA = "/etc/entando/ca";
 
     default List<EnvVar> getTlsVariables() {
         List<EnvVar> vars = new ArrayList<>();

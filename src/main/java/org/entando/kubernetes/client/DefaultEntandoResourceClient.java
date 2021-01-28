@@ -21,6 +21,7 @@ import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
+import io.fabric8.kubernetes.api.model.DoneableEvent;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -36,7 +37,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
@@ -181,13 +184,19 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     @Override
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updateStatus(T customResource,
             AbstractServerStatus status) {
-        performStatusUpdate(customResource, t -> t.getStatus().putServerStatus(status));
+        performStatusUpdate(customResource,
+                t -> t.getStatus().putServerStatus(status),
+                e -> e.withReason("StatusUpdate").withType(status.getQualifier()).withAction(status.getType())
+        );
     }
 
     @Override
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updatePhase(T customResource,
             EntandoDeploymentPhase phase) {
-        performStatusUpdate(customResource, t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()));
+        performStatusUpdate(customResource,
+                t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
+                e -> e.withReason("PhaseUpdate").withType(phase.name()).withAction(phase.name())
+        );
     }
 
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
@@ -218,11 +227,14 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     @Override
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void deploymentFailed(T customResource, Exception reason) {
-        performStatusUpdate(customResource, t -> {
-            t.getStatus().findCurrentServerStatus()
-                    .ifPresent(newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
-            t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());
-        });
+        performStatusUpdate(customResource,
+                t -> {
+                    t.getStatus().findCurrentServerStatus()
+                            .ifPresent(
+                                    newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
+                    t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());
+                },
+                e -> e.withAction("Failed").withReason(reason.getMessage()).withType(reason.getClass().getSimpleName()));
     }
 
     private <S extends Serializable, T extends EntandoBaseCustomResource<S>> Service loadService(T peerInNamespace, String name) {
@@ -240,7 +252,22 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     @SuppressWarnings("unchecked")
     private <S extends Serializable, T extends EntandoBaseCustomResource<S>> void performStatusUpdate(T customResource,
-            Consumer<T> consumer) {
+            Consumer<T> consumer, UnaryOperator<DoneableEvent> eventPopulator) {
+        final DoneableEvent doneableEvent = client.events().inNamespace(customResource.getMetadata().getNamespace()).createNew()
+                .withNewMetadata()
+                .withNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName() + "-" + NameUtils.randomNumeric(4))
+                .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
+                .endMetadata()
+                .withNewInvolvedObject()
+                .withNamespace(customResource.getMetadata().getNamespace())
+                .withNamespace(customResource.getMetadata().getName())
+                .withUid(customResource.getMetadata().getUid())
+                .withResourceVersion(customResource.getMetadata().getResourceVersion())
+                .withApiVersion(customResource.getApiVersion())
+                .withFieldPath("status")
+                .endInvolvedObject();
+        eventPopulator.apply(doneableEvent).done();
         Resource<T, ?> resource = getOperations((Class<T>) customResource.getClass())
                 .inNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName());
