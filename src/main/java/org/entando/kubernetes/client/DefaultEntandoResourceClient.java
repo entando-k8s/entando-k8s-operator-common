@@ -261,7 +261,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .endMetadata()
                 .withNewInvolvedObject()
                 .withNamespace(customResource.getMetadata().getNamespace())
-                .withNamespace(customResource.getMetadata().getName())
+                .withName(customResource.getMetadata().getName())
                 .withUid(customResource.getMetadata().getUid())
                 .withResourceVersion(customResource.getMetadata().getResourceVersion())
                 .withApiVersion(customResource.getApiVersion())
