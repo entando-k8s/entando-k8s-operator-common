@@ -22,7 +22,6 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableEvent;
-import io.fabric8.kubernetes.api.model.MicroTime;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -66,7 +65,7 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-'T'HH.mm.ss'Z'Z");
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH.mm.ss'Z'Z");
     private final KubernetesClient client;
     private final EntandoResourceOperationsRegistry entandoResourceRegistry;
 
