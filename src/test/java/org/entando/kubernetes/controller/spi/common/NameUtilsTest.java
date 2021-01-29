@@ -17,8 +17,13 @@
 package org.entando.kubernetes.controller.spi.common;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.util.HashSet;
+import java.util.Set;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.junit.jupiter.api.Tag;
@@ -27,6 +32,23 @@ import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
 class NameUtilsTest {
+
+    private static final String FIFTY_NINE_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567";
+
+    @Test
+    void testShortenTo63Chars() {
+        Set<String> existing = new HashSet<>();
+        //We are unlikely to have more than 10 resources with similar names in a namespace
+        for (int i = 0; i < 10; i++) {
+            String found = NameUtils.shortenTo63Chars(FIFTY_NINE_CHARS + "asdfasdfasdfasdfasdfasdfasdfasdfasdf");
+            assertThat(found, startsWith(FIFTY_NINE_CHARS));
+            assertThat(found.length(), is(63));
+            String suffix = found.substring(59);
+            assertThat(Integer.parseInt(suffix), greaterThan(999));
+            assertFalse(existing.contains(found));
+            existing.add(found);
+        }
+    }
 
     @Test
     void testCamelCaseToDashDelimited() {

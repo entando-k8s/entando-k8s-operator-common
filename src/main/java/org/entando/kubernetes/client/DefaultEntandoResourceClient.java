@@ -291,6 +291,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .withLastTimestamp(dateTimeFormatter.format(LocalDateTime.now()))
                 .withNewSource(NameUtils.controllerNameOf(customResource), null)
                 .withNewInvolvedObject()
+                .withKind(customResource.getKind())
                 .withNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())
                 .withUid(customResource.getMetadata().getUid())

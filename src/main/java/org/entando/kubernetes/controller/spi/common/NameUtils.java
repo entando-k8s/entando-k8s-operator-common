@@ -33,6 +33,7 @@ public class NameUtils {
     public static final String DEFAULT_SERVER_QUALIFIER = "server";
     public static final String DEFAULT_INGRESS_SUFFIX = "ingress";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final Pattern pattern = Pattern.compile("(?=[A-Z][a-z])");
 
     private NameUtils() {
     }
@@ -57,8 +58,6 @@ public class NameUtils {
     }
 
     public static String camelCaseToDashDelimited(String in) {
-        final String regex = "(?=[A-Z][a-z])";
-        final Pattern pattern = Pattern.compile(regex);
         return pattern.matcher(Introspector.decapitalize(in)).replaceAll("-").toLowerCase(Locale.ROOT);
     }
 
