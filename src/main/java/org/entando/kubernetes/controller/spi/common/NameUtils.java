@@ -16,7 +16,12 @@
 
 package org.entando.kubernetes.controller.spi.common;
 
+import java.beans.Introspector;
+import java.io.Serializable;
 import java.security.SecureRandom;
+import java.util.Locale;
+import java.util.regex.Pattern;
+import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class NameUtils {
@@ -51,11 +56,21 @@ public class NameUtils {
         return suffix.substring(0, size);
     }
 
+    public static String camelCaseToDashDelimited(String in) {
+        final String regex = "(?=[A-Z][a-z])";
+        final Pattern pattern = Pattern.compile(regex);
+        return pattern.matcher(Introspector.decapitalize(in)).replaceAll("-").toLowerCase(Locale.ROOT);
+    }
+
     public static String snakeCaseOf(String in) {
         return in.replace("-", "_").replace(".", "_");
     }
 
     public static String standardIngressName(EntandoCustomResource entandoCustomResource) {
         return entandoCustomResource.getMetadata().getName() + "-" + DEFAULT_INGRESS_SUFFIX;
+    }
+
+    public static <S extends Serializable, T extends EntandoBaseCustomResource<S>> String controllerNameOf(T customResource) {
+        return "entando-k8s-" + camelCaseToDashDelimited(customResource.getKind().substring("Entando".length())) + "-controller";
     }
 }

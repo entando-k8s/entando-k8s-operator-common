@@ -32,7 +32,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +65,7 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH.mm.ss'Z'Z");
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
     private final KubernetesClient client;
     private final EntandoResourceOperationsRegistry entandoResourceRegistry;
 
@@ -73,6 +73,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         this.client = client;
         entandoResourceRegistry = new EntandoResourceOperationsRegistry(client);
     }
+
     @Override
     public String getNamespace() {
         return client.getNamespace();
@@ -287,8 +288,8 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
                 .endMetadata()
                 .withCount(1)
-                .withLastTimestamp(dateTimeFormatter.format(ZonedDateTime.now()))
-                .withNewSource("entando-k8s-" + customResource.getKind().substring("Entando".length()) + "-controller", null)
+                .withLastTimestamp(dateTimeFormatter.format(LocalDateTime.now()))
+                .withNewSource(NameUtils.controllerNameOf(customResource), null)
                 .withNewInvolvedObject()
                 .withNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())

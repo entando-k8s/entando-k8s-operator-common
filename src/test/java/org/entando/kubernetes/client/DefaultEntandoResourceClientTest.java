@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.unittest.client;
+package org.entando.kubernetes.client;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
