@@ -106,7 +106,7 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
                 .withContainers(buildContainers(imageResolver, deployable))
                 .withDnsPolicy("ClusterFirst")
                 .withRestartPolicy("Always")
-                .withServiceAccountName(deployable.determineServiceAccountName())
+                .withServiceAccountName(deployable.getServiceAccountToUse())
                 .withVolumes(buildVolumesForDeployable(deployable)).endSpec()
                 .endTemplate()
                 .endSpec().buildSpec();

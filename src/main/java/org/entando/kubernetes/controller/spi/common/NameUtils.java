@@ -58,7 +58,12 @@ public class NameUtils {
     }
 
     public static String camelCaseToDashDelimited(String in) {
-        return pattern.matcher(Introspector.decapitalize(in)).replaceAll("-").toLowerCase(Locale.ROOT);
+        final String replacement = "-";
+        return camelCaseToDelimited(in, replacement).toLowerCase(Locale.ROOT);
+    }
+
+    private static String camelCaseToDelimited(String in, String delimiter) {
+        return pattern.matcher(Introspector.decapitalize(in)).replaceAll(delimiter);
     }
 
     public static String snakeCaseOf(String in) {
@@ -71,5 +76,9 @@ public class NameUtils {
 
     public static <S extends Serializable, T extends EntandoBaseCustomResource<S>> String controllerNameOf(T customResource) {
         return "entando-k8s-" + camelCaseToDashDelimited(customResource.getKind().substring("Entando".length())) + "-controller";
+    }
+
+    public static String upperSnakeCaseOf(String camelCase) {
+        return camelCaseToDelimited(camelCase, "_").toLowerCase(Locale.ROOT);
     }
 }

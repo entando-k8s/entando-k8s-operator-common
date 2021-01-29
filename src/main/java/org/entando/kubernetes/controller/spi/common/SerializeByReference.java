@@ -14,14 +14,26 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.deployable;
+package org.entando.kubernetes.controller.spi.common;
 
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface PublicIngressingDeployable<T extends ExposedDeploymentResult<T>, S extends KeycloakAwareSpec> extends
-        IngressingDeployable<T, S> {
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
 
-    KeycloakConnectionConfig getKeycloakDeploymentResult();
+/**
+ *
+ * Use this with getter methods that return Kubernetes resources. The presence of this
+ * annotation instructs the serializer to serialize only three fields:
+ * 1. apiVersion#kind (e.g entando.org/v1#EntandoPlugin)
+ * 2. namespace
+ * 3. name
+ *
+ *
+ */
+public @interface SerializeByReference {
+
 }

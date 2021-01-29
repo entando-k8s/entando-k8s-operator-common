@@ -27,11 +27,11 @@ import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.database.DatabaseDeploymentResult;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
-import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
 
-public class KeycloakConsumingDeployable implements PublicIngressingDeployable<ExposedDeploymentResult, EntandoAppSpec>, DbAwareDeployable {
+public class KeycloakConsumingDeployable implements PublicIngressingDeployable<SampleExposedDeploymentResult, EntandoAppSpec>,
+        DbAwareDeployable {
 
     public static final String TEST_INGRESS_NAMESPACE = "test-ingress-namespace";
     public static final String TEST_INGRESS_NAME = "test-ingress-name";
@@ -79,7 +79,7 @@ public class KeycloakConsumingDeployable implements PublicIngressingDeployable<E
     }
 
     @Override
-    public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new ExposedDeploymentResult(pod, service, ingress);
+    public SampleExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+        return new SampleExposedDeploymentResult(pod, service, ingress);
     }
 }

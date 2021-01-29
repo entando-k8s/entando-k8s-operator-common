@@ -16,18 +16,20 @@
 
 package org.entando.kubernetes.controller.spi.deployable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.List;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public interface Deployable<T extends ServiceDeploymentResult, S extends EntandoDeploymentSpec> {
+public interface Deployable<T extends ServiceDeploymentResult<T>, S extends EntandoDeploymentSpec> {
 
     /**
      * NB!!! Implementations need to implement this as a non-modifiable list with the exact same instances returned consistently.
@@ -36,17 +38,17 @@ public interface Deployable<T extends ServiceDeploymentResult, S extends Entando
 
     String getNameQualifier();
 
+    @SerializeByReference
     EntandoBaseCustomResource<S> getCustomResource();
 
     T createResult(Deployment deployment, Service service, Ingress ingress, Pod pod);
 
-    //TODO rename to getServiceAccountToUse
-    default String determineServiceAccountName() {
-        return getCustomResource().getSpec().getServiceAccountToUse().orElse(getServiceAccountName());
+    default String getServiceAccountToUse() {
+        return getCustomResource().getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
     }
 
-    //TODO rename to getDefaultServiceAccount
-    default String getServiceAccountName() {
+    @JsonIgnore
+    default String getDefaultServiceAccountName() {
         return "default";
     }
 

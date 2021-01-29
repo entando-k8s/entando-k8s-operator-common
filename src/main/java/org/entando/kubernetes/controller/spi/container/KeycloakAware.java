@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.container;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,7 @@ public interface KeycloakAware extends DeployableContainer, HasWebContext {
 
     KeycloakClientConfig getKeycloakClientConfig();
 
+    @JsonIgnore
     KeycloakAwareSpec getKeycloakAwareSpec();
 
     default String determineRealm() {

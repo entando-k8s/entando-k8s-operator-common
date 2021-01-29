@@ -28,7 +28,7 @@ import org.entando.kubernetes.model.WebServerStatus;
 /**
  * On addition of an Entando CustomResource, the DeployCommand is invoked for every service and database that needs to be deployed.
  */
-public class IngressingDeployCommand<T extends ExposedDeploymentResult, S extends EntandoIngressingDeploymentSpec> extends
+public class IngressingDeployCommand<T extends ExposedDeploymentResult<T>, S extends EntandoIngressingDeploymentSpec> extends
         DeployCommand<T, S> {
 
     private final IngressCreator<S> ingressCreator;

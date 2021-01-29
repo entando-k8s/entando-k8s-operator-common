@@ -48,7 +48,7 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.WebServerStatus;
 
-public class DeployCommand<T extends ServiceDeploymentResult, S extends EntandoDeploymentSpec> {
+public class DeployCommand<T extends ServiceDeploymentResult<T>, S extends EntandoDeploymentSpec> {
 
     protected final Deployable<T, S> deployable;
     protected final PersistentVolumeClaimCreator<S> persistentVolumeClaimCreator;

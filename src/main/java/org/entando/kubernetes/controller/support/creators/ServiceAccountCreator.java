@@ -62,7 +62,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
 
     private void prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable) {
         DoneableServiceAccount serviceAccount = serviceAccountClient
-                .findOrCreateServiceAccount(entandoCustomResource, deployable.determineServiceAccountName());
+                .findOrCreateServiceAccount(entandoCustomResource, deployable.getServiceAccountToUse());
         List<LocalObjectReference> pullSecrets = serviceAccount.buildImagePullSecrets();
         serviceAccount.addAllToImagePullSecrets(EntandoOperatorConfig.getImagePullSecrets().stream()
                 .filter(s -> pullSecrets.stream().noneMatch(pullSecret -> pullSecret.getName().equals(s))).map(LocalObjectReference::new)
@@ -72,7 +72,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
     private Role newRole(Deployable<?, S> deployable) {
         return new RoleBuilder()
                 .withNewMetadata()
-                .withName(deployable.determineServiceAccountName())
+                .withName(deployable.getServiceAccountToUse())
                 .endMetadata()
                 .withRules(forAllContainersIn(deployable))
                 .build();
@@ -87,7 +87,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
 
     private RoleBinding newRoleBinding(Deployable<?, S> deployable) {
         return new RoleBindingBuilder()
-                .withNewMetadata().withName(deployable.determineServiceAccountName() + ROLEBINDING_SUFFIX)
+                .withNewMetadata().withName(deployable.getServiceAccountToUse() + ROLEBINDING_SUFFIX)
                 .endMetadata()
                 .withNewRoleRef()
                 //                .withApiGroup("rbac.authorization.k8s.io")
@@ -97,7 +97,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
                 .addNewSubject()
                 //                .withApiGroup("rbac.authorization.k8s.io")
                 .withKind("ServiceAccount")
-                .withName(deployable.determineServiceAccountName())
+                .withName(deployable.getServiceAccountToUse())
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .endSubject()
                 .build();
@@ -114,7 +114,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
     private void createRoleBindingForClusterRole(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable,
             EntandoRbacRole role) {
         serviceAccountClient.createRoleBindingIfAbsent(this.entandoCustomResource, new RoleBindingBuilder()
-                .withNewMetadata().withName(deployable.determineServiceAccountName() + "-" + role.getK8sName())
+                .withNewMetadata().withName(deployable.getServiceAccountToUse() + "-" + role.getK8sName())
                 .endMetadata()
                 .withNewRoleRef()
                 .withName(role.getK8sName())
@@ -122,7 +122,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
                 .endRoleRef()
                 .addNewSubject()
                 .withKind("ServiceAccount")
-                .withName(deployable.determineServiceAccountName())
+                .withName(deployable.getServiceAccountToUse())
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .endSubject()
                 .build());

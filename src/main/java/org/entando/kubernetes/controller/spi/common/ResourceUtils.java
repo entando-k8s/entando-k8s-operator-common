@@ -16,10 +16,9 @@
 
 package org.entando.kubernetes.controller.spi.common;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
-import java.io.Serializable;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class ResourceUtils {
 
@@ -27,7 +26,7 @@ public class ResourceUtils {
 
     }
 
-    public static <S extends Serializable> OwnerReference buildOwnerReference(EntandoBaseCustomResource<S> entandoCustomResource) {
+    public static OwnerReference buildOwnerReference(HasMetadata entandoCustomResource) {
         return new OwnerReferenceBuilder()
                 .withApiVersion(entandoCustomResource.getApiVersion())
                 .withBlockOwnerDeletion(true)

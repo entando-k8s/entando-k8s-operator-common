@@ -65,7 +65,7 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
     }
 
     @Override
-    public String getServiceAccountName() {
+    public String getDefaultServiceAccountName() {
         return "plugin";
     }
 

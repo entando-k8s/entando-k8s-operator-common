@@ -79,7 +79,7 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     }
 
     @Override
-    public String getServiceAccountName() {
+    public String getDefaultServiceAccountName() {
         return MY_SERVICE_ACCOUNT;
     }
 }

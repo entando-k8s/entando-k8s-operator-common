@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 
 public class ExposedService extends AbstractServiceResult {
 
@@ -111,6 +112,7 @@ public class ExposedService extends AbstractServiceResult {
         return backend.getServiceName().endsWith("-to-" + service.getMetadata().getName());
     }
 
+    @SerializeByReference
     public Ingress getIngress() {
         return ingress;
     }

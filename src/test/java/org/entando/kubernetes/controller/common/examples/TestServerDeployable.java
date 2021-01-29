@@ -35,7 +35,7 @@ import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerSpec;
 
-public class TestServerDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServerSpec>, DbAwareDeployable,
+public class TestServerDeployable implements IngressingDeployable<SampleExposedDeploymentResult, EntandoKeycloakServerSpec>, DbAwareDeployable,
         Secretive {
 
     private final EntandoKeycloakServer keycloakServer;
@@ -67,8 +67,8 @@ public class TestServerDeployable implements IngressingDeployable<ExposedDeploym
     }
 
     @Override
-    public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new ExposedDeploymentResult(pod, service, ingress);
+    public SampleExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+        return new SampleExposedDeploymentResult(pod, service, ingress);
     }
 
     @Override

@@ -35,6 +35,7 @@ import javax.ws.rs.ClientErrorException;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
@@ -271,7 +272,7 @@ public class DummyBean {
         ResteasyProviderFactory.setInstance(instance);
     }
 
-    private static class TestKeycloakDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServerSpec> {
+    private static class TestKeycloakDeployable implements IngressingDeployable<SampleExposedDeploymentResult, EntandoKeycloakServerSpec> {
 
         private final List<DeployableContainer> containers = Arrays.asList(new TestKeycloakContainer());
         private final EntandoKeycloakServer keycloakServer;
@@ -306,8 +307,8 @@ public class DummyBean {
         }
 
         @Override
-        public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-            return new ExposedDeploymentResult(pod, service, ingress);
+        public SampleExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+            return new SampleExposedDeploymentResult(pod, service, ingress);
         }
 
         private static class TestKeycloakContainer implements IngressingContainer {

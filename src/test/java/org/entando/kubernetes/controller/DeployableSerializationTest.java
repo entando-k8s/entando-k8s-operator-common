@@ -20,12 +20,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.beans.Introspector;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -37,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.common.examples.SampleIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestData;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
@@ -102,7 +105,7 @@ class DeployableSerializationTest implements InProcessTestData {
         System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(customResource));
         System.out.println(deployabe.getFileSystemUserAndGroupId());
         System.out.println(deployabe.getNameQualifier());
-        System.out.println(deployabe.getServiceAccountName());
+        System.out.println(deployabe.getDefaultServiceAccountName());
         System.out.println(deployabe.getReplicas());
         assertThat(deployabe, is(instanceOf(Secretive.class)));
         System.out.println(((Secretive) deployabe).getSecrets());
@@ -121,8 +124,31 @@ class DeployableSerializationTest implements InProcessTestData {
         System.out.println(o.getDockerImageInfo().getRegistryHost());
         System.out.println(o.getDockerImageInfo().getRepository());
         System.out.println(o.getDockerImageInfo().getVersion());
-
+        System.out.println(getAnnotation(SampleIngressingDbAwareDeployable.class, "getDefaultServiceAccountName", JsonIgnore.class));
         //        System.out.println(json);
+    }
+
+    <T extends Annotation> T getAnnotation(Class<?> c, String methodName, Class<T> annotationType) {
+        final Method method;
+        try {
+            method = c.getMethod(methodName);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+        T annotation = method.getAnnotation(annotationType);
+        if (annotation == null && c.getSuperclass() != Object.class) {
+            annotation = getAnnotation(c.getSuperclass(), methodName, annotationType);
+        }
+        if (annotation == null) {
+            for (Class<?> intf : c.getInterfaces()) {
+                annotation = getAnnotation(intf, methodName, annotationType);
+                if (annotation != null) {
+                    return annotation;
+                }
+            }
+
+        }
+        return annotation;
     }
 
     private InvocationHandler getInvocationHandler(Map<String, Object> map) {
@@ -185,11 +211,13 @@ class DeployableSerializationTest implements InProcessTestData {
 
     private Map<String, Object> toMap(Object deployable) {
         Map<String, Object> map = new HashMap<>();
-        Arrays.stream(deployable.getClass().getInterfaces()).filter(aClass -> aClass.getName().startsWith("org.entando")).forEach(aClass ->
-                map.put("is" + aClass.getSimpleName(), Boolean.TRUE));
+        Arrays.stream(deployable.getClass().getInterfaces()).filter(aClass -> aClass.getName().startsWith("org.entando"))
+                .forEach(aClass ->
+                        map.put("is" + aClass.getSimpleName(), Boolean.TRUE));
         Arrays.stream(deployable.getClass().getMethods())
                 .filter(method -> (method.getName().startsWith("get")
-                        || method.getName().startsWith("is") && method.getReturnType() != void.class && method.getParameterCount() == 0))
+                        || method.getName().startsWith("is") && method.getReturnType() != void.class
+                        && method.getParameterCount() == 0))
                 .forEach(method -> {
                     try {
                         Object deserialize = deserialize(deployable, method);

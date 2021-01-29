@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.model.DbmsVendor;
 
 public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, IngressingContainer, TlsAware {
 
@@ -49,6 +50,9 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAware, I
             TODO: Set SPRING_JPA_PROPERTIES_HIBERNATE_ID_NEW_GENERATOR_MAPPINGS to 'false' if we ever run into issues with ID Generation
             */
         });
+        if(getDatabaseSchema().isEmpty() && getKeycloakAwareSpec().getDbms().orElse(DbmsVendor.NONE) == DbmsVendor.EMBEDDED){
+
+        }
         return vars;
     }
 

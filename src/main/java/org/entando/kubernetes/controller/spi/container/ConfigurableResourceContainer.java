@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.container;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Optional;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.EntandoResourceRequirements;
@@ -26,6 +27,7 @@ public interface ConfigurableResourceContainer extends DeployableContainer {
         return getCustomResourceSpec().getResourceRequirements();
     }
 
+    @JsonIgnore
     EntandoIngressingDeploymentSpec getCustomResourceSpec();
 
 }

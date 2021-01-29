@@ -21,7 +21,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import org.entando.kubernetes.model.AbstractServerStatus;
 
-public class ExposedDeploymentResult<T extends ExposedDeploymentResult> extends ExposedService implements ServiceDeploymentResult<T> {
+public class ExposedDeploymentResult<T extends ExposedDeploymentResult<T>> extends ExposedService implements ServiceDeploymentResult<T> {
 
     private AbstractServerStatus status;
     private Pod pod;

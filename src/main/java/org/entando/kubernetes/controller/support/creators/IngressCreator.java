@@ -41,7 +41,6 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
-import org.entando.kubernetes.model.EntandoResourceRequirements;
 import org.entando.kubernetes.model.HasIngress;
 
 public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends AbstractK8SResourceCreator<S> {
@@ -99,7 +98,7 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
     public void createIngress(IngressClient ingressClient, IngressingDeployable<?, S> ingressingDeployable, Service service) {
         this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(), ingressingDeployable.getIngressName());
         if (this.ingress == null) {
-            Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service));
+            Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service), ingressingDeployable);
             this.ingress = ingressClient.createIngress(entandoCustomResource, newIngress);
         } else {
             if (KubeUtils.customResourceOwns(entandoCustomResource, ingress)) {
@@ -123,10 +122,10 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
         return ingress;
     }
 
-    private Ingress newIngress(IngressClient ingressClient, List<HTTPIngressPath> paths) {
+    private Ingress newIngress(IngressClient ingressClient, List<HTTPIngressPath> paths, IngressingDeployable<?, S> deployable) {
         return new IngressBuilder()
                 .withNewMetadata()
-                .withAnnotations(forNginxIngress())
+                .withAnnotations(forNginxIngress(deployable))
                 .withName(NameUtils.standardIngressName(entandoCustomResource))
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .addToLabels(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName())
@@ -142,7 +141,7 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
                 .endRule().endSpec().build();
     }
 
-    private Map<String, String> forNginxIngress() {
+    private Map<String, String> forNginxIngress(IngressingDeployable<?, S> deployable) {
         Map<String, String> result = new HashMap<>();
         EntandoOperatorConfig.getIngressClass().ifPresent(s -> result.put("kubernetes.io/ingress.class", s));
         if (TlsHelper.canAutoCreateTlsSecret() || (entandoCustomResource instanceof HasIngress && ((HasIngress) entandoCustomResource)
@@ -151,9 +150,7 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
             //for cases where we have https available but the Keycloak redirect was specified as http
             result.put("nginx.ingress.kubernetes.io/force-ssl-redirect", "true");
         }
-        EntandoIngressingDeploymentSpec spec = entandoCustomResource.getSpec();
-        spec.getResourceRequirements().flatMap(EntandoResourceRequirements::getFileUploadLimit)
-                .ifPresent(s -> result.put("nginx.ingress.kubernetes.io/proxy-body-size", s));
+        deployable.getFileUploadLimit().ifPresent(s -> result.put("nginx.ingress.kubernetes.io/proxy-body-size", s));
         return result;
     }
 
