@@ -67,7 +67,6 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-'T'HH.mm.ss'Z'Z");
-    private static final DateTimeFormatter microtimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-'T'HH.mm.ss.SSSSSS'Z'Z");
     private final KubernetesClient client;
     private final EntandoResourceOperationsRegistry entandoResourceRegistry;
 
@@ -75,7 +74,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         this.client = client;
         entandoResourceRegistry = new EntandoResourceOperationsRegistry(client);
     }
-
     @Override
     public String getNamespace() {
         return client.getNamespace();
@@ -291,7 +289,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .endMetadata()
                 .withCount(1)
                 .withLastTimestamp(dateTimeFormatter.format(ZonedDateTime.now()))
-                .withEventTime(new MicroTime(microtimeFormatter.format(ZonedDateTime.now())))
                 .withNewSource("entando-k8s-" + customResource.getKind().substring("Entando".length()) + "-controller", null)
                 .withNewInvolvedObject()
                 .withNamespace(customResource.getMetadata().getNamespace())
