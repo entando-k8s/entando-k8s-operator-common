@@ -83,8 +83,8 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
         Optional<SimpleKeycloakClient> keycloakClient = Optional.ofNullable(potentiallyNullKeycloakClient);
         EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
                 k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
-        if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable) deployable).isExpectingDatabaseSchemas()) {
-            prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable) deployable);
+        if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
+            prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable<?>) deployable);
         }
         if (persistentVolumeClaimCreator.needsPersistentVolumeClaaims(deployable)) {
             //NB!!! it seems there is some confusion in K8S when a patch is done without any changes.
@@ -153,8 +153,11 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private void prepareDbSchemas(SimpleK8SClient<?> k8sClient, EntandoImageResolver entandoImageResolver,
-            DbAwareDeployable dbAwareDeployable) {
+    private void prepareDbSchemas(
+            SimpleK8SClient<?> k8sClient,
+            EntandoImageResolver entandoImageResolver,
+            DbAwareDeployable<?> dbAwareDeployable
+    ) {
         Pod completedPod = databasePreparationJobCreator.runToCompletion(k8sClient, dbAwareDeployable, entandoImageResolver);
         status.setInitPodStatus(completedPod.getStatus());
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);

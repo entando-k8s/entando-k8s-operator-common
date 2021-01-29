@@ -52,14 +52,17 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         super(entandoCustomResource);
     }
 
-    public Pod runToCompletion(SimpleK8SClient<?> client, DbAwareDeployable dbAwareDeployable, EntandoImageResolver entandoImageResolver) {
+    public Pod runToCompletion(
+            SimpleK8SClient<?> client,
+            DbAwareDeployable<?> dbAwareDeployable,
+            EntandoImageResolver entandoImageResolver) {
         client.pods().removeAndWait(
                 entandoCustomResource.getMetadata().getNamespace(), buildUniqueLabels(dbAwareDeployable.getNameQualifier()));
         return client.pods().runToCompletion(
                 buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable, dbAwareDeployable.getNameQualifier()));
     }
 
-    private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable dbAwareDeployable,
+    private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable<?> dbAwareDeployable,
             String qualifier) {
         return new PodBuilder().withNewMetadata()
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
