@@ -28,9 +28,7 @@ import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.DeploymentClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -77,7 +75,7 @@ class DeploymentCreatorTest implements InProcessTestUtil {
 
         DeploymentClientDouble deploymentClientDouble = new DeploymentClientDouble(new HashMap<>());
         EntandoApp testEntandoApp = newTestEntandoApp();
-        DeploymentCreator<EntandoAppSpec> deploymentCreator = new DeploymentCreator<>(testEntandoApp);
+        DeploymentCreator deploymentCreator = new DeploymentCreator(testEntandoApp);
 
         Deployment actual = deploymentCreator.createDeployment(
                 new EntandoImageResolver(null),

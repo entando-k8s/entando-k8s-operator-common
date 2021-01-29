@@ -61,7 +61,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 //Because Sonar doesn't pick up that this class is subclassed in other packages
-@SuppressWarnings("java:S5786")
+@SuppressWarnings({"java:S5786"})
 public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
@@ -81,7 +81,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         controller = new SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult>(k8sClient,
                 mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
@@ -133,7 +133,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         controller = new SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult>(k8sClient,
                 mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer());

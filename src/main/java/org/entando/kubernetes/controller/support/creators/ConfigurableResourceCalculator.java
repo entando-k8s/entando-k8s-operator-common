@@ -25,7 +25,7 @@ public class ConfigurableResourceCalculator extends ResourceCalculator {
 
     public ConfigurableResourceCalculator(ConfigurableResourceContainer container) {
         super(container);
-        this.resourceRequirements = container.getResourceRequirements().orElse(new EntandoResourceRequirements());
+        this.resourceRequirements = container.getResourceRequirementsOverride().orElse(new EntandoResourceRequirements());
     }
 
     @Override

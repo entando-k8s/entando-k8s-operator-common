@@ -27,7 +27,9 @@ import org.junit.jupiter.api.Tags;
 import org.mockito.Mockito;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-@SuppressWarnings({"java:S6068", "java:S6073"})
+//Because Sonar cannot detect that the test methods are declared in the superclass
+//and it cannot detect custom matchers and captors
+@SuppressWarnings({"java:S6068", "java:S6073","java:S2187"})
 public class BareBonesDeployableMockClientTest extends BareBonesDeployableTestBase {
 
     private SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
@@ -44,7 +46,7 @@ public class BareBonesDeployableMockClientTest extends BareBonesDeployableTestBa
     }
 
     @Override
-    public SimpleK8SClient getClient() {
+    public SimpleK8SClientDouble getClient() {
         return simpleK8SClientDouble;
     }
 

@@ -34,19 +34,18 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.SecurityMode;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<S> {
+public class ServiceAccountCreator extends AbstractK8SResourceCreator {
 
     public static final String ROLEBINDING_SUFFIX = "-rolebinding";
     private String role;
 
-    public ServiceAccountCreator(EntandoBaseCustomResource<S> entandoCustomResource) {
+    public ServiceAccountCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public void prepareServiceAccountAccess(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable) {
+    public void prepareServiceAccountAccess(ServiceAccountClient serviceAccountClient, Deployable<?> deployable) {
         prepareServiceAccount(serviceAccountClient, deployable);
         if (EntandoOperatorConfig.getOperatorSecurityMode() == SecurityMode.LENIENT) {
             //TODO reevaluate this. Maybe we should just always create/sync the role. This is fairly safe as the operator will not
@@ -60,7 +59,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
         }
     }
 
-    private void prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable) {
+    private void prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?> deployable) {
         DoneableServiceAccount serviceAccount = serviceAccountClient
                 .findOrCreateServiceAccount(entandoCustomResource, deployable.getServiceAccountToUse());
         List<LocalObjectReference> pullSecrets = serviceAccount.buildImagePullSecrets();
@@ -69,7 +68,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
                 .collect(Collectors.toList())).done();
     }
 
-    private Role newRole(Deployable<?, S> deployable) {
+    private Role newRole(Deployable<?> deployable) {
         return new RoleBuilder()
                 .withNewMetadata()
                 .withName(deployable.getServiceAccountToUse())
@@ -78,14 +77,14 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
                 .build();
     }
 
-    private List<PolicyRule> forAllContainersIn(Deployable<?, S> deployable) {
+    private List<PolicyRule> forAllContainersIn(Deployable<?> deployable) {
         return deployable.getContainers().stream()
                 .map(DeployableContainer::getKubernetesPermissions)
                 .flatMap(Collection::stream)
                 .map(this::newPolicyRule).collect(Collectors.toList());
     }
 
-    private RoleBinding newRoleBinding(Deployable<?, S> deployable) {
+    private RoleBinding newRoleBinding(Deployable<?> deployable) {
         return new RoleBindingBuilder()
                 .withNewMetadata().withName(deployable.getServiceAccountToUse() + ROLEBINDING_SUFFIX)
                 .endMetadata()
@@ -111,7 +110,7 @@ public class ServiceAccountCreator<S extends EntandoDeploymentSpec> extends Abst
                 .build();
     }
 
-    private void createRoleBindingForClusterRole(ServiceAccountClient serviceAccountClient, Deployable<?, S> deployable,
+    private void createRoleBindingForClusterRole(ServiceAccountClient serviceAccountClient, Deployable<?> deployable,
             EntandoRbacRole role) {
         serviceAccountClient.createRoleBindingIfAbsent(this.entandoCustomResource, new RoleBindingBuilder()
                 .withNewMetadata().withName(deployable.getServiceAccountToUse() + "-" + role.getK8sName())

@@ -29,13 +29,12 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.database.DatabaseDeploymentResult;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
-import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
-import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerSpec;
 
-public class TestServerDeployable implements IngressingDeployable<SampleExposedDeploymentResult, EntandoKeycloakServerSpec>, DbAwareDeployable,
+public class TestServerDeployable implements IngressingDeployableBase<SampleExposedDeploymentResult>, DbAwareDeployable,
         Secretive {
 
     private final EntandoKeycloakServer keycloakServer;
@@ -72,8 +71,13 @@ public class TestServerDeployable implements IngressingDeployable<SampleExposedD
     }
 
     @Override
+    public String getServiceAccountToUse() {
+        return this.keycloakServer.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
+    }
+
+    @Override
     public String getIngressName() {
-        return NameUtils.standardIngressName(keycloakServer);
+        return ((EntandoCustomResource) keycloakServer).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX;
     }
 
     @Override

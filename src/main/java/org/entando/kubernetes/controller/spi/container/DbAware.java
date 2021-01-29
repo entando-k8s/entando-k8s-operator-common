@@ -23,8 +23,7 @@ import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface DbAware extends DeployableContainer {
 
@@ -37,26 +36,25 @@ public interface DbAware extends DeployableContainer {
     List<DatabaseSchemaConnectionInfo> getSchemaConnectionInfo();
 
     static List<DatabaseSchemaConnectionInfo> buildDatabaseSchemaConnectionInfo(
-            EntandoBaseCustomResource<? extends EntandoDeploymentSpec> entandoBaseCustomResource,
+            EntandoCustomResource entandoBaseCustomResource,
             DatabaseServiceResult databaseServiceResult,
             List<String> schemaQualifiers) {
-        /**
-         * String used to distinguish resources in special cases like name shortening.
-         */
-        String identifierSuffix = SecretUtils.randomAlphanumeric(3);
-        return schemaQualifiers.stream().map(schemaQualifier -> {
-            String schemaName = NameUtils.snakeCaseOf(entandoBaseCustomResource.getMetadata().getName()) + "_" + schemaQualifier;
-            if (schemaName.length() > databaseServiceResult.getVendor().getVendorConfig().getMaxNameLength()) {
-                schemaName = schemaName.substring(0, databaseServiceResult.getVendor().getVendorConfig().getMaxNameLength() - 3)
-                        + identifierSuffix;
-            }
-            return new DatabaseSchemaConnectionInfo(databaseServiceResult,
-                    schemaName,
-                    SecretUtils.generateSecret(entandoBaseCustomResource,
-                            entandoBaseCustomResource.getMetadata().getName() + "-" + schemaQualifier + "-secret",
-                            schemaName)
-            );
-        }).collect(Collectors.toList());
+        return schemaQualifiers.stream()
+                .map(schemaQualifier -> {
+                    String schemaName = NameUtils.databaseCompliantName(
+                            entandoBaseCustomResource,
+                            schemaQualifier,
+                            databaseServiceResult.getVendor().getVendorConfig()
+                    );
+                    return new DatabaseSchemaConnectionInfo(databaseServiceResult,
+                            schemaName,
+                            SecretUtils.generateSecret(
+                                    entandoBaseCustomResource,
+                                    entandoBaseCustomResource.getMetadata().getName() + "-" + schemaQualifier + "-secret",
+                                    schemaName
+                            )
+                    );
+                }).collect(Collectors.toList());
     }
 
 }

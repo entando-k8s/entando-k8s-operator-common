@@ -125,7 +125,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, C
     void prepareKeycloakCustomResource() {
         this.sampleController = new SampleController<>(client, keycloakClient) {
             @Override
-            protected Deployable<SampleExposedDeploymentResult, EntandoAppSpec> createDeployable(
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {

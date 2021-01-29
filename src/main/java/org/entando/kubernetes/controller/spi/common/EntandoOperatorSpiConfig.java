@@ -18,6 +18,9 @@ package org.entando.kubernetes.controller.spi.common;
 
 public class EntandoOperatorSpiConfig {
 
+    private EntandoOperatorSpiConfig() {
+    }
+
     public static boolean assumeExternalHttpsProvider() {
         return EntandoOperatorConfigBase.lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER)
                 .map(Boolean::valueOf).orElse(false);

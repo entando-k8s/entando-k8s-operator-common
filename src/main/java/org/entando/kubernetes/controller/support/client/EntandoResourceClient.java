@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.support.client;
 
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import java.io.Serializable;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
@@ -28,48 +27,38 @@ import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.KeycloakToUse;
 import org.entando.kubernetes.model.ResourceReference;
-import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public interface EntandoResourceClient {
 
     String getNamespace();
 
-    <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updateStatus(T customResource, AbstractServerStatus status);
+    void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status);
 
-    <S extends Serializable, T extends EntandoBaseCustomResource<S>> T load(Class<T> clzz, String resourceNamespace, String resourceName);
+    <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
-    <S extends Serializable, T extends EntandoBaseCustomResource<S>> T createOrPatchEntandoResource(T r);
+    <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
 
-    <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updatePhase(T customResource, EntandoDeploymentPhase phase);
+    void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase);
 
-    <S extends Serializable, T extends EntandoBaseCustomResource<S>> void deploymentFailed(T entandoCustomResource, Exception reason);
+    void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason);
 
-    <S extends Serializable, T extends EntandoBaseCustomResource<S>> Optional<ExternalDatabaseDeployment> findExternalDatabase(T resource,
-            DbmsVendor vendor);
+    Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource peerInNamespace, DbmsVendor vendor);
 
     <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource);
 
-    Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoBaseCustomResource<?> peerInNamespace);
+    Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace);
 
     <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
             EntandoBaseCustomResource<T> resource);
 
-    <S extends Serializable, T extends EntandoBaseCustomResource<S>> ExposedService loadExposedService(T resource);
-
-    default EntandoApp loadEntandoApp(String namespace, String name) {
-        return load(EntandoApp.class, namespace, name);
-    }
-
-    default EntandoPlugin loadEntandoPlugin(String namespace, String name) {
-        return load(EntandoPlugin.class, namespace, name);
-    }
+    ExposedService loadExposedService(EntandoCustomResource resource);
 
     DoneableConfigMap loadDefaultConfigMap();
 
@@ -123,8 +112,7 @@ public interface EntandoResourceClient {
         return refineResourceReference(resourceReference, resource.getMetadata());
     }
 
-    <T extends ClusterInfrastructureAwareSpec> Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(
-            EntandoBaseCustomResource<T> resource);
+    Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(EntandoCustomResource resource);
 
     default Optional<ResourceReference> refineResourceReference(ResourceReference resourceReference, ObjectMeta metadata) {
         if (resourceReference.getName() == null) {

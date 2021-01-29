@@ -44,34 +44,33 @@ import org.entando.kubernetes.controller.support.creators.ServiceAccountCreator;
 import org.entando.kubernetes.controller.support.creators.ServiceCreator;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.DbServerStatus;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.WebServerStatus;
 
-public class DeployCommand<T extends ServiceDeploymentResult<T>, S extends EntandoDeploymentSpec> {
+public class DeployCommand<T extends ServiceDeploymentResult<T>> {
 
-    protected final Deployable<T, S> deployable;
-    protected final PersistentVolumeClaimCreator<S> persistentVolumeClaimCreator;
-    protected final ServiceCreator<S> serviceCreator;
-    protected final DeploymentCreator<S> deploymentCreator;
-    protected final SecretCreator<S> secretCreator;
-    protected final DatabasePreparationPodCreator<S> databasePreparationJobCreator;
-    protected final KeycloakClientCreator<S> keycloakClientCreator;
-    protected final ServiceAccountCreator<S> serviceAccountCreator;
+    protected final Deployable<T> deployable;
+    protected final PersistentVolumeClaimCreator persistentVolumeClaimCreator;
+    protected final ServiceCreator serviceCreator;
+    protected final DeploymentCreator deploymentCreator;
+    protected final SecretCreator secretCreator;
+    protected final DatabasePreparationPodCreator databasePreparationJobCreator;
+    protected final KeycloakClientCreator keycloakClientCreator;
+    protected final ServiceAccountCreator serviceAccountCreator;
     protected final AbstractServerStatus status;
-    protected final EntandoBaseCustomResource<S> entandoCustomResource;
+    protected final EntandoCustomResource entandoCustomResource;
     private Pod pod;
 
-    public DeployCommand(Deployable<T, S> deployable) {
+    public DeployCommand(Deployable<T> deployable) {
         this.deployable = deployable;
         this.entandoCustomResource = deployable.getCustomResource();
-        persistentVolumeClaimCreator = new PersistentVolumeClaimCreator<>(entandoCustomResource);
-        serviceCreator = new ServiceCreator<>(entandoCustomResource);
-        deploymentCreator = new DeploymentCreator<>(entandoCustomResource);
-        secretCreator = new SecretCreator<>(entandoCustomResource);
-        databasePreparationJobCreator = new DatabasePreparationPodCreator<>(entandoCustomResource);
-        keycloakClientCreator = new KeycloakClientCreator<>(entandoCustomResource);
-        serviceAccountCreator = new ServiceAccountCreator<>(entandoCustomResource);
+        persistentVolumeClaimCreator = new PersistentVolumeClaimCreator(entandoCustomResource);
+        serviceCreator = new ServiceCreator(entandoCustomResource);
+        deploymentCreator = new DeploymentCreator(entandoCustomResource);
+        secretCreator = new SecretCreator(entandoCustomResource);
+        databasePreparationJobCreator = new DatabasePreparationPodCreator(entandoCustomResource);
+        keycloakClientCreator = new KeycloakClientCreator(entandoCustomResource);
+        serviceAccountCreator = new ServiceAccountCreator(entandoCustomResource);
         if (deployable instanceof IngressingDeployable) {
             status = new WebServerStatus();
         } else {
@@ -80,8 +79,8 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>, S extends Entan
         status.setQualifier(deployable.getNameQualifier());
     }
 
-    @SuppressWarnings("unchecked")
-    public T execute(SimpleK8SClient<?> k8sClient, Optional<SimpleKeycloakClient> keycloakClient) {
+    public T execute(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient potentiallyNullKeycloakClient) {
+        Optional<SimpleKeycloakClient> keycloakClient = Optional.ofNullable(potentiallyNullKeycloakClient);
         EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
                 k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
         if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable) deployable).hasContainersExpectingSchemas()) {
@@ -111,7 +110,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>, S extends Entan
         if (status.hasFailed()) {
             throw new EntandoControllerException("Creation of Kubernetes resources has failed");
         }
-        return (T) deployable.createResult(getDeployment(), getService(), ingress, getPod()).withStatus(getStatus());
+        return deployable.createResult(getDeployment(), getService(), ingress, getPod()).withStatus(getStatus());
     }
 
     @SuppressWarnings("java:S1172")//because this parameter is required for the subclass
@@ -119,7 +118,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>, S extends Entan
         return null;
     }
 
-    private boolean shouldCreateService(Deployable<T, S> deployable) {
+    private boolean shouldCreateService(Deployable<T> deployable) {
         return deployable.getContainers().stream().anyMatch(ServiceBackingContainer.class::isInstance);
     }
 
@@ -130,7 +129,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>, S extends Entan
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
-    private String resolveName(Deployable<T, S> deployable) {
+    private String resolveName(Deployable<T> deployable) {
         return entandoCustomResource.getMetadata().getName() + "-" + deployable.getNameQualifier();
     }
 

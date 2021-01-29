@@ -34,23 +34,22 @@ import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Ingressing;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class ServiceCreator<T extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<T> {
+public class ServiceCreator extends AbstractK8SResourceCreator {
 
     private Service primaryService;
 
-    public ServiceCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
+    public ServiceCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public ServiceCreator(EntandoBaseCustomResource<T> entandoCustomResource, Service primaryService) {
+    public ServiceCreator(EntandoCustomResource entandoCustomResource, Service primaryService) {
         super(entandoCustomResource);
         this.primaryService = primaryService;
     }
 
-    private Service newService(Deployable<?, ?> deployable) {
+    private Service newService(Deployable<?> deployable) {
         ObjectMeta objectMeta = fromCustomResource(true, resolveName(deployable.getNameQualifier(), "-service"),
                 deployable.getNameQualifier());
         return new ServiceBuilder()
@@ -63,7 +62,7 @@ public class ServiceCreator<T extends EntandoDeploymentSpec> extends AbstractK8S
                 .build();
     }
 
-    private List<ServicePort> buildPorts(Deployable<?, ?> deployable) {
+    private List<ServicePort> buildPorts(Deployable<?> deployable) {
         return deployable.getContainers().stream().filter(ServiceBackingContainer.class::isInstance)
                 .map(ServiceBackingContainer.class::cast)
                 .map(this::newServicePort).collect(Collectors.toList());
@@ -78,7 +77,7 @@ public class ServiceCreator<T extends EntandoDeploymentSpec> extends AbstractK8S
                 .build();
     }
 
-    public void createService(ServiceClient services, Deployable<?, ?> deployable) {
+    public void createService(ServiceClient services, Deployable<?> deployable) {
         primaryService = services.createOrReplaceService(entandoCustomResource, newService(deployable));
     }
 

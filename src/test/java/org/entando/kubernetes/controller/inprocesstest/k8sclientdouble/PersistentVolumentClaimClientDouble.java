@@ -19,8 +19,7 @@ package org.entando.kubernetes.controller.inprocesstest.k8sclientdouble;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import java.util.Map;
 import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class PersistentVolumentClaimClientDouble extends AbstractK8SClientDouble implements
         PersistentVolumeClaimClient {
@@ -31,8 +30,7 @@ public class PersistentVolumentClaimClientDouble extends AbstractK8SClientDouble
     }
 
     @Override
-    public <S extends EntandoDeploymentSpec> PersistentVolumeClaim createPersistentVolumeClaimIfAbsent(
-            EntandoBaseCustomResource<S> peerInNamespace,
+    public PersistentVolumeClaim createPersistentVolumeClaimIfAbsent(EntandoCustomResource peerInNamespace,
             PersistentVolumeClaim persistentVolumeClaim) {
         if (peerInNamespace == null) {
             return null;
@@ -42,7 +40,7 @@ public class PersistentVolumentClaimClientDouble extends AbstractK8SClientDouble
     }
 
     @Override
-    public <S extends EntandoDeploymentSpec> PersistentVolumeClaim loadPersistentVolumeClaim(EntandoBaseCustomResource<S> peerInNamespace,
+    public PersistentVolumeClaim loadPersistentVolumeClaim(EntandoCustomResource peerInNamespace,
             String name) {
         if (name == null) {
             return null;

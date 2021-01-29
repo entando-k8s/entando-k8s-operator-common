@@ -32,8 +32,6 @@ import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.support.creators.EntandoRbacRole;
-import org.entando.kubernetes.controller.support.creators.ServiceAccountCreator;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
@@ -73,7 +71,7 @@ class ServiceAcountCreatorTest implements InProcessTestUtil {
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(entandoApp, null,
                 emulateKeycloakDeployment(client));
         //When the operator prepares the service account
-        new ServiceAccountCreator<>(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
+        new ServiceAccountCreator(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
         //then the custom image pull secret must be propagated to the new serviceAccount
         assertThat(client.serviceAccounts().findOrCreateServiceAccount(entandoApp, MY_SERVICE_ACCOUNT).buildImagePullSecrets().get(0)
                 .getName(), is(MY_IMAGE_PULL_SECRET));
@@ -86,7 +84,7 @@ class ServiceAcountCreatorTest implements InProcessTestUtil {
         //When the operator prepares the service account
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(entandoApp, null,
                 emulateKeycloakDeployment(client));
-        new ServiceAccountCreator<>(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
+        new ServiceAccountCreator(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
         //then RoleBindings must exist for the standard cluster roles
         RoleBinding entandoEditorRoleBinding = client.serviceAccounts().loadRoleBinding(entandoApp, MY_SERVICE_ACCOUNT + "-entando-editor");
         assertThat(entandoEditorRoleBinding.getSubjects().get(0).getName(), is(MY_SERVICE_ACCOUNT));
@@ -117,7 +115,7 @@ class ServiceAcountCreatorTest implements InProcessTestUtil {
             }
         };
         //When the operator prepares the service account
-        new ServiceAccountCreator<>(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
+        new ServiceAccountCreator(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
         //The there must be a role with the required permission that has the same name as the ServiceAccount
         Role role = client.serviceAccounts().loadRole(entandoApp, MY_SERVICE_ACCOUNT);
         assertThat(role.getRules().get(0).getApiGroups(), hasItem("route.openshift.io"));

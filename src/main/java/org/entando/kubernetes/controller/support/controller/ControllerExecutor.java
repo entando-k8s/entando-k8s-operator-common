@@ -29,7 +29,6 @@ import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,16 +46,17 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.creators.TlsHelper;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ControllerExecutor {
+
     public static final String ETC_ENTANDO_TLS = TlsAware.ETC_ENTANDO_TLS;
     public static final String ETC_ENTANDO_CA = TlsAware.ETC_ENTANDO_CA;
 
     private static final Map<String, String> resourceKindToImageNames = buildImageMap();
     private final SimpleK8SClient<?> client;
     private final EntandoImageResolver imageResolver;
-    private String controllerNamespace;
+    private final String controllerNamespace;
 
     public ControllerExecutor(String controllerNamespace, KubernetesClient client) {
         this(controllerNamespace, new DefaultSimpleK8SClient(client));
@@ -81,7 +81,7 @@ public class ControllerExecutor {
         return map;
     }
 
-    public static <T extends Serializable> String resolveControllerImageName(EntandoBaseCustomResource<T> resource) {
+    public static String resolveControllerImageName(EntandoCustomResource resource) {
         return resolveControllerImageNameByKind(resource.getKind());
     }
 
@@ -89,28 +89,26 @@ public class ControllerExecutor {
         return resourceKindToImageNames.get(kind);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> Pod startControllerFor(Action action, T resource,
-            String imageVersionToUse) {
+    public Pod startControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
         removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
         return client.pods().start(pod);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> Pod runControllerFor(Action action, T resource,
-            String imageVersionToUse) {
+    public Pod runControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
         removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
         return client.pods().runToCompletion(pod);
     }
 
-    private void removeObsoleteControllerPods(EntandoBaseCustomResource<?> resource) {
+    private void removeObsoleteControllerPods(EntandoCustomResource resource) {
         this.client.pods().removeAndWait(controllerNamespace, Map.of(
                 KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind(),
                 KubeUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace(),
                 resource.getKind(), resource.getMetadata().getName()));
     }
 
-    private <T extends Serializable> Pod buildControllerPod(Action action, EntandoBaseCustomResource<T> resource,
+    private Pod buildControllerPod(Action action, EntandoCustomResource resource,
             String imageVersionToUse) {
         return new PodBuilder().withNewMetadata()
                 .withName(resource.getMetadata().getName() + "-deployer-" + NameUtils.randomNumeric(4).toLowerCase())
@@ -138,7 +136,7 @@ public class ControllerExecutor {
         return EntandoOperatorConfig.getOperatorServiceAccount().orElse("default");
     }
 
-    private <T extends Serializable> String determineControllerImage(EntandoBaseCustomResource<T> resource, String imageVersionToUse) {
+    private String determineControllerImage(EntandoCustomResource resource, String imageVersionToUse) {
         return this.imageResolver.determineImageUri(
                 "entando/" + resolveControllerImageName(resource) + ofNullable(imageVersionToUse).map(s -> ":" + s).orElse(""));
     }
@@ -147,7 +145,7 @@ public class ControllerExecutor {
         result.put(envVar.getName(), envVar);
     }
 
-    private <T extends Serializable> List<EnvVar> buildEnvVars(Action action, EntandoBaseCustomResource<T> resource) {
+    private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {
         Map<String, EnvVar> result = new HashMap<>();
         //TODO test if we can remove this line now given that we are copying all system properties and environment variables.
         Stream.of(EntandoOperatorConfigProperty.values())
@@ -189,7 +187,7 @@ public class ControllerExecutor {
         return propertyName.startsWith("related.image") || propertyName.startsWith("entando.");
     }
 
-    private <T extends Serializable> List<Volume> maybeCreateTlsVolumes(EntandoBaseCustomResource<T> resource) {
+    private List<Volume> maybeCreateTlsVolumes(EntandoCustomResource resource) {
         List<Volume> result = new ArrayList<>();
         if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
             //TODO no need to propagate the raw CA certs. But we do need to mount the resulting Java Truststore and override the

@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.spi.common;
 
 import java.util.Locale;
+import org.entando.kubernetes.model.DbmsVendor;
 
 public enum DbmsVendorConfig {
     MYSQL("org.hibernate.dialect.MySQL5InnoDBDialect", 3306, "root",
@@ -124,5 +125,14 @@ public enum DbmsVendorConfig {
 
     public String getName() {
         return name().toLowerCase(Locale.getDefault());
+    }
+
+    public DbmsVendor getDbms() {
+        try {
+            return DbmsVendor.valueOf(name());
+        } catch (IllegalArgumentException e) {
+            return DbmsVendor.EMBEDDED;
+        }
+
     }
 }

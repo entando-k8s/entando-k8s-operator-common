@@ -26,10 +26,9 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
-public interface Deployable<T extends ServiceDeploymentResult<T>, S extends EntandoDeploymentSpec> {
+public interface Deployable<T extends ServiceDeploymentResult<T>> {
 
     /**
      * NB!!! Implementations need to implement this as a non-modifiable list with the exact same instances returned consistently.
@@ -39,13 +38,11 @@ public interface Deployable<T extends ServiceDeploymentResult<T>, S extends Enta
     String getNameQualifier();
 
     @SerializeByReference
-    EntandoBaseCustomResource<S> getCustomResource();
+    EntandoCustomResource getCustomResource();
 
     T createResult(Deployment deployment, Service service, Ingress ingress, Pod pod);
 
-    default String getServiceAccountToUse() {
-        return getCustomResource().getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
-    }
+    String getServiceAccountToUse();
 
     @JsonIgnore
     default String getDefaultServiceAccountName() {

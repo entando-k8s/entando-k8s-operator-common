@@ -17,11 +17,9 @@
 package org.entando.kubernetes.controller.spi.common;
 
 import java.beans.Introspector;
-import java.io.Serializable;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.regex.Pattern;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class NameUtils {
@@ -70,15 +68,28 @@ public class NameUtils {
         return in.replace("-", "_").replace(".", "_");
     }
 
-    public static String standardIngressName(EntandoCustomResource entandoCustomResource) {
-        return entandoCustomResource.getMetadata().getName() + "-" + DEFAULT_INGRESS_SUFFIX;
-    }
-
-    public static <S extends Serializable, T extends EntandoBaseCustomResource<S>> String controllerNameOf(T customResource) {
+    public static String controllerNameOf(EntandoCustomResource customResource) {
         return "entando-k8s-" + camelCaseToDashDelimited(customResource.getKind().substring("Entando".length())) + "-controller";
     }
 
     public static String upperSnakeCaseOf(String camelCase) {
         return camelCaseToDelimited(camelCase, "_").toLowerCase(Locale.ROOT);
+    }
+
+    public static String databaseCompliantName(EntandoCustomResource resource, String nameQualifier, DbmsVendorConfig dbmsVendorConfig) {
+        String databaseName = NameUtils.snakeCaseOf(resource.getMetadata().getName()) + "_" + nameQualifier;
+        if (databaseName.length() > dbmsVendorConfig.getMaxNameLength()) {
+            databaseName = databaseName.substring(0, dbmsVendorConfig.getMaxNameLength() - 3) + randomNumeric(3);
+        }
+        return databaseName;
+
+    }
+
+    public static String standardIngressName(EntandoCustomResource resource) {
+        return resource.getMetadata().getName() + "-" + DEFAULT_INGRESS_SUFFIX;
+    }
+
+    public static String standardServiceName(EntandoCustomResource resource) {
+        return resource.getMetadata().getName() + "-" + DEFAULT_SERVER_QUALIFIER + "-" + DEFAULT_SERVICE_SUFFIX;
     }
 }

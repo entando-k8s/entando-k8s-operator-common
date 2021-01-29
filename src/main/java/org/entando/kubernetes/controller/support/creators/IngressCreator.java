@@ -39,16 +39,14 @@ import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
-import org.entando.kubernetes.model.HasIngress;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends AbstractK8SResourceCreator<S> {
+public class IngressCreator extends AbstractK8SResourceCreator {
 
     private final IngressPathCreator ingressPathCreator;
     private Ingress ingress;
 
-    public IngressCreator(EntandoBaseCustomResource<S> entandoCustomResource) {
+    public IngressCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
         this.ingressPathCreator = new IngressPathCreator(entandoCustomResource);
     }
@@ -95,16 +93,18 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
         return !service.getMetadata().getNamespace().equals(ingressingContainer.getIngressNamespace());
     }
 
-    public void createIngress(IngressClient ingressClient, IngressingDeployable<?, S> ingressingDeployable, Service service) {
+    public void createIngress(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable,
+            Service service) {
         this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(), ingressingDeployable.getIngressName());
         if (this.ingress == null) {
-            Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service), ingressingDeployable);
+            Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service),
+                    ingressingDeployable);
             this.ingress = ingressClient.createIngress(entandoCustomResource, newIngress);
         } else {
             if (KubeUtils.customResourceOwns(entandoCustomResource, ingress)) {
                 this.ingress = ingressClient.editIngress(entandoCustomResource, ingressingDeployable.getIngressName())
-                        .editSpec().editFirstRule().withHost(determineIngressHost(ingressClient)).endRule()
-                        .withTls(maybeBuildTls(ingressClient)).endSpec().done();
+                        .editSpec().editFirstRule().withHost(determineIngressHost(ingressClient, ingressingDeployable)).endRule()
+                        .withTls(maybeBuildTls(ingressClient, ingressingDeployable)).endSpec().done();
             }
             ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingDeployable, ingress, service);
         }
@@ -122,30 +122,30 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
         return ingress;
     }
 
-    private Ingress newIngress(IngressClient ingressClient, List<HTTPIngressPath> paths, IngressingDeployable<?, S> deployable) {
+    private Ingress newIngress(IngressClient ingressClient, List<HTTPIngressPath> paths,
+            IngressingDeployable<?> deployable) {
         return new IngressBuilder()
                 .withNewMetadata()
                 .withAnnotations(forNginxIngress(deployable))
-                .withName(NameUtils.standardIngressName(entandoCustomResource))
+                .withName(entandoCustomResource.getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX)
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .addToLabels(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName())
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(entandoCustomResource))
                 .endMetadata()
                 .withNewSpec()
-                .withTls(maybeBuildTls(ingressClient))
+                .withTls(maybeBuildTls(ingressClient, deployable))
                 .addNewRule()
-                .withHost(determineIngressHost(ingressClient))
+                .withHost(determineIngressHost(ingressClient, deployable))
                 .withNewHttp()
                 .withPaths(paths)
                 .endHttp()
                 .endRule().endSpec().build();
     }
 
-    private Map<String, String> forNginxIngress(IngressingDeployable<?, S> deployable) {
+    private Map<String, String> forNginxIngress(IngressingDeployable<?> deployable) {
         Map<String, String> result = new HashMap<>();
         EntandoOperatorConfig.getIngressClass().ifPresent(s -> result.put("kubernetes.io/ingress.class", s));
-        if (TlsHelper.canAutoCreateTlsSecret() || (entandoCustomResource instanceof HasIngress && ((HasIngress) entandoCustomResource)
-                .getTlsSecretName().isPresent())) {
+        if (TlsHelper.canAutoCreateTlsSecret() || deployable.getTlsSecretName().isPresent()) {
 
             //for cases where we have https available but the Keycloak redirect was specified as http
             result.put("nginx.ingress.kubernetes.io/force-ssl-redirect", "true");
@@ -154,21 +154,21 @@ public class IngressCreator<S extends EntandoIngressingDeploymentSpec> extends A
         return result;
     }
 
-    private List<IngressTLS> maybeBuildTls(IngressClient ingressClient) {
+    private List<IngressTLS> maybeBuildTls(IngressClient ingressClient, IngressingDeployable<?> deployable) {
         List<IngressTLS> result = new ArrayList<>();
-        ((HasIngress) entandoCustomResource).getTlsSecretName().ifPresent(s ->
-                result.add(new IngressTLSBuilder().withSecretName(s).withHosts(determineIngressHost(ingressClient)).build()));
+
+        deployable.getTlsSecretName().ifPresent(s ->
+                result.add(new IngressTLSBuilder().withSecretName(s).withHosts(determineIngressHost(ingressClient, deployable)).build()));
         if (result.isEmpty() && TlsHelper.canAutoCreateTlsSecret()) {
-            result.add(new IngressTLSBuilder().withHosts(determineIngressHost(ingressClient))
+            result.add(new IngressTLSBuilder().withHosts(determineIngressHost(ingressClient, deployable))
                     .withSecretName(entandoCustomResource.getMetadata().getName() + "-tls-secret").build());
 
         }
         return result;
     }
 
-    private String determineIngressHost(IngressClient ingressClient) {
-        //TODO Should we not encapsulate the HasIngress behind the IngressDeployable?
-        return ((HasIngress) entandoCustomResource).getIngressHostName()
+    private String determineIngressHost(IngressClient ingressClient, IngressingDeployable<?> deployable) {
+        return deployable.getIngressHostName()
                 .orElse(entandoCustomResource.getMetadata().getName() + "-" + entandoCustomResource.getMetadata().getNamespace() + "."
                         + determineRoutingSuffix(
                         ingressClient.getMasterUrlHost()));

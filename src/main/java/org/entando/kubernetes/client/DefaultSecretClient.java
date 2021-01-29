@@ -22,7 +22,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultSecretClient implements SecretClient {
@@ -45,7 +44,7 @@ public class DefaultSecretClient implements SecretClient {
     }
 
     @Override
-    public void createSecretIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, Secret secret) {
+    public void createSecretIfAbsent(EntandoCustomResource peerInNamespace, Secret secret) {
         try {
             client.secrets().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(secret);
         } catch (KubernetesClientException e) {
@@ -79,7 +78,7 @@ public class DefaultSecretClient implements SecretClient {
     }
 
     @Override
-    public void createConfigMapIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, ConfigMap configMap) {
+    public void createConfigMapIfAbsent(EntandoCustomResource peerInNamespace, ConfigMap configMap) {
         try {
             client.configMaps().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(configMap);
         } catch (KubernetesClientException e) {
@@ -88,7 +87,7 @@ public class DefaultSecretClient implements SecretClient {
     }
 
     @Override
-    public ConfigMap loadConfigMap(EntandoBaseCustomResource<?> peerInNamespace, String name) {
+    public ConfigMap loadConfigMap(EntandoCustomResource peerInNamespace, String name) {
         try {
             return client.configMaps().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
         } catch (KubernetesClientException e) {

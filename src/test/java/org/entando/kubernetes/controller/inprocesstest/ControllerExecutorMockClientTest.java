@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
+//Because Sonar cannot detect that the test methods are declared in the superclass
+@SuppressWarnings({"java:S2187"})
 public class ControllerExecutorMockClientTest extends ControllerExecutorTestBase {
 
     SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();

@@ -83,7 +83,7 @@ This interface has to be implemented by those DeployableContainer that needs a [
 This interface has only one method to be overridden: `getVolumeMountPath()`. It returns the path of the volume to claim inside the container that is about to be created.
 Once overridden that method, claim operation is automatically made, the PVC is bound to the claimer [CR](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and once the owner CR is deleted the PVC is deleted too.
 
-### org.entando.kubernetes.controller.spi.container.KeycloakAware
+### org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer
 
 This interface has to be implemented by those DeployableContainer that needs to reach Keycloak to guarantee their functionalities.
 It comes with a predefined set of environment variables pointing to the Entando default Keycloak installation.

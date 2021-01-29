@@ -26,7 +26,6 @@ import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.support.creators.SecretCreator;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
@@ -71,7 +70,7 @@ class SecretCreatorTest implements InProcessTestUtil {
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(entandoApp, null,
                 emulateKeycloakDeployment(client));
         //When the operator creates the secrets required for the deployment
-        new SecretCreator<>(entandoApp).createSecrets(client.secrets(), deployable);
+        new SecretCreator(entandoApp).createSecrets(client.secrets(), deployable);
         //Then the image pull secret is present in the  deployment namespace
         Secret secret = client.secrets().loadSecret(entandoApp, MY_IMAGE_PULL_SECRET);
         assertThat(secret.getType(), is("kubernetes.io/dockercfg"));

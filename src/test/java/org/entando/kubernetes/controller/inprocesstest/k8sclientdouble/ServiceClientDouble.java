@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
 import java.util.Map;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ServiceClientDouble extends AbstractK8SClientDouble implements ServiceClient {
 
@@ -30,7 +30,7 @@ public class ServiceClientDouble extends AbstractK8SClientDouble implements Serv
     }
 
     @Override
-    public Service createOrReplaceService(EntandoBaseCustomResource<?> peerInNamespace, Service service) {
+    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
         if (peerInNamespace == null) {
             return null;
         }
@@ -39,13 +39,13 @@ public class ServiceClientDouble extends AbstractK8SClientDouble implements Serv
     }
 
     @Override
-    public void createOrReplaceEndpoints(EntandoBaseCustomResource<?> peerInNamespace,
+    public void createOrReplaceEndpoints(EntandoCustomResource peerInNamespace,
             Endpoints endpoints) {
         getNamespace(peerInNamespace).putEndpoints(endpoints);
     }
 
     @Override
-    public Service loadService(EntandoBaseCustomResource<?> peerInNamespace, String name) {
+    public Service loadService(EntandoCustomResource peerInNamespace, String name) {
         if (peerInNamespace == null) {
             return null;
         }

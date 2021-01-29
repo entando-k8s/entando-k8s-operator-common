@@ -23,7 +23,6 @@ import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,14 +40,13 @@ import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.ResourceReference;
-import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
@@ -56,16 +54,8 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         super(namespaces);
     }
 
-    public void putEntandoApp(EntandoApp entandoApp) {
-        createOrPatchEntandoResource(entandoApp);
-    }
-
-    public void putEntandoPlugin(EntandoPlugin entandoPlugin) {
-        createOrPatchEntandoResource(entandoPlugin);
-    }
-
     @SuppressWarnings("unchecked")
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> T createOrPatchEntandoResource(T r) {
+    public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
         this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
         return r;
     }
@@ -80,34 +70,31 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updateStatus(T customResource,
+    public void updateStatus(EntandoCustomResource customResource,
             AbstractServerStatus status) {
         customResource.getStatus().putServerStatus(status);
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> T load(Class<T> clzz, String namespace, String name) {
+    public <T extends EntandoCustomResource> T load(Class<T> clzz, String namespace, String name) {
         Map<String, T> customResources = getNamespace(namespace).getCustomResources(clzz);
         return customResources.get(name);
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updatePhase(T entandoCustomResource,
-            EntandoDeploymentPhase phase) {
+    public void updatePhase(EntandoCustomResource entandoCustomResource, EntandoDeploymentPhase phase) {
         entandoCustomResource.getStatus().updateDeploymentPhase(phase, entandoCustomResource.getMetadata().getGeneration());
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void deploymentFailed(T entandoCustomResource,
-            Exception reason) {
+    public void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason) {
         entandoCustomResource.getStatus().findCurrentServerStatus()
                 .orElseThrow(() -> new IllegalStateException("No server status recorded yet!"))
                 .finishWith(new EntandoControllerFailureBuilder().withException(reason).build());
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> Optional<ExternalDatabaseDeployment> findExternalDatabase(
-            T resource, DbmsVendor vendor) {
+    public Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
         NamespaceDouble namespace = getNamespace(resource);
         Optional<EntandoDatabaseService> first = namespace.getCustomResources(EntandoDatabaseService.class).values().stream()
                 .filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor).findFirst();
@@ -139,7 +126,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoBaseCustomResource<?> peerInNamespace) {
+    public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace) {
         Collection<EntandoKeycloakServer> keycloakServers = getNamespace(peerInNamespace).getCustomResources(EntandoKeycloakServer.class)
                 .values();
         if (keycloakServers.size() == 1) {
@@ -158,11 +145,12 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> ExposedService loadExposedService(T resource) {
+    public ExposedService loadExposedService(EntandoCustomResource resource) {
         NamespaceDouble namespace = getNamespace(resource);
         Service service = namespace.getService(
                 resource.getMetadata().getName() + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-" + NameUtils.DEFAULT_SERVICE_SUFFIX);
-        Ingress ingress = namespace.getIngress(NameUtils.standardIngressName(resource));
+        Ingress ingress = namespace.getIngress(
+                resource.getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
         return new ExposedService(service, ingress);
     }
 
@@ -184,8 +172,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public <T extends ClusterInfrastructureAwareSpec> Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(
-            EntandoBaseCustomResource<T> resource) {
+    public Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(EntandoCustomResource resource) {
         return getNamespace(resource).getCustomResources(EntandoClusterInfrastructure.class).values().stream().findAny();
     }
 

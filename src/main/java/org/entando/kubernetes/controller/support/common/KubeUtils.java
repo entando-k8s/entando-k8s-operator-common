@@ -21,14 +21,12 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public final class KubeUtils {
@@ -54,7 +52,7 @@ public final class KubeUtils {
     private KubeUtils() {
     }
 
-    public static String getKindOf(Class<? extends EntandoBaseCustomResource<?>> c) {
+    public static String getKindOf(Class<? extends EntandoCustomResource> c) {
         return c.getSimpleName();
     }
 
@@ -66,20 +64,19 @@ public final class KubeUtils {
         }
     }
 
-    public static <S extends Serializable> boolean customResourceOwns(EntandoBaseCustomResource<S> customResource,
-            HasMetadata resource) {
+    public static boolean customResourceOwns(EntandoCustomResource customResource, HasMetadata resource) {
         return resource.getMetadata().getOwnerReferences().stream()
                 .anyMatch(ownerReference -> customResource.getMetadata().getName().equals(ownerReference.getName())
                         && customResource.getKind().equals(ownerReference.getKind()));
     }
 
-    public static OperatorProcessingInstruction resolveProcessingInstruction(EntandoBaseCustomResource<?> resource) {
+    public static OperatorProcessingInstruction resolveProcessingInstruction(EntandoCustomResource resource) {
         return resolveAnnotation(resource, PROCESSING_INSTRUCTION_ANNOTATION_NAME)
                 .map(value -> OperatorProcessingInstruction.valueOf(value.toUpperCase(Locale.ROOT).replace("-", "_")))
                 .orElse(OperatorProcessingInstruction.NONE);
     }
 
-    public static Optional<String> resolveAnnotation(EntandoBaseCustomResource<?> resource, String name) {
+    public static Optional<String> resolveAnnotation(EntandoCustomResource resource, String name) {
         return ofNullable(resource.getMetadata().getAnnotations()).map(map -> map.get(name));
     }
 

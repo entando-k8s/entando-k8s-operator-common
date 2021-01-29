@@ -32,7 +32,9 @@ import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.TlsAware;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
@@ -55,7 +57,7 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
         }
     }
 
-    public static <T extends EntandoBaseCustomResource> String secretName(T entandoResource) {
+    public static String secretName(EntandoCustomResource entandoResource) {
         return entandoResource.getMetadata().getName() + "-admin-secret";
     }
 
@@ -122,8 +124,12 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
         return VAR_LIB_MYDATA;
     }
 
-    @Override
-    public EntandoIngressingDeploymentSpec getCustomResourceSpec() {
+    protected EntandoIngressingDeploymentSpec getCustomResourceSpec() {
         return (EntandoIngressingDeploymentSpec) entandoResource.getSpec();
+    }
+
+    @Override
+    public List<EnvVar> getEnvironmentVariableOverrides() {
+        return getCustomResourceSpec().getEnvironmentVariables();
     }
 }

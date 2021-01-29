@@ -46,7 +46,7 @@ import org.entando.kubernetes.controller.spi.container.DbAware;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.container.HasWebContext;
-import org.entando.kubernetes.controller.spi.container.KeycloakAware;
+import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.SecretToMount;
@@ -55,10 +55,9 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class DeploymentCreator<S extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<S> {
+public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     public static final String VOLUME_SUFFIX = "-volume";
     public static final String DEPLOYMENT_SUFFIX = "-deployment";
@@ -66,11 +65,11 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
     public static final String PORT_SUFFIX = "-port";
     private Deployment deployment;
 
-    public DeploymentCreator(EntandoBaseCustomResource<S> entandoCustomResource) {
+    public DeploymentCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?, S> deployable) {
+    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?> deployable) {
         deployment = deploymentClient
                 .createOrPatchDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
         return deployment;
@@ -88,7 +87,7 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
         return deployment;
     }
 
-    private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver, Deployable<?, S> deployable) {
+    private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver, Deployable<?> deployable) {
         return new DeploymentBuilder()
                 .withNewSpec()
                 .withNewSelector()
@@ -112,7 +111,7 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
                 .endSpec().buildSpec();
     }
 
-    private PodSecurityContext buildSecurityContext(Deployable<?, S> deployable) {
+    private PodSecurityContext buildSecurityContext(Deployable<?> deployable) {
         if (EntandoOperatorConfig.requiresFilesystemGroupOverride()) {
             return deployable.getFileSystemUserAndGroupId()
                     .map(useAndGroupId -> new PodSecurityContextBuilder().withFsGroup(useAndGroupId).build()).orElse(null);
@@ -120,7 +119,7 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
         return null;
     }
 
-    private List<Volume> buildVolumesForDeployable(Deployable<?, S> deployable) {
+    private List<Volume> buildVolumesForDeployable(Deployable<?> deployable) {
         List<Volume> volumeList = deployable.getContainers().stream()
                 .map(this::buildVolumesForContainer)
                 .flatMap(Collection::stream)
@@ -155,7 +154,7 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
                 .build();
     }
 
-    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?, S> deployable) {
+    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?> deployable) {
         return deployable.getContainers().stream().map(deployableContainer -> this.newContainer(imageResolver, deployableContainer))
                 .collect(Collectors.toList());
     }
@@ -274,8 +273,8 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
 
     private List<EnvVar> determineEnvironmentVariables(DeployableContainer container) {
         ArrayList<EnvVar> vars = new ArrayList<>();
-        if (container instanceof KeycloakAware) {
-            KeycloakAware keycloakAware = (KeycloakAware) container;
+        if (container instanceof KeycloakAwareContainer) {
+            KeycloakAwareContainer keycloakAware = (KeycloakAwareContainer) container;
             vars.addAll(keycloakAware.getKeycloakVariables());
         }
         if (container instanceof DbAware) {
@@ -307,7 +306,7 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
         return resolveName(container.getNameQualifier(), VOLUME_SUFFIX);
     }
 
-    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?, S> deployable) {
+    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable) {
         return new DeploymentBuilder()
                 .withMetadata(fromCustomResource(true, resolveName(deployable.getNameQualifier(), DEPLOYMENT_SUFFIX),
                         deployable.getNameQualifier()))

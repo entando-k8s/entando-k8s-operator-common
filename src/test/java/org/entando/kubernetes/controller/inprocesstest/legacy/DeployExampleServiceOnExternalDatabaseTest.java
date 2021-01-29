@@ -90,7 +90,7 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
     void prepareExternalDB() {
         this.sampleController = new SampleController<>(client, keycloakClient) {
             @Override
-            protected Deployable<SampleExposedDeploymentResult, EntandoAppSpec> createDeployable(
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {

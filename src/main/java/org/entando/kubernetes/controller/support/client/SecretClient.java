@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.support.client;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface SecretClient {
@@ -37,15 +36,15 @@ public interface SecretClient {
      * @param peerInNamespace EntandoCustomResource that determines the namespace that the secret is to be created in.
      * @param secret the secret to be created.
      */
-    void createSecretIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, Secret secret);
+    void createSecretIfAbsent(EntandoCustomResource peerInNamespace, Secret secret);
 
     Secret loadSecret(EntandoCustomResource peerInNamespace, String secretName);
 
     Secret loadControllerSecret(String secretName);
 
-    void createConfigMapIfAbsent(EntandoBaseCustomResource<?> peerInNamespace, ConfigMap configMap);
+    void createConfigMapIfAbsent(EntandoCustomResource peerInNamespace, ConfigMap configMap);
 
-    ConfigMap loadConfigMap(EntandoBaseCustomResource<?> peerInNamespace, String name);
+    ConfigMap loadConfigMap(EntandoCustomResource peerInNamespace, String name);
 
     void overwriteControllerConfigMap(ConfigMap newKeycloakConnectionConfigMap);
 

@@ -70,7 +70,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
             new SampleController<>(
                     helper.getClient()) {
                 @Override
-                protected Deployable<SampleExposedDeploymentResult, EntandoPluginSpec> createDeployable(
+                protected Deployable<SampleExposedDeploymentResult> createDeployable(
                         EntandoPlugin newEntandoPlugin,
                         DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
                     return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult) {

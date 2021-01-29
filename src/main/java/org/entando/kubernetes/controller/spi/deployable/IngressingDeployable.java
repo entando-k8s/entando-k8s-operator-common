@@ -23,28 +23,14 @@ import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
-import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
-import org.entando.kubernetes.model.EntandoResourceRequirements;
-import org.entando.kubernetes.model.SpecHasIngress;
 
-public interface IngressingDeployable<T extends ExposedDeploymentResult<T>, S extends EntandoIngressingDeploymentSpec> extends
-        Deployable<T, S>,
-        Ingressing<IngressingContainer> {
+public interface IngressingDeployable<T extends ExposedDeploymentResult<T>> extends Deployable<T>, Ingressing<IngressingContainer> {
 
-    default Optional<String> getFileUploadLimit() {
-        return ((EntandoDeploymentSpec) getIngressingResource().getSpec()).getResourceRequirements()
-                .flatMap(EntandoResourceRequirements::getFileUploadLimit);
-    }
+    Optional<String> getFileUploadLimit();
 
-    default boolean isTlsSecretSpecified() {
-        return getIngressingResource().getTlsSecretName().isPresent();
-    }
+    Optional<String> getTlsSecretName();
 
-    @JsonIgnore
-    default SpecHasIngress getIngressingResource() {
-        return (SpecHasIngress) getCustomResource();
-    }
+    Optional<String> getIngressHostName();
 
     @Override
     @JsonIgnore

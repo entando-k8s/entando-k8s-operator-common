@@ -23,8 +23,7 @@ import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import java.util.Map;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ServiceAccountClientDouble extends AbstractK8SClientDouble implements ServiceAccountClient {
 
@@ -33,30 +32,29 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> String createRoleBindingIfAbsent(EntandoBaseCustomResource<T> peerInNamespace,
-            RoleBinding roleBinding) {
+    public String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
         getNamespace(peerInNamespace).putRoleBinding(roleBinding);
         return roleBinding.getMetadata().getName();
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> RoleBinding loadRoleBinding(EntandoBaseCustomResource<T> peerInNamespace, String name) {
+    public RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name) {
         return getNamespace(peerInNamespace).getRoleBinding(name);
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> String createRoleIfAbsent(EntandoBaseCustomResource<T> peerInNamespace, Role role) {
+    public String createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role) {
         getNamespace(peerInNamespace).putRole(role);
         return role.getMetadata().getName();
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> Role loadRole(EntandoBaseCustomResource<T> peerInNamespace, String name) {
+    public Role loadRole(EntandoCustomResource peerInNamespace, String name) {
         return getNamespace(peerInNamespace).getRole(name);
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> DoneableServiceAccount findOrCreateServiceAccount(EntandoBaseCustomResource<T> peerInNamespace,
+    public DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace,
             String name) {
         ServiceAccount serviceAccount = getNamespace(peerInNamespace).getServiceAccount(name);
         if (serviceAccount == null) {

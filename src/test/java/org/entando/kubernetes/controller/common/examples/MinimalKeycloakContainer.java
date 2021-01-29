@@ -26,10 +26,9 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 public class MinimalKeycloakContainer implements IngressingContainer {
 
     public static final String KCP = "7UTcVFN0HzaPQmV4bJDE";//RandomStringUtils.randomAlphanumeric(20);
-    private EntandoKeycloakServer keycloakServer;
+    protected EntandoKeycloakServer keycloakServer;
 
     public MinimalKeycloakContainer(EntandoKeycloakServer keycloakServer) {
-
         this.keycloakServer = keycloakServer;
     }
 

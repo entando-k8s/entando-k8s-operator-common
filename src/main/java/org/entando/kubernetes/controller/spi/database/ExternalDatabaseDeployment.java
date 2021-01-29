@@ -17,7 +17,6 @@
 package org.entando.kubernetes.controller.spi.database;
 
 import static java.lang.String.format;
-import static org.entando.kubernetes.controller.spi.common.NameUtils.snakeCaseOf;
 
 import io.fabric8.kubernetes.api.model.Service;
 import java.util.Map;
@@ -27,7 +26,7 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
 public class ExternalDatabaseDeployment extends AbstractServiceResult implements DatabaseServiceResult {
@@ -42,13 +41,8 @@ public class ExternalDatabaseDeployment extends AbstractServiceResult implements
         this.externalDatabase = externalDatabase;
     }
 
-    public static String adminSecretName(EntandoBaseCustomResource<?> resource, String nameQualifier) {
+    public static String adminSecretName(EntandoCustomResource resource, String nameQualifier) {
         return format("%s-%s-admin-secret", resource.getMetadata().getName(), nameQualifier);
-    }
-
-    public static String databaseName(EntandoBaseCustomResource<?> resource, String nameQualifier) {
-        return snakeCaseOf(resource.getMetadata().getName() + "_" + nameQualifier);
-
     }
 
     public static String serviceName(EntandoDatabaseService externalDatabase) {
@@ -71,7 +65,8 @@ public class ExternalDatabaseDeployment extends AbstractServiceResult implements
 
     @Override
     public String getDatabaseName() {
-        return getEntandoDatabaseService().getSpec().getDatabaseName().orElse(databaseName(externalDatabase, NAME_QUALIFIER));
+        return getEntandoDatabaseService().getSpec().getDatabaseName()
+                .orElse(NameUtils.databaseCompliantName(externalDatabase, NAME_QUALIFIER, getVendor().getVendorConfig()));
     }
 
     @Override

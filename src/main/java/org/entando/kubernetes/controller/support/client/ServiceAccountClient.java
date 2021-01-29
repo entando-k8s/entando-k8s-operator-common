@@ -19,20 +19,18 @@ package org.entando.kubernetes.controller.support.client;
 import io.fabric8.kubernetes.api.model.DoneableServiceAccount;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public interface ServiceAccountClient {
 
-    <T extends EntandoDeploymentSpec> String createRoleBindingIfAbsent(EntandoBaseCustomResource<T> peerInNamespace,
+    String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace,
             RoleBinding roleBinding);
 
-    <T extends EntandoDeploymentSpec> RoleBinding loadRoleBinding(EntandoBaseCustomResource<T> peerInNamespace, String name);
+    RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name);
 
-    <T extends EntandoDeploymentSpec> String createRoleIfAbsent(EntandoBaseCustomResource<T> peerInNamespace, Role role);
+    String createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role);
 
-    <T extends EntandoDeploymentSpec> Role loadRole(EntandoBaseCustomResource<T> peerInNamespace, String name);
+    Role loadRole(EntandoCustomResource peerInNamespace, String name);
 
-    <T extends EntandoDeploymentSpec> DoneableServiceAccount findOrCreateServiceAccount(EntandoBaseCustomResource<T> peerInNamespace,
-            String name);
+    DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name);
 }

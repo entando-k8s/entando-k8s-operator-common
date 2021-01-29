@@ -23,14 +23,14 @@ import java.util.Collections;
 import java.util.List;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.spibase.PublicIngressingDeployableBase;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec> extends
-        SampleIngressingDbAwareDeployable<S> implements PublicIngressingDeployable<SampleExposedDeploymentResult, S>,
+        SampleIngressingDbAwareDeployable<S> implements PublicIngressingDeployableBase<SampleExposedDeploymentResult>,
         Secretive {
 
     private final Secret sampleSecret;
@@ -60,7 +60,12 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
     }
 
     @Override
-    public KeycloakConnectionConfig getKeycloakDeploymentResult() {
+    public KeycloakConnectionConfig getKeycloakConnectionConfig() {
         return keycloakConnectionConfig;
+    }
+
+    @Override
+    public String getServiceAccountToUse() {
+        return this.entandoResource.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
     }
 }

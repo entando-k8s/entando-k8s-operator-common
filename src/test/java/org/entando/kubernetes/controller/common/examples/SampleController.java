@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.quarkus.runtime.StartupEvent;
-import java.util.Optional;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
@@ -30,6 +29,7 @@ import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.command.IngressingDeployCommand;
 import org.entando.kubernetes.controller.support.controller.AbstractDbAwareController;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
@@ -49,7 +49,7 @@ public abstract class SampleController<S extends KeycloakAwareSpec, C extends En
         processCommand();
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     protected void synchronizeDeploymentState(C newEntandoResource) {
         // Create database for Keycloak
         EntandoIngressingDeploymentSpec spec = newEntandoResource.getSpec();
@@ -59,19 +59,19 @@ public abstract class SampleController<S extends KeycloakAwareSpec, C extends En
         KeycloakConnectionConfig keycloakConnectionConfig = null;
         keycloakConnectionConfig = k8sClient.entandoResources()
                 .findKeycloak((EntandoBaseCustomResource<? extends KeycloakAwareSpec>) newEntandoResource);
-        Deployable<R, S> deployable = createDeployable(newEntandoResource, databaseServiceResult,
+        Deployable<R> deployable = createDeployable(newEntandoResource, databaseServiceResult,
                 keycloakConnectionConfig);
-        DeployCommand<R, S> deployCommand;
+        DeployCommand<R> deployCommand;
         if (deployable instanceof IngressingDeployable) {
             deployCommand = new IngressingDeployCommand((IngressingDeployable) deployable);
         } else {
             deployCommand = new DeployCommand<>(deployable);
         }
-        R keycloakDeploymentResult = deployCommand.execute(k8sClient, Optional.of(keycloakClient));
+        R keycloakDeploymentResult = deployCommand.execute(k8sClient, keycloakClient);
         k8sClient.entandoResources().updateStatus(newEntandoResource, keycloakDeploymentResult.getStatus());
     }
 
-    protected abstract Deployable<R, S> createDeployable(C newEntandoKeycloakServer,
+    protected abstract Deployable<R> createDeployable(C newEntandoKeycloakServer,
             DatabaseServiceResult databaseServiceResult,
             KeycloakConnectionConfig keycloakConnectionConfig);
 

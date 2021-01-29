@@ -31,7 +31,7 @@ import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Deployable<BarebonesDeploymentResult, S>, Secretive {
+public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Deployable<BarebonesDeploymentResult>, Secretive {
 
     public static final String MY_SERVICE_ACCOUNT = "my-service-account";
     public static final String NAME_QUALIFIER = "db";
@@ -76,6 +76,11 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     @Override
     public BarebonesDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
         return new BarebonesDeploymentResult(service, pod);
+    }
+
+    @Override
+    public String getServiceAccountToUse() {
+        return customResource.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
     }
 
     @Override

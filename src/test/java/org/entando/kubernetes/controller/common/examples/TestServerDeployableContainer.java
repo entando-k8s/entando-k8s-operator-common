@@ -20,7 +20,6 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
@@ -34,6 +33,7 @@ import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.controller.support.creators.SecretCreator;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class TestServerDeployableContainer implements IngressingContainer, DbAware, TlsAware {
@@ -42,7 +42,6 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
 
     private final EntandoKeycloakServer keycloakServer;
     private final List<DatabaseSchemaConnectionInfo> dbSchemaInfo;
-    private Map<String, DatabaseSchemaConnectionInfo> dbSchemas;
 
     public TestServerDeployableContainer(EntandoKeycloakServer keycloakServer,
             DatabaseServiceResult databaseServiceResult) {
@@ -82,7 +81,7 @@ public class TestServerDeployableContainer implements IngressingContainer, DbAwa
     @Override
     public List<EnvVar> getDatabaseConnectionVariables() {
         List<EnvVar> vars = new ArrayList<>();
-        DatabaseSchemaConnectionInfo databseSchemaConnectionInfo = dbSchemas.get("db");
+        DatabaseSchemaConnectionInfo databseSchemaConnectionInfo = dbSchemaInfo.get(0);
         vars.add(new EnvVar("DB_ADDR", databseSchemaConnectionInfo.getInternalServiceHostname(), null));
         vars.add(new EnvVar("DB_PORT", databseSchemaConnectionInfo.getPort(), null));
         vars.add(new EnvVar("DB_DATABASE", databseSchemaConnectionInfo.getDatabase(), null));

@@ -31,13 +31,14 @@ import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.spibase.KeycloakAwareContainerBase;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
-import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
+import org.entando.kubernetes.model.EntandoResourceRequirements;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends EntandoDeploymentSpec>> implements
-        SpringBootDeployableContainer,
+public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec>> implements
+        SpringBootDeployableContainer, KeycloakAwareContainerBase,
         ParameterizableContainer, PersistentVolumeAware, ConfigurableResourceContainer {
 
     public static final String MY_IMAGE = "entando/entando-k8s-service";
@@ -56,6 +57,11 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
             this.dbSchemaInfo = DbAware
                     .buildDatabaseSchemaConnectionInfo(customResource, databaseServiceResult, Collections.singletonList("serverdb"));
         }
+    }
+
+    @Override
+    public Optional<EntandoResourceRequirements> getResourceRequirementsOverride() {
+        return customResource.getSpec().getResourceRequirements();
     }
 
     @Override
@@ -95,14 +101,9 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
 
     @Override
     public KeycloakClientConfig getKeycloakClientConfig() {
-        return new KeycloakClientConfig(determineRealm(),
+        return new KeycloakClientConfig(getKeycloakRealmToUse(),
                 customResource.getMetadata().getName() + "-" + getNameQualifier(),
                 customResource.getMetadata().getName() + "-" + getNameQualifier());
-    }
-
-    @Override
-    public KeycloakAwareSpec getKeycloakAwareSpec() {
-        return (KeycloakAwareSpec) customResource.getSpec();
     }
 
     @Override
@@ -111,9 +112,8 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     }
 
     @Override
-    public EntandoIngressingDeploymentSpec getCustomResourceSpec() {
-        return customResource.getSpec() instanceof EntandoIngressingDeploymentSpec ? (EntandoIngressingDeploymentSpec) customResource
-                .getSpec() : null;
+    public Optional<DbmsVendor> getDbms() {
+        return dbSchemaInfo.stream().findFirst().map(i -> i.getVendor().getVendorConfig().getDbms());
     }
 
     @Override
@@ -124,5 +124,15 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     @Override
     public List<DatabaseSchemaConnectionInfo> getSchemaConnectionInfo() {
         return this.dbSchemaInfo;
+    }
+
+    @Override
+    public KeycloakAwareSpec getKeycloakAwareSpec() {
+        return customResource.getSpec();
+    }
+
+    @Override
+    public List<EnvVar> getEnvironmentVariableOverrides() {
+        return getKeycloakAwareSpec().getEnvironmentVariables();
     }
 }

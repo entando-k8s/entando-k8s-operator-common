@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
@@ -45,12 +44,11 @@ import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> extends AbstractK8SResourceCreator<T> {
+public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
 
-    public DatabasePreparationPodCreator(EntandoBaseCustomResource<T> entandoCustomResource) {
+    public DatabasePreparationPodCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
@@ -67,7 +65,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(entandoCustomResource))
                 .withLabels(buildUniqueLabels(qualifier))
-                .withName(entandoCustomResource.getMetadata().getName() + "-dbprep-" + UUID.randomUUID().toString().substring(0, 4))
+                .withName(entandoCustomResource.getMetadata().getName() + "-dbprep-" + SecretUtils.randomAlphanumeric(4))
                 .endMetadata()
                 .withNewSpec()
                 .withInitContainers(buildContainers(entandoImageResolver, secretClient, dbAwareDeployable))

@@ -25,7 +25,6 @@ import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingD
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PersistentVolumentClaimClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.support.creators.PersistentVolumeClaimCreator;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.junit.jupiter.api.AfterEach;
@@ -78,7 +77,7 @@ class PersistentVolumeClaimCreatorTest implements InProcessTestUtil {
     private PersistentVolumeClaim executeCreateDeploymentTest() {
 
         PersistentVolumentClaimClientDouble persistentVolumentClaimClientDouble = new PersistentVolumentClaimClientDouble(new HashMap<>());
-        PersistentVolumeClaimCreator<EntandoAppSpec> persistentVolumeClaimCreator = new PersistentVolumeClaimCreator<>(entandoApp);
+        PersistentVolumeClaimCreator persistentVolumeClaimCreator = new PersistentVolumeClaimCreator(entandoApp);
 
         persistentVolumeClaimCreator.createPersistentVolumeClaimsFor(persistentVolumentClaimClientDouble, deployable);
 

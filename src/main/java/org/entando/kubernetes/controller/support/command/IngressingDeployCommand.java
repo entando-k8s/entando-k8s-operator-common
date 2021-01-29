@@ -22,22 +22,20 @@ import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
-import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.WebServerStatus;
 
 /**
  * On addition of an Entando CustomResource, the DeployCommand is invoked for every service and database that needs to be deployed.
  */
-public class IngressingDeployCommand<T extends ExposedDeploymentResult<T>, S extends EntandoIngressingDeploymentSpec> extends
-        DeployCommand<T, S> {
+public class IngressingDeployCommand<T extends ExposedDeploymentResult<T>> extends DeployCommand<T> {
 
-    private final IngressCreator<S> ingressCreator;
-    private final IngressingDeployable<T, S> ingressingDeployable;
+    private final IngressCreator ingressCreator;
+    private final IngressingDeployable<T> ingressingDeployable;
 
-    public IngressingDeployCommand(IngressingDeployable<T, S> deployable) {
+    public IngressingDeployCommand(IngressingDeployable<T> deployable) {
         super(deployable);
         this.ingressingDeployable = deployable;
-        ingressCreator = new IngressCreator<>(entandoCustomResource);
+        ingressCreator = new IngressCreator(entandoCustomResource);
     }
 
     @Override
@@ -50,7 +48,7 @@ public class IngressingDeployCommand<T extends ExposedDeploymentResult<T>, S ext
         return getIngress();
     }
 
-    private void syncIngress(SimpleK8SClient<?> k8sClient, IngressingDeployable<?, S> ingressingDeployable) {
+    private void syncIngress(SimpleK8SClient<?> k8sClient, IngressingDeployable<?> ingressingDeployable) {
         if (ingressCreator.requiresDelegatingService(serviceCreator.getService(), ingressingDeployable)) {
             Service newDelegatingService = serviceCreator.newDelegatingService(k8sClient.services(), ingressingDeployable);
             ingressCreator.createIngress(k8sClient.ingresses(), ingressingDeployable, newDelegatingService);

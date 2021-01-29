@@ -27,13 +27,13 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
-import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
+import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public class SpringBootDeployable<S extends EntandoIngressingDeploymentSpec> implements
-        IngressingDeployable<SampleExposedDeploymentResult, S>,
+public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
+        IngressingDeployableBase<SampleExposedDeploymentResult>,
         DbAwareDeployable {
 
     private final EntandoBaseCustomResource<S> customResource;
@@ -77,6 +77,11 @@ public class SpringBootDeployable<S extends EntandoIngressingDeploymentSpec> imp
     @Override
     public SampleExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
         return new SampleExposedDeploymentResult(pod, service, ingress);
+    }
+
+    @Override
+    public String getServiceAccountToUse() {
+        return this.customResource.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
     }
 
 }

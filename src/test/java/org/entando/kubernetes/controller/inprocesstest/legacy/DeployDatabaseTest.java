@@ -97,7 +97,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty(), "true");
         this.sampleController = new SampleController<>(client, keycloakClient) {
             @Override
-            protected Deployable<SampleExposedDeploymentResult, EntandoAppSpec> createDeployable(
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SamplePublicIngressingDbAwareDeployable<>(newEntandoApp, databaseServiceResult,

@@ -20,10 +20,9 @@ import static org.entando.kubernetes.controller.support.creators.IngressCreator.
 
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import java.io.Serializable;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakAware;
+import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
@@ -31,49 +30,47 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class KeycloakClientCreator<S extends Serializable> {
+public class KeycloakClientCreator {
 
-    private final EntandoBaseCustomResource<S> entandoCustomResource;
+    private final EntandoCustomResource entandoCustomResource;
 
-    public KeycloakClientCreator(EntandoBaseCustomResource<S> entandoCustomResource) {
+    public KeycloakClientCreator(EntandoCustomResource entandoCustomResource) {
         this.entandoCustomResource = entandoCustomResource;
     }
 
-    public boolean requiresKeycloakClients(Deployable<?, ?> deployable) {
+    public boolean requiresKeycloakClients(Deployable<?> deployable) {
         return deployable instanceof PublicIngressingDeployable
-                || deployable.getContainers().stream().anyMatch(KeycloakAware.class::isInstance);
+                || deployable.getContainers().stream().anyMatch(KeycloakAwareContainer.class::isInstance);
     }
 
-    public void createKeycloakClients(SecretClient secrets, SimpleKeycloakClient keycloak, Deployable<?, ?> deployable,
+    public void createKeycloakClients(SecretClient secrets, SimpleKeycloakClient keycloak, Deployable<?> deployable,
             Optional<Ingress> ingress) {
         login(keycloak, deployable);
-        if (deployable instanceof PublicIngressingDeployable && this.entandoCustomResource.getSpec() instanceof KeycloakAwareSpec) {
+        if (deployable instanceof PublicIngressingDeployable) {
             //Create a public keycloak client
-            KeycloakAwareSpec spec = (KeycloakAwareSpec) this.entandoCustomResource.getSpec();
-            PublicIngressingDeployable<?, ?> publicIngressingDeployable = (PublicIngressingDeployable<?, ?>) deployable;
-            keycloak.createPublicClient(KeycloakName.ofTheRealm(spec),
-                    KeycloakName.ofThePublicClient(publicIngressingDeployable.getCustomResource().getSpec()),
+            PublicIngressingDeployable<?> publicIngressingDeployable = (PublicIngressingDeployable<?>) deployable;
+            keycloak.createPublicClient(publicIngressingDeployable.getKeycloakRealmToUse(),
+                    publicIngressingDeployable.getPublicClientIdToUse(),
                     getIngressServerUrl(ingress.orElseThrow(IllegalStateException::new)));
 
         }
         deployable.getContainers().stream()
-                .filter(KeycloakAware.class::isInstance)
-                .map(KeycloakAware.class::cast)
+                .filter(KeycloakAwareContainer.class::isInstance)
+                .map(KeycloakAwareContainer.class::cast)
                 .forEach(keycloakAware -> createClient(secrets, keycloak, keycloakAware, ingress));
     }
 
-    private void login(SimpleKeycloakClient client, Deployable<?, ?> deployable) {
+    private void login(SimpleKeycloakClient client, Deployable<?> deployable) {
         KeycloakConnectionConfig keycloakConnectionConfig;
         if (deployable instanceof PublicIngressingDeployable) {
-            keycloakConnectionConfig = ((PublicIngressingDeployable) deployable).getKeycloakDeploymentResult();
+            keycloakConnectionConfig = ((PublicIngressingDeployable<?>) deployable).getKeycloakConnectionConfig();
         } else {
             keycloakConnectionConfig = deployable.getContainers().stream()
-                    .filter(KeycloakAware.class::isInstance)
-                    .map(KeycloakAware.class::cast)
-                    .map(KeycloakAware::getKeycloakConnectionConfig)
+                    .filter(KeycloakAwareContainer.class::isInstance)
+                    .map(KeycloakAwareContainer.class::cast)
+                    .map(KeycloakAwareContainer::getKeycloakConnectionConfig)
                     .findAny()
                     .orElseThrow(IllegalArgumentException::new);
         }
@@ -81,7 +78,8 @@ public class KeycloakClientCreator<S extends Serializable> {
                 keycloakConnectionConfig.getPassword());
     }
 
-    private void createClient(SecretClient secrets, SimpleKeycloakClient client, KeycloakAware container, Optional<Ingress> ingress) {
+    private void createClient(SecretClient secrets, SimpleKeycloakClient client, KeycloakAwareContainer container,
+            Optional<Ingress> ingress) {
         KeycloakClientConfig keycloakConfig = container.getKeycloakClientConfig();
         KeycloakClientConfig keycloakClientConfig = container.getKeycloakClientConfig();
         if (ingress.isPresent()) {

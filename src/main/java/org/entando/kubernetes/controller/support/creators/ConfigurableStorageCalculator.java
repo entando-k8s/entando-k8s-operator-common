@@ -26,7 +26,7 @@ public class ConfigurableStorageCalculator extends StorageCalculator {
 
     public ConfigurableStorageCalculator(ConfigurableResourceContainer container) {
         super((PersistentVolumeAware) container);
-        this.resourceRequirements = container.getResourceRequirements().orElse(new EntandoResourceRequirements());
+        this.resourceRequirements = container.getResourceRequirementsOverride().orElse(new EntandoResourceRequirements());
     }
 
     @Override

@@ -30,7 +30,6 @@ import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
-import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -55,6 +54,7 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
@@ -106,7 +106,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoBaseCustomResource<?> peerInNamespace) {
+    public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace) {
         List<EntandoKeycloakServer> items = entandoResourceRegistry.getOperations(EntandoKeycloakServer.class)
                 .inNamespace(peerInNamespace.getMetadata().getNamespace()).list().getItems();
         if (items.size() == 1) {
@@ -135,8 +135,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <T extends ClusterInfrastructureAwareSpec> Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(
-            EntandoBaseCustomResource<T> resource) {
+    public Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(EntandoCustomResource resource) {
         List<EntandoClusterInfrastructure> items = entandoResourceRegistry
                 .getOperations(EntandoClusterInfrastructure.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
@@ -158,23 +157,14 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> ExposedService loadExposedService(T resource) {
+    public ExposedService loadExposedService(EntandoCustomResource resource) {
         return new ExposedService(
-                loadService(resource, standardServiceName(resource)),
-                loadIngress(resource, standardIngressName(resource)));
-    }
-
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> String standardServiceName(T resource) {
-        return resource.getMetadata().getName() + "-server-service";
-    }
-
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> String standardIngressName(T resource) {
-        return resource.getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX;
+                loadService(resource, NameUtils.standardServiceName(resource)),
+                loadIngress(resource, NameUtils.standardIngressName(resource)));
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> Optional<ExternalDatabaseDeployment> findExternalDatabase(
-            T resource, DbmsVendor vendor) {
+    public Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
         List<EntandoDatabaseService> externalDatabaseList = getOperations(EntandoDatabaseService.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
         return externalDatabaseList.stream().filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor)
@@ -189,30 +179,27 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> T load(Class<T> clzz, String resourceNamespace,
-            String resourceName) {
+    public <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName) {
         return ofNullable(getOperations(clzz).inNamespace(resourceNamespace)
                 .withName(resourceName).get()).orElseThrow(() -> notFound(clzz.getSimpleName(), resourceNamespace, resourceName).get());
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> T createOrPatchEntandoResource(T r) {
+    public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
         Class<T> type = (Class<T>) r.getClass();
         return createOrPatch(r, r, this.getOperations(type));
 
     }
 
-    private <S extends Serializable,
-            T extends EntandoBaseCustomResource<S>,
+    private <T extends EntandoCustomResource,
             D extends DoneableEntandoCustomResource<T, D>> CustomResourceOperationsImpl<T, CustomResourceList<T>, D> getOperations(
             Class<T> c) {
         return entandoResourceRegistry.getOperations(c);
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updateStatus(T customResource,
-            AbstractServerStatus status) {
+    public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
         performStatusUpdate(customResource,
                 t -> t.getStatus().putServerStatus(status),
                 e -> e.withType("Normal")
@@ -228,8 +215,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updatePhase(T customResource,
-            EntandoDeploymentPhase phase) {
+    public void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase) {
         performStatusUpdate(customResource,
                 t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
                 e -> e.withType("Normal")
@@ -244,7 +230,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void deploymentFailed(T customResource, Exception reason) {
+    public void deploymentFailed(EntandoCustomResource customResource, Exception reason) {
         performStatusUpdate(customResource,
                 t -> {
                     t.getStatus().findCurrentServerStatus()
@@ -265,21 +251,20 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         );
     }
 
-    private <S extends Serializable, T extends EntandoBaseCustomResource<S>> Service loadService(T peerInNamespace, String name) {
+    private Service loadService(EntandoCustomResource peerInNamespace, String name) {
         return client.services().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
     }
 
-    private <S extends Serializable, T extends EntandoBaseCustomResource<S>> Ingress loadIngress(T peerInNamespace, String name) {
+    private Ingress loadIngress(EntandoCustomResource peerInNamespace, String name) {
         return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
     }
 
-    protected <S extends Serializable, T extends EntandoBaseCustomResource<S>> Deployment loadDeployment(
-            EntandoBaseCustomResource<T> peerInNamespace, String name) {
+    protected Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {
         return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
     }
 
     @SuppressWarnings("unchecked")
-    private <S extends Serializable, T extends EntandoBaseCustomResource<S>> void performStatusUpdate(T customResource,
+    private <T extends EntandoCustomResource> void performStatusUpdate(EntandoCustomResource customResource,
             Consumer<T> consumer, UnaryOperator<DoneableEvent> eventPopulator) {
         final DoneableEvent doneableEvent = client.events().inNamespace(customResource.getMetadata().getNamespace()).createNew()
                 .withNewMetadata()

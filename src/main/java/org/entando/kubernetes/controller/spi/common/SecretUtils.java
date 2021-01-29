@@ -21,8 +21,7 @@ import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.util.UUID;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class SecretUtils {
 
@@ -36,15 +35,12 @@ public class SecretUtils {
         return new EnvVarSourceBuilder().withNewSecretKeyRef(key, secretName, Boolean.FALSE).build();
     }
 
-    public static <S extends EntandoDeploymentSpec> Secret generateSecret(EntandoBaseCustomResource<S> resource, String secretName,
-            String username) {
+    public static Secret generateSecret(EntandoCustomResource resource, String secretName, String username) {
         String password = randomAlphanumeric(16);
         return buildSecret(resource, secretName, username, password);
     }
 
-    public static <S extends EntandoDeploymentSpec> Secret buildSecret(EntandoBaseCustomResource<S> resource, String secretName,
-            String username,
-            String password) {
+    public static Secret buildSecret(EntandoCustomResource resource, String secretName, String username, String password) {
         return new SecretBuilder()
                 .withNewMetadata().withName(secretName)
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(resource))

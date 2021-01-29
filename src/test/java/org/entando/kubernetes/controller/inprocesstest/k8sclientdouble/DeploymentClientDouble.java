@@ -21,8 +21,7 @@ import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.Map;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DeploymentClientDouble extends AbstractK8SClientDouble implements DeploymentClient {
 
@@ -32,7 +31,7 @@ public class DeploymentClientDouble extends AbstractK8SClientDouble implements D
     }
 
     @Override
-    public <S extends EntandoDeploymentSpec> Deployment createOrPatchDeployment(EntandoBaseCustomResource<S> peerInNamespace,
+    public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace,
             Deployment deployment) {
         if (peerInNamespace == null) {
             return null;
@@ -48,7 +47,7 @@ public class DeploymentClientDouble extends AbstractK8SClientDouble implements D
     }
 
     @Override
-    public <S extends EntandoDeploymentSpec> Deployment loadDeployment(EntandoBaseCustomResource<S> peerInNamespace, String name) {
+    public Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {
         if (peerInNamespace == null) {
             return null;
         }

@@ -28,8 +28,7 @@ public class DbAwareKeycloakContainer extends MinimalKeycloakContainer implement
 
     private final List<DatabaseSchemaConnectionInfo> dbSchemaInfo;
 
-    public DbAwareKeycloakContainer(EntandoKeycloakServer entandoResource,
-            DatabaseServiceResult databaseServiceResult) {
+    public DbAwareKeycloakContainer(EntandoKeycloakServer entandoResource, DatabaseServiceResult databaseServiceResult) {
         super(entandoResource);
         this.dbSchemaInfo = DbAware
                 .buildDatabaseSchemaConnectionInfo(entandoResource, databaseServiceResult, Collections.singletonList("db"));

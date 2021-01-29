@@ -16,39 +16,27 @@
 
 package org.entando.kubernetes.controller.spi.container;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.List;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public interface KeycloakAware extends DeployableContainer, HasWebContext {
+public interface KeycloakAwareContainer extends DeployableContainer, HasWebContext {
 
     KeycloakConnectionConfig getKeycloakConnectionConfig();
 
     KeycloakClientConfig getKeycloakClientConfig();
 
-    @JsonIgnore
-    KeycloakAwareSpec getKeycloakAwareSpec();
+    String getKeycloakRealmToUse();
 
-    default String determineRealm() {
-        KeycloakAwareSpec keycloakAwareSpec = getKeycloakAwareSpec();
-        return KeycloakName.ofTheRealm(keycloakAwareSpec);
-
-    }
-
-    default String determinePublicClient() {
-        KeycloakAwareSpec keycloakAwareSpec = getKeycloakAwareSpec();
-        return KeycloakName.ofThePublicClient(keycloakAwareSpec);
-    }
+    String getPublicClientIdToUse();
 
     default List<EnvVar> getKeycloakVariables() {
         KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
         List<EnvVar> vars = new ArrayList<>();
         vars.add(new EnvVar("KEYCLOAK_ENABLED", "true", null));
-        vars.add(new EnvVar("KEYCLOAK_REALM", determineRealm(), null));
-        vars.add(new EnvVar("KEYCLOAK_PUBLIC_CLIENT_ID", determinePublicClient(), null));
+        vars.add(new EnvVar("KEYCLOAK_REALM", getKeycloakRealmToUse(), null));
+        vars.add(new EnvVar("KEYCLOAK_PUBLIC_CLIENT_ID", getPublicClientIdToUse(), null));
         vars.add(new EnvVar("KEYCLOAK_AUTH_URL", keycloakDeployment.getExternalBaseUrl(), null));
         String keycloakSecretName = KeycloakName.forTheClientSecret(getKeycloakClientConfig());
         vars.add(new EnvVar("KEYCLOAK_CLIENT_SECRET", null,

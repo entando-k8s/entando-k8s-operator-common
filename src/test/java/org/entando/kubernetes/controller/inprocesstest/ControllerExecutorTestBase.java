@@ -23,6 +23,8 @@ import static org.hamcrest.core.IsNull.notNullValue;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Watcher.Action;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PodClientDouble;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
@@ -41,12 +43,14 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     public static final String CONTROLLER_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("controller-namespace");
     protected EntandoKeycloakServer resource;
     private SimpleK8SClient<?> client;
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @AfterEach
     void resetSystemProperty() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty());
         client.pods().getPodWatcherHolder().set(null);
         PodClientDouble.setEmulatePodWatching(false);
+        scheduler.shutdownNow();
     }
 
     @Test
@@ -88,7 +92,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
 
     protected void emulatePodWaitingBehaviour(boolean requiresDelete) {
         PodClientDouble.setEmulatePodWatching(true);
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             if (requiresDelete) {
                 //The delete watcher won't trigger events because the condition is true from the beginning
                 await().atMost(30, TimeUnit.SECONDS).pollInterval(10, TimeUnit.MILLISECONDS)
@@ -100,7 +104,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
                     this.client.pods().loadPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName()) != null);
             Pod pod = this.client.pods().loadPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName());
             getClient().pods().getPodWatcherHolder().getAndSet(null).eventReceived(Action.MODIFIED, podWithSucceededStatus(pod));
-        }).start();
+        }, 300, TimeUnit.MILLISECONDS);
     }
 
 }

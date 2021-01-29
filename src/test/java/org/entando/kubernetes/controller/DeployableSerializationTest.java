@@ -50,7 +50,7 @@ import org.entando.kubernetes.controller.spi.container.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.container.HasWebContext;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
-import org.entando.kubernetes.controller.spi.container.KeycloakAware;
+import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
@@ -65,6 +65,7 @@ import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.junit.jupiter.api.Test;
 
 //And experiment in JSON serialization
@@ -83,7 +84,7 @@ class DeployableSerializationTest implements InProcessTestData {
             IngressingContainer.class,
             IngressingDeployable.class,
             IngressingPathOnPort.class,
-            KeycloakAware.class,
+            KeycloakAwareContainer.class,
             ParameterizableContainer.class,
             PersistentVolumeAware.class,
             PublicIngressingDeployable.class,
@@ -96,12 +97,12 @@ class DeployableSerializationTest implements InProcessTestData {
 
     @Test
     void testDeserialize() throws Exception {
-        String json = toJson(new DatabaseDeployable<>(DbmsDockerVendorStrategy.CENTOS_MYSQL, newTestEntandoApp(), null));
+        String json = toJson(new DatabaseDeployable(DbmsDockerVendorStrategy.CENTOS_MYSQL, newTestEntandoApp(), null));
         Map<String, Object> map = new ObjectMapper().readValue(new StringReader(json), Map.class);
-        Deployable<?, ?> deployabe = (Deployable<?, ?>) Proxy
+        Deployable<?> deployabe = (Deployable<?>) Proxy
                 .newProxyInstance(Thread.currentThread().getContextClassLoader(), getImplementedInterfaces(map), getInvocationHandler(map)
                 );
-        EntandoBaseCustomResource customResource = deployabe.getCustomResource();
+        EntandoCustomResource customResource = deployabe.getCustomResource();
         System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(customResource));
         System.out.println(deployabe.getFileSystemUserAndGroupId());
         System.out.println(deployabe.getNameQualifier());
@@ -156,6 +157,10 @@ class DeployableSerializationTest implements InProcessTestData {
             Object result = map.get(propertyName(method));
             if (Optional.class.isAssignableFrom(method.getReturnType())) {
                 return Optional.ofNullable(result);
+            } else if (EntandoCustomResource.class.isAssignableFrom(method.getReturnType())) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                return objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(result)),
+                        EntandoBaseCustomResource.class);
             } else if (method.getReturnType().getAnnotation(JsonDeserialize.class) != null) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 return objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(result)),

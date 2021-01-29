@@ -24,8 +24,6 @@ import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.support.creators.IngressCreator;
-import org.entando.kubernetes.controller.support.creators.ServiceCreator;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
@@ -55,9 +53,9 @@ class IngressCreatorTest implements InProcessTestUtil {
     @Test
     void testEdit() {
         SpringBootDeployable<EntandoAppSpec> deployable = new SpringBootDeployable<>(entandoApp, null, null);
-        ServiceCreator<EntandoAppSpec> serviceCreator = new ServiceCreator<>(entandoApp);
+        ServiceCreator serviceCreator = new ServiceCreator(entandoApp);
         serviceCreator.createService(client.services(), deployable);
-        IngressCreator<EntandoAppSpec> creator = new IngressCreator<>(entandoApp);
+        IngressCreator creator = new IngressCreator(entandoApp);
         creator.createIngress(client.ingresses(), deployable, serviceCreator.getService());
         assertThat(creator.getIngress().getSpec().getRules().get(0).getHost(), is("originalhost.com"));
         assertThat(creator.getIngress().getSpec().getTls().get(0).getHosts().get(0), is("originalhost.com"));
@@ -68,7 +66,7 @@ class IngressCreatorTest implements InProcessTestUtil {
                 .withIngressHostName("newhost.com")
                 .endSpec()
                 .build();
-        IngressCreator<EntandoAppSpec> editingCreator = new IngressCreator<>(newEntandoApp);
+        IngressCreator editingCreator = new IngressCreator(newEntandoApp);
         editingCreator
                 .createIngress(client.ingresses(), new SpringBootDeployable<>(newEntandoApp, null, null), serviceCreator.getService());
         assertThat(editingCreator.getIngress().getSpec().getRules().get(0).getHost(), is("newhost.com"));

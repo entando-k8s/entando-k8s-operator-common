@@ -14,13 +14,18 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.container;
+package org.entando.kubernetes.controller.spi.common;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
-import java.util.List;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface ParameterizableContainer extends DeployableContainer {
-
-    List<EnvVar> getEnvironmentVariableOverrides();
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+/**
+ * A method that should be used internally in the interface only. These methods are mildly deprecated.
+ */
+public @interface ForInternalUseOnly {
 
 }

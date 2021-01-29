@@ -24,7 +24,6 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -34,20 +33,23 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
-        Deployable<DatabaseDeploymentResult, S>, Secretive {
+public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>, Secretive {
 
     private final DbmsDockerVendorStrategy dbmsVendor;
-    private final EntandoBaseCustomResource<S> customResource;
+    private final EntandoCustomResource customResource;
     protected List<DeployableContainer> containers;
 
-    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoBaseCustomResource<S> customResource, Integer portOverride) {
+    public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoCustomResource customResource, Integer portOverride) {
         this.dbmsVendor = dbmsVendor;
         this.customResource = customResource;
         this.containers = Collections.singletonList(new DatabaseContainer(buildVariableInitializer(dbmsVendor), dbmsVendor, portOverride));
+    }
+
+    @Override
+    public String getServiceAccountToUse() {
+        return getDefaultServiceAccountName();
     }
 
     private DatabaseVariableInitializer buildVariableInitializer(DbmsDockerVendorStrategy vendorStrategy) {
@@ -93,7 +95,7 @@ public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
     }
 
     @Override
-    public EntandoBaseCustomResource<S> getCustomResource() {
+    public EntandoCustomResource getCustomResource() {
         return customResource;
     }
 
@@ -104,9 +106,12 @@ public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
 
     @Override
     public List<Secret> getSecrets() {
-        Secret secret = SecretUtils.generateSecret(customResource, getDatabaseAdminSecretName(),
-                dbmsVendor.getDefaultAdminUsername());
-        return Arrays.asList(secret);
+        Secret secret = SecretUtils.generateSecret(
+                customResource,
+                getDatabaseAdminSecretName(),
+                dbmsVendor.getDefaultAdminUsername()
+        );
+        return Collections.singletonList(secret);
     }
 
     protected String getDatabaseAdminSecretName() {
@@ -114,7 +119,7 @@ public class DatabaseDeployable<S extends EntandoDeploymentSpec> implements
     }
 
     protected String getDatabaseName() {
-        return ExternalDatabaseDeployment.databaseName(customResource, getNameQualifier());
+        return NameUtils.databaseCompliantName(customResource, getNameQualifier(), dbmsVendor.getVendorConfig());
     }
 
 }
