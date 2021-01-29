@@ -61,9 +61,9 @@ public class EntandoPluginIntegrationTestHelper extends
         if (hasContainerizedDb) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(120)),
                     plugin.getMetadata().getNamespace(), plugin.getMetadata().getName() + "-db");
+            waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), plugin, "server");
         }
 
-        waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), plugin, "server");
         waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240)),
                 plugin.getMetadata().getNamespace(), plugin.getMetadata().getName() + "-server");
         Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getOperations()

@@ -22,6 +22,7 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableEvent;
+import io.fabric8.kubernetes.api.model.MicroTime;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -32,6 +33,8 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -63,6 +66,7 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
     private final KubernetesClient client;
     private final EntandoResourceOperationsRegistry entandoResourceRegistry;
 
@@ -181,24 +185,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                                 externalDatabase));
     }
 
-    @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updateStatus(T customResource,
-            AbstractServerStatus status) {
-        performStatusUpdate(customResource,
-                t -> t.getStatus().putServerStatus(status),
-                e -> e.withReason("StatusUpdate").withType(status.getQualifier()).withAction(status.getType())
-        );
-    }
-
-    @Override
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updatePhase(T customResource,
-            EntandoDeploymentPhase phase) {
-        performStatusUpdate(customResource,
-                t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
-                e -> e.withReason("PhaseUpdate").withType(phase.name()).withAction(phase.name())
-        );
-    }
-
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
         return () -> new IllegalStateException(format("Could not find the %s '%s' in the namespace %s", kind, name, namespace));
     }
@@ -226,6 +212,39 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updateStatus(T customResource,
+            AbstractServerStatus status) {
+        performStatusUpdate(customResource,
+                t -> t.getStatus().putServerStatus(status),
+                e -> e.withType("Normal")
+                        .withReason("StatusUpdate")
+                        .withMessage(format("The %s  %s/%s received status update %s/%s ",
+                                customResource.getKind(),
+                                customResource.getMetadata().getNamespace(),
+                                customResource.getMetadata().getName(),
+                                status.getType(),
+                                status.getQualifier()))
+                        .withAction("STATUS_CHANGE")
+        );
+    }
+
+    @Override
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void updatePhase(T customResource,
+            EntandoDeploymentPhase phase) {
+        performStatusUpdate(customResource,
+                t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
+                e -> e.withType("Normal")
+                        .withReason("PhaseUpdated")
+                        .withMessage(format("The deployment of %s  %s/%s was updated  to %s",
+                                customResource.getKind(),
+                                customResource.getMetadata().getNamespace(),
+                                customResource.getMetadata().getName(),
+                                phase.name()))
+                        .withAction("PHASE_CHANGE")
+        );
+    }
+
+    @Override
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void deploymentFailed(T customResource, Exception reason) {
         performStatusUpdate(customResource,
                 t -> {
@@ -234,7 +253,17 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                                     newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
                     t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());
                 },
-                e -> e.withAction("Failed").withReason(reason.getMessage()).withType(reason.getClass().getSimpleName()));
+                e -> e.withType("Error")
+                        .withReason("Failed")
+                        .withMessage(
+                                format("The deployment of %s %s/%s failed due to %s. Fix the root cause and then trigger a redeployment "
+                                                + "by adding the annotation 'entando.org/processing-instruction: force'",
+                                        customResource.getKind(),
+                                        customResource.getMetadata().getNamespace(),
+                                        customResource.getMetadata().getName(),
+                                        reason.getMessage()))
+                        .withAction("FAILED")
+        );
     }
 
     private <S extends Serializable, T extends EntandoBaseCustomResource<S>> Service loadService(T peerInNamespace, String name) {
@@ -259,6 +288,11 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .withName(customResource.getMetadata().getName() + "-" + NameUtils.randomNumeric(4))
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
                 .endMetadata()
+                .withKind(customResource.getKind())
+                .withCount(1)
+                .withLastTimestamp(simpleDateFormat.format(new Date()))
+                .withEventTime(new MicroTime(simpleDateFormat.format(new Date())))
+                .withNewSource("entando-k8s-" + customResource.getKind().substring("Entando".length()) + "-controller", null)
                 .withNewInvolvedObject()
                 .withNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())

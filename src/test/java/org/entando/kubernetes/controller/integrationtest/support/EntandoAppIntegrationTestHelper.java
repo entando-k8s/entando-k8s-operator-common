@@ -41,21 +41,22 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
         if (deployingDbContainers) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
                     entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-db");
-        }
-        this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
-                entandoApp,
-                "server");
+            this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(150 + waitOffset)),
+                    entandoApp,
+                    "server");
 
+        }
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(180 + waitOffset)),
                 entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-server");
-        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
+        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(180 + waitOffset)),
                 entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-ab");
-        this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
-                entandoApp,
-                "cm");
-        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
+        if (deployingDbContainers) {
+            this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
+                    entandoApp,
+                    "cm");
+        }
+        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(180 + waitOffset)),
                 entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-cm");
-        //        this times out wait for the other pods first
         await().atMost(60, SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
@@ -68,7 +69,7 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
 
         await().atMost(60, SECONDS).until(() -> HttpTestHelper.read(
                 HttpTestHelper.getDefaultProtocol() + "://" + entandoApp.getSpec().getIngressHostName()
-                        .orElseThrow(() -> new IllegalStateException())
+                        .orElseThrow(IllegalStateException::new)
                         + "/entando-de-app/index.jsp").contains("Entando - Welcome"));
     }
 
