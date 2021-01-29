@@ -101,11 +101,11 @@ public class KeycloakIntegrationTestHelper extends
 
     public void createAndWaitForKeycloak(EntandoKeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
         getOperations().inNamespace(keycloakServer.getMetadata().getNamespace()).create(keycloakServer);
-        if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsVendor.NONE && v != DbmsVendor.EMBEDDED).orElse(false)) {
-            if (deployingDbContainers) {
-                waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
-                        keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName() + "-db");
-            }
+        if (deployingDbContainers) {
+            waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
+                    keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName() + "-db");
+        }
+        if (requiresDatabaseJob(keycloakServer)) {
             this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)), keycloakServer, "server");
         }
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(270 + waitOffset)),
@@ -119,6 +119,10 @@ public class KeycloakIntegrationTestHelper extends
                     return status.forServerQualifiedBy("server").isPresent()
                             && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
                 });
+    }
+
+    private Boolean requiresDatabaseJob(EntandoKeycloakServer keycloakServer) {
+        return keycloakServer.getSpec().getDbms().map(v -> v != DbmsVendor.NONE && v != DbmsVendor.EMBEDDED).orElse(false);
     }
 
     public void ensureKeycloakClient(KeycloakAwareSpec keycloakAwareSpec, String clientId,

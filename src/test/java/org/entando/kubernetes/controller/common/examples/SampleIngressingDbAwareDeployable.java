@@ -31,7 +31,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
 public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngressingDeploymentSpec> implements
-        IngressingDeployableBase<SampleExposedDeploymentResult>, DbAwareDeployable {
+        IngressingDeployableBase<SampleExposedDeploymentResult>, DbAwareDeployable<SampleExposedDeploymentResult> {
 
     protected final EntandoBaseCustomResource<S> entandoResource;
     protected final List<DeployableContainer> containers;

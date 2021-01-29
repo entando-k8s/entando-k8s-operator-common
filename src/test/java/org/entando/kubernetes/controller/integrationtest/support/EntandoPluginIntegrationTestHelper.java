@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.plugin.DoneableEntandoPlugin;
@@ -61,9 +62,10 @@ public class EntandoPluginIntegrationTestHelper extends
         if (hasContainerizedDb) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(120)),
                     plugin.getMetadata().getNamespace(), plugin.getMetadata().getName() + "-db");
+        }
+        if (requiresDatabaseJob(plugin)) {
             waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), plugin, "server");
         }
-
         waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240)),
                 plugin.getMetadata().getNamespace(), plugin.getMetadata().getName() + "-server");
         Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getOperations()
@@ -74,6 +76,11 @@ public class EntandoPluginIntegrationTestHelper extends
             return status.forServerQualifiedBy("server").isPresent()
                     && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
         });
+    }
+
+    private Boolean requiresDatabaseJob(EntandoPlugin plugin) {
+        return plugin.getSpec().getDbms().map(dbmsVendor -> !(dbmsVendor == DbmsVendor.EMBEDDED || dbmsVendor == DbmsVendor.NONE))
+                .orElse(false);
     }
 
 }

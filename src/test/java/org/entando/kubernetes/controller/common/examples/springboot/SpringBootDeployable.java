@@ -34,7 +34,7 @@ import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
         IngressingDeployableBase<SampleExposedDeploymentResult>,
-        DbAwareDeployable {
+        DbAwareDeployable<SampleExposedDeploymentResult> {
 
     private final EntandoBaseCustomResource<S> customResource;
     private final DeployableContainer container;

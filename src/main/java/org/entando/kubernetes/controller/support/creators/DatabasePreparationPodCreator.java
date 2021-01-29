@@ -86,7 +86,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     }
 
     private List<Container> buildContainers(EntandoImageResolver entandoImageResolver, SecretClient secretClient,
-            DbAwareDeployable deployable) {
+            DbAwareDeployable<?> deployable) {
         List<Container> result = new ArrayList<>();
         for (DbAware dbAware : deployable.getDbAwareContainers()) {
             Optional<DatabasePopulator> databasePopulator = dbAware.getDatabasePopulator();

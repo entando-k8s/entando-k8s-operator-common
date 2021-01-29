@@ -83,7 +83,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
         Optional<SimpleKeycloakClient> keycloakClient = Optional.ofNullable(potentiallyNullKeycloakClient);
         EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
                 k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
-        if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable) deployable).hasContainersExpectingSchemas()) {
+        if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable) deployable).isExpectingDatabaseSchemas()) {
             prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable) deployable);
         }
         if (persistentVolumeClaimCreator.needsPersistentVolumeClaaims(deployable)) {
