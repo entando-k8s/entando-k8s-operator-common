@@ -23,7 +23,7 @@ public interface DatabasePopulator {
 
     DockerImageInfo getDockerImageInfo();
 
-    String[] getCommand();
+    List<String> getCommand();
 
     List<EnvVar> getEnvironmentVariables();
 

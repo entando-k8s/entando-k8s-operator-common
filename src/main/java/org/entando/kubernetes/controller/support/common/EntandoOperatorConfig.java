@@ -120,6 +120,9 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
                 .map(Paths::get);
     }
 
+    public static Optional<String> getPullPolicyOverride() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_PULL_POLICY_OVERRIDE);
+    }
     /*
     Misc config
      */

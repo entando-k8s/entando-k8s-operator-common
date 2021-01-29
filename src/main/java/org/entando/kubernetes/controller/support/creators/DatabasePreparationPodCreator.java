@@ -42,6 +42,7 @@ import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
@@ -113,7 +114,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
                 .shortenTo63Chars(entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-db-population-job");
         return new ContainerBuilder()
                 .withImage(entandoImageResolver.determineImageUri(databasePopulator.getDockerImageInfo()))
-                .withImagePullPolicy("Always")
+                .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse("IfNotPresent"))
                 .withName(dbJobName)
                 .withCommand(databasePopulator.getCommand())
                 .withEnv(databasePopulator.getEnvironmentVariables()).build();
@@ -130,7 +131,7 @@ public class DatabasePreparationPodCreator<T extends EntandoDeploymentSpec> exte
         return new ContainerBuilder()
                 .withImage(entandoImageResolver
                         .determineImageUri("entando/entando-k8s-dbjob"))
-                .withImagePullPolicy("Always")
+                .withImagePullPolicy("IfNotPresent")
                 .withName(dbJobName)
                 .withEnv(buildEnvironment(schemaConnectionInfo)).build();
     }

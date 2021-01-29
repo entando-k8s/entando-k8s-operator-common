@@ -164,7 +164,7 @@ public class DeploymentCreator<S extends EntandoDeploymentSpec> extends Abstract
             DeployableContainer deployableContainer) {
         return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + CONTAINER_SUFFIX)
                 .withImage(imageResolver.determineImageUri(deployableContainer.getDockerImageInfo()))
-                .withImagePullPolicy("Always")
+                .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse("IfNotPresent"))
                 .withPorts(buildPorts(deployableContainer))
                 .withReadinessProbe(buildReadinessProbe(deployableContainer))
                 .withVolumeMounts(buildVolumeMounts(deployableContainer))
