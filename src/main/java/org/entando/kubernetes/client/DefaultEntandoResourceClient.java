@@ -33,8 +33,8 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +66,8 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-'T'HH.mm.ss'Z'Z");
+    private static final DateTimeFormatter microtimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-'T'HH.mm.ss.SSSSSS'Z'Z");
     private final KubernetesClient client;
     private final EntandoResourceOperationsRegistry entandoResourceRegistry;
 
@@ -288,10 +289,9 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .withName(customResource.getMetadata().getName() + "-" + NameUtils.randomNumeric(4))
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
                 .endMetadata()
-                .withKind(customResource.getKind())
                 .withCount(1)
-                .withLastTimestamp(simpleDateFormat.format(new Date()))
-                .withEventTime(new MicroTime(simpleDateFormat.format(new Date())))
+                .withLastTimestamp(dateTimeFormatter.format(ZonedDateTime.now()))
+                .withEventTime(new MicroTime(microtimeFormatter.format(ZonedDateTime.now())))
                 .withNewSource("entando-k8s-" + customResource.getKind().substring("Entando".length()) + "-controller", null)
                 .withNewInvolvedObject()
                 .withNamespace(customResource.getMetadata().getNamespace())
