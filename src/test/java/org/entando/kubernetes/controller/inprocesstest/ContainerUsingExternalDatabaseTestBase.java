@@ -28,7 +28,10 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.Serializable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
@@ -39,6 +42,7 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
@@ -57,6 +61,8 @@ import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior,
@@ -65,8 +71,21 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String SAMPLE_NAME_DB = NameUtils.snakeCaseOf(SAMPLE_NAME + "_db");
-    EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
+    final EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
+
+    @BeforeEach
+    public void enableQueueing() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+    }
+
+    @AfterEach
+    public void shutDown() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
+        scheduler.shutdownNow();
+        getClient().pods().getPodWatcherQueue().clear();
+    }
 
     @Test
     void testSelectingOneOfTwoExternalDatabase() {
@@ -155,35 +174,34 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
 
     protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
             String deploymentName) {
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             try {
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                //Deleting previous dbPreparationPods doesn't require events
+                getClient().pods().getPodWatcherQueue().take();
+                PodWatcher dbPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 await().atMost(20, TimeUnit.SECONDS).until(() -> getClient().pods()
                         .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server")) != null);
                 Pod dbPreparationPod = getClient().pods()
                         .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                dbPodWatcher.eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
+                PodWatcher serverPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
-            } catch (Exception e) {
-                e.printStackTrace();
+                serverPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
 
-        }).start();
+        }, 100, TimeUnit.MILLISECONDS);
     }
 
-    @SuppressWarnings("unchecked")
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, createResource.getMetadata().getNamespace());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, createResource.getMetadata().getName());
             controller.onStartup(new StartupEvent());
-        }).start();
+        }, 10, TimeUnit.MILLISECONDS);
     }
 
 }

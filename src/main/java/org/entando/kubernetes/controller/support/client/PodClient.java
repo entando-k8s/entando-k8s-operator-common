@@ -25,7 +25,7 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.BlockingQueue;
 import org.entando.kubernetes.client.EntandoExecListener;
 
 public interface PodClient extends PodWaitingClient {
@@ -62,7 +62,9 @@ public interface PodClient extends PodWaitingClient {
             Object mutex = new Object();
             synchronized (mutex) {
                 EntandoExecListener listener = new EntandoExecListener(mutex, timeoutSeconds);
-                getExecListenerHolder().set(listener);
+                if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
+                    getExecListenerHolder().add(listener);//because it should never be full during tests. fail early.
+                }
                 ExecWatch exec = podResource.inContainer(containerName)
                         .readingInput(in)
                         .writingOutput(System.out)
@@ -87,7 +89,7 @@ public interface PodClient extends PodWaitingClient {
     /**
      * A getter for the an AtomicReference to the most recently constructed ExecListener for testing purposes.
      */
-    AtomicReference<EntandoExecListener> getExecListenerHolder();
+    BlockingQueue<EntandoExecListener> getExecListenerHolder();
 
     void removeAndWait(String namespace, Map<String, String> labels);
 }

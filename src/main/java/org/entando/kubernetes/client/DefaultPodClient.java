@@ -28,7 +28,8 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.function.Predicate;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
@@ -38,8 +39,8 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 public class DefaultPodClient implements PodClient {
 
     private final KubernetesClient client;
-    private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
-    private AtomicReference<EntandoExecListener> execListenerHolder = new AtomicReference<>();
+    private BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
+    private BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
 
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;
@@ -47,7 +48,7 @@ public class DefaultPodClient implements PodClient {
         KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
     }
 
-    public AtomicReference<EntandoExecListener> getExecListenerHolder() {
+    public BlockingQueue<EntandoExecListener> getExecListenerHolder() {
         return execListenerHolder;
     }
 
@@ -62,7 +63,7 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
-    public AtomicReference<PodWatcher> getPodWatcherHolder() {
+    public BlockingQueue<PodWatcher> getPodWatcherQueue() {
         return podWatcherHolder;
     }
 

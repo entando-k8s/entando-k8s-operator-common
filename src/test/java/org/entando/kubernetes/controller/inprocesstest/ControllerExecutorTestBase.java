@@ -26,8 +26,10 @@ import io.fabric8.kubernetes.client.Watcher.Action;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PodClientDouble;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.controller.ControllerExecutor;
@@ -35,6 +37,7 @@ import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("java:S5786")
@@ -43,14 +46,19 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     public static final String CONTROLLER_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("controller-namespace");
     protected EntandoKeycloakServer resource;
     private SimpleK8SClient<?> client;
-    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    @BeforeEach
+    public void enableQueueing() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+    }
 
     @AfterEach
     void resetSystemProperty() {
         System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty());
-        client.pods().getPodWatcherHolder().set(null);
-        PodClientDouble.setEmulatePodWatching(false);
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
         scheduler.shutdownNow();
+        getClient().pods().getPodWatcherQueue().clear();
     }
 
     @Test
@@ -59,7 +67,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
         resource = newEntandoKeycloakServer();
-        emulatePodWaitingBehaviour(false);
+        emulatePodWaitingBehaviour();
         controllerExecutor.startControllerFor(Action.ADDED, resource, "6.0.0");
 
         Pod pod = this.client.pods()
@@ -79,7 +87,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
         this.client = getClient();
         ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
         resource = newEntandoKeycloakServer();
-        emulatePodWaitingBehaviour(false);
+        emulatePodWaitingBehaviour();
         Pod pod = controllerExecutor.runControllerFor(Action.ADDED, resource, "6.0.0");
         assertThat(pod, is(notNullValue()));
         assertThat(
@@ -90,21 +98,23 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
         //TODO check mounts for certs, etc
     }
 
-    protected void emulatePodWaitingBehaviour(boolean requiresDelete) {
-        PodClientDouble.setEmulatePodWatching(true);
+    protected void emulatePodWaitingBehaviour() {
+        PodClientDouble.ENQUEUE_POD_WATCH_HOLDERS.set(true);
         scheduler.schedule(() -> {
-            if (requiresDelete) {
-                //The delete watcher won't trigger events because the condition is true from the beginning
-                await().atMost(30, TimeUnit.SECONDS).pollInterval(10, TimeUnit.MILLISECONDS)
-                        .until(() -> getClient().pods().getPodWatcherHolder()
-                                .getAndSet(null) != null);
+            try {
+                //The delete watcher won't need events to be triggered because the condition is true from the beginning
+                getClient().pods().getPodWatcherQueue().take();
+                //The second watcher will trigger events
+                PodWatcher controllerPodWatcher = getClient().pods().getPodWatcherQueue().take();
+                await().atMost(30, TimeUnit.SECONDS).pollDelay(100, TimeUnit.MILLISECONDS).until(() ->
+                        this.client.pods().loadPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName())
+                                != null);
+                Pod pod = this.client.pods().loadPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName());
+                controllerPodWatcher.eventReceived(Action.MODIFIED, podWithSucceededStatus(pod));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-            //The second watcher will trigger events
-            await().atMost(30, TimeUnit.SECONDS).pollDelay(100, TimeUnit.MILLISECONDS).until(() ->
-                    this.client.pods().loadPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName()) != null);
-            Pod pod = this.client.pods().loadPod(CONTROLLER_NAMESPACE, "EntandoKeycloakServer", resource.getMetadata().getName());
-            getClient().pods().getPodWatcherHolder().getAndSet(null).eventReceived(Action.MODIFIED, podWithSucceededStatus(pod));
-        }, 300, TimeUnit.MILLISECONDS);
+        }, 30, TimeUnit.MILLISECONDS);
     }
 
 }

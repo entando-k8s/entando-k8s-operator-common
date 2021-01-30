@@ -29,7 +29,6 @@ import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.command.IngressingDeployCommand;
 import org.entando.kubernetes.controller.support.controller.AbstractDbAwareController;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 

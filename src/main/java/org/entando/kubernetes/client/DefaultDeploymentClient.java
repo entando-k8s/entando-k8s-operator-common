@@ -25,7 +25,8 @@ import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
@@ -34,7 +35,7 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClient {
 
     private final KubernetesClient client;
-    private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
+    private BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
 
     public DefaultDeploymentClient(KubernetesClient client) {
         this.client = client;
@@ -76,7 +77,7 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
     }
 
     @Override
-    public AtomicReference<PodWatcher> getPodWatcherHolder() {
+    public BlockingQueue<PodWatcher> getPodWatcherQueue() {
         return podWatcherHolder;
     }
 }

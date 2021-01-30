@@ -26,7 +26,10 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.Serializable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
@@ -38,6 +41,7 @@ import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.test.support.CommonLabels;
@@ -53,6 +57,8 @@ import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("java:S5786")
@@ -64,6 +70,19 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     public static final String SAMPLE_NAME_DB = NameUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
+
+    @BeforeEach
+    public void enableQueueing() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+    }
+
+    @AfterEach
+    public void shutDown() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
+        scheduler.shutdownNow();
+        getClient().pods().getPodWatcherQueue().clear();
+    }
 
     @Test
     void testBasicDeployment() {
@@ -137,26 +156,24 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
 
     protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
             String deploymentName) {
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             try {
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                PodWatcher dbPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                dbPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
+                //Deleting possible existing dbPreprationPods won't require events to be triggered
+                getClient().pods().getPodWatcherQueue().take();
+                PodWatcher dbPreprationPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Pod dbPreparationPod = getClient().pods()
                         .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                dbPreprationPodWatcher.eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
+                PodWatcher serverPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
-            } catch (Exception e) {
-                e.printStackTrace();
+                serverPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-
-        }).start();
+        }, 100, TimeUnit.MILLISECONDS);
     }
 
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {

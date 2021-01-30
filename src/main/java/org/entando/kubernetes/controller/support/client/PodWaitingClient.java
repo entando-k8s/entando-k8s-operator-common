@@ -22,23 +22,28 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.Watchable;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import org.entando.kubernetes.client.PodWatcher;
 
 public interface PodWaitingClient {
 
+    AtomicBoolean ENQUEUE_POD_WATCH_HOLDERS = new AtomicBoolean(false);
+
     /**
      * A getter for the an AtomicReference to the most recently constructed PodWatcherholder for testing purposes.
      */
-    AtomicReference<PodWatcher> getPodWatcherHolder();
+    BlockingQueue<PodWatcher> getPodWatcherQueue();
 
     default Pod watchPod(Predicate<Pod> podPredicate, long timeoutSeconds, Watchable<Watch, Watcher<Pod>> podResource) {
         try {
             Object mutex = new Object();
             synchronized (mutex) {
                 PodWatcher watcher = new PodWatcher(podPredicate, mutex, timeoutSeconds * 1000);
-                getPodWatcherHolder().set(watcher);
+                if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
+                    getPodWatcherQueue().add(watcher);//because it should never be full during tests. fail early.
+                }
                 try (Watch ignored = podResource.watch(watcher)) {
                     //Sonar seems to believe the JVM may not respect wait() with timeout due to 'Spurious wakeups'
                     while (watcher.shouldStillWait()) {

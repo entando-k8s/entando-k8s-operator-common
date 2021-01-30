@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleDeployableContainer;
 import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
@@ -46,6 +47,7 @@ import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
@@ -82,17 +84,25 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
     SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
     private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
-    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    @BeforeEach
+    public void enableQueueing() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+    }
+
+    @AfterEach
+    public void shutDown() {
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty());
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
+        scheduler.shutdownNow();
+        getClient().pods().getPodWatcherQueue().clear();
+
+    }
 
     @BeforeEach
     void setIngressClass() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty(), "nginx");
-    }
-
-    @AfterEach
-    void removeIngressClass() {
-        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty());
-        scheduler.shutdownNow();
     }
 
     @Test
@@ -230,25 +240,21 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                PodWatcher dbDeploymentWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
+                dbDeploymentWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
                 //wait for deletion of db preparation pod
-                await().pollInterval(1, TimeUnit.MILLISECONDS).atMost(10, TimeUnit.SECONDS)
-                        .until(() -> getClient().pods().getPodWatcherHolder().getAndSet(null) != null);
+                getClient().pods().getPodWatcherQueue().take();
                 //wait for db preparation pod
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                PodWatcher dbPreparationPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Pod dbPreparationPod = getClient().pods()
                         .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                dbPreparationPodWatcher.eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
+                PodWatcher serverPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+                serverPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
             } catch (Exception e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
 
         }, 500, TimeUnit.MILLISECONDS);

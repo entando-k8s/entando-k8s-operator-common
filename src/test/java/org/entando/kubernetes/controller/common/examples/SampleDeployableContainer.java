@@ -32,7 +32,6 @@ import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.TlsAware;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
-import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
