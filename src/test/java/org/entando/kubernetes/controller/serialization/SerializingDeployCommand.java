@@ -178,7 +178,8 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
                                 .stream().filter(crd ->
                                         crd.getSpec().getNames().getKind().equals(resourceReference.getKind()) && resourceReference
                                                 .getApiVersion()
-                                                .startsWith(crd.getSpec().getGroup())).findFirst().orElseThrow(()->new IllegalStateException("Could not find CRD for " + resourceReference.getKind()));
+                                                .startsWith(crd.getSpec().getGroup())).findFirst()
+                                .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + resourceReference.getKind()));
                         final Map<String, Object> crMap = kubernetesClient.customResource(new Builder()
                                 .withName(definition.getMetadata().getName())
                                 .withGroup(definition.getSpec().getGroup())
@@ -200,7 +201,8 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
                                         .withName(resourceReference.getMetadata().getName())
                                         .fromServer()
                                         .get())
-                                .orElseThrow(()->new IllegalStateException("Resource kind '" + resourceReference.getKind() +"' not supported."));
+                                .orElseThrow(() -> new IllegalStateException(
+                                        "Resource kind '" + resourceReference.getKind() + "' not supported."));
                     }
                 }
                 if (Optional.class.isAssignableFrom(method.getReturnType())) {
