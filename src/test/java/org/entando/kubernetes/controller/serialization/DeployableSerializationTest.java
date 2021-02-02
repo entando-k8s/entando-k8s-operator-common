@@ -62,7 +62,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 //And experiment in JSON serialization
-@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
+@Tags({@Tag("in-process"), @Tag("pre-deploymentt"), @Tag("component")})
 @EnableRuleMigrationSupport
 class DeployableSerializationTest implements InProcessTestData, InProcessTestUtil, PodBehavior {
 
