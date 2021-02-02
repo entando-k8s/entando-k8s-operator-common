@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.spi.container;
 
 import static java.lang.String.format;
 
-import org.entando.kubernetes.model.KeycloakAwareSpec;
+import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
@@ -73,14 +73,14 @@ public class KeycloakName {
         return format("keycloak-%s-%s-admin-secret", namespace, name);
     }
 
-    public static String ofTheRealm(KeycloakAwareSpec keycloakAwareSpec) {
-        return keycloakAwareSpec.getKeycloakToUse()
+    public static String ofTheRealm(KeycloakPreference keycloakAwareSpec) {
+        return keycloakAwareSpec.getPreferredKeycloakToUse()
                 .map(keycloakToUse -> keycloakToUse.getRealm().orElse(ENTANDO_DEFAULT_KEYCLOAK_REALM))
                 .orElse(ENTANDO_DEFAULT_KEYCLOAK_REALM);
     }
 
-    public static String ofThePublicClient(KeycloakAwareSpec keycloakAwareSpec) {
-        return keycloakAwareSpec.getKeycloakToUse()
+    public static String ofThePublicClient(KeycloakPreference keycloakAwareSpec) {
+        return keycloakAwareSpec.getPreferredKeycloakToUse()
                 .map(keycloakToUse -> keycloakToUse.getPublicClientId().orElse(PUBLIC_CLIENT_ID))
                 .orElse(PUBLIC_CLIENT_ID);
     }

@@ -73,7 +73,7 @@ public class NameUtils {
     }
 
     public static String upperSnakeCaseOf(String camelCase) {
-        return camelCaseToDelimited(camelCase, "_").toLowerCase(Locale.ROOT);
+        return camelCaseToDelimited(camelCase, "_").toUpperCase(Locale.ROOT);
     }
 
     public static String databaseCompliantName(EntandoCustomResource resource, String nameQualifier, DbmsVendorConfig dbmsVendorConfig) {

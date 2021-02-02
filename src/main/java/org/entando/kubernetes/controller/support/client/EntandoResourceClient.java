@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller.support.client;
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
@@ -29,7 +30,6 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.KeycloakToUse;
 import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
@@ -51,7 +51,7 @@ public interface EntandoResourceClient {
 
     Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource peerInNamespace, DbmsVendor vendor);
 
-    <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource);
+    KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference);
 
     Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace);
 
@@ -62,9 +62,10 @@ public interface EntandoResourceClient {
 
     DoneableConfigMap loadDefaultConfigMap();
 
-    default <T extends KeycloakAwareSpec> Optional<ResourceReference> determineKeycloakToUse(EntandoBaseCustomResource<T> resource) {
+    default Optional<ResourceReference> determineKeycloakToUse(EntandoCustomResource resource,
+            KeycloakPreference keycloakPreference) {
         ResourceReference resourceReference = null;
-        Optional<KeycloakToUse> keycloakToUse = resource.getSpec().getKeycloakToUse();
+        Optional<KeycloakToUse> keycloakToUse = keycloakPreference.getPreferredKeycloakToUse();
         if (keycloakToUse.isPresent()) {
             resourceReference = new ResourceReference(
                     keycloakToUse.get().getNamespace().orElse(null),

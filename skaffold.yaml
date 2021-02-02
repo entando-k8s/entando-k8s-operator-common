@@ -12,6 +12,22 @@ build:
 deploy:
   kubectl: {}
 profiles:
+- name: jvm
+  build:
+    artifacts:
+    - image: entando/entando-k8s-operator-common
+      docker:
+        dockerfile: Dockerfile.jvm
+        buildArgs:
+          VERSION: "{{ .VERSION}}"
+- name: native
+  build:
+    artifacts:
+    - image: entando/entando-k8s-operator-common
+      docker:
+        dockerfile: Dockerfile.native
+        buildArgs:
+          VERSION: "{{ .VERSION}}"
 - name: dev
   build:
     tagPolicy:

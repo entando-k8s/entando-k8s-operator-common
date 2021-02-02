@@ -144,7 +144,8 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public Keycloak getKeycloakFor(EntandoBaseCustomResource<? extends KeycloakAwareSpec> requiresKeycloak) {
-        KeycloakConnectionConfig keycloak = entandoResourceClient.findKeycloak(requiresKeycloak);
+        KeycloakConnectionConfig keycloak = entandoResourceClient
+                .findKeycloak(requiresKeycloak, requiresKeycloak.getSpec()::getKeycloakToUse);
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         clientBuilder.register(EntandoJackson2Provider.class);
         return KeycloakBuilder.builder()

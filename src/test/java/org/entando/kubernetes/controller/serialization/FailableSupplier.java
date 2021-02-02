@@ -14,16 +14,9 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.result;
+package org.entando.kubernetes.controller.serialization;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import org.entando.kubernetes.model.AbstractServerStatus;
+public interface FailableSupplier<T> {
 
-public interface ServiceDeploymentResult<T extends ServiceDeploymentResult<T>> extends ServiceResult {
-
-    T withStatus(AbstractServerStatus status);
-
-    AbstractServerStatus getStatus();
-
-    Pod getPod();
+    T supply() throws Exception;
 }

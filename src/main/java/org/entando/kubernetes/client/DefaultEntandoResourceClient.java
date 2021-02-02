@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
@@ -57,7 +58,6 @@ import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
@@ -80,8 +80,8 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource) {
-        Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource);
+    public KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
+        Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource, keycloakPreference);
         String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
                 .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
         String configMapName = keycloakToUse.map(KeycloakName::forTheConnectionConfigMap)
@@ -285,7 +285,17 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .withFieldPath("status")
                 .endInvolvedObject();
         eventPopulator.apply(doneableEvent).done();
-        Resource<T, ?> resource = getOperations((Class<T>) customResource.getClass())
+        final CustomResourceOperationsImpl<T, CustomResourceList<T>, ?> operations;
+        if (customResource instanceof EntandoBaseCustomResource) {
+            operations = getOperations((Class<T>) customResource.getClass());
+        } else {
+            SerializedEntandoResource ser = (SerializedEntandoResource) customResource;
+            operations = (CustomResourceOperationsImpl) client
+                    .customResources(ser.getDefinition(), SerializedEntandoResource.class, CustomResourceList.class,
+                            DoneableCustomResource.class);
+        }
+
+        Resource<T, ?> resource = operations
                 .inNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName());
         T latest = resource.fromServer().get();

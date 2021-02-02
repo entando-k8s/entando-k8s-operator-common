@@ -90,7 +90,7 @@ class DefaultEntandoResourceClientTest implements InProcessTestUtil {
                 .endMetadata()
                 .build();
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = entandoResourceClient.findKeycloak(resource);
+        KeycloakConnectionConfig config = entandoResourceClient.findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the Keycloak in the SAME namespace as the EntadoApp.
         assertThat(config.getExternalBaseUrl(), is(HTTP_TEST_COM));
@@ -192,7 +192,7 @@ class DefaultEntandoResourceClientTest implements InProcessTestUtil {
                 .endMetadata()
                 .build();
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = entandoResourceClient.findKeycloak(resource);
+        KeycloakConnectionConfig config = entandoResourceClient.findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the marked as the DEFAULT keycloak server
         assertThat(config.getExternalBaseUrl(), is(HTTP_TEST_COM));
@@ -257,7 +257,7 @@ class DefaultEntandoResourceClientTest implements InProcessTestUtil {
                 .endSpec()
                 .build();
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = entandoResourceClient.findKeycloak(resource);
+        KeycloakConnectionConfig config = entandoResourceClient.findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the marked as the DEFAULT keycloak server
         assertThat(config.getExternalBaseUrl(), is(HTTP_TEST_COM));

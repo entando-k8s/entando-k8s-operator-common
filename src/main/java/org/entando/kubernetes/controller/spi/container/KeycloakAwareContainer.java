@@ -19,17 +19,22 @@ package org.entando.kubernetes.controller.spi.container;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.List;
+import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 
-public interface KeycloakAwareContainer extends DeployableContainer, HasWebContext {
+public interface KeycloakAwareContainer extends DeployableContainer, HasWebContext, KeycloakPreference {
 
     KeycloakConnectionConfig getKeycloakConnectionConfig();
 
     KeycloakClientConfig getKeycloakClientConfig();
 
-    String getKeycloakRealmToUse();
+    default String getKeycloakRealmToUse() {
+        return KeycloakName.ofTheRealm(this);
+    }
 
-    String getPublicClientIdToUse();
+    default String getPublicClientIdToUse() {
+        return KeycloakName.ofThePublicClient(this);
+    }
 
     default List<EnvVar> getKeycloakVariables() {
         KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();

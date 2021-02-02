@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
@@ -47,6 +48,7 @@ import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.keycloak.admin.client.Keycloak;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
@@ -102,8 +104,8 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource) {
-        Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource);
+    public KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
+        Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource,keycloakPreference);
         String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
                 .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
         String configMapName = keycloakToUse.map(KeycloakName::forTheConnectionConfigMap)

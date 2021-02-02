@@ -142,7 +142,7 @@ public class IntegrationTestHelperBase<
     }
 
     public String determineRealm(KeycloakAwareSpec spec) {
-        return KeycloakName.ofTheRealm(spec);
+        return KeycloakName.ofTheRealm(spec::getKeycloakToUse);
     }
 
     public DoneableConfigMap loadDefaultOperatorConfigMap() {

@@ -17,7 +17,6 @@
 package org.entando.kubernetes.controller.spi.result;
 
 import io.fabric8.kubernetes.api.model.Service;
-import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 
 public abstract class AbstractServiceResult implements ServiceResult {
 
@@ -38,7 +37,6 @@ public abstract class AbstractServiceResult implements ServiceResult {
     }
 
     @Override
-    @SerializeByReference
     public Service getService() {
         return service;
     }

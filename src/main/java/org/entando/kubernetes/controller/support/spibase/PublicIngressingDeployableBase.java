@@ -16,27 +16,20 @@
 
 package org.entando.kubernetes.controller.support.spibase;
 
-import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
+import org.entando.kubernetes.model.KeycloakToUse;
 
 public interface PublicIngressingDeployableBase<T extends ExposedDeploymentResult<T>> extends IngressingDeployableBase<T>,
         PublicIngressingDeployable<T> {
 
     @Override
-    @SuppressWarnings("unchecked")
-    default String getKeycloakRealmToUse() {
+    default Optional<KeycloakToUse> getPreferredKeycloakToUse() {
         EntandoBaseCustomResource<KeycloakAwareSpec> ka = (EntandoBaseCustomResource<KeycloakAwareSpec>) getCustomResource();
-        return KeycloakName.ofTheRealm(ka.getSpec());
+        return ka.getSpec().getKeycloakToUse();
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    default String getPublicClientIdToUse() {
-        EntandoBaseCustomResource<KeycloakAwareSpec> ka = (EntandoBaseCustomResource<KeycloakAwareSpec>) getCustomResource();
-        return KeycloakName.ofThePublicClient(ka.getSpec());
-
-    }
 }

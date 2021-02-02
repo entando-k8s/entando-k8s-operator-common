@@ -274,7 +274,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     private static class EntandoPluginSampleDeployableContainer extends SampleDeployableContainer<EntandoPluginSpec> implements
             KeycloakAwareContainerBase {
 
-        private KeycloakConnectionConfig keycloakConnectionConfig;
+        private final KeycloakConnectionConfig keycloakConnectionConfig;
 
         public EntandoPluginSampleDeployableContainer(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource,
                 KeycloakConnectionConfig keycloakConnectionConfig,

@@ -56,8 +56,9 @@ public abstract class SampleController<S extends KeycloakAwareSpec, C extends En
         );
         // Create the Keycloak service using the provided database
         KeycloakConnectionConfig keycloakConnectionConfig = null;
+        final EntandoBaseCustomResource<? extends KeycloakAwareSpec> entandoBaseCustomResource = newEntandoResource;
         keycloakConnectionConfig = k8sClient.entandoResources()
-                .findKeycloak((EntandoBaseCustomResource<? extends KeycloakAwareSpec>) newEntandoResource);
+                .findKeycloak(entandoBaseCustomResource,entandoBaseCustomResource.getSpec()::getKeycloakToUse);
         Deployable<R> deployable = createDeployable(newEntandoResource, databaseServiceResult,
                 keycloakConnectionConfig);
         DeployCommand<R> deployCommand;

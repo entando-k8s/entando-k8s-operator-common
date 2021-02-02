@@ -14,3 +14,20 @@ pipelineConfig:
         secretKeyRef:
           key: redhat.registry.credentials
           name: entando-jx-common-secret
+    - name: EXECUTABLE_TYPE
+      valueFrom:
+        secretKeyRef:
+          name: entando-jx-common-secret
+          key: executable.type
+  pipelines:
+    pullRequest:
+      build:
+        steps:
+          - sh: skaffold-build
+            name: container-build
+    release:
+      build:
+        steps:
+          - sh: skaffold-build
+            name: container-build
+

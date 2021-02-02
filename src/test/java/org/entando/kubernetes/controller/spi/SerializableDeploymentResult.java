@@ -14,44 +14,27 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.deployable;
+package org.entando.kubernetes.controller.spi;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import java.util.List;
-import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
-import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.controller.spi.result.ServiceResult;
 
-public interface Deployable<T extends ServiceDeploymentResult<T>> {
-
-    /**
-     * NB!!! Implementations need to implement this as a non-modifiable list with the exact same instances returned consistently.
-     */
-    List<DeployableContainer> getContainers();
-
-    String getNameQualifier();
+public interface SerializableDeploymentResult<T extends ServiceDeploymentResult<T>> extends ServiceResult, ServiceDeploymentResult<T> {
 
     @SerializeByReference
-    EntandoCustomResource getCustomResource();
+    Deployment getDeployment();
 
-    T createResult(Deployment deployment, Service service, Ingress ingress, Pod pod);
+    @SerializeByReference
+    Service getService();
 
-    String getServiceAccountToUse();
+    @SerializeByReference
+    Pod getPod();
 
-    default String getDefaultServiceAccountName() {
-        return "default";
-    }
-
-    default int getReplicas() {
-        return 1;
-    }
-
-    default Optional<Long> getFileSystemUserAndGroupId() {
-        return Optional.empty();
-    }
+    @SerializeByReference
+    Ingress getIngress();
 }
