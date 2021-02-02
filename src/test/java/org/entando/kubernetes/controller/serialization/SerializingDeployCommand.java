@@ -151,7 +151,7 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
             try {
                 return type.getConstructor(String.class).newInstance(object.toString());
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new IllegalStateException(e);
+                throw new IllegalStateException("Could not coerce to number: " + object, e);
             }
         } else {
             throw new IllegalArgumentException(type + " not supported");
@@ -178,7 +178,7 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
                                 .stream().filter(crd ->
                                         crd.getSpec().getNames().getKind().equals(resourceReference.getKind()) && resourceReference
                                                 .getApiVersion()
-                                                .startsWith(crd.getSpec().getGroup())).findFirst().orElseThrow(IllegalStateException::new);
+                                                .startsWith(crd.getSpec().getGroup())).findFirst().orElseThrow(()->new IllegalStateException("Could not find CRD for " + resourceReference.getKind()));
                         final Map<String, Object> crMap = kubernetesClient.customResource(new Builder()
                                 .withName(definition.getMetadata().getName())
                                 .withGroup(definition.getSpec().getGroup())
@@ -200,7 +200,7 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
                                         .withName(resourceReference.getMetadata().getName())
                                         .fromServer()
                                         .get())
-                                .orElseThrow(IllegalStateException::new);
+                                .orElseThrow(()->new IllegalStateException("Resource kind '" + resourceReference.getKind() +"' not supported."));
                     }
                 }
                 if (Optional.class.isAssignableFrom(method.getReturnType())) {
