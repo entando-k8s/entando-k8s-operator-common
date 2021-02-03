@@ -16,34 +16,38 @@
 
 package org.entando.kubernetes.controller.inprocesstest;
 
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PodClientDouble;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.mockito.Mockito;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
+//Because Sonar cannot detect that the test methods are declared in the superclass
+//and it cannot detect custom matchers and captors
+@SuppressWarnings({"java:S6068", "java:S6073", "java:S2187"})
 public class BareBonesDeployableMockClientTest extends BareBonesDeployableTestBase {
 
-    private SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
-    private SimpleKeycloakClient keycloakClient = Mockito.mock(SimpleKeycloakClient.class);
+    private final SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
+    private final SimpleKeycloakClient keycloakClient = Mockito.mock(SimpleKeycloakClient.class);
 
-    @BeforeAll
-    public static void emulatePodWaiting() {
-        PodClientDouble.setEmulatePodWatching(true);
+    @AfterEach
+    public void dontEmulatePodWaiting() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
+        getClient().pods().getPodWatcherQueue().clear();
     }
 
-    @AfterAll
-    public static void dontEmulatePodWaiting() {
-        PodClientDouble.setEmulatePodWatching(false);
+    @BeforeEach
+    public void prepareKeycloakMocks() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+
     }
 
     @Override
-    public SimpleK8SClient getClient() {
+    public SimpleK8SClientDouble getClient() {
         return simpleK8SClientDouble;
     }
 

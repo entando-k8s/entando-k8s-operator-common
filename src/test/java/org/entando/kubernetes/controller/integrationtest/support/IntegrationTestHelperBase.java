@@ -29,23 +29,24 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.OperationsSupplier;
-import org.entando.kubernetes.controller.IngressingDeployCommand;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.ControllerExecutor;
-import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
 import org.entando.kubernetes.controller.integrationtest.support.ControllerStartupEventFiringListener.OnStartupMethod;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.controller.ControllerExecutor;
+import org.entando.kubernetes.controller.support.creators.IngressCreator;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
 public class IntegrationTestHelperBase<
         R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<D, R>
-        > implements FluentIntegrationTesting {
+        D extends DoneableEntandoCustomResource<R, D>
+        > implements FluentIntegrationTesting, CommonLabels {
 
     protected final DefaultKubernetesClient client;
     protected final CustomResourceOperationsImpl<R, L, D> operations;
@@ -94,23 +95,24 @@ public class IntegrationTestHelperBase<
         return domainSuffix;
     }
 
-    @SuppressWarnings("unchecked")
-    public JobPodWaiter waitForJobPod(JobPodWaiter mutex, String namespace, String jobName) {
+    public <S extends EntandoDeploymentSpec> JobPodWaiter waitForDbJobPod(JobPodWaiter mutex, EntandoBaseCustomResource<S> resource,
+            String deploymentQualifier) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
-                () -> client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems()
+                () -> client.pods().inNamespace(resource.getMetadata().getNamespace())
+                        .withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems()
                         .size() > 0);
-        Pod pod = client.pods().inNamespace(namespace).withLabel(KubeUtils.DB_JOB_LABEL_NAME, jobName).list().getItems().get(0);
+        Pod pod = client.pods().inNamespace(resource.getMetadata().getNamespace())
+                .withLabels(dbPreparationJobLabels(resource, deploymentQualifier)).list().getItems().get(0);
         mutex.throwException(IllegalStateException.class)
-                .waitOn(client.pods().inNamespace(namespace).withName(pod.getMetadata().getName()));
+                .waitOn(client.pods().inNamespace(resource.getMetadata().getNamespace()).withName(pod.getMetadata().getName()));
         return mutex;
     }
 
-    @SuppressWarnings("unchecked")
     public ServicePodWaiter waitForServicePod(ServicePodWaiter mutex, String namespace, String deploymentName) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
-                () -> client.pods().inNamespace(namespace).withLabel(IngressingDeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
+                () -> client.pods().inNamespace(namespace).withLabel(KubeUtils.DEPLOYMENT_LABEL_NAME, deploymentName).list()
                         .getItems().size() > 0);
-        Pod pod = client.pods().inNamespace(namespace).withLabel(IngressingDeployCommand.DEPLOYMENT_LABEL_NAME, deploymentName).list()
+        Pod pod = client.pods().inNamespace(namespace).withLabel(KubeUtils.DEPLOYMENT_LABEL_NAME, deploymentName).list()
                 .getItems().get(0);
         mutex.throwException(IllegalStateException.class)
                 .waitOn(client.pods().inNamespace(namespace).withName(pod.getMetadata().getName()));
@@ -135,14 +137,12 @@ public class IntegrationTestHelperBase<
     }
 
     public void listenAndRespondWithLatestImage(String namespace) {
-        ControllerExecutor executor = new  ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
-        String versionToUse = executor.resolveLatestImageFor(operations.getType())
-                .orElseThrow(() -> new IllegalStateException("No K8S Controller Image has been registered for " + operations.getType()));
-        containerStartingListener.listen(namespace, executor, versionToUse);
+        ControllerExecutor executor = new ControllerExecutor(TestFixturePreparation.ENTANDO_CONTROLLERS_NAMESPACE, client);
+        containerStartingListener.listen(namespace, executor, null);
     }
 
     public String determineRealm(KeycloakAwareSpec spec) {
-        return KeycloakName.ofTheRealm(spec);
+        return KeycloakName.ofTheRealm(spec::getKeycloakToUse);
     }
 
     public DoneableConfigMap loadDefaultOperatorConfigMap() {

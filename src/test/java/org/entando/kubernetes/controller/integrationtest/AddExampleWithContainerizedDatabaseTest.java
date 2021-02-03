@@ -25,26 +25,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
+import java.util.stream.Stream;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SampleIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
-import org.entando.kubernetes.controller.database.DbmsVendorConfig;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoPluginIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.K8SIntegrationTestHelper;
 import org.entando.kubernetes.controller.integrationtest.support.KeycloakIntegrationTestHelper;
-import org.entando.kubernetes.controller.integrationtest.support.SampleWriter;
 import org.entando.kubernetes.controller.integrationtest.support.TestFixtureRequest;
-import org.entando.kubernetes.controller.spi.Deployable;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorComplianceMode;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -56,24 +58,28 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 @Tags({@Tag("inter-process"), @Tag("pre-deployment"), @Tag("component")})
 class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTesting, InProcessTestUtil {
 
     public static final String TEST_PLUGIN_NAME = EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAME + "-name-longer-than-32";
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
-    private final SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller =
-            new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(
+    private final SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller =
+            new SampleController<>(
                     helper.getClient()) {
                 @Override
-                protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(
+                protected Deployable<SampleExposedDeploymentResult> createDeployable(
                         EntandoPlugin newEntandoPlugin,
                         DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
-                    return new SampleIngressingDbAwareDeployable<EntandoPluginSpec>(newEntandoPlugin, databaseServiceResult) {
+                    return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult) {
                         @Override
                         protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
-                            return Arrays.asList(new SampleSpringBootDeployableContainer<>(entandoResource, keycloakConnectionConfig));
+                            return Collections.singletonList(new SampleSpringBootDeployableContainer<>(
+                                    entandoResource,
+                                    keycloakConnectionConfig,
+                                    databaseServiceResult));
                         }
                     };
                 }
@@ -94,13 +100,18 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         helper.releaseAllFinalizers();
         helper.afterTest();
         helper.keycloak().deleteDefaultKeycloakAdminSecret();
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"postgresql", "mysql"})
-    void create(String vendorName) {
+    @MethodSource("provideStringsForIsBlank")
+    void create(DbmsVendor dbmsVendor, EntandoOperatorComplianceMode complianceMode) {
         //When I create a EntandoPlugin and I specify it to use PostgreSQL
-        DbmsVendor dbmsVendor = DbmsVendor.valueOf(vendorName.toUpperCase());
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
+                complianceMode.name());
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty(),
+                "redhat-registry");
         EntandoPlugin entandoPlugin = new EntandoPluginBuilder().withNewMetadata()
                 .withName(TEST_PLUGIN_NAME)
                 .withNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
@@ -110,13 +121,21 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                 .withNewKeycloakToUse().withRealm(KeycloakIntegrationTestHelper.KEYCLOAK_REALM).endKeycloakToUse()
                 .withDbms(dbmsVendor)
                 .endSpec().build();
-        SampleWriter.writeSample(entandoPlugin, "keycloak-with-embedded-postgresql-db");
         helper.entandoPlugins()
                 .listenAndRespondWithStartupEvent(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE, controller::onStartup);
         helper.entandoPlugins().createAndWaitForPlugin(entandoPlugin, true);
         //Then I expect to see
         verifyDatabaseDeployment(dbmsVendor);
         verifyPluginDeployment();
+    }
+
+    private static Stream<Arguments> provideStringsForIsBlank() {
+        return Stream.of(
+                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.COMMUNITY),
+                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.REDHAT),
+                Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.COMMUNITY),
+                Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.REDHAT)
+        );
     }
 
     private void verifyDatabaseDeployment(DbmsVendor dbmsVendor) {

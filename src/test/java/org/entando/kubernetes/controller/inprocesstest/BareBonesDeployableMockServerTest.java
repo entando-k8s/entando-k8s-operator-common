@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.inprocesstest;
 
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.junit.Rule;
 import org.junit.jupiter.api.Tag;
@@ -27,6 +27,8 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 @EnableRuleMigrationSupport
+//Because Sonar cannot detect that the test methods are declared in the superclas
+@SuppressWarnings("java:S2187")
 public class BareBonesDeployableMockServerTest extends BareBonesDeployableTestBase implements PodBehavior {
 
     @Rule

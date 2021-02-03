@@ -21,8 +21,8 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.entando.kubernetes.controller.k8sclient.ServiceClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.controller.support.client.ServiceClient;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultServiceClient implements ServiceClient {
 
@@ -33,7 +33,7 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
-    public void createOrReplaceEndpoints(EntandoBaseCustomResource<?> peerInNamespace, Endpoints endpoints) {
+    public void createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
         //TODO remove the namespace overriding once we create delegate services from the correct context (the App)
         String namespace = ofNullable(endpoints.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
@@ -45,12 +45,12 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
-    public Service loadService(EntandoBaseCustomResource<?> peerInNamespace, String name) {
+    public Service loadService(EntandoCustomResource peerInNamespace, String name) {
         return client.services().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
     }
 
     @Override
-    public Service createOrReplaceService(EntandoBaseCustomResource<?> peerInNamespace, Service service) {
+    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
         String namespace = ofNullable(service.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
         return client.services().inNamespace(namespace).createOrReplace(service);

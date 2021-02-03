@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.TlsHelper;
-import org.entando.kubernetes.controller.creators.IngressCreator;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.creators.IngressCreator;
+import org.entando.kubernetes.controller.support.creators.TlsHelper;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public final class TestFixturePreparation {
@@ -85,16 +85,29 @@ public final class TestFixturePreparation {
             config.setNamespace(ENTANDO_CONTROLLERS_NAMESPACE);
             result = new AutoAdaptableKubernetesClient(HttpClientUtils.createHttpClient(config), config);
         }
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_NAMESPACE_TO_OBSERVE.getJvmSystemProperty(),
-                ENTANDO_CONTROLLERS_NAMESPACE);
+        ensureRedHatRegistryCredentials(result);
         return result;
+    }
+
+    private static void ensureRedHatRegistryCredentials(AutoAdaptableKubernetesClient result) {
+        if (result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).withName("redhat-registry").get() == null) {
+            EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s ->
+                    result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).createNew().withNewMetadata()
+                            .withNamespace(ENTANDO_CONTROLLERS_NAMESPACE)
+                            .withName("redhat-registry")
+                            .endMetadata()
+                            .addToStringData(".dockerconfigjson", s)
+                            .withType("kubernetes.io/dockerconfigjson")
+                            .done());
+        }
     }
 
     @SuppressWarnings("unchecked")
     public static void prepareTestFixture(KubernetesClient client, TestFixtureRequest testFixtureRequest) {
-        for (Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry : testFixtureRequest.getRequiredDeletions().entrySet()) {
+        for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?>>>> entry :
+                testFixtureRequest.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
-                for (Class<? extends EntandoBaseCustomResource> type : entry.getValue()) {
+                for (Class<? extends EntandoBaseCustomResource<?>> type : entry.getValue()) {
                     //This is a bit heavy-handed, but we need  to make absolutely sure the pods are deleted before the test starts
                     //Pods are considered 'deleted' even if they are still gracefully shutting down and the second or two
                     // it takes to shut down can interfere with subsequent pod watchers.

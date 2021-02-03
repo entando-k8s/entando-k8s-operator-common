@@ -33,7 +33,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.entando.kubernetes.controller.common.TlsHelper;
+import org.entando.kubernetes.controller.support.creators.TlsHelper;
 
 public final class HttpTestHelper {
 

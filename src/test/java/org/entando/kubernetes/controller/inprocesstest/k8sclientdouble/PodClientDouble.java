@@ -33,36 +33,32 @@ import io.fabric8.kubernetes.client.dsl.Watchable;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import org.entando.kubernetes.client.EntandoExecListener;
 import org.entando.kubernetes.client.PodWatcher;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.PodResult;
-import org.entando.kubernetes.controller.PodResult.State;
 import org.entando.kubernetes.controller.integrationtest.support.PodResourceDouble;
-import org.entando.kubernetes.controller.k8sclient.PodClient;
+import org.entando.kubernetes.controller.spi.common.PodResult;
+import org.entando.kubernetes.controller.spi.common.PodResult.State;
+import org.entando.kubernetes.controller.support.client.PodClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 
 public class PodClientDouble extends AbstractK8SClientDouble implements PodClient {
 
-    private static boolean emulatePodWatching = false;
-    private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
-    private AtomicReference<EntandoExecListener> execListenerHolder = new AtomicReference<>();
+    private final BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
+    private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
 
     public PodClientDouble(Map<String, NamespaceDouble> namespaces) {
         super(namespaces);
     }
 
-    public static void setEmulatePodWatching(boolean emulatePodWatching) {
-        PodClientDouble.emulatePodWatching = emulatePodWatching;
-    }
-
     @Override
-    public AtomicReference<PodWatcher> getPodWatcherHolder() {
+    public BlockingQueue<PodWatcher> getPodWatcherQueue() {
         return podWatcherHolder;
     }
 
     @Override
-    public AtomicReference<EntandoExecListener> getExecListenerHolder() {
+    public BlockingQueue<EntandoExecListener> getExecListenerHolder() {
         return execListenerHolder;
     }
 
@@ -73,7 +69,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
                         .allMatch(labelEntry -> pod.getMetadata().getLabels().containsKey(labelEntry.getKey()) && pod.getMetadata()
                                 .getLabels().get(
                                         labelEntry.getKey()).equals(labelEntry.getValue())));
-        if (emulatePodWatching) {
+        if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
             watchPod(Objects::isNull,
                     EntandoOperatorConfig.getPodShutdownTimeoutSeconds(), new DummyWatchable());
 
@@ -85,7 +81,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     public Pod runToCompletion(Pod pod) {
         if (pod != null) {
             getNamespace(pod).putPod(pod);
-            if (emulatePodWatching) {
+            if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
                 return watchPod(got -> PodResult.of(got).getState() == State.COMPLETED,
                         EntandoOperatorConfig.getPodCompletionTimeoutSeconds(), new DummyWatchable());
 
@@ -120,14 +116,15 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
-    public Pod loadPod(String namespace, String labelName, String labelValue) {
+    public Pod loadPod(String namespace, Map<String, String> labels) {
         return getNamespace(namespace).getPods().values().stream()
-                .filter(pod -> labelValue.equals(pod.getMetadata().getLabels().get(labelName))).findFirst().orElse(null);
+                .filter(pod -> labels.entrySet().stream().allMatch(stringStringEntry -> stringStringEntry.getValue()
+                        .equals(pod.getMetadata().getLabels().get(stringStringEntry.getKey())))).findFirst().orElse(null);
     }
 
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
-        if (emulatePodWatching) {
+        if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
             Pod result = watchPod(
                     got -> PodResult.of(got).getState() == State.READY || PodResult.of(got).getState() == State.COMPLETED,
                     EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),

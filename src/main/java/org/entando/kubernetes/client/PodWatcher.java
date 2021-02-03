@@ -30,6 +30,7 @@ public class PodWatcher implements Watcher<Pod> {
     private Pod lastPod;
 
     public PodWatcher(Predicate<Pod> podPredicate, Object mutex, long timeout) {
+        this.mutex = mutex;
         this.podPredicate = pod -> {
             try {
                 return podPredicate.test(pod);
@@ -37,7 +38,6 @@ public class PodWatcher implements Watcher<Pod> {
                 return false;
             }
         };
-        this.mutex = mutex;
         this.timeout = timeout;
     }
 

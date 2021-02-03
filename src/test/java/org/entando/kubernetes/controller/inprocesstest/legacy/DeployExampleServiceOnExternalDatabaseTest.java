@@ -31,22 +31,24 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
-import org.entando.kubernetes.controller.database.EntandoDatabaseServiceController;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.entando.kubernetes.controller.spi.Deployable;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.controller.EntandoDatabaseServiceController;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.app.EntandoApp;
@@ -66,7 +68,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals {
+//Sonar doesn't recognize custom captors
+@SuppressWarnings({"java:S6068", "java:S6073"})
+class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, FluentTraversals, CommonLabels {
 
     public static final String MY_APP_SERVER_DEPLOYMENT = MY_APP + "-server-deployment";
     private static final String MY_APP_DB_SECRET = MY_APP + "-db-secret";
@@ -80,13 +84,13 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult> sampleController;
+    private SampleController<EntandoAppSpec, EntandoApp, SampleExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void prepareExternalDB() {
-        this.sampleController = new SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult>(client, keycloakClient) {
+        this.sampleController = new SampleController<>(client, keycloakClient) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoAppSpec> createDeployable(
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
@@ -114,8 +118,8 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
         NamedArgumentCaptor<Secret> keycloakSecretCaptor = forResourceNamed(Secret.class, MY_APP_DB_SECRET);
         verify(client.secrets()).createSecretIfAbsent(eq(entandoApp), keycloakSecretCaptor.capture());
         Secret keycloakSecret = keycloakSecretCaptor.getValue();
-        assertThat(keycloakSecret.getStringData().get(KubeUtils.USERNAME_KEY), is("my_app_db"));
-        assertThat(keycloakSecret.getStringData().get(KubeUtils.PASSSWORD_KEY), is(not(emptyOrNullString())));
+        assertThat(keycloakSecret.getStringData().get(SecretUtils.USERNAME_KEY), is("my_app_db"));
+        assertThat(keycloakSecret.getStringData().get(SecretUtils.PASSSWORD_KEY), is(not(emptyOrNullString())));
     }
 
     @Test
@@ -131,8 +135,7 @@ class DeployExampleServiceOnExternalDatabaseTest implements InProcessTestUtil, F
                 MY_APP_SERVER_DEPLOYMENT);
         verify(client.deployments()).createOrPatchDeployment(eq(entandoApp), keyclaokDeploymentCaptor.capture());
         //Then a pod was created for an Entandoapp using the credentials and connection settings of the EntandoDatabaseService
-        LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabel(Pod.class, ENTANDO_APP_LABEL_NAME, MY_APP)
-                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-server-db-job");
+        LabeledArgumentCaptor<Pod> keycloakSchemaJobCaptor = forResourceWithLabels(Pod.class, dbPreparationJobLabels(entandoApp, "server"));
         verify(client.pods()).runToCompletion(keycloakSchemaJobCaptor.capture());
         Pod keycloakDbJob = keycloakSchemaJobCaptor.getValue();
         Container theInitContainer = theInitContainerNamed(MY_APP + "-db-schema-creation-job").on(keycloakDbJob);

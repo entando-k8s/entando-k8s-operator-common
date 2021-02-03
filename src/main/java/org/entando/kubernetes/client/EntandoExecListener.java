@@ -21,11 +21,11 @@ import okhttp3.Response;
 
 public class EntandoExecListener implements ExecListener {
 
-    private long start = System.currentTimeMillis();
+    private final Object mutex;
+    private final int timeoutSeconds;
+    private final long start = System.currentTimeMillis();
     private boolean failed = false;
     boolean shouldStillWait = true;
-    private Object mutex;
-    private int timeoutSeconds;
 
     public EntandoExecListener(Object mutex, int timeoutSeconds) {
         this.mutex = mutex;
@@ -55,7 +55,7 @@ public class EntandoExecListener implements ExecListener {
     }
 
     public boolean shouldStillWait() {
-        if (System.currentTimeMillis() - start > timeoutSeconds * 1000) {
+        if (System.currentTimeMillis() - start > timeoutSeconds * 1000L) {
             failed = true;
             shouldStillWait = false;
             return false;

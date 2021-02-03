@@ -19,31 +19,36 @@ package org.entando.kubernetes.controller.inprocesstest;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNotNull;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.mock;
 
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
+import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.barebones.BareBonesContainer;
 import org.entando.kubernetes.controller.common.examples.barebones.BareBonesDeployable;
 import org.entando.kubernetes.controller.common.examples.barebones.BarebonesDeploymentResult;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.entando.kubernetes.controller.spi.Deployable;
-import org.entando.kubernetes.controller.spi.PortSpec;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.PortSpec;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
@@ -58,26 +63,39 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+//Because Sonar doesn't pick up that this class is subclassed in other packages
+@SuppressWarnings({"java:S5786"})
 public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
-    public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
-    EntandoPlugin plugin = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    protected SimpleK8SClient k8sClient;
+    private final Map<String, String> properties = new ConcurrentHashMap<>();
+    private final EntandoPlugin plugin = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
+    protected SimpleK8SClient<?> k8sClient;
+    private SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult> controller;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
-    private SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult> controller;
-    private Map<String, String> properties = new ConcurrentHashMap<>();
+    @BeforeEach
+    public void enableQueueing() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+    }
+
+    @AfterEach
+    public void shutDown() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
+        scheduler.shutdownNow();
+        getClient().pods().getPodWatcherQueue().clear();
+    }
 
     @Test
     void testBasicDeploymentWithAdditionalPorts() {
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
         emulateKeycloakDeployment(k8sClient);
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult>(k8sClient,
+        controller = new SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult>(k8sClient,
                 mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
@@ -111,7 +129,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     }
 
     @BeforeEach
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void stashNamespacesToObserve() {
         this.properties.putAll((Map) System.getProperties());
     }
@@ -126,10 +144,10 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
         emulateKeycloakDeployment(k8sClient);
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, BarebonesDeploymentResult>(k8sClient,
+        controller = new SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult>(k8sClient,
                 mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer());
@@ -150,14 +168,14 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect one deployment. This is where we can put all the assertions
         RoleBinding editorRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-entando-editor");
-        assertNotNull(editorRoleBinding);
+        assertThat(editorRoleBinding, notNullValue());
         assertThat(editorRoleBinding.getRoleRef().getKind(), is("ClusterRole"));
         assertThat(editorRoleBinding.getRoleRef().getName(), is("entando-editor"));
         assertThat(editorRoleBinding.getSubjects().get(0).getName(), is("my-service-account"));
         assertThat(editorRoleBinding.getSubjects().get(0).getKind(), is("ServiceAccount"));
         assertThat(editorRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
         RoleBinding viewRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-pod-viewer");
-        assertNotNull(viewRoleBinding);
+        assertThat(viewRoleBinding, notNullValue());
         assertThat(viewRoleBinding.getRoleRef().getKind(), is("ClusterRole"));
         assertThat(viewRoleBinding.getRoleRef().getName(), is("pod-viewer"));
         assertThat(viewRoleBinding.getSubjects().get(0).getName(), is("my-service-account"));
@@ -167,20 +185,19 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
 
     protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
             String deploymentName) {
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             try {
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                final PodWatcher podWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
-            } catch (Exception e) {
-                e.printStackTrace();
+                podWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
 
-        }).start();
+        }, 200, TimeUnit.MILLISECONDS);
     }
 
-    public <T extends EntandoBaseCustomResource> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
         new Thread(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());

@@ -25,24 +25,24 @@ import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
-import java.util.concurrent.atomic.AtomicReference;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.k8sclient.DeploymentClient;
-import org.entando.kubernetes.controller.k8sclient.PodWaitingClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import org.entando.kubernetes.controller.support.client.DeploymentClient;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClient {
 
     private final KubernetesClient client;
-    private AtomicReference<PodWatcher> podWatcherHolder = new AtomicReference<>();
+    private BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
 
     public DefaultDeploymentClient(KubernetesClient client) {
         this.client = client;
     }
 
     @Override
-    public <S extends EntandoDeploymentSpec> Deployment createOrPatchDeployment(EntandoBaseCustomResource<S> peerInNamespace,
+    public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace,
             Deployment deployment) {
         Deployment existingDeployment = getDeploymenResourceFor(peerInNamespace, deployment).get();
         if (existingDeployment == null) {
@@ -61,8 +61,8 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
         }
     }
 
-    private <S extends EntandoDeploymentSpec> RollableScalableResource<Deployment, DoneableDeployment> getDeploymenResourceFor(
-            EntandoBaseCustomResource<S> peerInNamespace,
+    private RollableScalableResource<Deployment, DoneableDeployment> getDeploymenResourceFor(
+            EntandoCustomResource peerInNamespace,
             Deployment deployment) {
         return client.apps()
                 .deployments()
@@ -71,13 +71,13 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
     }
 
     @Override
-    public <S extends EntandoDeploymentSpec> Deployment loadDeployment(EntandoBaseCustomResource<S> peerInNamespace, String name) {
+    public Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {
         return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name)
                 .get();
     }
 
     @Override
-    public AtomicReference<PodWatcher> getPodWatcherHolder() {
+    public BlockingQueue<PodWatcher> getPodWatcherQueue() {
         return podWatcherHolder;
     }
 }

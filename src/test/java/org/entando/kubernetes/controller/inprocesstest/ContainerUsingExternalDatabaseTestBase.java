@@ -17,7 +17,6 @@
 package org.entando.kubernetes.controller.inprocesstest;
 
 import static org.awaitility.Awaitility.await;
-import static org.entando.kubernetes.controller.KubeUtils.standardIngressName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
@@ -28,23 +27,32 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
+import java.io.Serializable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.common.CreateExternalServiceCommand;
+import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.common.examples.springboot.SpringBootDeployable;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.spi.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
@@ -53,21 +61,36 @@ import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior,
-        VariableReferenceAssertions {
+        VariableReferenceAssertions, CommonLabels {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
-    public static final String SAMPLE_NAME_DB = KubeUtils.snakeCaseOf(SAMPLE_NAME + "_db");
-    EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller;
+    public static final String SAMPLE_NAME_DB = NameUtils.snakeCaseOf(SAMPLE_NAME + "_db");
+    final EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
+    private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
+
+    @BeforeEach
+    public void enableQueueing() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+    }
+
+    @AfterEach
+    public void shutDown() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
+        scheduler.shutdownNow();
+        getClient().pods().getPodWatcherQueue().clear();
+    }
 
     @Test
     void testSelectingOneOfTwoExternalDatabase() {
         //Given I have a controller that processes EntandoPlugins
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(getClient(), getKeycloakClient()) {
+        controller = new SampleController<>(getClient(), getKeycloakClient()) {
             @Override
             protected SpringBootDeployable<EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
@@ -92,14 +115,15 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect a server deployment
         Deployment serverDeployment = getClient().deployments()
-                .loadDeployment(plugin1, SAMPLE_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
+                .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
         assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), Matchers.is(1));
         verifySpringDatasource(serverDeployment);
         //Then  no db deployment
         assertNull(getClient().deployments().loadDeployment(plugin1, SAMPLE_NAME + "-db-deployment"));
 
         //And I an ingress paths
-        Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(), standardIngressName(plugin1));
+        Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
+                ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
         assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
                 Matchers.is(8084));
     }
@@ -115,7 +139,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         getClient().entandoResources().createOrPatchEntandoResource(databaseService);
         getClient().secrets().createSecretIfAbsent(databaseService,
                 new SecretBuilder().withNewMetadata().withNamespace(SAMPLE_NAMESPACE).withName(secretName).endMetadata()
-                        .addToData(KubeUtils.USERNAME_KEY, "username").addToData(KubeUtils.PASSSWORD_KEY, "asdf123").build());
+                        .addToData(SecretUtils.USERNAME_KEY, "username").addToData(SecretUtils.PASSSWORD_KEY, "asdf123").build());
         new CreateExternalServiceCommand(databaseService).execute(getClient());
     }
 
@@ -123,11 +147,11 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
 
     void verifySpringDatasource(Deployment serverDeployment) {
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
-                .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KubeUtils.USERNAME_KEY));
+                .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_PASSWORD.name())
-                .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(KubeUtils.PASSSWORD_KEY));
+                .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(SecretUtils.PASSSWORD_KEY));
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_PASSWORD.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
         assertThat(theVariableNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_URL.name())
@@ -150,34 +174,34 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
 
     protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
             String deploymentName) {
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             try {
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-                String dbJobName = String.format("%s-server-db-job", resource.getMetadata().getName());
+                //Deleting previous dbPreparationPods doesn't require events
+                getClient().pods().getPodWatcherQueue().take();
+                PodWatcher dbPodWatcher = getClient().pods().getPodWatcherQueue().take();
+                await().atMost(20, TimeUnit.SECONDS).until(() -> getClient().pods()
+                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server")) != null);
                 Pod dbPreparationPod = getClient().pods()
-                        .loadPod(resource.getMetadata().getNamespace(), KubeUtils.DB_JOB_LABEL_NAME, dbJobName);
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
+                dbPodWatcher.eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
+                PodWatcher serverPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
-            } catch (Exception e) {
-                e.printStackTrace();
+                serverPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
 
-        }).start();
+        }, 100, TimeUnit.MILLISECONDS);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends EntandoBaseCustomResource> void onAdd(T resource) {
-        new Thread(() -> {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
+        scheduler.schedule(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, createResource.getMetadata().getNamespace());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, createResource.getMetadata().getName());
             controller.onStartup(new StartupEvent());
-        }).start();
+        }, 10, TimeUnit.MILLISECONDS);
     }
 
 }

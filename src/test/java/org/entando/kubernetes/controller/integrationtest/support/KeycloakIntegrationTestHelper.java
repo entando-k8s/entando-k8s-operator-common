@@ -24,14 +24,17 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.ClientBuilder;
 import org.entando.kubernetes.client.DefaultEntandoResourceClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
-import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.KeycloakName;
+import org.entando.kubernetes.client.EntandoJackson2Provider;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
@@ -43,6 +46,7 @@ import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -73,16 +77,16 @@ public class KeycloakIntegrationTestHelper extends
                 .withNamespace(namespace)
                 .withName(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG)
                 .endMetadata()
-                .addToData(KubeUtils.URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())
-                .addToData(KubeUtils.INTERNAL_URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())
+                .addToData(NameUtils.URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())
+                .addToData(NameUtils.INTERNAL_URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())
                 .done();
         client.secrets().createOrReplaceWithNew()
                 .withNewMetadata()
                 .withNamespace(namespace)
                 .withName(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .endMetadata()
-                .addToStringData(KubeUtils.USERNAME_KEY, EntandoOperatorTestConfig.getKeycloakUser())
-                .addToStringData(KubeUtils.PASSSWORD_KEY, EntandoOperatorTestConfig.getKeycloakPassword())
+                .addToStringData(SecretUtils.USERNAME_KEY, EntandoOperatorTestConfig.getKeycloakUser())
+                .addToStringData(SecretUtils.PASSSWORD_KEY, EntandoOperatorTestConfig.getKeycloakPassword())
                 .done();
     }
 
@@ -96,26 +100,29 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public void createAndWaitForKeycloak(EntandoKeycloakServer keycloakServer, int waitOffset, boolean deployingDbContainers) {
-        getOperations().inNamespace(KEYCLOAK_NAMESPACE).create(keycloakServer);
-        if (keycloakServer.getSpec().getDbms().map(v -> v != DbmsVendor.NONE && v != DbmsVendor.EMBEDDED).orElse(false)) {
-            if (deployingDbContainers) {
-                waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
-                        KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-db");
-            }
-            this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
-                    KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server-db-job");
+        getOperations().inNamespace(keycloakServer.getMetadata().getNamespace()).create(keycloakServer);
+        if (deployingDbContainers) {
+            waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
+                    keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName() + "-db");
+        }
+        if (requiresDatabaseJob(keycloakServer)) {
+            this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)), keycloakServer, "server");
         }
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(270 + waitOffset)),
-                KEYCLOAK_NAMESPACE, KEYCLOAK_NAME + "-server");
+                keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName() + "-server");
         await().atMost(90, TimeUnit.SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
-                            .inNamespace(KEYCLOAK_NAMESPACE)
+                            .inNamespace(keycloakServer.getMetadata().getNamespace())
                             .withName(KEYCLOAK_NAME)
                             .fromServer().get().getStatus();
                     return status.forServerQualifiedBy("server").isPresent()
                             && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
                 });
+    }
+
+    private Boolean requiresDatabaseJob(EntandoKeycloakServer keycloakServer) {
+        return keycloakServer.getSpec().getDbms().map(v -> v != DbmsVendor.NONE && v != DbmsVendor.EMBEDDED).orElse(false);
     }
 
     public void ensureKeycloakClient(KeycloakAwareSpec keycloakAwareSpec, String clientId,
@@ -137,8 +144,12 @@ public class KeycloakIntegrationTestHelper extends
     }
 
     public Keycloak getKeycloakFor(EntandoBaseCustomResource<? extends KeycloakAwareSpec> requiresKeycloak) {
-        KeycloakConnectionConfig keycloak = entandoResourceClient.findKeycloak(requiresKeycloak);
+        KeycloakConnectionConfig keycloak = entandoResourceClient
+                .findKeycloak(requiresKeycloak, requiresKeycloak.getSpec()::getKeycloakToUse);
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        clientBuilder.register(EntandoJackson2Provider.class);
         return KeycloakBuilder.builder()
+                .resteasyClient((ResteasyClient) clientBuilder.build())
                 .serverUrl(keycloak.getExternalBaseUrl())
                 .grantType(OAuth2Constants.PASSWORD)
                 .realm("master")

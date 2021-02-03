@@ -23,8 +23,8 @@ import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
-import org.entando.kubernetes.controller.PodResult;
-import org.entando.kubernetes.controller.PodResult.State;
+import org.entando.kubernetes.controller.spi.common.PodResult;
+import org.entando.kubernetes.controller.spi.common.PodResult.State;
 
 /**
  * Limit the use of this class to integration tests. It does thread locking (Object.wait) which is not ideal for server side applications.

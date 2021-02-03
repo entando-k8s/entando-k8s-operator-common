@@ -21,6 +21,7 @@ import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
+import io.fabric8.kubernetes.api.model.DoneableEvent;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -30,18 +31,24 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.entando.kubernetes.controller.ExposedService;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.InfrastructureConfig;
-import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
-import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.database.ExternalDatabaseDeployment;
-import org.entando.kubernetes.controller.k8sclient.EntandoResourceClient;
+import java.util.function.UnaryOperator;
+import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.ResourceUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.spi.result.ExposedService;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
+import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
@@ -51,7 +58,6 @@ import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
@@ -59,6 +65,7 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
     private final KubernetesClient client;
     private final EntandoResourceOperationsRegistry entandoResourceRegistry;
 
@@ -73,8 +80,8 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <T extends KeycloakAwareSpec> KeycloakConnectionConfig findKeycloak(EntandoBaseCustomResource<T> resource) {
-        Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource);
+    public KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
+        Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource, keycloakPreference);
         String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
                 .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
         String configMapName = keycloakToUse.map(KeycloakName::forTheConnectionConfigMap)
@@ -94,12 +101,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
             throw new IllegalStateException(
                     format("Could not find the Keycloak configMp %s in namespace %s", configMapName, configMapNamespace));
         }
-        return new KeycloakConnectionSecret(secret, configMap);
+        return new KeycloakConnectionConfig(secret, configMap);
 
     }
 
     @Override
-    public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoBaseCustomResource<?> peerInNamespace) {
+    public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace) {
         List<EntandoKeycloakServer> items = entandoResourceRegistry.getOperations(EntandoKeycloakServer.class)
                 .inNamespace(peerInNamespace.getMetadata().getNamespace()).list().getItems();
         if (items.size() == 1) {
@@ -128,8 +135,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public <T extends ClusterInfrastructureAwareSpec> Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(
-            EntandoBaseCustomResource<T> resource) {
+    public Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(EntandoCustomResource resource) {
         List<EntandoClusterInfrastructure> items = entandoResourceRegistry
                 .getOperations(EntandoClusterInfrastructure.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
@@ -153,16 +159,8 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     @Override
     public ExposedService loadExposedService(EntandoCustomResource resource) {
         return new ExposedService(
-                loadService(resource, standardServiceName(resource)),
-                loadIngress(resource, standardIngressName(resource)));
-    }
-
-    public String standardServiceName(EntandoCustomResource resource) {
-        return resource.getMetadata().getName() + "-server-service";
-    }
-
-    public String standardIngressName(EntandoCustomResource resource) {
-        return resource.getMetadata().getName() + "-" + KubeUtils.DEFAULT_INGRESS_SUFFIX;
+                loadService(resource, NameUtils.standardServiceName(resource)),
+                loadIngress(resource, NameUtils.standardIngressName(resource)));
     }
 
     @Override
@@ -174,16 +172,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                         new ExternalDatabaseDeployment(
                                 loadService(externalDatabase, ExternalDatabaseDeployment.serviceName(externalDatabase)),
                                 externalDatabase));
-    }
-
-    @Override
-    public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
-        getOperations(customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .edit()
-                .withStatus(status)
-                .done();
     }
 
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
@@ -204,39 +192,63 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     }
 
-    private <T extends EntandoCustomResource, D extends DoneableEntandoCustomResource<D, T>> CustomResourceOperationsImpl<T,
-            CustomResourceList<T>, D> getOperations(Class<T> c) {
+    private <T extends EntandoCustomResource,
+            D extends DoneableEntandoCustomResource<T, D>> CustomResourceOperationsImpl<T, CustomResourceList<T>, D> getOperations(
+            Class<T> c) {
         return entandoResourceRegistry.getOperations(c);
     }
 
     @Override
-    public void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase) {
-        getOperations(customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .edit().withPhase(phase).done();
+    public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
+        performStatusUpdate(customResource,
+                t -> t.getStatus().putServerStatus(status),
+                e -> e.withType("Normal")
+                        .withReason("StatusUpdate")
+                        .withMessage(format("The %s  %s/%s received status update %s/%s ",
+                                customResource.getKind(),
+                                customResource.getMetadata().getNamespace(),
+                                customResource.getMetadata().getName(),
+                                status.getType(),
+                                status.getQualifier()))
+                        .withAction("STATUS_CHANGE")
+        );
+    }
 
+    @Override
+    public void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase) {
+        performStatusUpdate(customResource,
+                t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
+                e -> e.withType("Normal")
+                        .withReason("PhaseUpdated")
+                        .withMessage(format("The deployment of %s  %s/%s was updated  to %s",
+                                customResource.getKind(),
+                                customResource.getMetadata().getNamespace(),
+                                customResource.getMetadata().getName(),
+                                phase.name()))
+                        .withAction("PHASE_CHANGE")
+        );
     }
 
     @Override
     public void deploymentFailed(EntandoCustomResource customResource, Exception reason) {
-        Optional<AbstractServerStatus> currentServerStatus = getOperations(customResource.getClass())
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName()).get().getStatus().findCurrentServerStatus();
-        if (currentServerStatus.isPresent()) {
-            AbstractServerStatus newStatus = currentServerStatus.get();
-            newStatus.finishWith(new EntandoControllerFailureBuilder().withException(reason).build());
-            getOperations(customResource.getClass())
-                    .inNamespace(customResource.getMetadata().getNamespace())
-                    .withName(customResource.getMetadata().getName())
-                    .edit().withStatus(newStatus).withPhase(EntandoDeploymentPhase.FAILED).done();
-        } else {
-            getOperations(customResource.getClass())
-                    .inNamespace(customResource.getMetadata().getNamespace())
-                    .withName(customResource.getMetadata().getName())
-                    .edit().withPhase(EntandoDeploymentPhase.FAILED).done();
-
-        }
+        performStatusUpdate(customResource,
+                t -> {
+                    t.getStatus().findCurrentServerStatus()
+                            .ifPresent(
+                                    newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
+                    t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());
+                },
+                e -> e.withType("Error")
+                        .withReason("Failed")
+                        .withMessage(
+                                format("The deployment of %s %s/%s failed due to %s. Fix the root cause and then trigger a redeployment "
+                                                + "by adding the annotation 'entando.org/processing-instruction: force'",
+                                        customResource.getKind(),
+                                        customResource.getMetadata().getNamespace(),
+                                        customResource.getMetadata().getName(),
+                                        reason.getMessage()))
+                        .withAction("FAILED")
+        );
     }
 
     private Service loadService(EntandoCustomResource peerInNamespace, String name) {
@@ -248,8 +260,47 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     protected Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {
-        return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name)
-                .get();
+        return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends EntandoCustomResource> void performStatusUpdate(EntandoCustomResource customResource,
+            Consumer<T> consumer, UnaryOperator<DoneableEvent> eventPopulator) {
+        final DoneableEvent doneableEvent = client.events().inNamespace(customResource.getMetadata().getNamespace()).createNew()
+                .withNewMetadata()
+                .withNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName() + "-" + NameUtils.randomNumeric(4))
+                .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
+                .endMetadata()
+                .withCount(1)
+                .withLastTimestamp(dateTimeFormatter.format(LocalDateTime.now()))
+                .withNewSource(NameUtils.controllerNameOf(customResource), null)
+                .withNewInvolvedObject()
+                .withKind(customResource.getKind())
+                .withNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName())
+                .withUid(customResource.getMetadata().getUid())
+                .withResourceVersion(customResource.getMetadata().getResourceVersion())
+                .withApiVersion(customResource.getApiVersion())
+                .withFieldPath("status")
+                .endInvolvedObject();
+        eventPopulator.apply(doneableEvent).done();
+        final CustomResourceOperationsImpl<T, CustomResourceList<T>, ?> operations;
+        if (customResource instanceof EntandoBaseCustomResource) {
+            operations = getOperations((Class<T>) customResource.getClass());
+        } else {
+            SerializedEntandoResource ser = (SerializedEntandoResource) customResource;
+            operations = (CustomResourceOperationsImpl) client
+                    .customResources(ser.getDefinition(), SerializedEntandoResource.class, CustomResourceList.class,
+                            DoneableCustomResource.class);
+        }
+
+        Resource<T, ?> resource = operations
+                .inNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName());
+        T latest = resource.fromServer().get();
+        consumer.accept(latest);
+        resource.updateStatus(latest);
     }
 
 }

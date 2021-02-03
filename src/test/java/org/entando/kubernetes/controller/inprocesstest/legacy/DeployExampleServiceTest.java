@@ -53,23 +53,27 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.Map;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.common.TlsHelper;
 import org.entando.kubernetes.controller.common.examples.SampleController;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.creators.SecretCreator;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.LabeledArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.argumentcaptors.NamedArgumentCaptor;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.entando.kubernetes.controller.spi.Deployable;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.TlsAware;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.creators.SecretCreator;
+import org.entando.kubernetes.controller.support.creators.TlsHelper;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
@@ -88,7 +92,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 //in execute component test
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
+//Sonar doesn't recognize custom captors
+@SuppressWarnings({"java:S6068", "java:S6073"})
+class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, CommonLabels {
 
     private static final String MY_APP_ADMIN_SECRET = MY_APP + "-admin-secret";
     private static final String MY_APP_SERVER = MY_APP + "-server";
@@ -99,7 +105,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
     private static final String MY_APP_DB_PVC = MY_APP_DB + "-pvc";
     private static final String MY_APP_DB_DEPLOYMENT = MY_APP_DB + "-deployment";
     private static final String MY_APP_DB_SECRET = MY_APP_DB + "-secret";
-    private static final String MY_APP_INGRESS = MY_APP + "-" + KubeUtils.DEFAULT_INGRESS_SUFFIX;
+    private static final String MY_APP_INGRESS = MY_APP + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX;
     private static final String MY_APP_DB_ADMIN_SECRET = MY_APP_DB + "-admin-secret";
     private static final String DB_ADDR = "DB_ADDR";
     private static final String DB_PORT_VAR = "DB_PORT";
@@ -113,13 +119,13 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
     private final SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble();
     @Mock
     private SimpleKeycloakClient keycloakClient;
-    private SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult> sampleController;
+    private SampleController<EntandoAppSpec, EntandoApp, SampleExposedDeploymentResult> sampleController;
 
     @BeforeEach
     void prepareKeycloakCustomResource() {
-        this.sampleController = new SampleController<EntandoApp, EntandoAppSpec, ExposedDeploymentResult>(client, keycloakClient) {
+        this.sampleController = new SampleController<>(client, keycloakClient) {
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoAppSpec> createDeployable(
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(
                     EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
@@ -160,16 +166,16 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         NamedArgumentCaptor<Secret> adminSecretCaptor = forResourceNamed(Secret.class, MY_APP_DB_ADMIN_SECRET);
         verify(client.secrets()).createSecretIfAbsent(eq(newEntandoApp), adminSecretCaptor.capture());
         Secret theDbAdminSecret = adminSecretCaptor.getValue();
-        assertThat(theKey(KubeUtils.USERNAME_KEY).on(theDbAdminSecret), is("root"));
-        assertThat(theKey(KubeUtils.PASSSWORD_KEY).on(theDbAdminSecret), is(not(emptyOrNullString())));
+        assertThat(theKey(SecretUtils.USERNAME_KEY).on(theDbAdminSecret), is("root"));
+        assertThat(theKey(SecretUtils.PASSSWORD_KEY).on(theDbAdminSecret), is(not(emptyOrNullString())));
         assertThat(theLabel(ENTANDO_APP_LABEL_NAME).on(theDbAdminSecret), is(MY_APP));
 
         //And a K8S Secret was created with a name that reflects the EntandoApp and the fact that it is the keycloakd db secret
         NamedArgumentCaptor<Secret> entandoAppDbSecretCaptor = forResourceNamed(Secret.class, MY_APP_DB_SECRET);
         verify(client.secrets()).createSecretIfAbsent(eq(newEntandoApp), entandoAppDbSecretCaptor.capture());
         Secret entandoAppDbSecret = entandoAppDbSecretCaptor.getValue();
-        assertThat(theKey(KubeUtils.USERNAME_KEY).on(entandoAppDbSecret), is(MY_APP_DATABASE));
-        assertThat(theKey(KubeUtils.PASSSWORD_KEY).on(entandoAppDbSecret), is(not(emptyOrNullString())));
+        assertThat(theKey(SecretUtils.USERNAME_KEY).on(entandoAppDbSecret), is(MY_APP_DATABASE));
+        assertThat(theKey(SecretUtils.PASSSWORD_KEY).on(entandoAppDbSecret), is(not(emptyOrNullString())));
         assertThat(theLabel(ENTANDO_APP_LABEL_NAME).on(entandoAppDbSecret), is(MY_APP));
 
         //And a K8S Secret was created in the Keycloak deployment's namespace containing the CA keystore
@@ -181,7 +187,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
 
         //And a K8S Secret was created in the Keycloak deployment's namespace containing the CA keystore
         NamedArgumentCaptor<Secret> trustStoreSecretCaptor = forResourceNamed(Secret.class,
-                SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME);
+                TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME);
         verify(client.secrets(), atLeast(1)).createSecretIfAbsent(eq(newEntandoApp), trustStoreSecretCaptor.capture());
         Secret trustStoreSecret = trustStoreSecretCaptor.getValue();
         assertThat(theKey(SecretCreator.TRUST_STORE_FILE).on(trustStoreSecret), is(TlsHelper.getInstance().getTrustStoreBase64()));
@@ -276,9 +282,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         //When the DeployCommand processes the addition request
         sampleController.onStartup(new StartupEvent());
         // A DB preparation Pod is created with labels linking it to the EntandoApp
-        LabeledArgumentCaptor<Pod> podCaptor = forResourceWithLabel(Pod.class, ENTANDO_APP_LABEL_NAME, MY_APP)
-                //And the fact that it is a DB JOB
-                .andWithLabel(KubeUtils.DB_JOB_LABEL_NAME, MY_APP + "-server-db-job");
+        LabeledArgumentCaptor<Pod> podCaptor = forResourceWithLabels(Pod.class, dbPreparationJobLabels(newEntandoApp, "server"));
         verify(client.pods()).runToCompletion(podCaptor.capture());
         Pod theDbJobPod = podCaptor.getValue();
         //With exactly 1 container
@@ -297,17 +301,17 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
                 theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(theSchemaPeparationContainer).getSecretKeyRef().getName(),
                 is(MY_APP_DB_ADMIN_SECRET));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_USER).on(theSchemaPeparationContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.USERNAME_KEY));
+                is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(theSchemaPeparationContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.PASSSWORD_KEY));
+                is(SecretUtils.PASSSWORD_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_USER).on(theSchemaPeparationContainer).getSecretKeyRef().getName(),
                 is(MY_APP_DB_SECRET));
         assertThat(theVariableReferenceNamed(DATABASE_PASSWORD).on(theSchemaPeparationContainer).getSecretKeyRef().getName(),
                 is(MY_APP_DB_SECRET));
         assertThat(theVariableReferenceNamed(DATABASE_USER).on(theSchemaPeparationContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.USERNAME_KEY));
+                is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(DATABASE_PASSWORD).on(theSchemaPeparationContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.PASSSWORD_KEY));
+                is(SecretUtils.PASSSWORD_KEY));
     }
 
     @Test
@@ -361,9 +365,9 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
                 .updateStatus(eq(newEntandoApp), argThat(matchesDeploymentStatus(dbDeploymentStatus)));
         verify(client.entandoResources(), atLeastOnce())
                 .updateStatus(eq(newEntandoApp), argThat(matchesDeploymentStatus(serverDeploymentStatus)));
-        assertThat(theVolumeNamed(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + "-volume").on(serverDeployment).getSecret()
+        assertThat(theVolumeNamed(TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + "-volume").on(serverDeployment).getSecret()
                         .getSecretName(),
-                is(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
+                is(TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
         //And all volumes have been mapped
         verifyThatAllVolumesAreMapped(newEntandoApp, client, dbDeployment);
         verifyThatAllVolumesAreMapped(newEntandoApp, client, serverDeployment);
@@ -373,16 +377,17 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         //Exposing a port 8080
         assertThat(thePortNamed(SERVER_PORT).on(theServerContainer).getContainerPort(), is(8080));
         assertThat(thePortNamed(SERVER_PORT).on(theServerContainer).getProtocol(), is(TCP));
-        //And that uses the image reflecting the custom registry and Entando image version specified
-        assertThat(theServerContainer.getImage(), is("entando/entando-keycloak:6.0.0-SNAPSHOT"));
+        //And that uses the image reflecting the custom  Entando image version specified
+        assertThat(theServerContainer.getImage(), is("docker.io/entando/entando-keycloak:6.0.0-SNAPSHOT"));
         //And that is configured to point to the DB Service
         assertThat(theVariableReferenceNamed(KEYCLOAK_USER).on(theServerContainer).getSecretKeyRef().getName(),
                 is(MY_APP_ADMIN_SECRET));
-        assertThat(theVariableReferenceNamed(KEYCLOAK_USER).on(theServerContainer).getSecretKeyRef().getKey(), is(KubeUtils.USERNAME_KEY));
+        assertThat(theVariableReferenceNamed(KEYCLOAK_USER).on(theServerContainer).getSecretKeyRef().getKey(),
+                is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(KEYCLOAK_PASSWORD).on(theServerContainer).getSecretKeyRef().getName(),
                 is(MY_APP_ADMIN_SECRET));
         assertThat(theVariableReferenceNamed(KEYCLOAK_PASSWORD).on(theServerContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.PASSSWORD_KEY));
+                is(SecretUtils.PASSSWORD_KEY));
         assertThat(theVariableNamed(DB_ADDR).on(theServerContainer),
                 is(MY_APP_DB_SERVICE + "." + MY_APP_NAMESPACE + ".svc.cluster.local"));
         assertThat(theVariableNamed(DB_PORT_VAR).on(theServerContainer), is("3306"));
@@ -390,13 +395,13 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         assertThat(theVariableReferenceNamed(DB_USER).on(theServerContainer).getSecretKeyRef().getName(),
                 is(MY_APP_DB_SECRET));
         assertThat(theVariableReferenceNamed(DB_USER).on(theServerContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.USERNAME_KEY));
+                is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(DB_PASSWORD).on(theServerContainer).getSecretKeyRef().getKey(),
-                is(KubeUtils.PASSSWORD_KEY));
+                is(SecretUtils.PASSSWORD_KEY));
         assertThat(theVariableNamed(DB_VENDOR).on(theServerContainer), is("mysql"));
-        assertThat(theVolumeMountNamed(SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + "-volume").on(theServerContainer)
+        assertThat(theVolumeMountNamed(TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + "-volume").on(theServerContainer)
                         .getMountPath(),
-                is(SecretCreator.CERT_SECRET_MOUNT_ROOT + "/" + SecretCreator.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
+                is(SecretCreator.CERT_SECRET_MOUNT_ROOT + "/" + TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
     }
 
     private void verifyTheDbContainer(Container theDbContainer) {
@@ -404,7 +409,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals {
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getContainerPort(), is(3306));
         assertThat(thePortNamed(DB_PORT).on(theDbContainer).getProtocol(), is(TCP));
         //And that uses the image reflecting the custom registry and Entando image version specified
-        assertThat(theDbContainer.getImage(), is("docker.io/entando/mysql-57-centos7:latest"));
+        assertThat(theDbContainer.getImage(), is("docker.io/centos/mysql-80-centos7:latest"));
     }
 
     @Test

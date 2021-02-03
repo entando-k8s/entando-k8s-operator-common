@@ -33,13 +33,15 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.ServiceUnavailableException;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
-import org.entando.kubernetes.controller.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.plugin.ExpectedRole;
 import org.entando.kubernetes.model.plugin.Permission;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -86,8 +88,10 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         this.currentBaseUrl = baseUrl;
         this.currentUser = username;
         isHttps = baseUrl.toLowerCase().startsWith("https");
-
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        clientBuilder.register(EntandoJackson2Provider.class);
         final Keycloak attemptedKeycloak = KeycloakBuilder.builder()
+                .resteasyClient((ResteasyClient) clientBuilder.build())
                 .serverUrl(baseUrl)
                 .grantType(OAuth2Constants.PASSWORD)
                 .realm(MASTER_REALM)
@@ -210,7 +214,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             CredentialRepresentation credentials = new CredentialRepresentation();
             credentials.setValue("adminadmin");
             credentials.setTemporary(true);
-            credentials.setType(KubeUtils.PASSSWORD_KEY);
+            credentials.setType(SecretUtils.PASSSWORD_KEY);
             String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
             realmResource.users().get(userId).resetPassword(credentials);
         }

@@ -17,7 +17,7 @@
 package org.entando.kubernetes.controller.inprocesstest.argumentcaptors;
 
 import java.util.List;
-import org.entando.kubernetes.controller.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
 import org.mockito.Mockito;
 import org.mockito.internal.matchers.CapturingMatcher;
 import org.mockito.internal.util.Primitives;

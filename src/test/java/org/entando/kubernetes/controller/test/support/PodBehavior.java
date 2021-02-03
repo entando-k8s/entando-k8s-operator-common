@@ -16,7 +16,7 @@
 
 package org.entando.kubernetes.controller.test.support;
 
-import static org.entando.kubernetes.controller.PodResult.SUCCEEDED_PHASE;
+import static org.entando.kubernetes.controller.spi.common.PodResult.SUCCEEDED_PHASE;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
@@ -30,7 +30,8 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 
 public interface PodBehavior {
 
@@ -68,7 +69,7 @@ public interface PodBehavior {
                 .withNewMetadata()
                 .withLabels(template.getMetadata().getLabels())
                 .withNamespace(deployment.getMetadata().getNamespace())
-                .withName(deployment.getMetadata().getName() + "-" + RandomStringUtils.randomAlphanumeric(8))
+                .withName(deployment.getMetadata().getName() + "-" + SecretUtils.randomAlphanumeric(8))
                 .endMetadata()
                 .withNewSpec()
                 .withContainers(template.getSpec().getContainers())

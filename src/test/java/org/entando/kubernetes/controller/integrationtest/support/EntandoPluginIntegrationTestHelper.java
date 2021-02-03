@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.plugin.DoneableEntandoPlugin;
@@ -43,7 +44,7 @@ public class EntandoPluginIntegrationTestHelper extends
 
     public void createAndWaitForPlugin(EntandoPlugin plugin, boolean hasContainerizedDb) {
         // And a secret named pam-connection
-        client.secrets().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE).createOrReplace(new SecretBuilder()
+        client.secrets().inNamespace(plugin.getMetadata().getNamespace()).createOrReplace(new SecretBuilder()
                 .withNewMetadata()
                 .withName(PAM_CONNECTION_CONFIG)
                 .endMetadata()
@@ -51,30 +52,35 @@ public class EntandoPluginIntegrationTestHelper extends
                 .addToStringData("config.yaml", "thisis: nothing")
                 .build());
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> client.secrets().inNamespace(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE)
+                .until(() -> client.secrets().inNamespace(plugin.getMetadata().getNamespace())
                         .withName(PAM_CONNECTION_CONFIG).get() != null);
         getOperations()
-                .inNamespace(TEST_PLUGIN_NAMESPACE).create(plugin);
+                .inNamespace(plugin.getMetadata().getNamespace()).create(plugin);
         // Then I expect to see
         // 1. A deployment for the plugin, with a name that starts with the plugin name and ends with
         // "-deployment" and a single port for 8081
         if (hasContainerizedDb) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(120)),
-                    TEST_PLUGIN_NAMESPACE, plugin.getMetadata().getName() + "-db");
+                    plugin.getMetadata().getNamespace(), plugin.getMetadata().getName() + "-db");
         }
-
-        waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), TEST_PLUGIN_NAMESPACE,
-                plugin.getMetadata().getName() + "-server-db-job");
+        if (requiresDatabaseJob(plugin)) {
+            waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(60)), plugin, "server");
+        }
         waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240)),
-                TEST_PLUGIN_NAMESPACE, plugin.getMetadata().getName() + "-server");
+                plugin.getMetadata().getNamespace(), plugin.getMetadata().getName() + "-server");
         Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getOperations()
-                .inNamespace(TEST_PLUGIN_NAMESPACE).withName(plugin.getMetadata().getName());
+                .inNamespace(plugin.getMetadata().getNamespace()).withName(plugin.getMetadata().getName());
         //Wait for widget registration too - sometimes we get 503's for about 3 attempts
         await().atMost(240, SECONDS).until(() -> {
             EntandoCustomResourceStatus status = pluginResource.fromServer().get().getStatus();
             return status.forServerQualifiedBy("server").isPresent()
                     && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
         });
+    }
+
+    private Boolean requiresDatabaseJob(EntandoPlugin plugin) {
+        return plugin.getSpec().getDbms().map(dbmsVendor -> !(dbmsVendor == DbmsVendor.EMBEDDED || dbmsVendor == DbmsVendor.NONE))
+                .orElse(false);
     }
 
 }

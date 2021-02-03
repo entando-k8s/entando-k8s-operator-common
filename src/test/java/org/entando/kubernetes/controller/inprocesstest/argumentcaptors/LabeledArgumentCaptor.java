@@ -47,10 +47,20 @@ public final class LabeledArgumentCaptor<T extends HasMetadata> {
         andWithLabel(labelName, labelValue);
     }
 
+    public LabeledArgumentCaptor(Class<? extends T> clazz, Map<String, String> labels) {
+        this.clazz = clazz;
+        this.labelsToMatch.putAll(labels);
+    }
+
     @SuppressWarnings("unchecked")
     public static <U extends HasMetadata, S extends U> LabeledArgumentCaptor<U> forResourceWithLabel(Class<S> clazz,
             String labelname, String labelValue) {
         return new LabeledArgumentCaptor(clazz, labelname, labelValue);
+    }
+
+    public static <U extends HasMetadata, S extends U> LabeledArgumentCaptor<U> forResourceWithLabels(Class<S> clazz,
+            Map<String, String> labels) {
+        return new LabeledArgumentCaptor<>(clazz, labels);
     }
 
     public LabeledArgumentCaptor<T> andWithLabel(String labelName, String labelValue) {

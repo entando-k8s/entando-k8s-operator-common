@@ -17,7 +17,6 @@
 package org.entando.kubernetes.controller.inprocesstest;
 
 import static org.awaitility.Awaitility.await;
-import static org.entando.kubernetes.controller.KubeUtils.standardIngressName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,30 +27,39 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
+import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.KeycloakConnectionConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.SimpleKeycloakClient;
+import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.common.examples.SampleController;
 import org.entando.kubernetes.controller.common.examples.SampleDeployableContainer;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.database.DatabaseServiceResult;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
-import org.entando.kubernetes.controller.spi.Deployable;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.KeycloakAware;
-import org.entando.kubernetes.controller.spi.KubernetesPermission;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.spibase.KeycloakAwareContainerBase;
+import org.entando.kubernetes.controller.test.support.CommonLabels;
 import org.entando.kubernetes.controller.test.support.FluentTraversals;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.controller.test.support.VariableReferenceAssertions;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
@@ -63,27 +71,38 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-@SuppressWarnings("java:S5786")
-public abstract class PublicIngressingTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions {
+@SuppressWarnings({"java:S6068", "java:S6073", "java:S5786"})
+public abstract class PublicIngressingTestBase implements InProcessTestUtil, PodBehavior, FluentTraversals, VariableReferenceAssertions,
+        CommonLabels {
 
     public static final String SAMPLE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("sample-namespace");
     public static final String SAMPLE_NAME = EntandoOperatorTestConfig.calculateName("sample-name");
     public static final String OTHER_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("other-namespace");
     public static final String OTHER_NAME = EntandoOperatorTestConfig.calculateName("other-name");
-    protected SimpleK8SClient k8sClient;
+    protected SimpleK8SClient<?> k8sClient;
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
     SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
-    private SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult> controller;
+    private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    @BeforeEach
+    public void enableQueueing() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+    }
+
+    @AfterEach
+    public void shutDown() {
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty());
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
+        scheduler.shutdownNow();
+        getClient().pods().getPodWatcherQueue().clear();
+
+    }
 
     @BeforeEach
     void setIngressClass() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty(), "nginx");
-    }
-
-    @AfterEach
-    void removeIngressClass() {
-        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_INGRESS_CLASS.getJvmSystemProperty());
     }
 
     @Test
@@ -91,13 +110,13 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //Given I have a PublicIngressingDeployment in the Sample Namespace
         testBasicDeployment();
         //And I have a plugin in another namespace to share the same Ingress
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(k8sClient, mock) {
+        controller = new SampleController<>(k8sClient, mock) {
 
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin plugin,
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin plugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<EntandoPluginSpec>(plugin, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<>(plugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
                     public String getIngressNamespace() {
@@ -106,13 +125,12 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
                     @Override
                     public String getIngressName() {
-                        return KubeUtils.standardIngressName(plugin1);
+                        return ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX;
                     }
 
                     @Override
-                    @SuppressWarnings("unchecked")
-                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource entandoResource) {
-                        return Arrays.asList(new SampleDeployableContainer<EntandoPluginSpec>(entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
+                        return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult) {
                             @Override
                             public int getPrimaryPort() {
                                 return 8082;
@@ -139,14 +157,15 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect two deployments. This is where we can put all the assertions
         Deployment serverDeployment = k8sClient.deployments()
-                .loadDeployment(plugin2, OTHER_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
+                .loadDeployment(plugin2, OTHER_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
         verifyThatAllVariablesAreMapped(plugin2, k8sClient, serverDeployment);
         verifyThatAllVolumesAreMapped(plugin2, k8sClient, serverDeployment);
         assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(1));
         Deployment dbDeployment = k8sClient.deployments().loadDeployment(plugin2, OTHER_NAME + "-db-deployment");
         assertThat(dbDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(1));
         //And I expect three ingress paths
-        Ingress ingress = k8sClient.ingresses().loadIngress(plugin1.getMetadata().getNamespace(), standardIngressName(plugin1));
+        Ingress ingress = k8sClient.ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
+                ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
         assertThat(theHttpPath("/auth").on(ingress).getBackend().getServicePort().getIntVal(), is(8080));
         assertThat(theHttpPath("/auth2").on(ingress).getBackend().getServicePort().getIntVal(), is(8081));
         assertThat(theHttpPath("/auth3").on(ingress).getBackend().getServicePort().getIntVal(), is(8082));
@@ -158,19 +177,20 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //Given I have a controller that processes EntandoPlugins
         lenient().when(mock.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn("ASDFASDFASDfa");
         this.k8sClient = getClient();
-        controller = new SampleController<EntandoPlugin, EntandoPluginSpec, ExposedDeploymentResult>(k8sClient, mock) {
+        controller = new SampleController<>(k8sClient, mock) {
 
             @Override
-            protected Deployable<ExposedDeploymentResult, EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<EntandoPluginSpec>(newEntandoPlugin, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
                     @SuppressWarnings("unchecked")
                     protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
-                        return Arrays.asList(new SampleDeployableContainer<>(entandoResource),
-                                new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig));
+                        return Arrays.asList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult),
+                                new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig,
+                                        databaseServiceResult));
                     }
                 };
             }
@@ -189,14 +209,15 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect two deployments. This is where we can put all the assertions
         Deployment serverDeployment = k8sClient.deployments()
-                .loadDeployment(plugin1, SAMPLE_NAME + "-" + KubeUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
+                .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
         verifyThatAllVariablesAreMapped(plugin1, k8sClient, serverDeployment);
         verifyThatAllVolumesAreMapped(plugin1, k8sClient, serverDeployment);
         assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(2));
         Deployment dbDeployment = k8sClient.deployments().loadDeployment(plugin1, SAMPLE_NAME + "-db-deployment");
         assertThat(dbDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(1));
         //And I expect two ingress paths
-        Ingress ingress = k8sClient.ingresses().loadIngress(plugin1.getMetadata().getNamespace(), standardIngressName(plugin1));
+        Ingress ingress = k8sClient.ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
+                ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
         assertThat(theHttpPath("/auth").on(ingress).getBackend().getServicePort().getIntVal(), is(8080));
         assertThat(theHttpPath("/auth2").on(ingress).getBackend().getServicePort().getIntVal(), is(8081));
         assertThat(ingress.getMetadata().getAnnotations().get("kubernetes.io/ingress.class"), is("nginx"));
@@ -217,35 +238,30 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
     protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
             String deploymentName) {
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             try {
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                PodWatcher dbDeploymentWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
+                dbDeploymentWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
                 //wait for deletion of db preparation pod
-                await().pollInterval(1, TimeUnit.MILLISECONDS).atMost(10, TimeUnit.SECONDS)
-                        .until(() -> getClient().pods().getPodWatcherHolder().getAndSet(null) != null);
+                getClient().pods().getPodWatcherQueue().take();
                 //wait for db preparation pod
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
-                String dbJobName = String.format("%s-server-db-job",  resource.getMetadata().getName());
+                PodWatcher dbPreparationPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Pod dbPreparationPod = getClient().pods()
-                        .loadPod(resource.getMetadata().getNamespace(), KubeUtils.DB_JOB_LABEL_NAME, dbJobName);
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
-                await().atMost(10, TimeUnit.SECONDS).until(() -> getClient().pods().getPodWatcherHolder().get() != null);
+                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
+                dbPreparationPodWatcher.eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
+                PodWatcher serverPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
-                getClient().pods().getPodWatcherHolder().getAndSet(null)
-                        .eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
+                serverPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
             } catch (Exception e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
 
-        }).start();
+        }, 500, TimeUnit.MILLISECONDS);
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntandoBaseCustomResource> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
         new Thread(() -> {
             T createResource = k8sClient.entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
@@ -256,13 +272,14 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     }
 
     private static class EntandoPluginSampleDeployableContainer extends SampleDeployableContainer<EntandoPluginSpec> implements
-            KeycloakAware {
+            KeycloakAwareContainerBase {
 
-        private KeycloakConnectionConfig keycloakConnectionConfig;
+        private final KeycloakConnectionConfig keycloakConnectionConfig;
 
         public EntandoPluginSampleDeployableContainer(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource,
-                KeycloakConnectionConfig keycloakConnectionConfig) {
-            super(entandoResource);
+                KeycloakConnectionConfig keycloakConnectionConfig,
+                DatabaseServiceResult databaseServiceResult) {
+            super(entandoResource, databaseServiceResult);
             this.keycloakConnectionConfig = keycloakConnectionConfig;
         }
 
@@ -288,7 +305,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
         @Override
         public KeycloakClientConfig getKeycloakClientConfig() {
-            return new KeycloakClientConfig(determineRealm(), "some-client", "Some Client");
+            return new KeycloakClientConfig(getKeycloakRealmToUse(), "some-client", "Some Client");
         }
 
         @Override

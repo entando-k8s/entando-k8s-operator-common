@@ -20,11 +20,12 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.common.InfrastructureConfig;
-import org.entando.kubernetes.controller.common.KeycloakConnectionSecret;
-import org.entando.kubernetes.controller.common.KeycloakName;
-import org.entando.kubernetes.controller.k8sclient.SimpleK8SClient;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.test.support.VolumeMatchAssertions;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
@@ -35,20 +36,20 @@ import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBasedAnswers, K8SResourceArgumentMatchers,
         StandardArgumentCaptors, InProcessTestData {
 
-    default <T extends KeycloakAwareSpec> KeycloakConnectionSecret emulateKeycloakDeployment(SimpleK8SClient<?> client) {
+    default <T extends KeycloakAwareSpec> KeycloakConnectionConfig emulateKeycloakDeployment(SimpleK8SClient<?> client) {
         Secret secret = new SecretBuilder().withNewMetadata().withName(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .endMetadata()
-                .addToStringData(KubeUtils.USERNAME_KEY, MY_KEYCLOAK_ADMIN_USERNAME)
-                .addToStringData(KubeUtils.PASSSWORD_KEY, MY_KEYCLOAK_ADMIN_PASSWORD)
+                .addToStringData(SecretUtils.USERNAME_KEY, MY_KEYCLOAK_ADMIN_USERNAME)
+                .addToStringData(SecretUtils.PASSSWORD_KEY, MY_KEYCLOAK_ADMIN_PASSWORD)
                 .build();
         client.secrets().overwriteControllerSecret(secret);
         ConfigMap configMap = new ConfigMapBuilder().withNewMetadata().withName(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG)
                 .endMetadata()
-                .addToData(KubeUtils.URL_KEY, MY_KEYCLOAK_BASE_URL)
-                .addToData(KubeUtils.INTERNAL_URL_KEY, MY_KEYCLOAK_BASE_URL)
+                .addToData(NameUtils.URL_KEY, MY_KEYCLOAK_BASE_URL)
+                .addToData(NameUtils.INTERNAL_URL_KEY, MY_KEYCLOAK_BASE_URL)
                 .build();
         client.secrets().overwriteControllerConfigMap(configMap);
-        return new KeycloakConnectionSecret(secret, configMap);
+        return new KeycloakConnectionConfig(secret, configMap);
     }
 
     default <T extends KeycloakAwareSpec> void emulateClusterInfrastuctureDeployment(SimpleK8SClient<?> client) {

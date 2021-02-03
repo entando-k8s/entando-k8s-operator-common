@@ -24,14 +24,12 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import org.entando.kubernetes.client.DefaultIngressClient;
-import org.entando.kubernetes.controller.creators.IngressCreator;
 import org.entando.kubernetes.controller.integrationtest.support.EntandoOperatorTestConfig.TestTarget;
+import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.model.link.EntandoAppPluginLink;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 
 public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
@@ -41,11 +39,7 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
     private final EntandoPluginIntegrationTestHelper entandoPluginIntegrationTestHelper = new EntandoPluginIntegrationTestHelper(client);
     private final KeycloakIntegrationTestHelper keycloakHelper = new KeycloakIntegrationTestHelper(client);
     private final EntandoAppIntegrationTestHelper entandoAppHelper = new EntandoAppIntegrationTestHelper(client);
-    private final EntandoAppPluginLinkIntegrationTestHelper entandoAppPluginLinkHelper = new EntandoAppPluginLinkIntegrationTestHelper(
-            client);
     private final ExternalDatabaseIntegrationTestHelper externalDatabaseHelper = new ExternalDatabaseIntegrationTestHelper(client);
-    private final ClusterInfrastructureIntegrationTestHelper clusterInfrastructureHelper = new ClusterInfrastructureIntegrationTestHelper(
-            client);
 
     private static void stopStaleWatchersFromFillingUpTheLogs() {
         Enumeration<String> loggerNames = LogManager.getLogManager().getLoggerNames();
@@ -59,16 +53,8 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
         }
     }
 
-    public EntandoAppPluginLinkIntegrationTestHelper appPluginLinks() {
-        return entandoAppPluginLinkHelper;
-    }
-
     public ExternalDatabaseIntegrationTestHelper externalDatabases() {
         return externalDatabaseHelper;
-    }
-
-    public ClusterInfrastructureIntegrationTestHelper clusterInfrastructure() {
-        return clusterInfrastructureHelper;
     }
 
     public KeycloakIntegrationTestHelper keycloak() {
@@ -85,11 +71,9 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
 
     public void afterTest() {
         keycloak().afterTest();
-        clusterInfrastructure().afterTest();
         externalDatabases().afterTest();
         entandoPlugins().afterTest();
         entandoApps().afterTest();
-        appPluginLinks().afterTest();
         if (EntandoOperatorTestConfig.getTestTarget() == TestTarget.STANDALONE) {
             client.close();
             stopStaleWatchersFromFillingUpTheLogs();
@@ -106,21 +90,17 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
     }
 
     public void releaseFinalizers(TestFixtureRequest request) {
-        for (Entry<String, List<Class<? extends EntandoBaseCustomResource>>> entry : request.getRequiredDeletions().entrySet()) {
+        for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?>>>> entry : request.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
-                for (Class<? extends EntandoBaseCustomResource> type : entry.getValue()) {
+                for (Class<? extends EntandoBaseCustomResource<?>> type : entry.getValue()) {
                     if (type.equals(EntandoKeycloakServer.class)) {
                         this.keycloak().releaseAllFinalizers(entry.getKey());
                     } else if (type.equals(EntandoApp.class)) {
                         this.entandoApps().releaseAllFinalizers(entry.getKey());
                     } else if (type.equals(EntandoPlugin.class)) {
                         this.entandoPlugins().releaseAllFinalizers(entry.getKey());
-                    } else if (type.equals(EntandoClusterInfrastructure.class)) {
-                        this.clusterInfrastructure().releaseAllFinalizers(entry.getKey());
                     } else if (type.equals(EntandoDatabaseService.class)) {
                         this.externalDatabases().releaseAllFinalizers(entry.getKey());
-                    } else if (type.equals(EntandoAppPluginLink.class)) {
-                        this.appPluginLinks().releaseAllFinalizers(entry.getKey());
                     }
                 }
             }
@@ -129,10 +109,8 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
 
     public void releaseAllFinalizers() {
         keycloak().releaseAllFinalizers(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE);
-        clusterInfrastructure().releaseAllFinalizers(ClusterInfrastructureIntegrationTestHelper.CLUSTER_INFRASTRUCTURE_NAMESPACE);
         entandoApps().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
         entandoPlugins().releaseAllFinalizers(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE);
-        appPluginLinks().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
     }
 
     public String getDomainSuffix() {

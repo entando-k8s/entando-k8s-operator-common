@@ -23,14 +23,14 @@ import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import io.quarkus.runtime.StartupEvent;
 import java.util.Optional;
-import org.entando.kubernetes.controller.KubeUtils;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ControllerStartupEventFiringListener<
         R extends EntandoCustomResource,
         L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<D, R>
+        D extends DoneableEntandoCustomResource<R, D>
         > {
 
     private final CustomResourceOperationsImpl<R, L, D> operations;

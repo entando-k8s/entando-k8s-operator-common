@@ -28,11 +28,9 @@ import io.fabric8.kubernetes.client.OperationInfo;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.sql.Timestamp;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.k8sclient.ServiceAccountClient;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
+import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 /**
  * <p>RBAC objects are extremely sensitive resources in Kubernetes. Generally we expect customers to prohibiting us from
@@ -57,7 +55,7 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> DoneableServiceAccount findOrCreateServiceAccount(EntandoBaseCustomResource<T> peerInNamespace,
+    public DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace,
             String name) {
         try {
             Resource<ServiceAccount, DoneableServiceAccount> serviceAccountResource = client.serviceAccounts()
@@ -77,23 +75,22 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> String createRoleBindingIfAbsent(EntandoBaseCustomResource<T> peerInNamespace,
-            RoleBinding roleBinding) {
+    public String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
         return createIfAbsent(peerInNamespace, roleBinding, client.rbac().roleBindings());
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> RoleBinding loadRoleBinding(EntandoBaseCustomResource<T> peerInNamespace, String name) {
+    public RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name) {
         return load(peerInNamespace, name, client.rbac().roleBindings());
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> String createRoleIfAbsent(EntandoBaseCustomResource<T> peerInNamespace, Role role) {
+    public String createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role) {
         return createIfAbsent(peerInNamespace, role, client.rbac().roles());
     }
 
     @Override
-    public <T extends EntandoDeploymentSpec> Role loadRole(EntandoBaseCustomResource<T> peerInNamespace, String name) {
+    public Role loadRole(EntandoCustomResource peerInNamespace, String name) {
         return load(peerInNamespace, name, client.rbac().roles());
     }
 

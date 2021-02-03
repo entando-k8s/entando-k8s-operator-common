@@ -20,6 +20,7 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.controller.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.app.DoneableEntandoApp;
@@ -36,30 +37,30 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
         super(client, EntandoAppOperationFactory::produceAllEntandoApps);
     }
 
-    public void createAndWaitForApp(EntandoApp entandoApp, int waitOffset, boolean deployingDbContainers) {
-        getOperations().inNamespace(TEST_NAMESPACE).create(entandoApp);
-        if (deployingDbContainers) {
+    public void createAndWaitForApp(EntandoApp entandoApp, int waitOffset, boolean hasContainerizedDatabase) {
+        getOperations().inNamespace(entandoApp.getMetadata().getNamespace()).create(entandoApp);
+        if (hasContainerizedDatabase) {
             waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(150 + waitOffset)),
-                    TEST_NAMESPACE, TEST_APP_NAME + "-db");
+                    entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-db");
+
         }
-        this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
-                TEST_NAMESPACE,
-                TEST_APP_NAME + "-server-db-job");
+        if (requiresDatabaseJob(entandoApp)) {
+            this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(150 + waitOffset)), entandoApp, "server");
+        }
         this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(180 + waitOffset)),
-                TEST_NAMESPACE, TEST_APP_NAME + "-server");
-        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
-                TEST_NAMESPACE, TEST_APP_NAME + "-ab");
-        this.waitForJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)),
-                TEST_NAMESPACE,
-                TEST_APP_NAME + "-cm-db-job");
-        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(300 + waitOffset)),
-                TEST_NAMESPACE, TEST_APP_NAME + "-cm");
-        //        this times out wait for the other pods first
+                entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-server");
+        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(180 + waitOffset)),
+                entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-ab");
+        if (requiresDatabaseJob(entandoApp)) {
+            this.waitForDbJobPod(new JobPodWaiter().limitCompletionTo(Duration.ofSeconds(40 + waitOffset)), entandoApp, "cm");
+        }
+        this.waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(180 + waitOffset)),
+                entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName() + "-cm");
         await().atMost(60, SECONDS).until(
                 () -> {
                     EntandoCustomResourceStatus status = getOperations()
-                            .inNamespace(TEST_NAMESPACE)
-                            .withName(TEST_APP_NAME)
+                            .inNamespace(entandoApp.getMetadata().getNamespace())
+                            .withName(entandoApp.getMetadata().getName())
                             .fromServer().get().getStatus();
                     return status.forServerQualifiedBy("server").isPresent()
                             && status.getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL;
@@ -67,8 +68,13 @@ public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<E
 
         await().atMost(60, SECONDS).until(() -> HttpTestHelper.read(
                 HttpTestHelper.getDefaultProtocol() + "://" + entandoApp.getSpec().getIngressHostName()
-                        .orElseThrow(() -> new IllegalStateException())
+                        .orElseThrow(IllegalStateException::new)
                         + "/entando-de-app/index.jsp").contains("Entando - Welcome"));
+    }
+
+    public Boolean requiresDatabaseJob(EntandoApp entandoApp) {
+        return entandoApp.getSpec().getDbms().map(dbmsVendor -> !(dbmsVendor == DbmsVendor.EMBEDDED || dbmsVendor == DbmsVendor.NONE))
+                .orElse(false);
     }
 
 }

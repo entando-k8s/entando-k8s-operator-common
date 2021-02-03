@@ -25,6 +25,7 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import io.quarkus.runtime.StartupEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -34,22 +35,21 @@ import javax.ws.rs.ClientErrorException;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.KeycloakClientConfig;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.creators.IngressCreator;
+import org.entando.kubernetes.controller.common.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.integrationtest.support.HttpTestHelper;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.IngressingContainer;
-import org.entando.kubernetes.controller.spi.IngressingDeployable;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.container.IngressingContainer;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.creators.IngressCreator;
+import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerSpec;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -120,7 +120,7 @@ public class DummyBean {
         //When I create the public client in this realm
         kc.createPublicClient(MY_REALM, MY_CLIENT, "http://test.domain.com");
         //Then a new Client should be available
-        Optional<ClientRepresentation> publicClient = findClientInRealm(MY_REALM, KubeUtils.PUBLIC_CLIENT_ID);
+        Optional<ClientRepresentation> publicClient = findClientInRealm(MY_REALM, KeycloakName.PUBLIC_CLIENT_ID);
         assertThat(publicClient.isPresent(), is(true));
         //With publicClient enabled
         assertThat(publicClient.get().isPublicClient(), is(true));
@@ -270,7 +270,7 @@ public class DummyBean {
         ResteasyProviderFactory.setInstance(instance);
     }
 
-    private static class TestKeycloakDeployable implements IngressingDeployable<ExposedDeploymentResult, EntandoKeycloakServerSpec> {
+    private static class TestKeycloakDeployable implements IngressingDeployableBase<SampleExposedDeploymentResult> {
 
         private final List<DeployableContainer> containers = Arrays.asList(new TestKeycloakContainer());
         private final EntandoKeycloakServer keycloakServer;
@@ -305,8 +305,13 @@ public class DummyBean {
         }
 
         @Override
-        public ExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-            return new ExposedDeploymentResult(pod, service, ingress);
+        public SampleExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+            return new SampleExposedDeploymentResult(pod, service, ingress);
+        }
+
+        @Override
+        public String getServiceAccountToUse() {
+            return keycloakServer.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
         }
 
         private static class TestKeycloakContainer implements IngressingContainer {
@@ -332,10 +337,12 @@ public class DummyBean {
             }
 
             @Override
-            public void addEnvironmentVariables(List<EnvVar> vars) {
+            public List<EnvVar> getEnvironmentVariables() {
+                List<EnvVar> vars = new ArrayList<>();
                 vars.add(new EnvVar("DB_VENDOR", "h2", null));
                 vars.add(new EnvVar("KEYCLOAK_USER", "test-admin", null));
                 vars.add(new EnvVar("KEYCLOAK_PASSWORD", KCP, null));
+                return vars;
             }
 
             @Override

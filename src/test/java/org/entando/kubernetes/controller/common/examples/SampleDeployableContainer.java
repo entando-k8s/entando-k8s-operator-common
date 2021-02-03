@@ -17,21 +17,23 @@
 package org.entando.kubernetes.controller.common.examples;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import org.entando.kubernetes.controller.FluentTernary;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.database.DatabaseSchemaCreationResult;
-import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.DatabasePopulator;
-import org.entando.kubernetes.controller.spi.DbAware;
-import org.entando.kubernetes.controller.spi.IngressingContainer;
-import org.entando.kubernetes.controller.spi.ParameterizableContainer;
-import org.entando.kubernetes.controller.spi.PersistentVolumeAware;
-import org.entando.kubernetes.controller.spi.TlsAware;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
+import org.entando.kubernetes.controller.spi.container.DbAware;
+import org.entando.kubernetes.controller.spi.container.IngressingContainer;
+import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
+import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
+import org.entando.kubernetes.controller.spi.container.TlsAware;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
@@ -42,13 +44,19 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     public static final String VAR_LIB_MYDATA = "/var/lib/mydata";
 
     private final EntandoBaseCustomResource<S> entandoResource;
-    private Map<String, DatabaseSchemaCreationResult> dbSchemas;
+    private final List<DatabaseSchemaConnectionInfo> databaseSchemaInfo;
 
-    public SampleDeployableContainer(EntandoBaseCustomResource<S> entandoResource) {
+    public SampleDeployableContainer(EntandoBaseCustomResource<S> entandoResource, DatabaseServiceResult databaseServiceResult) {
         this.entandoResource = entandoResource;
+        if (databaseServiceResult == null) {
+            this.databaseSchemaInfo = Collections.emptyList();
+        } else {
+            this.databaseSchemaInfo = DbAware
+                    .buildDatabaseSchemaConnectionInfo(entandoResource, databaseServiceResult, Collections.singletonList("db"));
+        }
     }
 
-    public static <T extends EntandoBaseCustomResource> String secretName(T entandoResource) {
+    public static String secretName(EntandoCustomResource entandoResource) {
         return entandoResource.getMetadata().getName() + "-admin-secret";
     }
 
@@ -59,7 +67,7 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
 
     @Override
     public String getNameQualifier() {
-        return KubeUtils.DEFAULT_SERVER_QUALIFIER;
+        return NameUtils.DEFAULT_SERVER_QUALIFIER;
     }
 
     @Override
@@ -68,28 +76,36 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     }
 
     @Override
-    public void addEnvironmentVariables(List<EnvVar> vars) {
-        vars.add(new EnvVar("KEYCLOAK_USER", null, KubeUtils.secretKeyRef(secretName(entandoResource), KubeUtils.USERNAME_KEY)));
-        vars.add(new EnvVar("KEYCLOAK_PASSWORD", null, KubeUtils.secretKeyRef(secretName(entandoResource), KubeUtils.PASSSWORD_KEY)));
-        addDatabaseConnectionVariables(vars);
+    public List<EnvVar> getEnvironmentVariables() {
+        List<EnvVar> vars = new ArrayList<>();
+        vars.add(new EnvVar("KEYCLOAK_USER", null, SecretUtils.secretKeyRef(secretName(entandoResource), SecretUtils.USERNAME_KEY)));
+        vars.add(new EnvVar("KEYCLOAK_PASSWORD", null, SecretUtils.secretKeyRef(secretName(entandoResource), SecretUtils.PASSSWORD_KEY)));
         vars.add(new EnvVar("PROXY_ADDRESS_FORWARDING", "true", null));
+        return vars;
     }
 
     @Override
-    public void addDatabaseConnectionVariables(List<EnvVar> vars) {
-        DatabaseSchemaCreationResult databaseSchemaCreationResult = dbSchemas.get("db");
-        vars.add(new EnvVar("DB_ADDR", databaseSchemaCreationResult.getInternalServiceHostname(), null));
-        vars.add(new EnvVar("DB_PORT", databaseSchemaCreationResult.getPort(), null));
-        vars.add(new EnvVar("DB_DATABASE", databaseSchemaCreationResult.getDatabase(), null));
-        vars.add(new EnvVar("DB_PASSWORD", null, databaseSchemaCreationResult.getPasswordRef()));
-        vars.add(new EnvVar("DB_USER", null, databaseSchemaCreationResult.getUsernameRef()));
-        vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databaseSchemaCreationResult), null));
-        vars.add(new EnvVar("DB_SCHEMA", databaseSchemaCreationResult.getSchemaName(), null));
+    public List<EnvVar> getDatabaseConnectionVariables() {
+        List<EnvVar> vars = new ArrayList<>();
+        DatabaseSchemaConnectionInfo databseSchemaConnectionInfo = databaseSchemaInfo.get(0);
+        vars.add(new EnvVar("DB_ADDR", databseSchemaConnectionInfo.getInternalServiceHostname(), null));
+        vars.add(new EnvVar("DB_PORT", databseSchemaConnectionInfo.getPort(), null));
+        vars.add(new EnvVar("DB_DATABASE", databseSchemaConnectionInfo.getDatabase(), null));
+        vars.add(new EnvVar("DB_PASSWORD", null, databseSchemaConnectionInfo.getPasswordRef()));
+        vars.add(new EnvVar("DB_USER", null, databseSchemaConnectionInfo.getUsernameRef()));
+        vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databseSchemaConnectionInfo), null));
+        vars.add(new EnvVar("DB_SCHEMA", databseSchemaConnectionInfo.getSchemaName(), null));
+        return vars;
     }
 
-    private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaCreationResult databaseSchemaCreationResult) {
-        return FluentTernary.use("postgres").when(databaseSchemaCreationResult.getVendor() == DbmsDockerVendorStrategy.POSTGRESQL)
-                .orElse(databaseSchemaCreationResult.getVendor().getName());
+    @Override
+    public List<DatabaseSchemaConnectionInfo> getSchemaConnectionInfo() {
+        return this.databaseSchemaInfo;
+    }
+
+    private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaConnectionInfo databseSchemaConnectionInfo) {
+        return FluentTernary.use("postgres").when(databseSchemaConnectionInfo.getVendor().getVendorConfig() == DbmsVendorConfig.POSTGRESQL)
+                .orElse(databseSchemaConnectionInfo.getVendor().getVendorConfig().getName());
     }
 
     @Override
@@ -103,23 +119,16 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     }
 
     @Override
-    public List<String> getDbSchemaQualifiers() {
-        return Arrays.asList("db");
-    }
-
-    @Override
-    public Optional<DatabasePopulator> useDatabaseSchemas(Map<String, DatabaseSchemaCreationResult> dbSchemas) {
-        this.dbSchemas = dbSchemas;
-        return Optional.empty();
-    }
-
-    @Override
     public String getVolumeMountPath() {
         return VAR_LIB_MYDATA;
     }
 
-    @Override
-    public EntandoIngressingDeploymentSpec getCustomResourceSpec() {
+    protected EntandoIngressingDeploymentSpec getCustomResourceSpec() {
         return (EntandoIngressingDeploymentSpec) entandoResource.getSpec();
+    }
+
+    @Override
+    public List<EnvVar> getEnvironmentVariableOverrides() {
+        return getCustomResourceSpec().getEnvironmentVariables();
     }
 }

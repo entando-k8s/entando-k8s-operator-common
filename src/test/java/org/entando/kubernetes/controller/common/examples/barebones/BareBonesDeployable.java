@@ -23,21 +23,21 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
-import org.entando.kubernetes.controller.KubeUtils;
-import org.entando.kubernetes.controller.database.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.Deployable;
-import org.entando.kubernetes.controller.spi.DeployableContainer;
-import org.entando.kubernetes.controller.spi.Secretive;
+import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
-public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Deployable<BarebonesDeploymentResult, S>, Secretive {
+public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Deployable<BarebonesDeploymentResult>, Secretive {
 
     public static final String MY_SERVICE_ACCOUNT = "my-service-account";
     public static final String NAME_QUALIFIER = "db";
     private final List<DeployableContainer> containers;
     private EntandoBaseCustomResource<S> customResource;
-    private DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.POSTGRESQL;
+    private DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.CENTOS_POSTGRESQL;
 
     public BareBonesDeployable(EntandoBaseCustomResource<S> customResource) {
         this(customResource, new BareBonesContainer());
@@ -49,8 +49,8 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     }
 
     @Override
-    public List<Secret> buildSecrets() {
-        Secret secret = KubeUtils.generateSecret(customResource, BareBonesContainer.getDatabaseAdminSecretName(),
+    public List<Secret> getSecrets() {
+        Secret secret = SecretUtils.generateSecret(customResource, BareBonesContainer.getDatabaseAdminSecretName(),
                 dbmsVendor.getDefaultAdminUsername());
         return Arrays.asList(secret);
     }
@@ -79,7 +79,12 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     }
 
     @Override
-    public String getServiceAccountName() {
+    public String getServiceAccountToUse() {
+        return customResource.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
+    }
+
+    @Override
+    public String getDefaultServiceAccountName() {
         return MY_SERVICE_ACCOUNT;
     }
 }

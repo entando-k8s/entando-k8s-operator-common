@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.api.model.extensions.DoneableIngress;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Map;
-import org.entando.kubernetes.controller.k8sclient.IngressClient;
+import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class IngressClientDouble extends AbstractK8SClientDouble implements IngressClient {

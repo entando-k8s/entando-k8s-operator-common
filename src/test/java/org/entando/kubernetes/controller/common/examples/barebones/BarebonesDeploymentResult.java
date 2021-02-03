@@ -18,8 +18,8 @@ package org.entando.kubernetes.controller.common.examples.barebones;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
-import org.entando.kubernetes.controller.AbstractServiceResult;
-import org.entando.kubernetes.controller.spi.ServiceDeploymentResult;
+import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
+import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.model.AbstractServerStatus;
 
 public class BarebonesDeploymentResult extends AbstractServiceResult implements ServiceDeploymentResult<BarebonesDeploymentResult> {
@@ -40,11 +40,6 @@ public class BarebonesDeploymentResult extends AbstractServiceResult implements 
     @Override
     public String getPort() {
         return pod.getSpec().getContainers().get(0).getPorts().get(0).getContainerPort().toString();
-    }
-
-    @Override
-    public Service getService() {
-        return null;
     }
 
     @Override
