@@ -78,7 +78,7 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
     @BeforeEach
     public void enableQueueing() {
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
-        EntandoCustomResourceResolver<EntandoApp, EntandoAppList, DoneableEntandoApp> resolver = new EntandoCustomResourceResolver(
+        EntandoCustomResourceResolver<EntandoApp, EntandoAppList, DoneableEntandoApp> resolver = new EntandoCustomResourceResolver<>(
                 EntandoApp.class, EntandoAppList.class, DoneableEntandoApp.class);
         resolver.resolveOperation(server.getClient());
     }

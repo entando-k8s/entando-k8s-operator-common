@@ -27,7 +27,11 @@ pipelineConfig:
             name: container-build
     release:
       build:
+        replace: true
         steps:
+          - sh: git fetch origin
+            name: fetch-history-for-sonar
+          - sh: mvn-deploy-release -P${EXECUTABLE_TYPE}
+            name: mvn-deploy-release
           - sh: skaffold-build
             name: container-build
-
