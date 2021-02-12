@@ -19,14 +19,14 @@ package org.entando.kubernetes.controller.support.creators;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.entando.kubernetes.controller.common.examples.springboot.SpringBootDeployable;
-import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
-import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
+import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeployable;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
+import org.entando.kubernetes.test.common.InProcessTestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-class IngressCreatorTest implements InProcessTestUtil {
+class IngressCreatorTest implements InProcessTestData {
 
     SimpleK8SClient<?> client = new SimpleK8SClientDouble();
     EntandoApp entandoApp = new EntandoAppBuilder(newTestEntandoApp())

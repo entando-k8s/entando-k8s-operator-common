@@ -18,6 +18,7 @@ package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
@@ -43,39 +44,47 @@ public class KubernetesRestInterceptor implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Logger logger = Logger.getLogger(method.getDeclaringClass().getName());
-        logger.log(Level.SEVERE, () -> {
+        logger.log(Level.INFO, () -> {
             StringBuilder message = new StringBuilder(
                     String.format("Entering method %s in class %s", method.getName(),
                             method.getDeclaringClass().getName()));
-            Optional<EntandoCustomResource> first = Arrays.stream(args)
-                    .filter(EntandoCustomResource.class::isInstance)
-                    .map(EntandoCustomResource.class::cast).findFirst();
-            if (first.isPresent()) {
-                message.append(format(first.get()));
-            }
-            Optional<HasMetadata> second = Arrays.stream(args)
-                    .filter(o -> o instanceof HasMetadata && o.getClass().getName().startsWith("io.fabric8.kubernetes"))
-                    .map(HasMetadata.class::cast).findFirst();
-            if (second.isPresent()) {
+            if (args != null) {
+                Optional<EntandoCustomResource> first = Arrays.stream(args)
+                        .filter(EntandoCustomResource.class::isInstance)
+                        .map(EntandoCustomResource.class::cast).findFirst();
                 if (first.isPresent()) {
-                    message.append(" and");
+                    message.append(format(first.get()));
                 }
-                message.append(format(second.get()));
-            }
-            if (!(first.isPresent() || second.isPresent())) {
-                message.append(" with ").append(String.join(",", Arrays.stream(args).map(Object::toString).collect(Collectors.toList())));
+                Optional<HasMetadata> second = Arrays.stream(args)
+                        .filter(o -> o instanceof HasMetadata && o.getClass().getName().startsWith("io.fabric8.kubernetes"))
+                        .map(HasMetadata.class::cast).findFirst();
+                if (second.isPresent()) {
+                    if (first.isPresent()) {
+                        message.append(" and");
+                    }
+                    message.append(format(second.get()));
+                }
+                if (!(first.isPresent() || second.isPresent())) {
+                    message.append(" with ")
+                            .append(String.join(",", Arrays.stream(args).map(Object::toString).collect(Collectors.toList())));
+                }
             }
             return message.toString();
         });
         try {
             return method.invoke(delegate, args);
+        } catch (InvocationTargetException e) {
+            logger.log(Level.SEVERE, e.getTargetException(), () -> String.format("Failure executing method %s in class %s",
+                    method.getName(),
+                    method.getDeclaringClass().getName()));
+            throw e.getTargetException();
         } catch (Exception e) {
             logger.log(Level.SEVERE, e, () -> String.format("Failure executing method %s in class %s",
                     method.getName(),
                     method.getDeclaringClass().getName()));
             throw e;
         } finally {
-            logger.log(Level.SEVERE, () ->
+            logger.log(Level.INFO, () ->
                     String.format("Exiting method %s in class %s", method.getName(),
                             method.getDeclaringClass().getName()));
 

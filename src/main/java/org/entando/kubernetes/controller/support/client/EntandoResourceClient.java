@@ -41,6 +41,8 @@ public interface EntandoResourceClient {
 
     void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status);
 
+    <T extends EntandoCustomResource> T reload(T customResource);
+
     <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
     <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);

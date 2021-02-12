@@ -21,6 +21,7 @@ import static java.lang.String.format;
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.dsl.Execable;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
@@ -46,10 +47,10 @@ public interface PodClient extends PodWaitingClient {
 
     Pod runToCompletion(Pod pod);
 
-    ExecWatch executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands);
+    EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands);
 
     @SuppressWarnings({"java:S106"})
-    default ExecWatch executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, int timeoutSeconds,
+    default EntandoExecListener executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, int timeoutSeconds,
             String... script) {
         StringBuilder sb = new StringBuilder();
         for (String s : script) {
@@ -65,20 +66,22 @@ public interface PodClient extends PodWaitingClient {
                 if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
                     getExecListenerHolder().add(listener);//because it should never be full during tests. fail early.
                 }
-                ExecWatch exec = podResource.inContainer(containerName)
+                final Execable<String, ExecWatch> execable = podResource.inContainer(containerName)
                         .readingInput(in)
-                        .writingOutput(System.out)
-                        .writingError(System.err)
+                        .writingOutput(listener.getOutWriter())
+                        .redirectingError()
                         .withTTY()
-                        .usingListener(listener)
-                        .exec();
+                        .usingListener(listener);
+                listener.setExecable(execable);
+                execable.exec();
+
                 while (listener.shouldStillWait()) {
                     mutex.wait(1000);
                 }
                 if (listener.hasFailed()) {
                     throw new IllegalStateException(format("Command did not meet the wait condition within 20 seconds: %s", sb.toString()));
                 }
-                return exec;
+                return listener;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

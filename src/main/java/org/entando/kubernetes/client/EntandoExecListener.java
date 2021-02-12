@@ -17,7 +17,16 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.client.dsl.ExecListener;
+import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.dsl.Execable;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import okhttp3.Response;
+import org.apache.commons.io.IOUtils;
 
 public class EntandoExecListener implements ExecListener {
 
@@ -26,6 +35,8 @@ public class EntandoExecListener implements ExecListener {
     private final long start = System.currentTimeMillis();
     private boolean failed = false;
     boolean shouldStillWait = true;
+    private ByteArrayOutputStream outWriter = new ByteArrayOutputStream();
+    private Execable<String, ExecWatch> execable;
 
     public EntandoExecListener(Object mutex, int timeoutSeconds) {
         this.mutex = mutex;
@@ -63,7 +74,23 @@ public class EntandoExecListener implements ExecListener {
         return shouldStillWait;
     }
 
+    public OutputStream getOutWriter() {
+        return outWriter;
+    }
+
+    public List<String> getOutput() throws IOException {
+        return IOUtils.readLines(new ByteArrayInputStream(outWriter.toByteArray()), StandardCharsets.UTF_8);
+    }
+
     public boolean hasFailed() {
         return failed;
+    }
+
+    public void setExecable(Execable<String, ExecWatch> execable) {
+        this.execable = execable;
+    }
+
+    public Execable<String, ExecWatch> getExecable() {
+        return execable;
     }
 }

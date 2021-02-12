@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.support.creators;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.entando.kubernetes.controller.common.examples.barebones.BareBonesContainer;
+import org.entando.kubernetes.controller.spi.examples.barebones.BareBonesContainer;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

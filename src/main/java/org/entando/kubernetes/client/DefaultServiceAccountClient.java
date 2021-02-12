@@ -94,23 +94,14 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
         return load(peerInNamespace, name, client.rbac().roles());
     }
 
+    @SuppressWarnings("unchecked")
     private <R extends HasMetadata, D extends Doneable<R>> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
             MixedOperation<R, ?, D, Resource<R, D>> operation) {
         if (load(peerInNamespace, resource.getMetadata().getName(), operation) == null) {
-            return create(peerInNamespace, resource, operation);
-        }
-        return resource.getMetadata().getName();
-    }
-
-    @SuppressWarnings("unchecked")
-    private <R extends HasMetadata, D extends Doneable<R>> String create(EntandoCustomResource peerInNamespace, R resource,
-            MixedOperation<R, ?, D, Resource<R, D>> operation) {
-        try {
             return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).create(resource)
                     .getMetadata().getName();
-        } catch (KubernetesClientException e) {
-            return KubernetesExceptionProcessor.squashDuplicateExceptionOnCreate(peerInNamespace, resource, e);
         }
+        return resource.getMetadata().getName();
     }
 
     private <R extends HasMetadata, D extends Doneable<R>> R load(EntandoCustomResource peerInNamespace, String name,

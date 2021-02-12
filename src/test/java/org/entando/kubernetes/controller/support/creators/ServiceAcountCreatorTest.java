@@ -24,18 +24,18 @@ import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import java.util.Arrays;
 import java.util.List;
-import org.entando.kubernetes.controller.common.examples.SampleDeployableContainer;
-import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
-import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
+import org.entando.kubernetes.controller.spi.examples.SampleDeployableContainer;
+import org.entando.kubernetes.controller.spi.examples.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
+import org.entando.kubernetes.test.common.InProcessTestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-class ServiceAcountCreatorTest implements InProcessTestUtil {
+class ServiceAcountCreatorTest implements InProcessTestData {
 
     private static final String MY_SERVICE_ACCOUNT = "my-service-account";
     private static final String MY_IMAGE_PULL_SECRET = "my-image-pull-secret";

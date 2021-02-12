@@ -21,6 +21,7 @@ import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
@@ -42,18 +43,26 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
     }
 
     @Override
+    public boolean supportsStartupProbes() {
+        final VersionInfo version = client.getVersion();
+        //Is null when using the MockServer. Return true because that is the most common scenario we want to test
+        return version == null || Integer.parseInt(version.getMinor()) >= 16;
+    }
+
+    @Override
     public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace,
             Deployment deployment) {
         Deployment existingDeployment = getDeploymenResourceFor(peerInNamespace, deployment).get();
         if (existingDeployment == null) {
             return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(deployment);
         } else {
-            getDeploymenResourceFor(peerInNamespace, deployment).scale(0, true);
+            //Don't wait because watching the pods until they have been removed is safer than to Fabric8's polling
+            getDeploymenResourceFor(peerInNamespace, deployment).scale(0, false);
             FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
             if (!podResource.list().getItems().isEmpty()) {
-                watchPod(pod -> podResource.list().getItems().isEmpty(), EntandoOperatorConfig.getPodCompletionTimeoutSeconds(),
+                watchPod(pod -> podResource.list().getItems().isEmpty(), EntandoOperatorConfig.getPodShutdownTimeoutSeconds(),
                         podResource);
             }
             //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod

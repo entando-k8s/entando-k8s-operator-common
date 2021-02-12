@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller.spi.container;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public interface DeployableContainer {
@@ -31,6 +32,10 @@ public interface DeployableContainer {
 
     default String determineImageToUse() {
         return "busybox";
+    }
+
+    default Optional<Integer> getMaximumStartupTimeSeconds() {
+        return Optional.empty();
     }
 
     String getNameQualifier();

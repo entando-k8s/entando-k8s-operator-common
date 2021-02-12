@@ -24,6 +24,7 @@ import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableEvent;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.CustomResourceList;
@@ -35,7 +36,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -68,6 +71,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
     private final KubernetesClient client;
     private final EntandoResourceOperationsRegistry entandoResourceRegistry;
+    private final Map<String, CustomResourceDefinition> definitions = new ConcurrentHashMap<>();
 
     public DefaultEntandoResourceClient(KubernetesClient client) {
         this.client = client;
@@ -99,7 +103,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         ConfigMap configMap = this.client.configMaps().inNamespace(configMapNamespace).withName(configMapName).fromServer().get();
         if (configMap == null) {
             throw new IllegalStateException(
-                    format("Could not find the Keycloak configMp %s in namespace %s", configMapName, configMapNamespace));
+                    format("Could not find the Keycloak ConfigMap %s in namespace %s", configMapName, configMapNamespace));
         }
         return new KeycloakConnectionConfig(secret, configMap);
 
@@ -215,6 +219,25 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <T extends EntandoCustomResource> T reload(T customResource) {
+        if (customResource instanceof EntandoBaseCustomResource) {
+            return (T) load(customResource.getClass(), customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
+        } else {
+            return (T) client.customResources(
+                    resolveDefinition((SerializedEntandoResource) customResource),
+                    SerializedEntandoResource.class,
+                    CustomResourceList.class,
+                    DoneableCustomResource.class
+            )
+                    .inNamespace(customResource.getMetadata().getNamespace())
+                    .withName(customResource.getMetadata().getName())
+                    .fromServer()
+                    .get();
+        }
+    }
+
+    @Override
     public void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase) {
         performStatusUpdate(customResource,
                 t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
@@ -235,7 +258,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 t -> {
                     t.getStatus().findCurrentServerStatus()
                             .ifPresent(
-                                    newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
+                                    newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder()
+                                            .withException(reason)
+                                            .withFailedObjectName(customResource.getMetadata().getNamespace(),
+                                                    customResource.getMetadata().getName())
+                                            .withFailedObjectType(customResource.getKind())
+                                            .build()));
                     t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());
                 },
                 e -> e.withType("Error")
@@ -290,6 +318,9 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
             operations = getOperations((Class<T>) customResource.getClass());
         } else {
             SerializedEntandoResource ser = (SerializedEntandoResource) customResource;
+            if (ser.getDefinition() == null) {
+                ser.setDefinition(resolveDefinition(ser));
+            }
             operations = (CustomResourceOperationsImpl) client
                     .customResources(ser.getDefinition(), SerializedEntandoResource.class, CustomResourceList.class,
                             DoneableCustomResource.class);
@@ -301,6 +332,22 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         T latest = resource.fromServer().get();
         consumer.accept(latest);
         resource.updateStatus(latest);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private CustomResourceDefinition resolveDefinition(SerializedEntandoResource ser) {
+        final String key = ser.getApiVersion() + "/" + ser.getKind();
+        CustomResourceDefinition definition = definitions.get(key);
+        if (definition == null) {
+            definition = client.customResourceDefinitions().list().getItems()
+                    .stream().filter(crd ->
+                            crd.getSpec().getNames().getKind().equals(ser.getKind()) && ser
+                                    .getApiVersion()
+                                    .startsWith(crd.getSpec().getGroup())).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + ser.getKind()));
+            definitions.put(key, definition);
+        }
+        return definition;
     }
 
 }

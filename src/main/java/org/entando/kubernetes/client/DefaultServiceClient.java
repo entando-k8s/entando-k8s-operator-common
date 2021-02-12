@@ -33,15 +33,15 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
-    public void createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
+    public Endpoints createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
         //TODO remove the namespace overriding once we create delegate services from the correct context (the App)
         String namespace = ofNullable(endpoints.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
         if (client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).get() != null) {
             client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
         }
-
-        client.endpoints().inNamespace(namespace).create(endpoints);
+        endpoints.getMetadata().setResourceVersion(null);
+        return client.endpoints().inNamespace(namespace).create(endpoints);
     }
 
     @Override
