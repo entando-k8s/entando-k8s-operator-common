@@ -83,7 +83,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
     SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
     private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
     @BeforeEach
     public void enableQueueing() {
@@ -258,15 +258,14 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         }, 500, TimeUnit.MILLISECONDS);
     }
 
-    @SuppressWarnings("unchecked")
     public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             T createResource = k8sClient.entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, createResource.getMetadata().getNamespace());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, createResource.getMetadata().getName());
             controller.onStartup(new StartupEvent());
-        }).start();
+        }, 0L, TimeUnit.MILLISECONDS);
     }
 
     private static class EntandoPluginSampleDeployableContainer extends SampleDeployableContainer<EntandoPluginSpec> implements

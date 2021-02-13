@@ -272,7 +272,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, createResource.getMetadata().getNamespace());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, createResource.getMetadata().getName());
             controller.onStartup(new StartupEvent());
-        }, 10, TimeUnit.MILLISECONDS);
+        }, 0, TimeUnit.MILLISECONDS);
     }
 
     private EntandoPlugin buildPlugin(String sampleNamespace, String sampleName) {
