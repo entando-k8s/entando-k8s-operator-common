@@ -117,7 +117,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         //When I create a new EntandoPlugin
         onAdd(plugin);
 
-        await().ignoreExceptions().atMost(20, TimeUnit.MINUTES).until(() ->
+        await().ignoreExceptions().atMost(20, TimeUnit.SECONDS).until(() ->
                 k8sClient.entandoResources()
                         .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
                         .getStatus()
@@ -158,7 +158,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         //When I create a new EntandoPlugin
         onAdd(plugin);
 
-        await().ignoreExceptions().atMost(20, TimeUnit.MINUTES).until(() ->
+        await().ignoreExceptions().atMost(20, TimeUnit.SECONDS).until(() ->
                 k8sClient.entandoResources()
                         .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
                         .getStatus()
