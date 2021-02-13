@@ -98,8 +98,9 @@ public class DefaultSecretClient implements SecretClient {
     @Override
     public void overwriteControllerConfigMap(ConfigMap configMap) {
         try {
-            configMap.getMetadata().setNamespace(client.getNamespace());
-            client.configMaps().inNamespace(client.getNamespace()).createOrReplace(configMap);
+            final String namespace = EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace());
+            configMap.getMetadata().setNamespace(namespace);
+            client.configMaps().inNamespace(namespace).createOrReplace(configMap);
         } catch (KubernetesClientException e) {
             KubernetesExceptionProcessor.verifyDuplicateExceptionOnCreate(client.getNamespace(), configMap, e);
         }

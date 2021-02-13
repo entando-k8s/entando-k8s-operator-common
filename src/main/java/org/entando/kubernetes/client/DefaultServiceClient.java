@@ -21,6 +21,7 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -41,7 +42,14 @@ public class DefaultServiceClient implements ServiceClient {
             client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
         }
         endpoints.getMetadata().setResourceVersion(null);
-        return client.endpoints().inNamespace(namespace).create(endpoints);
+        for (int i = 0; i < 10; i++) {
+            try {
+                return client.endpoints().inNamespace(namespace).create(endpoints);
+            } catch (KubernetesClientException e) {
+                //Waiting for K8S to delete it.
+            }
+        }
+        throw new IllegalStateException("Could not create Endpoints.");
     }
 
     @Override

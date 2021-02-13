@@ -185,7 +185,6 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 return new SamplePublicIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
-                    @SuppressWarnings("unchecked")
                     protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
                         return Arrays.asList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult),
                                 new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig,
@@ -201,7 +200,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //When I create a new EntandoPlugin
         onAdd(plugin1);
 
-        await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
+        await().ignoreExceptions().atMost(20, TimeUnit.SECONDS).until(() ->
                 k8sClient.entandoResources()
                         .load(plugin1.getClass(), plugin1.getMetadata().getNamespace(), plugin1.getMetadata().getName())
                         .getStatus()
