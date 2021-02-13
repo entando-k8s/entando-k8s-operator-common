@@ -46,7 +46,20 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
     public boolean supportsStartupProbes() {
         final VersionInfo version = client.getVersion();
         //Is null when using the MockServer. Return true because that is the most common scenario we want to test
-        return version == null || Integer.parseInt(version.getMinor()) >= 16;
+        return version == null || parseVersion(version) >= 16;
+    }
+
+    private int parseVersion(VersionInfo version) {
+        StringBuilder sb = new StringBuilder();
+        //Some versions have trailing non-digit characters
+        for (char current : version.getMinor().toCharArray()) {
+            if (Character.isDigit(current)) {
+                sb.append(current);
+            } else {
+                break;
+            }
+        }
+        return Integer.parseInt(sb.toString());
     }
 
     @Override

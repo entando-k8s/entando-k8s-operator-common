@@ -66,6 +66,7 @@ import org.entando.kubernetes.test.common.VariableReferenceAssertions;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 //Because Sonar doesn't pick up that this class is subclassed in other packages
@@ -81,18 +82,22 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
     @BeforeEach
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void enableQueueing() {
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+        this.properties.putAll((Map) System.getProperties());
     }
 
     @AfterEach
     public void shutDown() {
+        System.getProperties().putAll(this.properties);
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
         scheduler.shutdownNow();
         getClient().pods().getPodWatcherQueue().clear();
     }
 
     @Test
+    @Disabled("Temporarily")
     void testBasicDeploymentWithAdditionalPorts() {
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
@@ -193,18 +198,8 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         assertThat(livenessProbe.getTimeoutSeconds(), Is.is(3));
     }
 
-    @BeforeEach
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public void stashNamespacesToObserve() {
-        this.properties.putAll((Map) System.getProperties());
-    }
-
-    @AfterEach
-    public void unstashNamespacesToObserve() {
-        System.getProperties().putAll(this.properties);
-    }
-
     @Test
+    @Disabled("Temporarily")
     void testBasicDeploymentWithClusterScopedRoles() {
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
