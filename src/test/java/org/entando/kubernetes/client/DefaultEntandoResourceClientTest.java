@@ -57,14 +57,14 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 @EnableRuleMigrationSupport
 class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
 
-    public static final String APP_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("app-namespace");
+    public static final String APP_NAMESPACE = EntandoOperatorTestConfig.calculateName("app-namespace");
     public static final String HTTP_TEST_COM = "http://test.com";
     public static final String HTTP_TEST_SVC_CLUSTER_LOCAL = "http://test.svc.cluster.local";
     public static final String ADMIN = "admin";
     public static final String PASSWORD_01 = "Password01";
     public static final String MY_ECI_CLIENTID = "my-eci-clientid";
-    private static final String INFRA_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("infra-namespace");
-    private static final String KEYCLOAK_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("keycloak-namespace");
+    private static final String INFRA_NAMESPACE = EntandoOperatorTestConfig.calculateName("infra-namespace");
+    private static final String KEYCLOAK_NAMESPACE = EntandoOperatorTestConfig.calculateName("keycloak-namespace");
 
     @Override
     protected String[] getNamespacesToUse() {

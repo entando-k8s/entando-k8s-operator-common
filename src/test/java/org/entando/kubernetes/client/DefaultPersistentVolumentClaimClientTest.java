@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,11 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 class DefaultPersistentVolumentClaimClientTest extends AbstractK8SIntegrationTest {
 
     private final EntandoApp entandoApp = newTestEntandoApp();
+
+    @BeforeEach
+    void deletePersistentVolumeClaims() {
+        super.deleteAll(getFabric8Client().persistentVolumeClaims());
+    }
 
     @Test
     void shouldCreatePersistentVolumeClaimIfAbsent() {

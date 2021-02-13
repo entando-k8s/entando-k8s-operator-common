@@ -24,6 +24,7 @@ import io.fabric8.kubernetes.api.model.EndpointsBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,11 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 class DefaultServiceClientTest extends AbstractK8SIntegrationTest {
 
     private final EntandoApp entandoApp = newTestEntandoApp();
+
+    @BeforeEach
+    void deleteServices() {
+        deleteAll(getFabric8Client().services());
+    }
 
     @Test
     void shouldCreateOrReplaceService() {
