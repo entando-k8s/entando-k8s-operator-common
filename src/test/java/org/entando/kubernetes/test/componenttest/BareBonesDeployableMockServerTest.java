@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
-@Tags({@Tag("in-process"), @Tag("pre-deploymentt"), @Tag("component")})
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 @EnableRuleMigrationSupport
 //Because Sonar cannot detect that the test methods are declared in the superclas
 @SuppressWarnings("java:S2187")

@@ -66,7 +66,6 @@ import org.entando.kubernetes.test.common.VariableReferenceAssertions;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 //Because Sonar doesn't pick up that this class is subclassed in other packages
@@ -97,7 +96,6 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     }
 
     @Test
-    @Disabled("Temporarily")
     void testBasicDeploymentWithAdditionalPorts() {
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
@@ -199,7 +197,6 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     }
 
     @Test
-    @Disabled("Temporarily")
     void testBasicDeploymentWithClusterScopedRoles() {
         //Given I have a controller that processes EntandoPlugins
         this.k8sClient = getClient();
