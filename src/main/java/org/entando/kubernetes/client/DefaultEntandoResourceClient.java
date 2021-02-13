@@ -51,6 +51,7 @@ import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
@@ -92,7 +93,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .orElse(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG);
         String configMapNamespace = keycloakToUse
                 .map(resourceReference -> resourceReference.getNamespace().orElseThrow(IllegalStateException::new))
-                .orElse(client.getNamespace());
+                .orElse(getControllerConfigMapNamespace());
         //This secret is duplicated in the deployment namespace, but the controller can only read the one in its own namespace
         Secret secret = this.client.secrets().withName(secretName).fromServer().get();
         if (secret == null) {
@@ -121,13 +122,13 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     @Override
     public DoneableConfigMap loadDefaultConfigMap() {
-        Resource<ConfigMap, DoneableConfigMap> resource = client.configMaps().inNamespace(client.getNamespace())
+        Resource<ConfigMap, DoneableConfigMap> resource = client.configMaps().inNamespace(getControllerConfigMapNamespace())
                 .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME);
         if (resource.get() == null) {
-            return client.configMaps().inNamespace(client.getNamespace()).createNew()
+            return client.configMaps().inNamespace(getControllerConfigMapNamespace()).createNew()
                     .withNewMetadata()
                     .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME)
-                    .withNamespace(client.getNamespace())
+                    .withNamespace(getControllerConfigMapNamespace())
                     .endMetadata()
                     .addToData(new HashMap<>());
 
@@ -291,7 +292,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private <T extends EntandoCustomResource> void performStatusUpdate(EntandoCustomResource customResource,
             Consumer<T> consumer, UnaryOperator<DoneableEvent> eventPopulator) {
         final DoneableEvent doneableEvent = client.events().inNamespace(customResource.getMetadata().getNamespace()).createNew()
@@ -334,7 +335,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         resource.updateStatus(latest);
     }
 
-    @SuppressWarnings("rawtypes")
     private CustomResourceDefinition resolveDefinition(SerializedEntandoResource ser) {
         final String key = ser.getApiVersion() + "/" + ser.getKind();
         return definitions.computeIfAbsent(key, s -> client.customResourceDefinitions().list().getItems()
@@ -343,6 +343,10 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                                 .getApiVersion()
                                 .startsWith(crd.getSpec().getGroup())).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + ser.getKind())));
+    }
+
+    private String getControllerConfigMapNamespace() {
+        return EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace());
     }
 
 }

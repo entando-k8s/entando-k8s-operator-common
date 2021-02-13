@@ -73,7 +73,7 @@ public class DefaultSecretClient implements SecretClient {
 
     @Override
     public ConfigMap loadControllerConfigMap(String configMapName) {
-        return client.configMaps().inNamespace(EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace()))
+        return client.configMaps().inNamespace(getOperatorConfigMapNamespace())
                 .withName(configMapName).get();
     }
 
@@ -98,7 +98,7 @@ public class DefaultSecretClient implements SecretClient {
     @Override
     public void overwriteControllerConfigMap(ConfigMap configMap) {
         try {
-            final String namespace = EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace());
+            final String namespace = getOperatorConfigMapNamespace();
             configMap.getMetadata().setNamespace(namespace);
             client.configMaps().inNamespace(namespace).createOrReplace(configMap);
         } catch (KubernetesClientException e) {
@@ -106,4 +106,7 @@ public class DefaultSecretClient implements SecretClient {
         }
     }
 
+    private String getOperatorConfigMapNamespace() {
+        return EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace());
+    }
 }
