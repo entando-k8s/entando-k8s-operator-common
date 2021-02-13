@@ -298,7 +298,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         final DoneableEvent doneableEvent = client.events().inNamespace(customResource.getMetadata().getNamespace()).createNew()
                 .withNewMetadata()
                 .withNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName() + "-" + NameUtils.randomNumeric(4))
+                .withName(customResource.getMetadata().getName() + "-" + NameUtils.randomNumeric(8))
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
                 .endMetadata()
                 .withCount(1)
