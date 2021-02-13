@@ -60,7 +60,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@Tags({@Tag("inter-process"), @Tag("pre-deployment"), @Tag("component")})
+@Tags({@Tag("inter-process"), @Tag("pre-deploymentt"), @Tag("component")})
 class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTesting {
 
     public static final String TEST_PLUGIN_NAME = EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAME + "-name-longer-than-32";
@@ -130,9 +130,9 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
 
     private static Stream<Arguments> provideStringsForIsBlank() {
         return Stream.of(
-                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.COMMUNITY),
-                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.REDHAT),
-                Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.COMMUNITY),
+//                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.COMMUNITY),
+//                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.REDHAT),
+//                Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.COMMUNITY),
                 Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.REDHAT)
         );
     }
