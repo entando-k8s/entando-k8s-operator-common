@@ -44,33 +44,7 @@ public class KubernetesRestInterceptor implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Logger logger = Logger.getLogger(method.getDeclaringClass().getName());
-        logger.log(Level.INFO, () -> {
-            StringBuilder message = new StringBuilder(
-                    String.format("Entering method %s in class %s", method.getName(),
-                            method.getDeclaringClass().getName()));
-            if (args != null) {
-                Optional<EntandoCustomResource> first = Arrays.stream(args)
-                        .filter(EntandoCustomResource.class::isInstance)
-                        .map(EntandoCustomResource.class::cast).findFirst();
-                if (first.isPresent()) {
-                    message.append(format(first.get()));
-                }
-                Optional<HasMetadata> second = Arrays.stream(args)
-                        .filter(o -> o instanceof HasMetadata && o.getClass().getName().startsWith("io.fabric8.kubernetes"))
-                        .map(HasMetadata.class::cast).findFirst();
-                if (second.isPresent()) {
-                    if (first.isPresent()) {
-                        message.append(" and");
-                    }
-                    message.append(format(second.get()));
-                }
-                if (!(first.isPresent() || second.isPresent())) {
-                    message.append(" with ")
-                            .append(String.join(",", Arrays.stream(args).map(Object::toString).collect(Collectors.toList())));
-                }
-            }
-            return message.toString();
-        });
+        logger.log(Level.INFO, () -> buildEnterMessage(method, args));
         try {
             return method.invoke(delegate, args);
         } catch (InvocationTargetException e) {
@@ -89,6 +63,32 @@ public class KubernetesRestInterceptor implements InvocationHandler {
                             method.getDeclaringClass().getName()));
 
         }
+    }
+
+    private String buildEnterMessage(Method method, Object[] args) {
+        StringBuilder message = new StringBuilder(
+                String.format("Entering method %s in class %s", method.getName(),
+                        method.getDeclaringClass().getName()));
+        if (args != null) {
+            Optional<EntandoCustomResource> first = Arrays.stream(args)
+                    .filter(EntandoCustomResource.class::isInstance)
+                    .map(EntandoCustomResource.class::cast).findFirst();
+            first.ifPresent(entandoCustomResource -> message.append(format(entandoCustomResource)));
+            Optional<HasMetadata> second = Arrays.stream(args)
+                    .filter(o -> o instanceof HasMetadata && o.getClass().getName().startsWith("io.fabric8.kubernetes"))
+                    .map(HasMetadata.class::cast).findFirst();
+            if (second.isPresent()) {
+                if (first.isPresent()) {
+                    message.append(" and");
+                }
+                message.append(format(second.get()));
+            }
+            if (!(first.isPresent() || second.isPresent())) {
+                message.append(" with ")
+                        .append(Arrays.stream(args).map(Object::toString).collect(Collectors.joining(",")));
+            }
+        }
+        return message.toString();
     }
 
 }

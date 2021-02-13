@@ -337,17 +337,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     @SuppressWarnings("rawtypes")
     private CustomResourceDefinition resolveDefinition(SerializedEntandoResource ser) {
         final String key = ser.getApiVersion() + "/" + ser.getKind();
-        CustomResourceDefinition definition = definitions.get(key);
-        if (definition == null) {
-            definition = client.customResourceDefinitions().list().getItems()
-                    .stream().filter(crd ->
-                            crd.getSpec().getNames().getKind().equals(ser.getKind()) && ser
-                                    .getApiVersion()
-                                    .startsWith(crd.getSpec().getGroup())).findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + ser.getKind()));
-            definitions.put(key, definition);
-        }
-        return definition;
+        return definitions.computeIfAbsent(key, s -> client.customResourceDefinitions().list().getItems()
+                .stream().filter(crd ->
+                        crd.getSpec().getNames().getKind().equals(ser.getKind()) && ser
+                                .getApiVersion()
+                                .startsWith(crd.getSpec().getGroup())).findFirst()
+                .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + ser.getKind())));
     }
 
 }

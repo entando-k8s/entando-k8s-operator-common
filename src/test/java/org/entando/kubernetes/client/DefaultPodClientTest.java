@@ -19,6 +19,7 @@ package org.entando.kubernetes.client;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import io.fabric8.kubernetes.api.model.Pod;
@@ -157,6 +158,7 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         getSimpleK8SClient().pods().executeOnPod(startedPod, "nginx", 5, "touch /tmp/ready");
         getSimpleK8SClient().pods().executeOnPod(startedPod, "nginx", 5, "touch /tmp/live");
         getSimpleK8SClient().pods().executeOnPod(startedPod, "nginx", 5, "rm /tmp/live");
+        assertThat(startedPod, is(notNullValue()));
     }
 
     @Test
