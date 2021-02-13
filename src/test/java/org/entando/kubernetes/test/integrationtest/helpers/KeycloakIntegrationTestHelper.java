@@ -32,6 +32,7 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
@@ -73,7 +74,7 @@ public class KeycloakIntegrationTestHelper extends
         String namespace = client.getNamespace();
         client.configMaps().createOrReplaceWithNew()
                 .withNewMetadata()
-                .withNamespace(namespace)
+                .withNamespace(EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(namespace))
                 .withName(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG)
                 .endMetadata()
                 .addToData(NameUtils.URL_KEY, EntandoOperatorTestConfig.getKeycloakBaseUrl())

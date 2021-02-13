@@ -130,9 +130,9 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
 
     private static Stream<Arguments> provideStringsForIsBlank() {
         return Stream.of(
-//                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.COMMUNITY),
-//                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.REDHAT),
-//                Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.COMMUNITY),
+                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.COMMUNITY),
+                Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.REDHAT),
+                Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.COMMUNITY),
                 Arguments.of(DbmsVendor.MYSQL, EntandoOperatorComplianceMode.REDHAT)
         );
     }
