@@ -72,7 +72,8 @@ public class KeycloakIntegrationTestHelper extends
 
     public void prepareDefaultKeycloakSecretAndConfigMap() {
         String namespace = client.getNamespace();
-        client.configMaps().createOrReplaceWithNew()
+        client.configMaps().inNamespace(EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(namespace))
+                .createOrReplaceWithNew()
                 .withNewMetadata()
                 .withNamespace(EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(namespace))
                 .withName(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG)
