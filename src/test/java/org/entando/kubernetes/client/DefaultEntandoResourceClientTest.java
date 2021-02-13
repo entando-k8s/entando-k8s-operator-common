@@ -237,7 +237,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
                 .findExternalDatabase(resource, DbmsVendor.POSTGRESQL);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the Keycloak in the SAME namespace as the EntadoApp.
-        assertThat(config.get().getInternalServiceHostname(), is("my-database-service-db-service.app-namespace.svc.cluster.local"));
+        assertThat(config.get().getInternalServiceHostname(), is("my-database-service-db-service." + APP_NAMESPACE + ".svc.cluster.local"));
     }
 
     @Test
