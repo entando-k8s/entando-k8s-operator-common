@@ -254,9 +254,9 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
             builder = builder.withPeriodSeconds(10).withFailureThreshold(1);
         } else {
             //Delay half of the maximum allowed startup time
-            //allow for three failures that are spaced out enough time for the
+            //allow for four failures that are spaced out enough time for the
             //container only to fail after the maximum startup time
-            builder = builder.withInitialDelaySeconds(maximumStartupTimeSeconds / 2)
+            builder = builder.withInitialDelaySeconds(maximumStartupTimeSeconds / 3)
                     .withPeriodSeconds(maximumStartupTimeSeconds / 6)
                     .withFailureThreshold(3);
         }

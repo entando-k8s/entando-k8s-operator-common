@@ -21,6 +21,7 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DockerImageInfo;
@@ -39,6 +40,11 @@ public class DatabaseContainer implements ServiceBackingContainer, PersistentVol
         this.variableInitializer = variableInitializer;
         this.dbmsVendorDockerStrategy = dbmsVendorDockerStrategy;
         this.portOverride = portOverride;
+    }
+
+    @Override
+    public Optional<Integer> getMaximumStartupTimeSeconds() {
+        return Optional.of(90);
     }
 
     @Override
