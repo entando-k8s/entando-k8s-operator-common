@@ -48,9 +48,9 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
-import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
-import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
+import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppBuilder;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
@@ -67,8 +67,8 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     public static final String SAMPLE_NAMESPACE = "sample-namespace";
     public static final String SAMPLE_NAME = "sample-name";
     public static final String SAMPLE_NAME_DB = NameUtils.snakeCaseOf(SAMPLE_NAME + "_db");
-    EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
+    EntandoApp plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
+    private SampleController<EntandoAppSpec, EntandoApp, SampleExposedDeploymentResult> controller;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
     @BeforeEach
@@ -85,20 +85,20 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
 
     @Test
     void testBasicDeployment() {
-        //Given I have a controller that processes EntandoPlugins
+        //Given I have a controller that processes EntandoApps
         controller = new SampleController<>(getClient(), getKeycloakClient()) {
             @Override
-            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
+                return new SpringBootDeployable<>(newEntandoApp, keycloakConnectionConfig, databaseServiceResult);
             }
         };
         //And I have prepared the Standard KeycloakAdminSecert
         emulateKeycloakDeployment(getClient());
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
-        //When I create a new EntandoPlugin
+        //When I create a new EntandoApp
         onAdd(plugin1);
 
         await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
@@ -143,11 +143,11 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));
     }
 
-    private EntandoPlugin buildPlugin(String sampleNamespace, String sampleName) {
-        return new EntandoPluginBuilder().withNewMetadata()
+    private EntandoApp buildPlugin(String sampleNamespace, String sampleName) {
+        return new EntandoAppBuilder().withNewMetadata()
                 .withNamespace(sampleNamespace)
                 .withName(sampleName).endMetadata().withNewSpec()
-                .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
+                .withCustomServerImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
                 .addToEnvironmentVariables("MY_VAR", "MY_VAL")
                 .withDbms(DbmsVendor.POSTGRESQL).withReplicas(2).withIngressHostName("myhost.name.com")
                 .endSpec().build();

@@ -57,9 +57,9 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
-import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
-import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
+import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppBuilder;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
@@ -75,9 +75,9 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     public static final String SAMPLE_NAMESPACE = "sample-namespace";
     public static final String SAMPLE_NAME = "sample-name";
     private final Map<String, String> properties = new ConcurrentHashMap<>();
-    private final EntandoPlugin plugin = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
+    private final EntandoApp plugin = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     protected SimpleK8SClient<?> k8sClient;
-    private SampleController<EntandoPluginSpec, EntandoPlugin, BarebonesDeploymentResult> controller;
+    private SampleController<EntandoAppSpec, EntandoApp, BarebonesDeploymentResult> controller;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
     @BeforeEach
@@ -97,16 +97,16 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
 
     @Test
     void testBasicDeploymentWithAdditionalPorts() {
-        //Given I have a controller that processes EntandoPlugins
+        //Given I have a controller that processes EntandoApps
         this.k8sClient = getClient();
         emulateKeycloakDeployment(k8sClient);
         controller = new SampleController<>(k8sClient,
                 mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
+                return new BareBonesDeployable<>(newEntandoApp, new BareBonesContainer() {
                     @Override
                     public List<PortSpec> getAdditionalPorts() {
                         return Collections.singletonList(new PortSpec("ping", 8888));
@@ -117,7 +117,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         };
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin, plugin.getMetadata().getName());
-        //When I create a new EntandoPlugin
+        //When I create a new EntandoApp
         onAdd(plugin);
 
         await().ignoreExceptions().atMost(20, TimeUnit.SECONDS).until(() ->
@@ -138,16 +138,16 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
 
     @Test
     void testBasicDeploymentWithAllHealthProbes() {
-        //Given I have a controller that processes EntandoPlugins that has a maximumStartupTimeSeconds of 60
+        //Given I have a controller that processes EntandoApps that has a maximumStartupTimeSeconds of 60
         this.k8sClient = getClient();
         emulateKeycloakDeployment(k8sClient);
         controller = new SampleController<>(k8sClient,
                 mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
+                return new BareBonesDeployable<>(newEntandoApp, new BareBonesContainer() {
                     @Override
                     public Optional<Integer> getMaximumStartupTimeSeconds() {
                         return Optional.of(60);
@@ -158,7 +158,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         };
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin, plugin.getMetadata().getName());
-        //When I create a new EntandoPlugin
+        //When I create a new EntandoApp
         onAdd(plugin);
 
         await().ignoreExceptions().atMost(20, TimeUnit.SECONDS).until(() ->
@@ -198,15 +198,15 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
 
     @Test
     void testBasicDeploymentWithClusterScopedRoles() {
-        //Given I have a controller that processes EntandoPlugins
+        //Given I have a controller that processes EntandoApps
         this.k8sClient = getClient();
         emulateKeycloakDeployment(k8sClient);
         controller = new SampleController<>(k8sClient, mock(SimpleKeycloakClient.class)) {
             @Override
-            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer());
+                return new BareBonesDeployable<>(newEntandoApp, new BareBonesContainer());
             }
 
         };
@@ -214,7 +214,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty(), "*");
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin, plugin.getMetadata().getName());
-        //When I create a new EntandoPlugin
+        //When I create a new EntandoApp
         onAdd(plugin);
 
         await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
@@ -267,11 +267,11 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         }, 0, TimeUnit.MILLISECONDS);
     }
 
-    private EntandoPlugin buildPlugin(String sampleNamespace, String sampleName) {
-        return new EntandoPluginBuilder().withNewMetadata()
+    private EntandoApp buildPlugin(String sampleNamespace, String sampleName) {
+        return new EntandoAppBuilder().withNewMetadata()
                 .withNamespace(sampleNamespace)
                 .withName(sampleName).endMetadata().withNewSpec()
-                .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
+                .withCustomServerImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
                 .addToEnvironmentVariables("MY_VAR", "MY_VAL")
                 .withDbms(DbmsVendor.EMBEDDED).withReplicas(2).withIngressHostName("myhost.name.com")
                 .endSpec().build();

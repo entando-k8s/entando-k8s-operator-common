@@ -58,9 +58,9 @@ import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
-import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
-import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
+import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppBuilder;
+import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
@@ -79,10 +79,10 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     public static final String OTHER_NAMESPACE = "other-namespace";
     public static final String OTHER_NAME = "other-name";
     protected SimpleK8SClient<?> k8sClient;
-    EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    EntandoPlugin plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
+    EntandoApp plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
+    EntandoApp plugin2 = buildPlugin(OTHER_NAMESPACE, OTHER_NAME);
     SimpleKeycloakClient mock = Mockito.mock(SimpleKeycloakClient.class);
-    private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
+    private SampleController<EntandoAppSpec, EntandoApp, SampleExposedDeploymentResult> controller;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
     @BeforeEach
@@ -112,7 +112,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         controller = new SampleController<>(k8sClient, mock) {
 
             @Override
-            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin plugin,
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoApp plugin,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SamplePublicIngressingDbAwareDeployable<>(plugin, databaseServiceResult,
@@ -128,7 +128,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                     }
 
                     @Override
-                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec> entandoResource) {
                         return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult) {
                             @Override
                             public int getPrimaryPort() {
@@ -146,7 +146,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         };
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin2, plugin2.getMetadata().getName());
-        //When I create a new EntandoPlugin
+        //When I create a new EntandoApp
         onAdd(plugin2);
 
         await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
@@ -173,21 +173,21 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
     @Test
     void testBasicDeployment() {
-        //Given I have a controller that processes EntandoPlugins
+        //Given I have a controller that processes EntandoApps
         lenient().when(mock.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn("ASDFASDFASDfa");
         this.k8sClient = getClient();
         controller = new SampleController<>(k8sClient, mock) {
 
             @Override
-            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoApp newEntandoApp,
                     DatabaseServiceResult databaseServiceResult,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoApp, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
-                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec> entandoResource) {
                         return Arrays.asList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult),
-                                new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig,
+                                new EntandoAppSampleDeployableContainer(entandoResource, keycloakConnectionConfig,
                                         databaseServiceResult));
                     }
                 };
@@ -197,7 +197,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         emulateKeycloakDeployment(getClient());
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
-        //When I create a new EntandoPlugin
+        //When I create a new EntandoApp
         onAdd(plugin1);
 
         await().ignoreExceptions().atMost(20, TimeUnit.SECONDS).until(() ->
@@ -222,11 +222,11 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         assertThat(ingress.getMetadata().getAnnotations().get("nginx.ingress.kubernetes.io/proxy-body-size"), is("50m"));
     }
 
-    private EntandoPlugin buildPlugin(String sampleNamespace, String sampleName) {
-        return new EntandoPluginBuilder().withNewMetadata()
+    private EntandoApp buildPlugin(String sampleNamespace, String sampleName) {
+        return new EntandoAppBuilder().withNewMetadata()
                 .withNamespace(sampleNamespace)
                 .withName(sampleName).endMetadata().withNewSpec()
-                .withImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
+                .withCustomServerImage("docker.io/entando/entando-avatar-plugin:6.0.0-SNAPSHOT")
                 .withDbms(DbmsVendor.POSTGRESQL).withReplicas(2).withIngressHostName("myhost.name.com")
                 .withNewResourceRequirements()
                 .withFileUploadLimit("50m")
@@ -268,12 +268,12 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         }, 0L, TimeUnit.MILLISECONDS);
     }
 
-    private static class EntandoPluginSampleDeployableContainer extends SampleDeployableContainer<EntandoPluginSpec> implements
+    private static class EntandoAppSampleDeployableContainer extends SampleDeployableContainer<EntandoAppSpec> implements
             KeycloakAwareContainerBase {
 
         private final KeycloakConnectionConfig keycloakConnectionConfig;
 
-        public EntandoPluginSampleDeployableContainer(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource,
+        public EntandoAppSampleDeployableContainer(EntandoBaseCustomResource<EntandoAppSpec> entandoResource,
                 KeycloakConnectionConfig keycloakConnectionConfig,
                 DatabaseServiceResult databaseServiceResult) {
             super(entandoResource, databaseServiceResult);
@@ -292,7 +292,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
         @Override
         public List<KubernetesPermission> getKubernetesPermissions() {
-            return Arrays.asList(new KubernetesPermission("entando.org", "EntandoPlugin", "CREATE", "DELETE"));
+            return Arrays.asList(new KubernetesPermission("entando.org", "EntandoApp", "CREATE", "DELETE"));
         }
 
         @Override

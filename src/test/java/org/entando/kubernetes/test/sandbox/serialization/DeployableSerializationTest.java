@@ -26,7 +26,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceSpec;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
@@ -48,11 +47,7 @@ import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.PodClientDouble;
-import org.entando.kubernetes.model.EntandoCustomResourceResolver;
-import org.entando.kubernetes.model.app.DoneableEntandoApp;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.model.app.EntandoAppList;
-import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
 import org.entando.kubernetes.test.common.InProcessTestData;
 import org.entando.kubernetes.test.common.PodBehavior;
 import org.entando.kubernetes.test.componenttest.InProcessTestUtil;
@@ -78,9 +73,6 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
     @BeforeEach
     public void enableQueueing() {
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
-        EntandoCustomResourceResolver<EntandoApp, EntandoAppList, DoneableEntandoApp> resolver = new EntandoCustomResourceResolver<>(
-                EntandoApp.class, EntandoAppList.class, DoneableEntandoApp.class);
-        resolver.resolveOperation(server.getClient());
     }
 
     @AfterEach
@@ -103,7 +95,7 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
             try {
                 //The second watcher will trigger events
                 PodWatcher controllerPodWatcher = getClient().pods().getPodWatcherQueue().take();
-                final Resource<Deployment, DoneableDeployment> deploymentResource = server.getClient().apps().deployments()
+                final Resource<Deployment> deploymentResource = server.getClient().apps().deployments()
                         .inNamespace(app.getMetadata().getNamespace())
                         .withName(app.getMetadata().getName() + "-db-deployment");
                 await().atMost(30, TimeUnit.SECONDS).ignoreExceptions().until(
@@ -119,7 +111,6 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
 
     @Test
     void testDatabaseDeployableSerialization() {
-        EntandoAppOperationFactory.produceAllEntandoApps(server.getClient());
         final EntandoApp entandoApp = newTestEntandoApp();
         getClient().entandoResources().createOrPatchEntandoResource(entandoApp);
         emulatePodWaitingBehaviour(entandoApp);

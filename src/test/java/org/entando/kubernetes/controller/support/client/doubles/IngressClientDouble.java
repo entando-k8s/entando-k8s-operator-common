@@ -16,10 +16,10 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
-import io.fabric8.kubernetes.api.model.extensions.DoneableIngress;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Map;
+import org.entando.kubernetes.controller.support.client.DoneableIngress;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 

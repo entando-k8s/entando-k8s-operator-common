@@ -23,9 +23,10 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.Watcher.Action;
+import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
+import org.entando.kubernetes.test.common.EntandoOperatorTestConfig;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -79,9 +80,7 @@ class DefaultDeploymentClientTest extends AbstractK8SIntegrationTest {
 
     private void scheduleDownscalingBehaviour(EntandoApp customResource, long incrementSize) {
         //scale down (NB! resource.updateStatus doesn't work on the K8S Mock Server)
-        scheduler.schedule(() -> server
-                        .getClient().apps().deployments().inNamespace(customResource.getMetadata().getNamespace())
-                        .withName("my-deployment").edit().withNewStatus().withReplicas(0).withObservedGeneration(100L).endStatus().done(),
+        scheduler.schedule(() -> scaleDeployment(customResource, 0, "my-deployment"),
                 incrementSize,
                 TimeUnit.MILLISECONDS);
         //delete pods
@@ -94,11 +93,18 @@ class DefaultDeploymentClientTest extends AbstractK8SIntegrationTest {
                 TimeUnit.MILLISECONDS);
     }
 
+    private Deployment scaleDeployment(EntandoApp customResource, int replicas, String name) {
+        final RollableScalableResource<Deployment> operation = server
+                .getClient().apps().deployments().inNamespace(customResource.getMetadata().getNamespace()).withName(name);
+        operation.updateStatus(
+                new DeploymentBuilder(operation.fromServer().get()).withNewStatus().withReplicas(replicas).withObservedGeneration(100L)
+                        .endStatus().build());
+        return operation.fromServer().get();
+    }
+
     private Deployment emulateUpscaling(EntandoApp customResource) {
         //Scale up (NB! resource.updateStatus doesn't work on the K8S Mock Server)
-        final Deployment d = server
-                .getClient().apps().deployments().inNamespace(customResource.getMetadata().getNamespace())
-                .withName("my-deployment").edit().withNewStatus().withReplicas(1).endStatus().done();
+        Deployment d = scaleDeployment(customResource, 1, "my-deployment");
         getSimpleK8SClient().pods().start(podFrom(d));
         return d;
     }

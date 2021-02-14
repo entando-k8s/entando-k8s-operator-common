@@ -19,11 +19,8 @@ package org.entando.kubernetes.client;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.VersionInfo;
-import io.fabric8.kubernetes.client.Watch;
-import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -71,7 +68,7 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
         } else {
             //Don't wait because watching the pods until they have been removed is safer than to Fabric8's polling
             getDeploymenResourceFor(peerInNamespace, deployment).scale(0, false);
-            FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client.pods()
+            FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
             if (!podResource.list().getItems().isEmpty()) {
@@ -83,7 +80,7 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
         }
     }
 
-    private RollableScalableResource<Deployment, DoneableDeployment> getDeploymenResourceFor(
+    private RollableScalableResource<Deployment> getDeploymenResourceFor(
             EntandoCustomResource peerInNamespace,
             Deployment deployment) {
         return client.apps()

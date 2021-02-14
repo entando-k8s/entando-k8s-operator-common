@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.support.client;
 
 import static java.lang.String.format;
 
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import io.fabric8.kubernetes.client.dsl.Execable;
@@ -50,7 +49,7 @@ public interface PodClient extends PodWaitingClient {
     EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands);
 
     @SuppressWarnings({"java:S106"})
-    default EntandoExecListener executeAndWait(PodResource<Pod, DoneablePod> podResource, String containerName, int timeoutSeconds,
+    default EntandoExecListener executeAndWait(PodResource<Pod> podResource, String containerName, int timeoutSeconds,
             String... script) {
         StringBuilder sb = new StringBuilder();
         for (String s : script) {

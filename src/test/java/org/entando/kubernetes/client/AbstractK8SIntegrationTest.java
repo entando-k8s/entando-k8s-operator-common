@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.client;
 
-import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -30,12 +29,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.test.common.EntandoOperatorTestConfig;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.InterProcessTestData;
 import org.entando.kubernetes.test.common.PodBehavior;
-import org.entando.kubernetes.test.integrationtest.common.DeletionWaiter;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
-import org.entando.kubernetes.test.integrationtest.common.TestFixturePreparation;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,8 +47,8 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
 
     protected <R extends HasMetadata,
             L extends KubernetesResourceList<R>,
-            D extends Doneable<R>,
-            O extends Resource<R, D>> void deleteAll(MixedOperation<R, L, D, O> operation) {
+
+            O extends Resource<R>> void deleteAll(MixedOperation<R, L, O> operation) {
         for (String s : getNamespacesToUse()) {
             new DeletionWaiter<>(operation).fromNamespace(s).waitingAtMost(100, TimeUnit.SECONDS);
         }

@@ -16,11 +16,9 @@
 
 package org.entando.kubernetes.client;
 
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.PodResource;
@@ -53,7 +51,7 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public void removeAndWait(String namespace, Map<String, String> labels) {
-        FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client
+        FilterWatchListDeletable<Pod, PodList> podResource = client
                 .pods().inNamespace(namespace).withLabels(labels);
         podResource.delete();
         watchPod(
@@ -75,7 +73,7 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
-        PodResource<Pod, DoneablePod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
+        PodResource<Pod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName());
         return executeAndWait(podResource, containerName, timeoutSeconds, commands);
     }
@@ -87,7 +85,7 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
-        Watchable<Watch, Watcher<Pod>> watchable = client.pods().inNamespace(namespace).withLabel(labelName, labelValue);
+        Watchable<Watcher<Pod>> watchable = client.pods().inNamespace(namespace).withLabel(labelName, labelValue);
         return watchPod(got -> PodResult.of(got).getState() == State.READY || PodResult.of(got).getState() == State.COMPLETED,
                 EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),
                 watchable);
@@ -103,7 +101,7 @@ public class DefaultPodClient implements PodClient {
      * logic. waituntilCondition also polls which is nasty.
      */
     private Pod waitFor(Pod pod, Predicate<Pod> podPredicate, long timeoutSeconds) {
-        Watchable<Watch, Watcher<Pod>> watchable = client.pods().inNamespace(pod.getMetadata().getNamespace())
+        Watchable<Watcher<Pod>> watchable = client.pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName());
         return watchPod(podPredicate, timeoutSeconds, watchable);
 

@@ -16,10 +16,6 @@
 
 package org.entando.kubernetes.test.sandbox.serialization;
 
-import io.fabric8.kubernetes.api.model.Doneable;
-import io.fabric8.kubernetes.api.model.DoneablePersistentVolumeClaim;
-import io.fabric8.kubernetes.api.model.DoneablePod;
-import io.fabric8.kubernetes.api.model.DoneableService;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
@@ -30,8 +26,6 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
-import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
-import io.fabric8.kubernetes.api.model.extensions.DoneableIngress;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressList;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -49,8 +43,7 @@ public enum SupportedResourceKind {
         public MixedOperation<
                 Service,
                 ServiceList,
-                DoneableService,
-                ServiceResource<Service, DoneableService>
+                ServiceResource<Service>
                 > getOperation(KubernetesClient client) {
             return client.services();
         }
@@ -60,8 +53,7 @@ public enum SupportedResourceKind {
         public MixedOperation<
                 Deployment,
                 DeploymentList,
-                DoneableDeployment,
-                RollableScalableResource<Deployment, DoneableDeployment>
+                RollableScalableResource<Deployment>
                 > getOperation(KubernetesClient client) {
             return client.apps().deployments();
         }
@@ -71,8 +63,7 @@ public enum SupportedResourceKind {
         public MixedOperation<
                 Pod,
                 PodList,
-                DoneablePod,
-                PodResource<Pod, DoneablePod>
+                PodResource<Pod>
                 > getOperation(KubernetesClient client) {
             return client.pods();
         }
@@ -82,8 +73,7 @@ public enum SupportedResourceKind {
         public MixedOperation<
                 Ingress,
                 IngressList,
-                DoneableIngress,
-                Resource<Ingress, DoneableIngress>
+                Resource<Ingress>
                 > getOperation(KubernetesClient client) {
             return client.extensions().ingresses();
         }
@@ -93,8 +83,7 @@ public enum SupportedResourceKind {
         public MixedOperation<
                 PersistentVolumeClaim,
                 PersistentVolumeClaimList,
-                DoneablePersistentVolumeClaim,
-                Resource<PersistentVolumeClaim, DoneablePersistentVolumeClaim>
+                Resource<PersistentVolumeClaim>
                 > getOperation(KubernetesClient client) {
             return client.persistentVolumeClaims();
         }
@@ -107,9 +96,8 @@ public enum SupportedResourceKind {
     public <
             T extends HasMetadata,
             L extends KubernetesResourceList<T>,
-            D extends Doneable<T>,
-            R extends Resource<T, D>
-            > MixedOperation<T, L, D, R> getOperation(KubernetesClient client) {
+            R extends Resource<T>
+            > MixedOperation<T, L, R> getOperation(KubernetesClient client) {
         return null;
     }
 

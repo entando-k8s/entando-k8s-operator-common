@@ -24,22 +24,14 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.JeeServer;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.entando.kubernetes.model.keycloakserver.StandardKeycloakImage;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
-import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
-import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
 
 public interface InterProcessTestData {
 
@@ -48,14 +40,9 @@ public interface InterProcessTestData {
     String MY_KEYCLOAK_ADMIN_PASSWORD = MY_KEYCLOAK_ADMIN_USERNAME + "123";
     String TLS_SECRET = "tls-secret";
     String MY_KEYCLOAK_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-kc-namespace");
-    String MY_CLUSTER_INFRASTRUCTURE = "my-eci";
-    String MY_CLUSTER_INFRASTRUCTURE_TLS_SECRET = MY_CLUSTER_INFRASTRUCTURE + "-" + TLS_SECRET;
-    String MY_CLUSTER_INFRASTRUCTURE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-eci-namespace");
     String MY_APP = EntandoOperatorTestConfig.calculateName("my-app");
     String MY_APP_TLS_SECRET = MY_APP + "-" + TLS_SECRET;
     String MY_APP_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace");
-    String MY_PLUGIN = EntandoOperatorTestConfig.calculateName("my-plugin");
-    String MY_PLUGIN_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-plugin-namespace");
     String MY_KEYCLOAK_HOSTNAME = "access.192.168.0.100.nip.io";
     String MY_KEYCLOAK_BASE_URL = "http://" + MY_KEYCLOAK_HOSTNAME + "/auth";
 
@@ -76,22 +63,6 @@ public interface InterProcessTestData {
                 .build();
     }
 
-    default EntandoClusterInfrastructure newEntandoClusterInfrastructure() {
-        return new EntandoClusterInfrastructureBuilder()
-                .withNewMetadata()
-                .withName(MY_CLUSTER_INFRASTRUCTURE)
-                .withNamespace(MY_CLUSTER_INFRASTRUCTURE_NAMESPACE)
-                .endMetadata()
-                .withNewSpec()
-                .withDbms(DbmsVendor.MYSQL)
-                .withIngressHostName("entando-infra.192.168.0.100.nip.io")
-                .withReplicas(3)
-                .withDefault(true)
-                .withTlsSecretName(MY_CLUSTER_INFRASTRUCTURE_TLS_SECRET)
-                .endSpec()
-                .build();
-    }
-
     default EntandoApp newTestEntandoApp() {
         return new EntandoAppBuilder()
                 .withNewMetadata()
@@ -108,27 +79,7 @@ public interface InterProcessTestData {
                 .build();
     }
 
-    default EntandoPlugin newTestEntandoPlugin() {
-        return new EntandoPluginBuilder()
-                .withNewMetadata()
-                .withName(MY_PLUGIN)
-                .withNamespace(MY_PLUGIN_NAMESPACE)
-                .endMetadata()
-                .withNewSpec()
-                .withImage("entando/myplugin")
-                .withDbms(DbmsVendor.MYSQL)
-                .withReplicas(2)
-                .withIngressPath("/myplugin")
-                .withHealthCheckPath("/actuator/health")
-                .withSecurityLevel(PluginSecurityLevel.STRICT)
-                .addNewRole("some-role", "role-name")
-                .addNewPermission("myplugin", "plugin-admin")
-                .addNewConnectionConfigName("pam-connection")
-                .endSpec()
-                .build();
-    }
-
-    default <T extends KeycloakAwareSpec> KeycloakConnectionConfig emulateKeycloakDeployment(SimpleK8SClient<?> client) {
+    default KeycloakConnectionConfig emulateKeycloakDeployment(SimpleK8SClient<?> client) {
         Secret secret = new SecretBuilder().withNewMetadata().withName(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .endMetadata()
                 .addToStringData(SecretUtils.USERNAME_KEY, MY_KEYCLOAK_ADMIN_USERNAME)
@@ -144,15 +95,4 @@ public interface InterProcessTestData {
         return new KeycloakConnectionConfig(secret, configMap);
     }
 
-    default <T extends KeycloakAwareSpec> void emulateClusterInfrastuctureDeployment(SimpleK8SClient<?> client) {
-        EntandoClusterInfrastructure dummyClusterInfrastructure = newEntandoClusterInfrastructure();
-        ConfigMap configMap = new ConfigMapBuilder().withNewMetadata()
-                .withName(InfrastructureConfig.connectionConfigMapNameFor(dummyClusterInfrastructure))
-                .endMetadata()
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_CLIENT_ID_KEY, "asdf")
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_EXTERNAL_URL_KEY, "http://som.com/asdf")
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_INTERNAL_URL_KEY, "http://som.com/asdf")
-                .build();
-        client.secrets().createConfigMapIfAbsent(dummyClusterInfrastructure, configMap);
-    }
 }

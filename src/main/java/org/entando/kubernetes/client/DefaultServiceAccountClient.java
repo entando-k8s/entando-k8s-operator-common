@@ -16,18 +16,19 @@
 
 package org.entando.kubernetes.client;
 
-import io.fabric8.kubernetes.api.model.Doneable;
-import io.fabric8.kubernetes.api.model.DoneableServiceAccount;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountList;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.OperationInfo;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.sql.Timestamp;
+import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.EntandoCustomResource;
@@ -58,12 +59,13 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     public DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace,
             String name) {
         try {
-            Resource<ServiceAccount, DoneableServiceAccount> serviceAccountResource = client.serviceAccounts()
-                    .inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name);
+            Resource<ServiceAccount> serviceAccountResource = serviceAccountsInNamespace(peerInNamespace).withName(name);
             if (serviceAccountResource.get() == null) {
-                return serviceAccountResource.createNew().withNewMetadata().withName(name).endMetadata();
+                return new DoneableServiceAccount(serviceAccountsInNamespace(peerInNamespace)::create).withNewMetadata().withName(name)
+                        .endMetadata();
             } else {
-                return serviceAccountResource.edit().editMetadata()
+                return new DoneableServiceAccount(serviceAccountsInNamespace(peerInNamespace).withName(name)::patch)
+                        .editMetadata()
                         //to ensure there is a state change so that the patch request does not get rejected
                         .addToAnnotations(KubeUtils.UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
                         .endMetadata();
@@ -73,6 +75,7 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
                     .processExceptionOnLoad(peerInNamespace, e, "ServiceAccount", name);
         }
     }
+
 
     @Override
     public String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
@@ -95,8 +98,8 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @SuppressWarnings("unchecked")
-    private <R extends HasMetadata, D extends Doneable<R>> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
-            MixedOperation<R, ?, D, Resource<R, D>> operation) {
+    private <R extends HasMetadata> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
+            MixedOperation<R, ?, Resource<R>> operation) {
         if (load(peerInNamespace, resource.getMetadata().getName(), operation) == null) {
             return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).create(resource)
                     .getMetadata().getName();
@@ -104,14 +107,18 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
         return resource.getMetadata().getName();
     }
 
-    private <R extends HasMetadata, D extends Doneable<R>> R load(EntandoCustomResource peerInNamespace, String name,
-            MixedOperation<R, ?, D, Resource<R, D>> operation) {
+    private <R extends HasMetadata> R load(EntandoCustomResource peerInNamespace, String name,
+            MixedOperation<R, ?, Resource<R>> operation) {
         try {
             return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
         } catch (KubernetesClientException e) {
             throw KubernetesExceptionProcessor
                     .processExceptionOnLoad(peerInNamespace, e, ((OperationInfo) operation).getKind(), name);
         }
+    }
+    private NonNamespaceOperation<ServiceAccount, ServiceAccountList, Resource<ServiceAccount>> serviceAccountsInNamespace(
+            EntandoCustomResource peerInNamespace) {
+        return client.serviceAccounts().inNamespace(peerInNamespace.getMetadata().getNamespace());
     }
 
 }

@@ -430,10 +430,10 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, C
                 MY_APP_DB_PVC);
         verify(this.client.persistentVolumeClaims())
                 .createPersistentVolumeClaimIfAbsent(eq(newEntandoApp), dbPvcCaptor.capture());
-        //With names that reflect the EntandoPlugin and the type of deployment the claim is used for
+        //With names that reflect the EntandoApp and the type of deployment the claim is used for
         PersistentVolumeClaim dbPvc = dbPvcCaptor.getValue();
 
-        //And labels that link this PVC to the EntandoApp, the EntandoPlugin and the specific deployment
+        //And labels that link this PVC to the EntandoApp, the EntandoApp and the specific deployment
         assertThat(dbPvc.getMetadata().getLabels().get(ENTANDO_APP_LABEL_NAME), is(MY_APP));
         assertThat(dbPvc.getMetadata().getLabels().get(DEPLOYMENT_LABEL_NAME), is(MY_APP_DB));
 
@@ -441,7 +441,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, C
         verify(this.client.persistentVolumeClaims())
                 .loadPersistentVolumeClaim(eq(newEntandoApp), eq(MY_APP_DB_PVC));
 
-        // And K8S was instructed to update the status of the EntandoPlugin with
+        // And K8S was instructed to update the status of the EntandoApp with
         // the status of both PersistentVolumeClaims
         verify(client.entandoResources(), atLeastOnce())
                 .updateStatus(eq(newEntandoApp), argThat(containsThePersistentVolumeClaimStatus(dbPvcStatus)));

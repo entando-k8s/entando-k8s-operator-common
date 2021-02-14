@@ -25,7 +25,6 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
-import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
@@ -37,14 +36,9 @@ import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.entando.kubernetes.model.keycloakserver.StandardKeycloakImage;
-import org.entando.kubernetes.model.plugin.EntandoPlugin;
-import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
-import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
 
 public interface InProcessTestData {
 
@@ -91,22 +85,6 @@ public interface InProcessTestData {
                 .build();
     }
 
-    default EntandoClusterInfrastructure newEntandoClusterInfrastructure() {
-        return new EntandoClusterInfrastructureBuilder()
-                .withNewMetadata()
-                .withName(MY_CLUSTER_INFRASTRUCTURE)
-                .withNamespace(MY_CLUSTER_INFRASTRUCTURE_NAMESPACE)
-                .endMetadata()
-                .withNewSpec()
-                .withDbms(DbmsVendor.MYSQL)
-                .withIngressHostName("entando-infra.192.168.0.100.nip.io")
-                .withReplicas(3)
-                .withDefault(true)
-                .withTlsSecretName(MY_CLUSTER_INFRASTRUCTURE_TLS_SECRET)
-                .endSpec()
-                .build();
-    }
-
     default EntandoApp newTestEntandoApp() {
         return new EntandoAppBuilder()
                 .withNewMetadata()
@@ -119,26 +97,6 @@ public interface InProcessTestData {
                 .withIngressHostName("myapp.192.168.0.100.nip.io")
                 .withReplicas(1)
                 .withTlsSecretName(MY_APP_TLS_SECRET)
-                .endSpec()
-                .build();
-    }
-
-    default EntandoPlugin newTestEntandoPlugin() {
-        return new EntandoPluginBuilder()
-                .withNewMetadata()
-                .withName(MY_PLUGIN)
-                .withNamespace(MY_PLUGIN_NAMESPACE)
-                .endMetadata()
-                .withNewSpec()
-                .withImage("entando/myplugin")
-                .withDbms(DbmsVendor.MYSQL)
-                .withReplicas(2)
-                .withIngressPath("/myplugin")
-                .withHealthCheckPath("/actuator/health")
-                .withSecurityLevel(PluginSecurityLevel.STRICT)
-                .addNewRole("some-role", "role-name")
-                .addNewPermission("myplugin", "plugin-admin")
-                .addNewConnectionConfigName("pam-connection")
                 .endSpec()
                 .build();
     }
@@ -157,18 +115,6 @@ public interface InProcessTestData {
                 .build();
         client.secrets().overwriteControllerConfigMap(configMap);
         return new KeycloakConnectionConfig(secret, configMap);
-    }
-
-    default <T extends KeycloakAwareSpec> void emulateClusterInfrastuctureDeployment(SimpleK8SClient<?> client) {
-        EntandoClusterInfrastructure dummyClusterInfrastructure = newEntandoClusterInfrastructure();
-        ConfigMap configMap = new ConfigMapBuilder().withNewMetadata()
-                .withName(InfrastructureConfig.connectionConfigMapNameFor(dummyClusterInfrastructure))
-                .endMetadata()
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_CLIENT_ID_KEY, "asdf")
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_EXTERNAL_URL_KEY, "http://som.com/asdf")
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_INTERNAL_URL_KEY, "http://som.com/asdf")
-                .build();
-        client.secrets().createConfigMapIfAbsent(dummyClusterInfrastructure, configMap);
     }
 
     default DatabaseServiceResult emulateDatabasDeployment(SimpleK8SClient<EntandoResourceClientDouble> client) {

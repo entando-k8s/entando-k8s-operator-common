@@ -36,10 +36,6 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentStatus;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
-import java.io.IOException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.util.Map;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
@@ -55,8 +51,8 @@ import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientD
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.app.DoneableEntandoApp;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.componenttest.InProcessTestUtil;
@@ -117,7 +113,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     }
 
     @Test
-    void testSecrets() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
+    void testSecrets() {
         //Given I have an EntandoApp custom resource with MySQL as database
         final EntandoApp newEntandoApp = entandoApp;
         client.entandoResources().createOrPatchEntandoResource(entandoApp);
@@ -234,11 +230,11 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     @Test
     void testPostgresqlDeployment() {
         //Given I have an EntandoApp custom resource with MySQL as database
-        EntandoApp newEntandoApp = new DoneableEntandoApp(entandoApp, s -> s)
+        EntandoApp newEntandoApp = new EntandoAppBuilder(entandoApp)
                 .editSpec()
                 .withDbms(DbmsVendor.POSTGRESQL)
                 .endSpec()
-                .done();
+                .build();
         client.entandoResources().createOrPatchEntandoResource(newEntandoApp);
         //And K8S is receiving Deployment requests
         DeploymentStatus dbDeploymentStatus = new DeploymentStatus();
@@ -294,10 +290,10 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
                 MY_APP_DB_PVC);
         verify(this.client.persistentVolumeClaims())
                 .createPersistentVolumeClaimIfAbsent(eq(newEntandoApp), dbPvcCaptor.capture());
-        //With names that reflect the EntandoPlugin and the type of deployment the claim is used for
+        //With names that reflect the EntandoApp and the type of deployment the claim is used for
         PersistentVolumeClaim dbPvc = dbPvcCaptor.getValue();
 
-        //And labels that link this PVC to the EntandoApp, the EntandoPlugin and the specific deployment
+        //And labels that link this PVC to the EntandoApp, the EntandoApp and the specific deployment
         assertThat(dbPvc.getMetadata().getLabels().get(ENTANDO_APP_LABEL_NAME), is(MY_APP));
         assertThat(dbPvc.getMetadata().getLabels().get(DEPLOYMENT_LABEL_NAME), is(MY_APP_DB));
 
@@ -305,7 +301,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         verify(this.client.persistentVolumeClaims())
                 .loadPersistentVolumeClaim(eq(newEntandoApp), eq(MY_APP_DB_PVC));
 
-        // And K8S was instructed to update the status of the EntandoPlugin with
+        // And K8S was instructed to update the status of the EntandoApp with
         // the status of both PersistentVolumeClaims
         verify(client.entandoResources(), atLeastOnce())
                 .updateStatus(eq(newEntandoApp), argThat(containsThePersistentVolumeClaimStatus(dbPvcStatus)));

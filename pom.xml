@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.entando</groupId>
-        <version>6.3.13</version>
+        <version>6.3.0-SNAPSHOT</version>
         <artifactId>entando-quarkus-parent</artifactId>
         <relativePath/>
     </parent>
@@ -65,7 +65,7 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
-        <entando-k8s-custom-model.version>6.3.1</entando-k8s-custom-model.version>
+        <entando-k8s-custom-model.version>6.3.0-SNAPSHOT</entando-k8s-custom-model.version>
         <preDeploymentTestGroups>pre-deployment</preDeploymentTestGroups>
         <postDeploymentTestGroups>none</postDeploymentTestGroups>
         <maven.compiler.source>11</maven.compiler.source>
@@ -78,13 +78,12 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.sun.org.apache</groupId>
-            <artifactId>jaxp-ri</artifactId>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-kubernetes-client</artifactId>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>entando-k8s-custom-model</artifactId>
-            <version>${entando-k8s-custom-model.version}</version>
+            <groupId>com.sun.org.apache</groupId>
+            <artifactId>jaxp-ri</artifactId>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>

@@ -24,9 +24,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import java.io.Serializable;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 
@@ -44,9 +45,8 @@ import org.entando.kubernetes.model.EntandoCustomResourceStatus;
         ignoreUnknown = true
 )
 
-public class SerializedEntandoResource extends CustomResource implements EntandoCustomResource {
+public class SerializedEntandoResource extends CustomResource<Serializable, EntandoCustomResourceStatus> implements EntandoCustomResource {
 
-    private EntandoCustomResourceStatus status;
     @JsonIgnore
     private CustomResourceDefinition definition;
 
@@ -64,11 +64,6 @@ public class SerializedEntandoResource extends CustomResource implements Entando
             this.status = new EntandoCustomResourceStatus();
         }
         return this.status;
-    }
-
-    @Override
-    public void setStatus(EntandoCustomResourceStatus status) {
-        this.status = status;
     }
 
     @Override

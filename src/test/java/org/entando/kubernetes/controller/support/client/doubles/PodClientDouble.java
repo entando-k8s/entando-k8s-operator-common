@@ -20,7 +20,7 @@ import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
-import io.fabric8.kubernetes.api.model.DoneablePod;
+import io.fabric8.kubernetes.api.model.ListOptions;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodConditionBuilder;
 import io.fabric8.kubernetes.api.model.PodSpec;
@@ -101,7 +101,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     @Override
     public EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
         if (pod != null) {
-            PodResource<Pod, DoneablePod> podResource = new PodResourceDouble();
+            PodResource<Pod> podResource = new PodResourceDouble();
             return executeAndWait(podResource, containerName, timeoutSeconds, commands);
         }
         return null;
@@ -155,10 +155,16 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
         return null;
     }
 
-    private static class DummyWatchable implements Watchable<Watch, Watcher<Pod>> {
+    private static class DummyWatchable implements Watchable<Watcher<Pod>> {
 
         @Override
         public Watch watch(Watcher<Pod> podWatcher) {
+            return () -> {
+            };
+        }
+
+        @Override
+        public Watch watch(ListOptions options, Watcher<Pod> watcher) {
             return () -> {
             };
         }

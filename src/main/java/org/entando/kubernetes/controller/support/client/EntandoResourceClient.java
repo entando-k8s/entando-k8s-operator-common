@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.controller.support.client;
 
-import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
@@ -25,14 +24,11 @@ import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.model.AbstractServerStatus;
-import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.KeycloakToUse;
 import org.entando.kubernetes.model.ResourceReference;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public interface EntandoResourceClient {
@@ -56,9 +52,6 @@ public interface EntandoResourceClient {
     KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference);
 
     Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace);
-
-    <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
-            EntandoBaseCustomResource<T> resource);
 
     ExposedService loadExposedService(EntandoCustomResource resource);
 
@@ -88,34 +81,6 @@ public interface EntandoResourceClient {
         }
         return refineResourceReference(resourceReference, resource.getMetadata());
     }
-
-    default <T extends ClusterInfrastructureAwareSpec> Optional<ResourceReference> determineClusterInfrastructureToUse(
-            EntandoBaseCustomResource<T> resource) {
-        ResourceReference resourceReference = null;
-        Optional<ResourceReference> clusterInfrastructureToUse = resource.getSpec().getClusterInfrastructureToUse();
-        if (clusterInfrastructureToUse.isPresent()) {
-            //Not ideal. GetName should not return null.
-            resourceReference = new ResourceReference(
-                    clusterInfrastructureToUse.get().getNamespace().orElse(null),
-                    clusterInfrastructureToUse.get().getName());
-        } else {
-            Optional<EntandoClusterInfrastructure> clusterInfrastructure = findClusterInfrastructureInNamespace(resource);
-            if (clusterInfrastructure.isPresent()) {
-                resourceReference = new ResourceReference(
-                        clusterInfrastructure.get().getMetadata().getNamespace(),
-                        clusterInfrastructure.get().getMetadata().getName());
-            } else {
-                DoneableConfigMap configMapResource = loadDefaultConfigMap();
-                resourceReference = new ResourceReference(
-                        configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAMESPACE_KEY),
-                        configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAME_KEY));
-
-            }
-        }
-        return refineResourceReference(resourceReference, resource.getMetadata());
-    }
-
-    Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(EntandoCustomResource resource);
 
     default Optional<ResourceReference> refineResourceReference(ResourceReference resourceReference, ObjectMeta metadata) {
         if (resourceReference.getName() == null) {
