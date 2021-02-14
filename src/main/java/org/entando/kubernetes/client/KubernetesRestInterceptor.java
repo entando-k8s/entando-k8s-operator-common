@@ -22,10 +22,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KubernetesRestInterceptor implements InvocationHandler {
 
@@ -43,24 +43,27 @@ public class KubernetesRestInterceptor implements InvocationHandler {
     @SuppressWarnings("squid:S2139")//Because it is common practice to log and rethrow an exception in a logging interceptor
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        Logger logger = Logger.getLogger(method.getDeclaringClass().getName());
-        logger.log(Level.INFO, () -> buildEnterMessage(method, args));
+        Logger logger = LoggerFactory.getLogger(method.getDeclaringClass());
+        if (logger.isInfoEnabled()) {
+            logger.info(buildEnterMessage(method, args));
+        }
         try {
             return method.invoke(delegate, args);
         } catch (InvocationTargetException e) {
-            logger.log(Level.SEVERE, e.getTargetException(), () -> String.format("Failure executing method %s in class %s",
+            logger.error(String.format("Failure executing method %s in class %s",
                     method.getName(),
-                    method.getDeclaringClass().getName()));
+                    method.getDeclaringClass().getName()), e.getTargetException());
             throw e.getTargetException();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, e, () -> String.format("Failure executing method %s in class %s",
+            logger.error(String.format("Failure executing method %s in class %s",
                     method.getName(),
-                    method.getDeclaringClass().getName()));
+                    method.getDeclaringClass().getName()), e);
             throw e;
         } finally {
-            logger.log(Level.INFO, () ->
-                    String.format("Exiting method %s in class %s", method.getName(),
-                            method.getDeclaringClass().getName()));
+            if (logger.isInfoEnabled()) {
+                logger.info(String.format("Exiting method %s in class %s", method.getName(),
+                        method.getDeclaringClass().getName()));
+            }
 
         }
     }

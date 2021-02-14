@@ -55,6 +55,7 @@ import org.entando.kubernetes.controller.support.spibase.KeycloakAwareContainerB
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
@@ -128,7 +129,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                     }
 
                     @Override
-                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec> entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec, EntandoCustomResourceStatus> entandoResource) {
                         return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult) {
                             @Override
                             public int getPrimaryPort() {
@@ -185,7 +186,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 return new SamplePublicIngressingDbAwareDeployable<>(newEntandoApp, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
-                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec> entandoResource) {
+                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec, EntandoCustomResourceStatus> entandoResource) {
                         return Arrays.asList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult),
                                 new EntandoAppSampleDeployableContainer(entandoResource, keycloakConnectionConfig,
                                         databaseServiceResult));
@@ -234,7 +235,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 .endSpec().build();
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
@@ -258,7 +259,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         }, 500, TimeUnit.MILLISECONDS);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onAdd(T resource) {
         scheduler.schedule(() -> {
             T createResource = k8sClient.entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
@@ -273,7 +274,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
         private final KeycloakConnectionConfig keycloakConnectionConfig;
 
-        public EntandoAppSampleDeployableContainer(EntandoBaseCustomResource<EntandoAppSpec> entandoResource,
+        public EntandoAppSampleDeployableContainer(EntandoBaseCustomResource<EntandoAppSpec, EntandoCustomResourceStatus> entandoResource,
                 KeycloakConnectionConfig keycloakConnectionConfig,
                 DatabaseServiceResult databaseServiceResult) {
             super(entandoResource, databaseServiceResult);

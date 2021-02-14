@@ -55,6 +55,7 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigPro
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.app.EntandoApp;
@@ -75,7 +76,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
     public static final String SAMPLE_NAMESPACE = "sample-namespace";
     public static final String SAMPLE_NAME = "sample-name";
     private final Map<String, String> properties = new ConcurrentHashMap<>();
-    private final EntandoApp plugin = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
+    private final EntandoApp app = buildApp(SAMPLE_NAMESPACE, SAMPLE_NAME);
     protected SimpleK8SClient<?> k8sClient;
     private SampleController<EntandoAppSpec, EntandoApp, BarebonesDeploymentResult> controller;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
@@ -116,20 +117,20 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
 
         };
         //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour(plugin, plugin.getMetadata().getName());
+        emulatePodWaitingBehaviour(app, app.getMetadata().getName());
         //When I create a new EntandoApp
-        onAdd(plugin);
+        onAdd(app);
 
         await().ignoreExceptions().atMost(20, TimeUnit.SECONDS).until(() ->
                 k8sClient.entandoResources()
-                        .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
+                        .load(app.getClass(), app.getMetadata().getNamespace(), app.getMetadata().getName())
                         .getStatus()
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect one deployment.
         Deployment serverDeployment = k8sClient.deployments()
-                .loadDeployment(plugin, format("%s-%s-deployment", SAMPLE_NAME, BareBonesDeployable.NAME_QUALIFIER));
-        verifyThatAllVariablesAreMapped(plugin, k8sClient, serverDeployment);
-        verifyThatAllVolumesAreMapped(plugin, k8sClient, serverDeployment);
+                .loadDeployment(app, format("%s-%s-deployment", SAMPLE_NAME, BareBonesDeployable.NAME_QUALIFIER));
+        verifyThatAllVariablesAreMapped(app, k8sClient, serverDeployment);
+        verifyThatAllVolumesAreMapped(app, k8sClient, serverDeployment);
         assertThat(thePortNamed("my-db-port").on(theContainerNamed(BareBonesContainer.NAME_QUALIFIER + "-container").on(serverDeployment))
                 .getContainerPort(), is(5432));
         assertThat(thePortNamed("ping").on(theContainerNamed(BareBonesContainer.NAME_QUALIFIER + "-container").on(serverDeployment))
@@ -157,18 +158,18 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
 
         };
         //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour(plugin, plugin.getMetadata().getName());
+        emulatePodWaitingBehaviour(app, app.getMetadata().getName());
         //When I create a new EntandoApp
-        onAdd(plugin);
+        onAdd(app);
 
         await().ignoreExceptions().atMost(20, TimeUnit.SECONDS).until(() ->
                 k8sClient.entandoResources()
-                        .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
+                        .load(app.getClass(), app.getMetadata().getNamespace(), app.getMetadata().getName())
                         .getStatus()
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect one deployment.
         Deployment serverDeployment = k8sClient.deployments()
-                .loadDeployment(plugin, format("%s-%s-deployment", SAMPLE_NAME, BareBonesDeployable.NAME_QUALIFIER));
+                .loadDeployment(app, format("%s-%s-deployment", SAMPLE_NAME, BareBonesDeployable.NAME_QUALIFIER));
         final Container thePrimaryContainer = thePrimaryContainerOn(serverDeployment);
         //With a stratup probe
         final Probe startupProbe = thePrimaryContainer.getStartupProbe();
@@ -213,17 +214,17 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         //And the operator is deployed at cluster scope
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty(), "*");
         //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour(plugin, plugin.getMetadata().getName());
+        emulatePodWaitingBehaviour(app, app.getMetadata().getName());
         //When I create a new EntandoApp
-        onAdd(plugin);
+        onAdd(app);
 
         await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
                 k8sClient.entandoResources()
-                        .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
+                        .load(app.getClass(), app.getMetadata().getNamespace(), app.getMetadata().getName())
                         .getStatus()
                         .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect a namespace scoped RoleBinding
-        RoleBinding editorRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-entando-editor");
+        RoleBinding editorRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(app, "my-service-account-entando-editor");
         assertThat(editorRoleBinding, notNullValue());
         //Then that binds to the entando-editor ClusterRole
         assertThat(editorRoleBinding.getRoleRef().getKind(), is("ClusterRole"));
@@ -232,7 +233,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         assertThat(editorRoleBinding.getSubjects().get(0).getKind(), is("ServiceAccount"));
         assertThat(editorRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
         //And another namespace scoped RoleBinding
-        RoleBinding viewRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-pod-viewer");
+        RoleBinding viewRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(app, "my-service-account-pod-viewer");
         assertThat(viewRoleBinding, notNullValue());
         //Then that binds to the pod-viewer ClusterRole
         assertThat(viewRoleBinding.getRoleRef().getKind(), is("ClusterRole"));
@@ -242,7 +243,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         assertThat(viewRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
@@ -257,7 +258,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         }, 200, TimeUnit.MILLISECONDS);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onAdd(T resource) {
         scheduler.schedule(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
@@ -267,7 +268,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         }, 0, TimeUnit.MILLISECONDS);
     }
 
-    private EntandoApp buildPlugin(String sampleNamespace, String sampleName) {
+    private EntandoApp buildApp(String sampleNamespace, String sampleName) {
         return new EntandoAppBuilder().withNewMetadata()
                 .withNamespace(sampleNamespace)
                 .withName(sampleName).endMetadata().withNewSpec()

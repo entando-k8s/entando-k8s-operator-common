@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.sandbox.serialization;
+package org.entando.kubernetes.cli;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;

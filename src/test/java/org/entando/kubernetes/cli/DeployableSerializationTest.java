@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.sandbox.serialization;
+package org.entando.kubernetes.cli;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,10 +25,12 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceSpec;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -71,8 +73,11 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
     private SimpleK8SClient<?> defaultSimpleK8SClient;
 
     @BeforeEach
-    public void enableQueueing() {
+    public void enableQueueing() throws IOException {
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+        final Resource<CustomResourceDefinition> crd = server.getClient().customResourceDefinitions()
+                .load(Thread.currentThread().getContextClassLoader().getResource("crds/EntandoAppCRD.yaml"));
+        crd.create(crd.get());
     }
 
     @AfterEach

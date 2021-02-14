@@ -14,15 +14,9 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.cli;
 
-/*
- * Throw this exception to disrupt the current progression of objects being installed.
- */
-public class EntandoControllerException extends RuntimeException {
+public interface FailableSupplier<T> {
 
-    public EntandoControllerException(String message) {
-        super(message);
-    }
-
+    T supply() throws Exception;
 }

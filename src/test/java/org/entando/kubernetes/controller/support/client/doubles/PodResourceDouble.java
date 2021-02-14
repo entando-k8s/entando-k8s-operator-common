@@ -62,6 +62,7 @@ public class PodResourceDouble extends PodOperationsImpl {
         return new PodResourceDouble(getContext().withErrPipe(new PipedInputStream()));
     }
 
+
     @Override
     public Execable<String, ExecWatch> usingListener(ExecListener execListener) {
         return new PodResourceDouble(getContext().withExecListener(execListener));
@@ -70,6 +71,13 @@ public class PodResourceDouble extends PodOperationsImpl {
     @Override
     public ExecListenable<String, ExecWatch> withTTY() {
         return new PodResourceDouble(getContext().withTty(true));
+    }
+
+    @Override
+    public ContainerResource<LogWatch, InputStream, PipedOutputStream, OutputStream, PipedInputStream, String, ExecWatch, Boolean,
+            InputStream, Boolean> inContainer(
+            String containerId) {
+        return new PodResourceDouble(getContext().withContainerId(containerId));
     }
 
     @Override

@@ -34,7 +34,6 @@ import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.controller.EntandoControllerException;
 import org.entando.kubernetes.controller.support.creators.DatabasePreparationPodCreator;
 import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.support.creators.KeycloakClientCreator;

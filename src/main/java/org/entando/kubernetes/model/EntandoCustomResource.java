@@ -17,8 +17,9 @@
 package org.entando.kubernetes.model;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.Namespaced;
 
-public interface EntandoCustomResource extends HasMetadata {
+public interface EntandoCustomResource extends HasMetadata, Namespaced {
 
     EntandoCustomResourceStatus getStatus();
 

@@ -20,6 +20,7 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.EntandoResourceRequirements;
 
@@ -28,24 +29,24 @@ public interface IngressingDeployableBase<T extends ExposedDeploymentResult<T>> 
     @Override
     @SuppressWarnings("unchecked")
     default Optional<String> getFileUploadLimit() {
-        EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec> r =
-                (EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec>) getCustomResource();
+        EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec, EntandoCustomResourceStatus> r =
+                (EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec, EntandoCustomResourceStatus>) getCustomResource();
         return r.getSpec().getResourceRequirements().flatMap(EntandoResourceRequirements::getFileUploadLimit);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     default Optional<String> getTlsSecretName() {
-        EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec> r =
-                (EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec>) getCustomResource();
+        EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec, EntandoCustomResourceStatus> r =
+                (EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec, EntandoCustomResourceStatus>) getCustomResource();
         return r.getSpec().getTlsSecretName();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     default Optional<String> getIngressHostName() {
-        EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec> r =
-                (EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec>) getCustomResource();
+        EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec, EntandoCustomResourceStatus> r =
+                (EntandoBaseCustomResource<? extends EntandoIngressingDeploymentSpec, EntandoCustomResourceStatus>) getCustomResource();
         return r.getSpec().getIngressHostName();
     }
 

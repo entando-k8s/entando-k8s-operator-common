@@ -19,9 +19,11 @@ package org.entando.kubernetes.client;
 import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.Endpoints;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import java.util.function.Supplier;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -42,14 +44,21 @@ public class DefaultServiceClient implements ServiceClient {
             client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
         }
         endpoints.getMetadata().setResourceVersion(null);
+        return retry(() -> client.endpoints().inNamespace(namespace).create(endpoints));
+    }
+
+    private <T extends HasMetadata> T retry(Supplier<T> s) {
+        KubernetesClientException exception=null;
         for (int i = 0; i < 10; i++) {
             try {
-                return client.endpoints().inNamespace(namespace).create(endpoints);
+                return s.get();
             } catch (KubernetesClientException e) {
                 //Waiting for K8S to delete it.
+                exception=e;
             }
         }
-        throw new IllegalStateException("Could not create Endpoints.");
+        throw exception;
+
     }
 
     @Override
@@ -61,6 +70,10 @@ public class DefaultServiceClient implements ServiceClient {
     public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
         String namespace = ofNullable(service.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
-        return client.services().inNamespace(namespace).createOrReplace(service);
+        if (client.services().inNamespace(namespace).withName(service.getMetadata().getName()).get() != null) {
+            client.services().inNamespace(namespace).withName(service.getMetadata().getName()).delete();
+        }
+        service.getMetadata().setResourceVersion(null);
+        return retry(() -> client.services().inNamespace(namespace).create(service));
     }
 }

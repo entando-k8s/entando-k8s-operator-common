@@ -53,41 +53,27 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
         @Type(value = EntandoDatabaseService.class, name = "EntandoDatabaseService")
 })
 
-public abstract class EntandoBaseCustomResource<S extends Serializable> extends CustomResource<S, EntandoCustomResourceStatus> implements
+public abstract class EntandoBaseCustomResource<P extends Serializable, T extends EntandoCustomResourceStatus> extends
+        CustomResource<P, T> implements
         EntandoCustomResource {
-
-    private S spec;
-    private EntandoCustomResourceStatus status;
 
     protected EntandoBaseCustomResource() {
         super();
     }
 
-    protected EntandoBaseCustomResource(ObjectMeta objectMeta, S spec, EntandoCustomResourceStatus status) {
+    protected EntandoBaseCustomResource(ObjectMeta objectMeta, P spec, T status) {
         super();
         super.setMetadata(objectMeta);
         this.spec = spec;
         this.status = status;
     }
 
-    public S getSpec() {
-        return spec;
-    }
-
-    public void setSpec(S spec) {
-        this.spec = spec;
-    }
-
     @Override
-    public EntandoCustomResourceStatus getStatus() {
+    public T getStatus() {
         if (status == null) {
             setStatus(new EntandoCustomResourceStatus());
         }
         return this.status;
     }
 
-    @Override
-    public void setStatus(EntandoCustomResourceStatus status) {
-        this.status = status;
-    }
 }

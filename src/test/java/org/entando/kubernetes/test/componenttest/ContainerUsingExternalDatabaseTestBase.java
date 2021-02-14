@@ -48,13 +48,14 @@ import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
@@ -171,7 +172,8 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                 .endSpec().build();
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
@@ -193,7 +195,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         }, 100, TimeUnit.MILLISECONDS);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onAdd(T resource) {
         scheduler.schedule(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());

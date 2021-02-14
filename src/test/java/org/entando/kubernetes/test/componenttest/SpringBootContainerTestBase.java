@@ -46,6 +46,7 @@ import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.app.EntandoApp;
@@ -153,7 +154,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
                 .endSpec().build();
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
@@ -175,7 +176,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         }, 100, TimeUnit.MILLISECONDS);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onAdd(T resource) {
         new Thread(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
@@ -185,7 +186,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         }).start();
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onDelete(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onDelete(T resource) {
         new Thread(() -> {
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.DELETED.name());
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, resource.getMetadata().getNamespace());

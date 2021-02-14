@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
+import org.junit.platform.commons.logging.LoggerFactory;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
@@ -51,6 +52,7 @@ class DefaultServiceAccountClientTest extends AbstractK8SIntegrationTest {
 
     @Test
     void shouldNotReplacePreviouslyCreatedRole() {
+        LoggerFactory.getLogger(getClass()).info("ASdfasdfasddasfdf"::toString);
         //Given I have an existing Role with the annotation "created: first"
         getSimpleK8SClient().serviceAccounts().createRoleIfAbsent(entandoApp, new RoleBuilder()
                 .editOrNewMetadata()

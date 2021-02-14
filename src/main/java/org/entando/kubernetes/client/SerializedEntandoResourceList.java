@@ -18,6 +18,6 @@ package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.client.CustomResourceList;
 
-public class SerializedEntandoResourceList extends CustomResourceList<SerializedEntandoResource> {
+public class SerializedEntandoResourceList extends CustomResourceList<DeserializedEntandoResource> {
 
 }

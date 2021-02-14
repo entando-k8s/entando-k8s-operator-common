@@ -32,6 +32,7 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
@@ -105,7 +106,7 @@ class ServiceAcountCreatorTest implements InProcessTestData {
                 entandoApp, null,
                 emulateKeycloakDeployment(client)) {
             @Override
-            protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec> entandoResource) {
+            protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoAppSpec, EntandoCustomResourceStatus> entandoResource) {
                 return Arrays.asList(new SampleDeployableContainer<EntandoAppSpec>(entandoResource, databaseServiceResult) {
                     @Override
                     public List<KubernetesPermission> getKubernetesPermissions() {

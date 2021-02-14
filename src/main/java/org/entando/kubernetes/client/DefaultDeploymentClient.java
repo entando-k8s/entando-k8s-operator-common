@@ -41,9 +41,13 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
 
     @Override
     public boolean supportsStartupProbes() {
-        final VersionInfo version = client.getVersion();
-        //Is null when using the MockServer. Return true because that is the most common scenario we want to test
-        return version == null || parseVersion(version) >= 16;
+        try {
+            final VersionInfo version = client.getVersion();
+            //Is null when using the MockServer. Return true because that is the most common scenario we want to test
+            return version == null || parseVersion(version) >= 16;
+        } catch (RuntimeException e) {
+            return true;
+        }
     }
 
     private int parseVersion(VersionInfo version) {

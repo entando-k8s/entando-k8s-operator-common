@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.client;
 
 import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceAccountFluentImpl;
 import java.util.function.UnaryOperator;
 
@@ -25,7 +26,7 @@ public class DoneableServiceAccount extends ServiceAccountFluentImpl<DoneableSer
     private final UnaryOperator<ServiceAccount> action;
 
     public DoneableServiceAccount(UnaryOperator<ServiceAccount> action) {
-        this.action = action;
+        this(new ServiceAccountBuilder().withNewMetadata().endMetadata().build(),action);
     }
 
     public DoneableServiceAccount(ServiceAccount ServiceAccount, UnaryOperator<ServiceAccount> action) {

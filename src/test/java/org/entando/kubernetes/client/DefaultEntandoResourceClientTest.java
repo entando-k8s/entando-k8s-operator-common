@@ -70,6 +70,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
     @BeforeEach
     void clearNamespaces() {
         deleteAll(getFabric8Client().configMaps());
+        deleteAll(getFabric8Client().customResources(EntandoKeycloakServer.class));
     }
 
     @Test
@@ -115,16 +116,17 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
 
     @Test
     void shouldUpdateStatusOfOpaqueCustomResource() throws IOException {
+        getFabric8Client().apiextensions().v1beta1().customResourceDefinitions().list();
         //Given I have created an EntandoApp
         final EntandoApp entandoApp = getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(newTestEntandoApp());
         ObjectMapper mapper = new ObjectMapper();
         //But it is represented in an opaque format
-        SerializedEntandoResource serializedEntandoResource = mapper
-                .readValue(mapper.writeValueAsBytes(entandoApp), SerializedEntandoResource.class);
+        DeserializedEntandoResource deserializedEntandoResource = mapper
+                .readValue(mapper.writeValueAsBytes(entandoApp), DeserializedEntandoResource.class);
         //When I update its status
-        getSimpleK8SClient().entandoResources().updateStatus(serializedEntandoResource, new WebServerStatus("my-webapp"));
+        getSimpleK8SClient().entandoResources().updateStatus(deserializedEntandoResource, new WebServerStatus("my-webapp"));
         //The updated status reflects on the custom resource
-        final SerializedEntandoResource actual = getSimpleK8SClient().entandoResources().reload(serializedEntandoResource);
+        final DeserializedEntandoResource actual = getSimpleK8SClient().entandoResources().reload(deserializedEntandoResource);
         assertTrue(actual.getStatus().forServerQualifiedBy("my-webapp").isPresent());
 
     }

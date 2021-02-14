@@ -24,10 +24,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
-import io.fabric8.kubernetes.client.CustomResource;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import java.io.Serializable;
+import java.util.Optional;
 import org.entando.kubernetes.model.EntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 
@@ -45,11 +45,14 @@ import org.entando.kubernetes.model.EntandoCustomResourceStatus;
         ignoreUnknown = true
 )
 
-public class SerializedEntandoResource extends CustomResource<Serializable, EntandoCustomResourceStatus> implements EntandoCustomResource {
+public class DeserializedEntandoResource implements EntandoCustomResource {
 
     @JsonIgnore
     private CustomResourceDefinition definition;
-
+    private EntandoCustomResourceStatus status;
+    private ObjectMeta metadata;
+    private String kind;
+    private String apiVersion;
     public void setDefinition(CustomResourceDefinition definition) {
         this.definition = definition;
     }
@@ -67,7 +70,36 @@ public class SerializedEntandoResource extends CustomResource<Serializable, Enta
     }
 
     @Override
+    public void setStatus(EntandoCustomResourceStatus status) {
+        this.status=status;
+    }
+
+    @Override
     public String getDefinitionName() {
         return null;
+    }
+
+    @Override
+    public ObjectMeta getMetadata() {
+        return metadata;
+    }
+
+    @Override
+    public void setMetadata(ObjectMeta metadata) {
+        this.metadata = metadata;
+    }
+
+    @Override
+    public String getApiVersion() {
+        return Optional.ofNullable(definition).map(crd->crd.getSpec().getGroup() + "/" + crd.getSpec().getVersion()).orElse(apiVersion);
+    }
+
+    @Override
+    public String getKind() {
+        return Optional.ofNullable(definition).map(crd->crd.getSpec().getNames().getKind()).orElse(kind);
+    }
+
+    @Override
+    public void setApiVersion(String version) {
     }
 }

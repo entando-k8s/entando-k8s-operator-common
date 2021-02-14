@@ -14,24 +14,15 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.controller.support.command;
 
-public class AutoExit implements Runnable {
+/*
+ * Throw this exception to disrupt the current progression of objects being installed.
+ */
+public class EntandoControllerException extends RuntimeException {
 
-    private final boolean exit;
-    private int code;
-
-    public AutoExit(boolean exit) {
-        this.exit = exit;
+    public EntandoControllerException(String message) {
+        super(message);
     }
 
-    public void run() {
-        if (exit) {
-            System.exit(code);
-        }
-    }
-
-    public void withCode(int code) {
-        this.code = code;
-    }
 }

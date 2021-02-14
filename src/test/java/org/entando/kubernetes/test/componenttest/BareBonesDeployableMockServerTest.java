@@ -19,6 +19,7 @@ package org.entando.kubernetes.test.componenttest;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.test.common.EntandoOperatorTestConfig;
 import org.entando.kubernetes.test.common.PodBehavior;
 import org.junit.Rule;
 import org.junit.jupiter.api.Tag;
@@ -30,7 +31,9 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 //Because Sonar cannot detect that the test methods are declared in the superclas
 @SuppressWarnings("java:S2187")
 public class BareBonesDeployableMockServerTest extends BareBonesDeployableTestBase implements PodBehavior {
-
+    static{
+        EntandoOperatorTestConfig.setLogManager();
+    }
     @Rule
     public KubernetesServer server = new KubernetesServer(false, true);
     private SimpleK8SClient defaultSimpleK8SClient;

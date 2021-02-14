@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.model.annotation.Group;
+import io.fabric8.kubernetes.model.annotation.Version;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
@@ -36,7 +38,14 @@ import org.entando.kubernetes.model.SpecHasIngress;
         setterVisibility = Visibility.NONE)
 @RegisterForReflection
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class EntandoKeycloakServer extends EntandoBaseCustomResource<EntandoKeycloakServerSpec> implements SpecHasIngress {
+@Group("entando.org")
+@Version("v1")
+public class EntandoKeycloakServer extends EntandoBaseCustomResource<EntandoKeycloakServerSpec, EntandoCustomResourceStatus> implements SpecHasIngress {
+
+    @Override
+    public String getCRDName() {
+        return super.getCRDName();
+    }
 
     public static final String CRD_NAME = "entandokeycloakservers.entando.org";
 

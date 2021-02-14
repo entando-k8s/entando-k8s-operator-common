@@ -25,10 +25,6 @@ public class DoneableIngress extends IngressFluentImpl<DoneableIngress> {
 
     private final UnaryOperator<Ingress> action;
 
-    public DoneableIngress(UnaryOperator<Ingress> action) {
-        this.action = action;
-    }
-
     public DoneableIngress(Ingress ingress, UnaryOperator<Ingress> action) {
         super(ingress);
         this.action = action;

@@ -29,6 +29,7 @@ import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 
 public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Deployable<BarebonesDeploymentResult>, Secretive {
@@ -36,14 +37,14 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     public static final String MY_SERVICE_ACCOUNT = "my-service-account";
     public static final String NAME_QUALIFIER = "db";
     private final List<DeployableContainer> containers;
-    private EntandoBaseCustomResource<S> customResource;
+    private EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource;
     private DbmsDockerVendorStrategy dbmsVendor = DbmsDockerVendorStrategy.CENTOS_POSTGRESQL;
 
-    public BareBonesDeployable(EntandoBaseCustomResource<S> customResource) {
+    public BareBonesDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource) {
         this(customResource, new BareBonesContainer());
     }
 
-    public BareBonesDeployable(EntandoBaseCustomResource<S> customResource, DeployableContainer... containers) {
+    public BareBonesDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource, DeployableContainer... containers) {
         this.customResource = customResource;
         this.containers = Arrays.asList(containers);
     }
@@ -69,7 +70,7 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     }
 
     @Override
-    public EntandoBaseCustomResource<S> getCustomResource() {
+    public EntandoBaseCustomResource<S, EntandoCustomResourceStatus> getCustomResource() {
         return customResource;
     }
 

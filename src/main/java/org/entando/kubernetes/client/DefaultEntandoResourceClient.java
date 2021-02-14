@@ -23,13 +23,12 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
-import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinitionVersion;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinitionVersion;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
@@ -203,8 +202,8 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         } else {
             return (T)  client
                     .customResources(
-                            buildContext((SerializedEntandoResource) customResource),
-                            SerializedEntandoResource.class,
+                            buildContext((DeserializedEntandoResource) customResource),
+                            DeserializedEntandoResource.class,
                             SerializedEntandoResourceList.class
                     )
                     .inNamespace(customResource.getMetadata().getNamespace())
@@ -214,12 +213,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         }
     }
 
-    private CustomResourceDefinitionContext buildContext(SerializedEntandoResource customResource) {
+    private CustomResourceDefinitionContext buildContext(DeserializedEntandoResource customResource) {
         final CustomResourceDefinition definition = resolveDefinition(customResource);
         return buildContext(definition);
     }
 
-    private CustomResourceDefinitionContext buildContext(CustomResourceDefinition definition) {
+    private static CustomResourceDefinitionContext buildContext(CustomResourceDefinition definition) {
         return new CustomResourceDefinitionContext.Builder()
                 .withScope(definition.getSpec().getScope())
                 .withGroup(definition.getSpec().getGroup())
@@ -311,12 +310,12 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         if (customResource instanceof EntandoBaseCustomResource) {
             operations = getOperations((Class<T>) customResource.getClass());
         } else {
-            SerializedEntandoResource ser = (SerializedEntandoResource) customResource;
+            DeserializedEntandoResource ser = (DeserializedEntandoResource) customResource;
             if (ser.getDefinition() == null) {
                 ser.setDefinition(resolveDefinition(ser));
             }
             operations = (CustomResourceOperationsImpl) client
-                    .customResources(buildContext(ser.getDefinition()), SerializedEntandoResource.class, CustomResourceList.class);
+                    .customResources(buildContext(ser.getDefinition()), DeserializedEntandoResource.class, CustomResourceList.class);
         }
 
         Resource<T> resource = operations
@@ -327,9 +326,9 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         resource.updateStatus(latest);
     }
 
-    private CustomResourceDefinition resolveDefinition(SerializedEntandoResource ser) {
+    private CustomResourceDefinition resolveDefinition(DeserializedEntandoResource ser) {
         final String key = ser.getApiVersion() + "/" + ser.getKind();
-        return definitions.computeIfAbsent(key, s -> client.apiextensions().v1().customResourceDefinitions().list().getItems()
+        return definitions.computeIfAbsent(key, s -> client.apiextensions().v1beta1().customResourceDefinitions().list().getItems()
                 .stream().filter(crd ->
                         crd.getSpec().getNames().getKind().equals(ser.getKind()) && ser
                                 .getApiVersion()

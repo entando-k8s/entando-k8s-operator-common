@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.sandbox.serialization;
+package org.entando.kubernetes.cli;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;

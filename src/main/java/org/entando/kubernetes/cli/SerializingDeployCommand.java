@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.sandbox.serialization;
+package org.entando.kubernetes.cli;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.entando.kubernetes.client.SerializedEntandoResource;
+import org.entando.kubernetes.client.DeserializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.container.DatabasePopulator;
@@ -192,11 +192,11 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
                                 .build())
                                 .get(resourceReference.getMetadata().getNamespace(), resourceReference.getMetadata().getName());
 
-                        final SerializedEntandoResource serializedEntandoResource = objectMapper
+                        final DeserializedEntandoResource deserializedEntandoResource = objectMapper
                                 .readValue(new StringReader(objectMapper.writeValueAsString(crMap)),
-                                        SerializedEntandoResource.class);
-                        serializedEntandoResource.setDefinition(definition);
-                        return serializedEntandoResource;
+                                        DeserializedEntandoResource.class);
+                        deserializedEntandoResource.setDefinition(definition);
+                        return deserializedEntandoResource;
                     } else {
                         return SupportedResourceKind.resolveFromKind(resourceReference.getKind())
                                 .map(k -> k.getOperation(kubernetesClient)

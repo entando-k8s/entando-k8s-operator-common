@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.controller;
 
 import static java.lang.String.format;
 
@@ -39,15 +39,17 @@ import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.command.DeployCommand;
+import org.entando.kubernetes.controller.support.command.EntandoControllerException;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.creators.TlsHelper;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 
-public abstract class AbstractDbAwareController<S extends Serializable, T extends EntandoBaseCustomResource<S>> {
+public abstract class AbstractDbAwareController<S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> {
 
     protected final SimpleK8SClient<?> k8sClient;
     protected final SimpleKeycloakClient keycloakClient;

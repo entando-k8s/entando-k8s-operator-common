@@ -24,7 +24,9 @@ import static org.hamcrest.Matchers.nullValue;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.PodStatus;
 import io.fabric8.kubernetes.client.Watcher.Action;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -73,8 +75,7 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         //When I wait for the pod
         if (EntandoOperatorTestConfig.emulateKubernetes()) {
             scheduler.schedule(() -> {
-                final Pod ready = getFabric8Client().pods().inNamespace(startedPod.getMetadata().getNamespace())
-                        .withName(startedPod.getMetadata().getName()).edit().withStatus(podWithReadyStatus(startedPod).getStatus()).done();
+                final Pod ready = updatePodWithStatus(startedPod, podWithReadyStatus(startedPod).getStatus());
                 takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED, ready);
             }, 200, TimeUnit.MILLISECONDS);
         }
@@ -183,8 +184,7 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         //When I wait for the pod
         if (EntandoOperatorTestConfig.emulateKubernetes()) {
             scheduler.schedule(() -> {
-                final Pod ready = getFabric8Client().pods().inNamespace(pod.getMetadata().getNamespace())
-                        .withName(pod.getMetadata().getName()).edit().withStatus(podWithSucceededStatus(pod).getStatus()).done();
+                final Pod ready = updatePodWithStatus(pod, podWithSucceededStatus(pod).getStatus());
                 takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED, ready);
             }, 200, TimeUnit.MILLISECONDS);
         }
@@ -192,6 +192,14 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         //Then the current thread only proceeds once the pod has completed
         assertThat(PodResult.of(actual).getState(), is(State.COMPLETED));
         assertThat(PodResult.of(actual).hasFailed(), is(false));
+    }
+
+    private Pod updatePodWithStatus(Pod targetPod, PodStatus status) {
+        final PodResource<Pod> resource = getFabric8Client().pods().inNamespace(targetPod.getMetadata().getNamespace())
+                .withName(targetPod.getMetadata().getName());
+        final Pod reloadedPod = resource.fromServer().get();
+        reloadedPod.setStatus(status);
+        return resource.updateStatus(reloadedPod);
     }
 
     @Test

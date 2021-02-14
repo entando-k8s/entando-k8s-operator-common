@@ -84,7 +84,7 @@ class DefaultDeploymentClientTest extends AbstractK8SIntegrationTest {
                 incrementSize,
                 TimeUnit.MILLISECONDS);
         //delete pods
-        scheduler.schedule((Runnable) server.getClient().pods().inNamespace(customResource.getMetadata().getNamespace())::delete,
+        scheduler.schedule((Runnable) getFabric8Client().pods().inNamespace(customResource.getMetadata().getNamespace())::delete,
                 incrementSize * 2,
                 TimeUnit.MILLISECONDS);
         //notify PodWaiter
@@ -94,8 +94,7 @@ class DefaultDeploymentClientTest extends AbstractK8SIntegrationTest {
     }
 
     private Deployment scaleDeployment(EntandoApp customResource, int replicas, String name) {
-        final RollableScalableResource<Deployment> operation = server
-                .getClient().apps().deployments().inNamespace(customResource.getMetadata().getNamespace()).withName(name);
+        final RollableScalableResource<Deployment> operation = getFabric8Client().apps().deployments().inNamespace(customResource.getMetadata().getNamespace()).withName(name);
         operation.updateStatus(
                 new DeploymentBuilder(operation.fromServer().get()).withNewStatus().withReplicas(replicas).withObservedGeneration(100L)
                         .endStatus().build());

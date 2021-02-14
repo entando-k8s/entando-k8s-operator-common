@@ -119,7 +119,7 @@ class DefaultSecretClientTest extends AbstractK8SIntegrationTest {
 
     @Override
     protected String[] getNamespacesToUse() {
-        return new String[]{entandoApp.getMetadata().getNamespace()};
+        return new String[]{entandoApp.getMetadata().getNamespace(), "keycloak-namespace"};
     }
 
 }

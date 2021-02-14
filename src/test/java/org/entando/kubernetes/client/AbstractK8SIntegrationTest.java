@@ -29,15 +29,20 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.test.common.DeletionWaiter;
 import org.entando.kubernetes.test.common.EntandoOperatorTestConfig;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.InterProcessTestData;
 import org.entando.kubernetes.test.common.PodBehavior;
+import org.entando.kubernetes.test.common.TestFixturePreparation;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractK8SIntegrationTest implements FluentTraversals, InterProcessTestData, PodBehavior {
+    static{
+        EntandoOperatorTestConfig.setLogManager();
+    }
 
     @Rule
     public KubernetesServer server = new KubernetesServer(false, true);
@@ -47,7 +52,6 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
 
     protected <R extends HasMetadata,
             L extends KubernetesResourceList<R>,
-
             O extends Resource<R>> void deleteAll(MixedOperation<R, L, O> operation) {
         for (String s : getNamespacesToUse()) {
             new DeletionWaiter<>(operation).fromNamespace(s).waitingAtMost(100, TimeUnit.SECONDS);
