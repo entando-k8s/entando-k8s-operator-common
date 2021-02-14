@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.serialization;
+package org.entando.kubernetes.controller.support.command;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;

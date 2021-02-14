@@ -17,40 +17,20 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
-import org.entando.kubernetes.controller.support.client.IngressClient;
-import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
 import org.entando.kubernetes.controller.support.client.PodClient;
 import org.entando.kubernetes.controller.support.client.SecretClient;
-import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
-import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 
 public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceClient> {
 
     private final KubernetesClient kubernetesClient;
-    private ServiceClient serviceClient;
     private PodClient podClient;
     private SecretClient secretClient;
     private EntandoResourceClient entandoResourceClient;
-    private DeploymentClient deploymentClient;
-    private IngressClient ingressClient;
-    private PersistentVolumeClaimClient persistentVolumeClaimClient;
-    private ServiceAccountClient serviceAccountClient;
 
     public DefaultSimpleK8SClient(KubernetesClient kubernetesClient) {
         this.kubernetesClient = kubernetesClient;
-    }
-
-    @Override
-    public ServiceClient services() {
-
-        if (this.serviceClient == null) {
-            this.serviceClient = new DefaultServiceClient(kubernetesClient);
-
-        }
-        return this.serviceClient;
     }
 
     @Override
@@ -77,37 +57,4 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
         }
         return this.entandoResourceClient;
     }
-
-    @Override
-    public ServiceAccountClient serviceAccounts() {
-        if (this.serviceAccountClient == null) {
-            this.serviceAccountClient = new DefaultServiceAccountClient(kubernetesClient);
-        }
-        return this.serviceAccountClient;
-    }
-
-    @Override
-    public DeploymentClient deployments() {
-        if (this.deploymentClient == null) {
-            this.deploymentClient = new DefaultDeploymentClient(kubernetesClient);
-        }
-        return this.deploymentClient;
-    }
-
-    @Override
-    public IngressClient ingresses() {
-        if (this.ingressClient == null) {
-            this.ingressClient = new DefaultIngressClient(kubernetesClient);
-        }
-        return this.ingressClient;
-    }
-
-    @Override
-    public PersistentVolumeClaimClient persistentVolumeClaims() {
-        if (this.persistentVolumeClaimClient == null) {
-            this.persistentVolumeClaimClient = new DefaultPersistentVolumeClaimClient(kubernetesClient);
-        }
-        return this.persistentVolumeClaimClient;
-    }
-
 }

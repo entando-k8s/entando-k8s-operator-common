@@ -18,20 +18,10 @@ package org.entando.kubernetes.controller.support.client;
 
 public interface SimpleK8SClient<T extends EntandoResourceClient> {
 
-    ServiceClient services();
-
-    IngressClient ingresses();
-
-    DeploymentClient deployments();
-
     PodClient pods();
-
-    PersistentVolumeClaimClient persistentVolumeClaims();
 
     SecretClient secrets();
 
     T entandoResources();
-
-    ServiceAccountClient serviceAccounts();
 
 }

@@ -1,5 +1,0 @@
-1. Refactor all the tests to look more like DeployExampleEntandoAppTest
-Rationale:
-We need to focus on the DeployCommand as entry point
-Different implementations of the SPI needs to be respected by the DeployCommand
-2. Introduce mockserver tests for the client package

@@ -14,17 +14,9 @@
  *
  */
 
-package org.entando.kubernetes.controller.common.examples;
+package org.entando.kubernetes.controller.support.command;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
+public interface FailableSupplier<T> {
 
-public class SampleExposedDeploymentResult extends ExposedDeploymentResult<SampleExposedDeploymentResult> {
-
-    public SampleExposedDeploymentResult(Pod pod, Service service,
-            Ingress ingress) {
-        super(pod, service, ingress);
-    }
+    T supply() throws Exception;
 }

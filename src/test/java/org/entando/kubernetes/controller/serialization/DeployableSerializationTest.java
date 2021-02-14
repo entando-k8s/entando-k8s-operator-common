@@ -50,6 +50,8 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.command.DefaultSerializableDeploymentResult;
+import org.entando.kubernetes.controller.support.command.SerializingDeployCommand;
 import org.entando.kubernetes.controller.test.support.PodBehavior;
 import org.entando.kubernetes.model.EntandoCustomResourceResolver;
 import org.entando.kubernetes.model.app.DoneableEntandoApp;

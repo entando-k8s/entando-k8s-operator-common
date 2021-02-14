@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.serialization;
+package org.entando.kubernetes.controller.support.command;
 
 import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.DoneablePersistentVolumeClaim;
