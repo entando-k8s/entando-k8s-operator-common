@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.serialization;
+package org.entando.kubernetes.test.sandbox.serialization;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,13 +47,15 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
-import org.entando.kubernetes.controller.support.command.DefaultSerializableDeploymentResult;
-import org.entando.kubernetes.controller.support.command.SerializingDeployCommand;
+import org.entando.kubernetes.controller.support.client.doubles.PodClientDouble;
 import org.entando.kubernetes.model.EntandoCustomResourceResolver;
 import org.entando.kubernetes.model.app.DoneableEntandoApp;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppList;
 import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
+import org.entando.kubernetes.test.common.InProcessTestData;
+import org.entando.kubernetes.test.common.PodBehavior;
+import org.entando.kubernetes.test.componenttest.InProcessTestUtil;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -123,6 +125,7 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
         emulatePodWaitingBehaviour(entandoApp);
         final DatabaseDeployable originalDeployable = new DatabaseDeployable(DbmsDockerVendorStrategy.CENTOS_MYSQL, entandoApp, null);
         final SerializingDeployCommand<DatabaseDeploymentResult> serializingDeployCommand = new SerializingDeployCommand<>(
+                server.getClient(),
                 originalDeployable);
         final DatabaseDeploymentResult databaseDeploymentResult = serializingDeployCommand.execute(getClient(), null);
         Deployable<DefaultSerializableDeploymentResult> serializedDeployable = serializingDeployCommand.getSerializedDeployable();
