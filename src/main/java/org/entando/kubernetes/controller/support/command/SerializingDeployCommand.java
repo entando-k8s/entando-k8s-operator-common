@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.entando.kubernetes.client.SerializedEntandoResource;
-import org.entando.kubernetes.controller.spi.SerializableDeploymentResult;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.container.DatabasePopulator;
@@ -70,11 +69,10 @@ import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.support.command.DeployCommand;
 
 public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
 
-    private final KubernetesClient kubernetesClient;
+    private KubernetesClient kubernetesClient;
     List<Class<?>> knownInterfaces = Arrays.asList(
             ConfigurableResourceContainer.class,
             DatabasePopulator.class,
@@ -102,14 +100,15 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
 
     private final Deployable<T> deployable;
 
-    public SerializingDeployCommand(KubernetesClient kubernetesClient, Deployable<T> deployable) {
+    public SerializingDeployCommand(Deployable<T> deployable) {
         this.deployable = deployable;
-        this.kubernetesClient = kubernetesClient;
     }
 
     public T execute(SimpleK8SClient<?> client, SimpleKeycloakClient keycloakClient) {
-        DeployCommand<DefaultSerializableDeploymentResult> command = new DeployCommand<>(getSerializedDeployable());
-        final DefaultSerializableDeploymentResult result = command.execute(client, keycloakClient);
+        //Serialize to the filesystem, call the cli, then read the output file
+        //        DeployCommand<DefaultSerializableDeploymentResult> command = new DeployCommand<>(getSerializedDeployable());
+        //        final DefaultSerializableDeploymentResult result = command.execute(client, keycloakClient);
+        final DefaultSerializableDeploymentResult result = null;
         SerializableDeploymentResult<?> serializedResult = serializeThenDeserialize(result);
         return this.deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),
                 serializedResult.getPod())

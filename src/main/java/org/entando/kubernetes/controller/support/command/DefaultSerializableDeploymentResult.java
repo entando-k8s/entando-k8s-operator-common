@@ -21,7 +21,6 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.SerializableDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 
 public class DefaultSerializableDeploymentResult

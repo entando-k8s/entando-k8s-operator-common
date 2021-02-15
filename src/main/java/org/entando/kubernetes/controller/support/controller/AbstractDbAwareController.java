@@ -38,7 +38,7 @@ import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.support.command.DeployCommand;
+import org.entando.kubernetes.controller.support.command.SerializingDeployCommand;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
@@ -175,7 +175,7 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
             DatabaseDeployable databaseDeployable = new DatabaseDeployable(
                     DbmsDockerVendorStrategy.forVendor(dbmsVendor, EntandoOperatorSpiConfig.getComplianceMode()),
                     entandoCustomResource, null);
-            DeployCommand<DatabaseDeploymentResult> dbCommand = new DeployCommand<>(databaseDeployable);
+            SerializingDeployCommand<DatabaseDeploymentResult> dbCommand = new SerializingDeployCommand<>(databaseDeployable);
             DatabaseDeploymentResult result = dbCommand.execute(k8sClient, null);
             if (result.hasFailed()) {
                 throw new EntandoControllerException("Database deployment failed");
