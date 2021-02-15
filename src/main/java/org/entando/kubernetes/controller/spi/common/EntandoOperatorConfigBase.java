@@ -16,13 +16,23 @@
 
 package org.entando.kubernetes.controller.spi.common;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class EntandoOperatorConfigBase {
 
+    private static AtomicReference<ConfigMap> configMap = new AtomicReference<>();
+
     protected EntandoOperatorConfigBase() {
+    }
+
+    public static void setConfigMap(ConfigMap configMap) {
+        EntandoOperatorConfigBase.configMap.set(configMap);
     }
 
     protected static String getProperty(ConfigProperty name, String defaultValue) {
@@ -33,20 +43,26 @@ public abstract class EntandoOperatorConfigBase {
         return Optional.ofNullable(lookupProperty(property.getJvmSystemProperty()).orElse(lookupProperty(property.name()).orElse(null)));
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public static Optional<String> lookupProperty(String name) {
-        Optional<String> fromEnv = System.getenv().entrySet().stream()
+        Optional<String> fromConfigMap = Optional.ofNullable(EntandoOperatorConfigBase.configMap.get())
+                .flatMap(map -> findFirstMatch(name, map.getData()));
+        if (fromConfigMap.isEmpty()) {
+            Optional<String> fromEnv = findFirstMatch(name, System.getenv());
+            if (fromEnv.isEmpty()) {
+                return findFirstMatch(name, new HashMap(System.getProperties()));
+            } else {
+                return fromEnv;
+            }
+        }
+        return fromConfigMap;
+    }
+
+    private static Optional<String> findFirstMatch(String name, Map<String, String> map) {
+        return map.entrySet().stream()
                 .filter(entry -> isMatch(name, entry))
                 .map(Entry::getValue)
                 .findFirst();
-        if (fromEnv.isPresent()) {
-            return fromEnv;
-        } else {
-            return System.getProperties().entrySet().stream()
-                    .filter(entry -> isMatch(name, entry))
-                    .map(Entry::getValue)
-                    .map(String.class::cast)
-                    .findFirst();
-        }
     }
 
     private static boolean isMatch(String n, Entry<?, ?> entry) {
