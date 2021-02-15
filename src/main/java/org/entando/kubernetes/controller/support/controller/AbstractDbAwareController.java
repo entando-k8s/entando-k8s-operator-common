@@ -42,7 +42,7 @@ import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.creators.TlsHelper;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;

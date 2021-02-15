@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.common;
+package org.entando.kubernetes.test.e2etest.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;

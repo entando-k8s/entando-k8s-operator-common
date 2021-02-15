@@ -45,7 +45,7 @@ import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.creators.TlsHelper;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ControllerExecutor {

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.common;
+package org.entando.kubernetes.client.integrationtesthelpers;
 
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
@@ -27,10 +27,11 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
+import org.entando.kubernetes.client.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
-import org.entando.kubernetes.controller.support.creators.TlsHelper;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public final class TestFixturePreparation {
@@ -68,9 +69,9 @@ public final class TestFixturePreparation {
 
     private static AutoAdaptableKubernetesClient buildKubernetesClient() {
         ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withConnectionTimeout(30000).withRequestTimeout(30000);
-        EntandoOperatorTestConfig.getKubernetesMasterUrl().ifPresent(s -> configBuilder.withMasterUrl(s));
-        EntandoOperatorTestConfig.getKubernetesUsername().ifPresent(s -> configBuilder.withUsername(s));
-        EntandoOperatorTestConfig.getKubernetesPassword().ifPresent(s -> configBuilder.withPassword(s));
+        EntandoOperatorTestConfig.getKubernetesMasterUrl().ifPresent(configBuilder::withMasterUrl);
+        EntandoOperatorTestConfig.getKubernetesUsername().ifPresent(configBuilder::withUsername);
+        EntandoOperatorTestConfig.getKubernetesPassword().ifPresent(configBuilder::withPassword);
         Config config = configBuilder.build();
         OkHttpClient httpClient = HttpClientUtils.createHttpClient(config);
         AutoAdaptableKubernetesClient result = new AutoAdaptableKubernetesClient(httpClient, config);
@@ -100,7 +101,6 @@ public final class TestFixturePreparation {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static void prepareTestFixture(KubernetesClient client, TestFixtureRequest testFixtureRequest) {
         for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?>>>> entry :
                 testFixtureRequest.getRequiredDeletions().entrySet()) {

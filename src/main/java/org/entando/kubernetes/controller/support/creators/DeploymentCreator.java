@@ -55,6 +55,7 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DeploymentCreator extends AbstractK8SResourceCreator {

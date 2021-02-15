@@ -25,7 +25,6 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;

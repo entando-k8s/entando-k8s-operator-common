@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.podwaiters;
+package org.entando.kubernetes.test.e2etest.podwaiters;
 
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;

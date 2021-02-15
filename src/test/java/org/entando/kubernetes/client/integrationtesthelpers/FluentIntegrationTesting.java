@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.common;
+package org.entando.kubernetes.client.integrationtesthelpers;
 
 import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -24,9 +24,9 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
+import org.entando.kubernetes.client.integrationtesthelpers.TestFixtureRequest.DeletionRequestBuilder;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.test.common.FluentTraversals;
-import org.entando.kubernetes.test.integrationtest.common.TestFixtureRequest.DeletionRequestBuilder;
 
 public interface FluentIntegrationTesting extends FluentTraversals {
 

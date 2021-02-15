@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.common;
+package org.entando.kubernetes.client;
 
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;

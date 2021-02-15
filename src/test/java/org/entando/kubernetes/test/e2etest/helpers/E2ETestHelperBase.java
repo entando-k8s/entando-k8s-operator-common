@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.helpers;
+package org.entando.kubernetes.test.e2etest.helpers;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
@@ -28,7 +28,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.client.DefaultIngressClient;
+import org.entando.kubernetes.client.EntandoOperatorTestConfig;
 import org.entando.kubernetes.client.OperationsSupplier;
+import org.entando.kubernetes.client.integrationtesthelpers.FluentIntegrationTesting;
+import org.entando.kubernetes.client.integrationtesthelpers.TestFixturePreparation;
+import org.entando.kubernetes.client.integrationtesthelpers.TestFixtureRequest;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.controller.ControllerExecutor;
@@ -38,17 +42,13 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.test.common.CommonLabels;
-import org.entando.kubernetes.test.integrationtest.common.ControllerContainerStartingListener;
-import org.entando.kubernetes.test.integrationtest.common.ControllerStartupEventFiringListener;
-import org.entando.kubernetes.test.integrationtest.common.ControllerStartupEventFiringListener.OnStartupMethod;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
-import org.entando.kubernetes.test.integrationtest.common.FluentIntegrationTesting;
-import org.entando.kubernetes.test.integrationtest.common.TestFixturePreparation;
-import org.entando.kubernetes.test.integrationtest.common.TestFixtureRequest;
-import org.entando.kubernetes.test.integrationtest.podwaiters.JobPodWaiter;
-import org.entando.kubernetes.test.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.test.e2etest.common.ControllerContainerStartingListener;
+import org.entando.kubernetes.test.e2etest.common.ControllerStartupEventFiringListener;
+import org.entando.kubernetes.test.e2etest.common.ControllerStartupEventFiringListener.OnStartupMethod;
+import org.entando.kubernetes.test.e2etest.podwaiters.JobPodWaiter;
+import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 
-public class IntegrationTestHelperBase<
+public class E2ETestHelperBase<
         R extends EntandoBaseCustomResource<?>,
         L extends CustomResourceList<R>,
         D extends DoneableEntandoCustomResource<R, D>
@@ -60,7 +60,7 @@ public class IntegrationTestHelperBase<
     private final ControllerStartupEventFiringListener<R, L, D> startupEventFiringListener;
     private ControllerContainerStartingListener<R, L, D> containerStartingListener;
 
-    protected IntegrationTestHelperBase(DefaultKubernetesClient client, OperationsSupplier<R, L, D> producer) {
+    protected E2ETestHelperBase(DefaultKubernetesClient client, OperationsSupplier<R, L, D> producer) {
         this.client = client;
         this.operations = producer.get(client);
         domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.helpers;
+package org.entando.kubernetes.test.e2etest.helpers;
 
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -30,6 +30,7 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.util.Collections;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
+import org.entando.kubernetes.client.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
@@ -42,12 +43,11 @@ import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceList;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceOperationFactory;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpecBuilder;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
-import org.entando.kubernetes.test.integrationtest.common.SampleWriter;
-import org.entando.kubernetes.test.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.test.e2etest.common.SampleWriter;
+import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 
-public class ExternalDatabaseIntegrationTestHelper extends
-        IntegrationTestHelperBase<EntandoDatabaseService, EntandoDatabaseServiceList, DoneableEntandoDatabaseService> {
+public class ExternalDatabaseE2ETestHelper extends
+        E2ETestHelperBase<EntandoDatabaseService, EntandoDatabaseServiceList, DoneableEntandoDatabaseService> {
 
     public static final String MY_EXTERNAL_DB = EntandoOperatorTestConfig.calculateName("my-external-db");
     private static final String ORACLE_INTERNAL_HOST = EntandoOperatorTestConfig.getOracleInternalHost().orElse("localhost");
@@ -59,7 +59,7 @@ public class ExternalDatabaseIntegrationTestHelper extends
     private static final String ORACLE_DATABASE_NAME = EntandoOperatorTestConfig.getOracleDatabaseName().orElse("ORCLPDB1.localdomain");
     private static final String TEST_SECRET = "test-secret";
 
-    public ExternalDatabaseIntegrationTestHelper(DefaultKubernetesClient client) {
+    public ExternalDatabaseE2ETestHelper(DefaultKubernetesClient client) {
         super(client, EntandoDatabaseServiceOperationFactory::produceAllEntandoDatabaseServices);
     }
 

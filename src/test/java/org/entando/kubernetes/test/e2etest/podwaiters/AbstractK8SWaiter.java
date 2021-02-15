@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.podwaiters;
+package org.entando.kubernetes.test.e2etest.podwaiters;
 
 import java.time.Duration;
 

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.helpers;
+package org.entando.kubernetes.test.e2etest.helpers;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
@@ -26,7 +26,9 @@ import javax.ws.rs.client.ClientBuilder;
 import org.entando.kubernetes.client.DefaultEntandoResourceClient;
 import org.entando.kubernetes.client.DefaultKeycloakClient;
 import org.entando.kubernetes.client.EntandoJackson2Provider;
-import org.entando.kubernetes.client.KeycloakTestHelper;
+import org.entando.kubernetes.client.EntandoOperatorTestConfig;
+import org.entando.kubernetes.client.integrationtesthelpers.FluentIntegrationTesting;
+import org.entando.kubernetes.client.integrationtesthelpers.KeycloakTestHelper;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
@@ -44,10 +46,8 @@ import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
-import org.entando.kubernetes.test.integrationtest.common.FluentIntegrationTesting;
-import org.entando.kubernetes.test.integrationtest.podwaiters.JobPodWaiter;
-import org.entando.kubernetes.test.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.test.e2etest.podwaiters.JobPodWaiter;
+import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -56,8 +56,8 @@ import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 
-public class KeycloakIntegrationTestHelper extends
-        IntegrationTestHelperBase<EntandoKeycloakServer, EntandoKeycloakServerList, DoneableEntandoKeycloakServer> implements
+public class KeycloakE2ETestHelper extends
+        E2ETestHelperBase<EntandoKeycloakServer, EntandoKeycloakServerList, DoneableEntandoKeycloakServer> implements
         FluentIntegrationTesting, KeycloakTestHelper {
 
     public static final String KEYCLOAK_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("keycloak-namespace");
@@ -65,7 +65,7 @@ public class KeycloakIntegrationTestHelper extends
     public static final String KEYCLOAK_REALM = EntandoOperatorTestConfig.calculateNameSpace("test-realm");
     private final DefaultEntandoResourceClient entandoResourceClient;
 
-    public KeycloakIntegrationTestHelper(DefaultKubernetesClient client) {
+    public KeycloakE2ETestHelper(DefaultKubernetesClient client) {
         super(client, EntandoKeycloakServerOperationFactory::produceAllEntandoKeycloakServers);
         this.entandoResourceClient = new DefaultEntandoResourceClient(client);
     }

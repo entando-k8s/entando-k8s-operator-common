@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.test.common;
 
-import static org.entando.kubernetes.test.componenttest.InProcessTestUtil.MY_KEYCLOAK_BASE_URL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -66,6 +65,9 @@ public interface FluentTraversals {
     String KEYCLOAK_USER = "KEYCLOAK_USER";
     String KEYCLOAK_PASSWORD = "KEYCLOAK_PASSWORD";
     String DB_VENDOR = "DB_VENDOR";
+    //TODO reconsider these two as they will only work on inprocess test scenarios
+    String MY_KEYCLOAK_HOSTNAME = "access.192.168.0.100.nip.io";
+    String MY_KEYCLOAK_BASE_URL = "http://" + MY_KEYCLOAK_HOSTNAME + "/auth";
 
     default ContainerFinder theContainerNamed(String name) {
         return new ContainerFinder(name);

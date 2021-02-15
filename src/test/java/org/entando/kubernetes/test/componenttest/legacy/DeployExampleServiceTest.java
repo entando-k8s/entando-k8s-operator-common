@@ -68,8 +68,8 @@ import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceC
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.controller.support.creators.SecretCreator;
-import org.entando.kubernetes.controller.support.creators.TlsHelper;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
@@ -401,7 +401,7 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, C
         assertThat(theVariableNamed(DB_VENDOR).on(theServerContainer), is("mysql"));
         assertThat(theVolumeMountNamed(TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME + "-volume").on(theServerContainer)
                         .getMountPath(),
-                is(SecretCreator.CERT_SECRET_MOUNT_ROOT + "/" + TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
+                is(SecretUtils.CERT_SECRET_MOUNT_ROOT + "/" + TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME));
     }
 
     private void verifyTheDbContainer(Container theDbContainer) {

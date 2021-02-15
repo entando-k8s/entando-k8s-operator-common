@@ -14,10 +14,13 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.helpers;
+package org.entando.kubernetes.test.e2etest.helpers;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
+import org.entando.kubernetes.client.EntandoOperatorTestConfig;
+import org.entando.kubernetes.client.integrationtesthelpers.FluentIntegrationTesting;
+import org.entando.kubernetes.client.integrationtesthelpers.HttpTestHelper;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
@@ -25,18 +28,15 @@ import org.entando.kubernetes.model.app.DoneableEntandoApp;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppList;
 import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
-import org.entando.kubernetes.test.integrationtest.common.FluentIntegrationTesting;
-import org.entando.kubernetes.test.integrationtest.common.HttpTestHelper;
-import org.entando.kubernetes.test.integrationtest.podwaiters.JobPodWaiter;
-import org.entando.kubernetes.test.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.test.e2etest.podwaiters.JobPodWaiter;
+import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 
-public class EntandoAppIntegrationTestHelper extends IntegrationTestHelperBase<EntandoApp, EntandoAppList, DoneableEntandoApp> {
+public class EntandoAppE2ETestHelper extends E2ETestHelperBase<EntandoApp, EntandoAppList, DoneableEntandoApp> {
 
     public static final String TEST_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("test-namespace");
     public static final String TEST_APP_NAME = EntandoOperatorTestConfig.calculateName("test-entando");
 
-    public EntandoAppIntegrationTestHelper(DefaultKubernetesClient client) {
+    public EntandoAppE2ETestHelper(DefaultKubernetesClient client) {
         super(client, EntandoAppOperationFactory::produceAllEntandoApps);
     }
 

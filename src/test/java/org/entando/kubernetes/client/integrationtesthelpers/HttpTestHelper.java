@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.common;
+package org.entando.kubernetes.client.integrationtesthelpers;
 
 import com.jayway.jsonpath.JsonPath;
 import java.io.BufferedReader;
@@ -33,7 +33,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.entando.kubernetes.controller.support.creators.TlsHelper;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 
 public final class HttpTestHelper {
 

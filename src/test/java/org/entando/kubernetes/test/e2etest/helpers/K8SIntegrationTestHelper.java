@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.helpers;
+package org.entando.kubernetes.test.e2etest.helpers;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.util.Enumeration;
@@ -24,26 +24,26 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import org.entando.kubernetes.client.DefaultIngressClient;
+import org.entando.kubernetes.client.EntandoOperatorTestConfig;
+import org.entando.kubernetes.client.EntandoOperatorTestConfig.TestTarget;
+import org.entando.kubernetes.client.integrationtesthelpers.FluentIntegrationTesting;
+import org.entando.kubernetes.client.integrationtesthelpers.TestFixturePreparation;
+import org.entando.kubernetes.client.integrationtesthelpers.TestFixtureRequest;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig.TestTarget;
-import org.entando.kubernetes.test.integrationtest.common.FluentIntegrationTesting;
-import org.entando.kubernetes.test.integrationtest.common.TestFixturePreparation;
-import org.entando.kubernetes.test.integrationtest.common.TestFixtureRequest;
 
 public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
 
     private final DefaultKubernetesClient client = TestFixturePreparation.newClient();
     private final String domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));
-    private final EntandoPluginIntegrationTestHelper entandoPluginIntegrationTestHelper = new EntandoPluginIntegrationTestHelper(client);
-    private final KeycloakIntegrationTestHelper keycloakHelper = new KeycloakIntegrationTestHelper(client);
-    private final EntandoAppIntegrationTestHelper entandoAppHelper = new EntandoAppIntegrationTestHelper(client);
-    private final ExternalDatabaseIntegrationTestHelper externalDatabaseHelper = new ExternalDatabaseIntegrationTestHelper(client);
+    private final EntandoPluginE2ETestHelper entandoPluginHelper = new EntandoPluginE2ETestHelper(client);
+    private final KeycloakE2ETestHelper keycloakHelper = new KeycloakE2ETestHelper(client);
+    private final EntandoAppE2ETestHelper entandoAppHelper = new EntandoAppE2ETestHelper(client);
+    private final ExternalDatabaseE2ETestHelper externalDatabaseHelper = new ExternalDatabaseE2ETestHelper(client);
 
     private static void stopStaleWatchersFromFillingUpTheLogs() {
         Enumeration<String> loggerNames = LogManager.getLogManager().getLoggerNames();
@@ -57,19 +57,19 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
         }
     }
 
-    public ExternalDatabaseIntegrationTestHelper externalDatabases() {
+    public ExternalDatabaseE2ETestHelper externalDatabases() {
         return externalDatabaseHelper;
     }
 
-    public KeycloakIntegrationTestHelper keycloak() {
+    public KeycloakE2ETestHelper keycloak() {
         return keycloakHelper;
     }
 
-    public EntandoPluginIntegrationTestHelper entandoPlugins() {
-        return entandoPluginIntegrationTestHelper;
+    public EntandoPluginE2ETestHelper entandoPlugins() {
+        return entandoPluginHelper;
     }
 
-    public EntandoAppIntegrationTestHelper entandoApps() {
+    public EntandoAppE2ETestHelper entandoApps() {
         return this.entandoAppHelper;
     }
 
@@ -112,9 +112,9 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
     }
 
     public void releaseAllFinalizers() {
-        keycloak().releaseAllFinalizers(KeycloakIntegrationTestHelper.KEYCLOAK_NAMESPACE);
-        entandoApps().releaseAllFinalizers(EntandoAppIntegrationTestHelper.TEST_NAMESPACE);
-        entandoPlugins().releaseAllFinalizers(EntandoPluginIntegrationTestHelper.TEST_PLUGIN_NAMESPACE);
+        keycloak().releaseAllFinalizers(KeycloakE2ETestHelper.KEYCLOAK_NAMESPACE);
+        entandoApps().releaseAllFinalizers(EntandoAppE2ETestHelper.TEST_NAMESPACE);
+        entandoPlugins().releaseAllFinalizers(EntandoPluginE2ETestHelper.TEST_PLUGIN_NAMESPACE);
     }
 
     public String getDomainSuffix() {

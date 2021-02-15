@@ -14,13 +14,14 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.helpers;
+package org.entando.kubernetes.test.e2etest.helpers;
 
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.client.EntandoOperatorTestConfig;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
@@ -28,18 +29,17 @@ import org.entando.kubernetes.model.plugin.DoneableEntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginList;
 import org.entando.kubernetes.model.plugin.EntandoPluginOperationFactory;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
-import org.entando.kubernetes.test.integrationtest.podwaiters.JobPodWaiter;
-import org.entando.kubernetes.test.integrationtest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.test.e2etest.podwaiters.JobPodWaiter;
+import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 
-public class EntandoPluginIntegrationTestHelper extends
-        IntegrationTestHelperBase<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> {
+public class EntandoPluginE2ETestHelper extends
+        E2ETestHelperBase<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> {
 
     public static final String TEST_PLUGIN_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("plugin-namespace");
     public static final String TEST_PLUGIN_NAME = EntandoOperatorTestConfig.calculateName("test-plugin-a");
     public static final String PAM_CONNECTION_CONFIG = "pam-connection-config";
 
-    public EntandoPluginIntegrationTestHelper(DefaultKubernetesClient client) {
+    public EntandoPluginE2ETestHelper(DefaultKubernetesClient client) {
         super(client, EntandoPluginOperationFactory::produceAllEntandoPlugins);
     }
 

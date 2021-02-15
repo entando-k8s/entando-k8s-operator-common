@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;

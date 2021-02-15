@@ -46,7 +46,6 @@ import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureO
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
-import org.entando.kubernetes.test.integrationtest.common.EntandoOperatorTestConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;

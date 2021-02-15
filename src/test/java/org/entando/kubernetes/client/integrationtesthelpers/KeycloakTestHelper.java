@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.client;
+package org.entando.kubernetes.client.integrationtesthelpers;
 
 import java.util.List;
 import java.util.Optional;

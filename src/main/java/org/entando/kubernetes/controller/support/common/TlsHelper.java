@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.creators;
+package org.entando.kubernetes.controller.support.common;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,7 +37,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 
 public final class TlsHelper {
 

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.common;
+package org.entando.kubernetes.client.integrationtesthelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,15 +25,16 @@ import org.entando.kubernetes.model.EntandoBaseCustomResource;
 
 public class TestFixtureRequest {
 
-    private Map<String, List<Class<? extends EntandoBaseCustomResource<?>>>> requiredDeletions = new ConcurrentHashMap<>();
+    private final Map<String, List<Class<? extends EntandoBaseCustomResource<?>>>> requiredDeletions = new ConcurrentHashMap<>();
 
-    private Map<String, List<EntandoBaseCustomResource<?>>> requiredAdditions = new ConcurrentHashMap<>();
+    private final Map<String, List<EntandoBaseCustomResource<?>>> requiredAdditions = new ConcurrentHashMap<>();
 
     public DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource<?>> type) {
         return new DeletionRequestBuilder(type, this);
     }
 
-    public AdditionRequestBuilder addAll(EntandoBaseCustomResource... objects) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public final AdditionRequestBuilder addAll(EntandoBaseCustomResource... objects) {
         return new AdditionRequestBuilder(Arrays.asList(objects), this);
     }
 
@@ -45,10 +46,10 @@ public class TestFixtureRequest {
         return requiredAdditions;
     }
 
-    public class DeletionRequestBuilder {
+    public static class DeletionRequestBuilder {
 
-        private Class<? extends EntandoBaseCustomResource<?>> typesToDelete;
-        private TestFixtureRequest request;
+        private final Class<? extends EntandoBaseCustomResource<?>> typesToDelete;
+        private final TestFixtureRequest request;
 
         private DeletionRequestBuilder(Class<? extends EntandoBaseCustomResource<?>> typesToDelete, TestFixtureRequest request) {
             this.typesToDelete = typesToDelete;

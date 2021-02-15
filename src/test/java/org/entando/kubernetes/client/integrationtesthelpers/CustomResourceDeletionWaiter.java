@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.integrationtest.common;
+package org.entando.kubernetes.client.integrationtesthelpers;
 
 import static org.awaitility.Awaitility.await;
 
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 public class CustomResourceDeletionWaiter {
 
-    private RawCustomResourceOperationsImpl operation;
+    private final RawCustomResourceOperationsImpl operation;
     private String name;
     private String namespace;
 
