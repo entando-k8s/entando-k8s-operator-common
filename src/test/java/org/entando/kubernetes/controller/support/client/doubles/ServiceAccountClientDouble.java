@@ -16,12 +16,12 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
-import io.fabric8.kubernetes.api.model.DoneableServiceAccount;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import java.util.Map;
+import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -63,13 +63,10 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
                     .endMetadata().build();
             getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
         }
-        return new DoneableServiceAccount(serviceAccount) {
-            @Override
-            public ServiceAccount done() {
-                ServiceAccount done = super.done();
-                getNamespace(peerInNamespace).putServiceAccount(done);
-                return done;
-            }
-        };
+        return new DoneableServiceAccount(serviceAccount, sa -> {
+            getNamespace(peerInNamespace).putServiceAccount(sa);
+            return sa;
+
+        });
     }
 }

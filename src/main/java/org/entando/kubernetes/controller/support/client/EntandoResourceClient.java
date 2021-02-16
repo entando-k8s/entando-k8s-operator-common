@@ -16,7 +16,7 @@
 
 package org.entando.kubernetes.controller.support.client;
 
-import io.fabric8.kubernetes.api.model.DoneableConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
@@ -62,7 +62,11 @@ public interface EntandoResourceClient {
 
     ExposedService loadExposedService(EntandoCustomResource resource);
 
-    DoneableConfigMap loadDefaultConfigMap();
+    DoneableConfigMap loadDefaultCapabilitiesConfigMap();
+
+    ConfigMap loadDockerImageInfoConfigMap();
+
+    ConfigMap loadOperatorConfig();
 
     default Optional<ResourceReference> determineKeycloakToUse(EntandoCustomResource resource,
             KeycloakPreference keycloakPreference) {
@@ -79,7 +83,7 @@ public interface EntandoResourceClient {
                         keycloak.get().getMetadata().getNamespace(),
                         keycloak.get().getMetadata().getName());
             } else {
-                DoneableConfigMap configMapResource = loadDefaultConfigMap();
+                DoneableConfigMap configMapResource = loadDefaultCapabilitiesConfigMap();
                 resourceReference = new ResourceReference(
                         configMapResource.getData().get(KeycloakName.DEFAULT_KEYCLOAK_NAMESPACE_KEY),
                         configMapResource.getData().get(KeycloakName.DEFAULT_KEYCLOAK_NAME_KEY));
@@ -105,7 +109,7 @@ public interface EntandoResourceClient {
                         clusterInfrastructure.get().getMetadata().getNamespace(),
                         clusterInfrastructure.get().getMetadata().getName());
             } else {
-                DoneableConfigMap configMapResource = loadDefaultConfigMap();
+                DoneableConfigMap configMapResource = loadDefaultCapabilitiesConfigMap();
                 resourceReference = new ResourceReference(
                         configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAMESPACE_KEY),
                         configMapResource.getData().get(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAME_KEY));

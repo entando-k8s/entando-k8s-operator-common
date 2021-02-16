@@ -21,7 +21,6 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.support.client.SecretClient;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultSecretClient implements SecretClient {
@@ -72,12 +71,6 @@ public class DefaultSecretClient implements SecretClient {
     }
 
     @Override
-    public ConfigMap loadControllerConfigMap(String configMapName) {
-        return client.configMaps().inNamespace(getOperatorConfigMapNamespace())
-                .withName(configMapName).get();
-    }
-
-    @Override
     public void createConfigMapIfAbsent(EntandoCustomResource peerInNamespace, ConfigMap configMap) {
         try {
             client.configMaps().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(configMap);
@@ -96,17 +89,21 @@ public class DefaultSecretClient implements SecretClient {
     }
 
     @Override
+    public ConfigMap loadControllerConfigMap(String configMapName) {
+        return client.configMaps().inNamespace(client.getNamespace())
+                .withName(configMapName).get();
+    }
+
+    @Override
+    //Will remove once we have propagate latest version to all downstream projects
+    @SuppressWarnings("deprecated")
     public void overwriteControllerConfigMap(ConfigMap configMap) {
         try {
-            final String namespace = getOperatorConfigMapNamespace();
-            configMap.getMetadata().setNamespace(namespace);
-            client.configMaps().inNamespace(namespace).createOrReplace(configMap);
+            configMap.getMetadata().setNamespace(client.getNamespace());
+            client.configMaps().inNamespace(client.getNamespace()).createOrReplace(configMap);
         } catch (KubernetesClientException e) {
             KubernetesExceptionProcessor.verifyDuplicateExceptionOnCreate(client.getNamespace(), configMap, e);
         }
     }
 
-    private String getOperatorConfigMapNamespace() {
-        return EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace());
-    }
 }

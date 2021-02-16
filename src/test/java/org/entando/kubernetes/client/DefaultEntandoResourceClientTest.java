@@ -250,7 +250,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
         //and the connection configmap was created in the KeycloakServer's namespace
         prepareKeycloakConnectionInfo(r);
         //and the EntandoKeycloakServer in question is marked as the default
-        getSimpleK8SClient().entandoResources().loadDefaultConfigMap()
+        getSimpleK8SClient().entandoResources().loadDefaultCapabilitiesConfigMap()
                 .addToData(KeycloakName.DEFAULT_KEYCLOAK_NAME_KEY, r.getMetadata().getName())
                 .addToData(KeycloakName.DEFAULT_KEYCLOAK_NAMESPACE_KEY, r.getMetadata().getNamespace())
                 .done();
@@ -292,7 +292,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
         //and the connection configmap was created in the EntandoClusterInfrastructure's namespace
         prepareInfrastructureConnectionInfo(r);
         //and the EntandoClusterInfrastructure in question is marked as the default
-        getSimpleK8SClient().entandoResources().loadDefaultConfigMap()
+        getSimpleK8SClient().entandoResources().loadDefaultCapabilitiesConfigMap()
                 .addToData(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAME_KEY, r.getMetadata().getName())
                 .addToData(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAMESPACE_KEY, r.getMetadata().getNamespace())
                 .done();

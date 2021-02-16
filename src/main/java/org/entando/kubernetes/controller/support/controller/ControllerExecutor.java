@@ -65,8 +65,7 @@ public class ControllerExecutor {
     public ControllerExecutor(String controllerNamespace, SimpleK8SClient<?> client) {
         this.controllerNamespace = controllerNamespace;
         this.client = client;
-        this.imageResolver = new EntandoImageResolver(
-                client.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
+        this.imageResolver = new EntandoImageResolver(client.entandoResources().loadDockerImageInfoConfigMap());
     }
 
     private static Map<String, String> buildImageMap() {

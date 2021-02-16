@@ -40,7 +40,6 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.DbmsVendor;
@@ -85,8 +84,8 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
         this.k8sClient = k8sClient;
         this.keycloakClient = keycloakClient;
         this.autoExit = autoExit;
-        this.entandoImageResolver = new EntandoImageResolver(
-                k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
+        this.entandoImageResolver = new EntandoImageResolver(k8sClient.entandoResources().loadDockerImageInfoConfigMap());
+        EntandoOperatorConfigBase.setConfigMap(k8sClient.entandoResources().loadOperatorConfig());
         Class<?> cls = getClass();
         List<Class<T>> types = new ArrayList<>();
         while (cls != AbstractDbAwareController.class) {

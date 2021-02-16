@@ -18,12 +18,13 @@ package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.NodeAddress;
-import io.fabric8.kubernetes.api.model.extensions.DoneableIngress;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.Map;
 import java.util.Optional;
+import org.entando.kubernetes.controller.support.client.DoneableIngress;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -51,8 +52,7 @@ public class DefaultIngressClient implements IngressClient {
 
     @Override
     public Ingress addHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath, Map<String, String> annotations) {
-        return client.extensions().ingresses().inNamespace(ingress.getMetadata().getNamespace())
-                .withName(ingress.getMetadata().getName()).edit()
+        return edit(ingress.getMetadata(), ingress.getMetadata().getName())
                 .editSpec().editFirstRule().editHttp()
                 .addNewPathLike(httpIngressPath)
                 .endPath().endHttp().endRule().endSpec()
@@ -60,10 +60,15 @@ public class DefaultIngressClient implements IngressClient {
                 .done();
     }
 
+    private DoneableIngress edit(ObjectMeta metadata, String name) {
+        return new DoneableIngress(client.extensions().ingresses().inNamespace(metadata.getNamespace())
+                .withName(name).fromServer().get(), client.extensions().ingresses().inNamespace(metadata.getNamespace())
+                .withName(name)::patch);
+    }
+
     @Override
     public Ingress removeHttpPath(Ingress ingress, HTTPIngressPath path) {
-        return client.extensions().ingresses().inNamespace(ingress.getMetadata().getNamespace())
-                .withName(ingress.getMetadata().getName()).edit()
+        return edit(ingress.getMetadata(), ingress.getMetadata().getName())
                 .editSpec().editFirstRule().editHttp()
                 .removeFromPaths(path)
                 .endHttp()
@@ -85,7 +90,7 @@ public class DefaultIngressClient implements IngressClient {
 
     @Override
     public DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
-        return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).edit();
+        return edit(peerInNamespace.getMetadata(), name);
     }
 
     @Override

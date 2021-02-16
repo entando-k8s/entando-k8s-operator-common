@@ -16,20 +16,21 @@
 
 package org.entando.kubernetes.controller.support.client;
 
-import io.fabric8.kubernetes.api.model.rbac.Role;
-import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.extensions.IngressFluentImpl;
+import java.util.function.UnaryOperator;
 
-public interface ServiceAccountClient {
+public class DoneableIngress extends IngressFluentImpl<DoneableIngress> {
 
-    String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace,
-            RoleBinding roleBinding);
+    private final UnaryOperator<Ingress> action;
 
-    RoleBinding loadRoleBinding(EntandoCustomResource peerInNamespace, String name);
+    public DoneableIngress(Ingress ingress, UnaryOperator<Ingress> action) {
+        super(ingress);
+        this.action = action;
+    }
 
-    String createRoleIfAbsent(EntandoCustomResource peerInNamespace, Role role);
-
-    Role loadRole(EntandoCustomResource peerInNamespace, String name);
-
-    DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name);
+    public Ingress done() {
+        Ingress built = new Ingress(getApiVersion(), getKind(), buildMetadata(), buildSpec(), buildStatus());
+        return action.apply(built);
+    }
 }

@@ -58,7 +58,7 @@ public class E2ETestHelperBase<
     protected final CustomResourceOperationsImpl<R, L, D> operations;
     private final String domainSuffix;
     private final ControllerStartupEventFiringListener<R, L, D> startupEventFiringListener;
-    private ControllerContainerStartingListener<R, L, D> containerStartingListener;
+    private final ControllerContainerStartingListener<R, L, D> containerStartingListener;
 
     protected E2ETestHelperBase(DefaultKubernetesClient client, OperationsSupplier<R, L, D> producer) {
         this.client = client;
@@ -151,12 +151,12 @@ public class E2ETestHelperBase<
         return KeycloakName.ofTheRealm(spec::getKeycloakToUse);
     }
 
-    public DoneableConfigMap loadDefaultOperatorConfigMap() {
+    public DoneableConfigMap loadDefaultCapabilitiesConfigMap() {
         Resource<ConfigMap, DoneableConfigMap> resource = client.configMaps().inNamespace(client.getNamespace())
-                .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME);
+                .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME);
         DoneableConfigMap configMap;
         if (resource.get() == null) {
-            configMap = resource.createNew().withNewMetadata().withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME)
+            configMap = resource.createNew().withNewMetadata().withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME)
                     .withNamespace(client.getNamespace()).endMetadata();
         } else {
             configMap = resource.edit();

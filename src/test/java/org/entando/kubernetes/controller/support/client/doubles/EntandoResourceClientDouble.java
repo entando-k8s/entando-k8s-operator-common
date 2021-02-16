@@ -19,7 +19,6 @@ package org.entando.kubernetes.controller.support.client.doubles;
 import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
@@ -33,8 +32,10 @@ import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
+import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
@@ -162,20 +163,36 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public DoneableConfigMap loadDefaultConfigMap() {
-        ConfigMap configMap = getNamespace(CONTROLLER_NAMESPACE).getConfigMap(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME);
+    public DoneableConfigMap loadDefaultCapabilitiesConfigMap() {
+        ConfigMap configMap = getNamespace(CONTROLLER_NAMESPACE)
+                .getConfigMap(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME);
         if (configMap == null) {
             return new DoneableConfigMap(item -> {
                 getNamespace(CONTROLLER_NAMESPACE).putConfigMap(item);
                 return item;
             })
                     .withNewMetadata()
-                    .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CONFIGMAP_NAME)
+                    .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME)
                     .withNamespace(CONTROLLER_NAMESPACE)
                     .endMetadata()
                     .addToData(new HashMap<>());
         }
-        return new DoneableConfigMap(configMap);
+        return new DoneableConfigMap(configMap, item -> {
+            getNamespace(CONTROLLER_NAMESPACE).putConfigMap(item);
+            return item;
+        });
+    }
+
+    @Override
+    public ConfigMap loadDockerImageInfoConfigMap() {
+        return getNamespace(EntandoOperatorConfig.getEntandoDockerImageInfoNamespace().orElse(CONTROLLER_NAMESPACE))
+                .getConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap());
+
+    }
+
+    @Override
+    public ConfigMap loadOperatorConfig() {
+        return getNamespace(CONTROLLER_NAMESPACE).getConfigMap(KubeUtils.ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME);
     }
 
     @Override

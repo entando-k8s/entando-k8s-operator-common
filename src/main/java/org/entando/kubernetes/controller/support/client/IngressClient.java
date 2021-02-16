@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.controller.support.client;
 
-import io.fabric8.kubernetes.api.model.extensions.DoneableIngress;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Map;
