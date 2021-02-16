@@ -53,10 +53,8 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
             this.role = serviceAccountClient.createRoleIfAbsent(entandoCustomResource, newRole(deployable));
             serviceAccountClient.createRoleBindingIfAbsent(entandoCustomResource, newRoleBinding(deployable));
         }
-        if (EntandoOperatorConfig.isClusterScopedDeployment()) {
-            Arrays.stream(EntandoRbacRole.values())
-                    .forEach(entandoRbacRole -> createRoleBindingForClusterRole(serviceAccountClient, deployable, entandoRbacRole));
-        }
+        Arrays.stream(EntandoRbacRole.values())
+                .forEach(entandoRbacRole -> createRoleBindingForClusterRole(serviceAccountClient, deployable, entandoRbacRole));
     }
 
     private void prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?> deployable) {
