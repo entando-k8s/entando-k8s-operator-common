@@ -30,11 +30,12 @@ import org.junit.jupiter.api.Tags;
 import org.mockito.Mockito;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-@SuppressWarnings({"java:S6068", "java:S6073"})
+//Sonar doesn't realize that the tests are in the superclass
+@SuppressWarnings({"java:S6068", "java:S6073", "java:S2187"})
 public class SpringBootContainerMockClientTest extends SpringBootContainerTestBase {
 
-    private SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
-    private SimpleKeycloakClient keycloakClient = Mockito.mock(SimpleKeycloakClient.class);
+    private final SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
+    private final SimpleKeycloakClient keycloakClient = Mockito.mock(SimpleKeycloakClient.class);
 
     @AfterEach
     public void dontEmulatePodWaiting() {

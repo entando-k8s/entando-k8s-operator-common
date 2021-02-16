@@ -26,6 +26,8 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 @EnableRuleMigrationSupport
+//Sonar doesn't realize that the tests are in the superclass
+@SuppressWarnings("java:S2187")
 public class ControllerExecutorMockServerTest extends ControllerExecutorTestBase {
 
     @Rule

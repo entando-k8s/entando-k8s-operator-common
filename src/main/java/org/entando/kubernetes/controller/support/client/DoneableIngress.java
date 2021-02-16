@@ -23,6 +23,7 @@ import java.util.function.UnaryOperator;
 public class DoneableIngress extends IngressFluentImpl<DoneableIngress> {
 
     private final UnaryOperator<Ingress> action;
+    private final Object hashCode = new Object();
 
     public DoneableIngress(Ingress ingress, UnaryOperator<Ingress> action) {
         super(ingress);
@@ -32,5 +33,15 @@ public class DoneableIngress extends IngressFluentImpl<DoneableIngress> {
     public Ingress done() {
         Ingress built = new Ingress(getApiVersion(), getKind(), buildMetadata(), buildSpec(), buildStatus());
         return action.apply(built);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode.hashCode();
     }
 }

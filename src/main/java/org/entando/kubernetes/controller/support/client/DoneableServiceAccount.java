@@ -24,6 +24,7 @@ import java.util.function.UnaryOperator;
 public class DoneableServiceAccount extends ServiceAccountFluentImpl<DoneableServiceAccount> {
 
     private final UnaryOperator<ServiceAccount> action;
+    private final Object hashCode = new Object();
 
     public DoneableServiceAccount(UnaryOperator<ServiceAccount> action) {
         this(new ServiceAccountBuilder().withNewMetadata().endMetadata().build(), action);
@@ -38,6 +39,16 @@ public class DoneableServiceAccount extends ServiceAccountFluentImpl<DoneableSer
         ServiceAccount buildable = new ServiceAccount(getApiVersion(), isAutomountServiceAccountToken(), buildImagePullSecrets(), getKind(),
                 buildMetadata(), buildSecrets());
         return action.apply(buildable);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode.hashCode();
     }
 
 }

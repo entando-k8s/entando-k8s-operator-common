@@ -23,6 +23,7 @@ import java.util.function.UnaryOperator;
 public class DoneableConfigMap extends ConfigMapFluentImpl<DoneableConfigMap> {
 
     private final UnaryOperator<ConfigMap> action;
+    private final Object hashCode = new Object();
 
     public DoneableConfigMap(UnaryOperator<ConfigMap> action) {
         this.action = action;
@@ -38,4 +39,13 @@ public class DoneableConfigMap extends ConfigMapFluentImpl<DoneableConfigMap> {
         return action.apply(built);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        return this == o;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode.hashCode();
+    }
 }
