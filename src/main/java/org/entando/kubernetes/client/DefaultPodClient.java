@@ -22,7 +22,6 @@ import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
-import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
@@ -75,7 +74,7 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
-    public ExecWatch executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
+    public EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
         PodResource<Pod, DoneablePod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName());
         return executeAndWait(podResource, containerName, timeoutSeconds, commands);

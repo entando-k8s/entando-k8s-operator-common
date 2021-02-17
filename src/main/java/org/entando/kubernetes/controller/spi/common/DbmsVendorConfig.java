@@ -31,7 +31,7 @@ public enum DbmsVendorConfig {
         }
     },
     POSTGRESQL("org.hibernate.dialect.PostgreSQLDialect", 5432, "postgres",
-            "psql -h 127.0.0.1 -U ${POSTGRESQL_USER} -q -d postgres -c '\\l'|grep ${POSTGRESQL_DATABASE}", 64, false) {
+            "/usr/libexec/check-container", 64, false) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {

@@ -32,7 +32,6 @@ import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.controller.EntandoControllerException;
 import org.entando.kubernetes.controller.support.creators.DatabasePreparationPodCreator;
@@ -81,8 +80,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
 
     public T execute(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient potentiallyNullKeycloakClient) {
         Optional<SimpleKeycloakClient> keycloakClient = Optional.ofNullable(potentiallyNullKeycloakClient);
-        EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
-                k8sClient.secrets().loadControllerConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()));
+        EntandoImageResolver entandoImageResolver = new EntandoImageResolver(k8sClient.entandoResources().loadDockerImageInfoConfigMap());
         if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
             prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable<?>) deployable);
         }

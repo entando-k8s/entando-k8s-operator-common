@@ -55,6 +55,7 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DeploymentCreator extends AbstractK8SResourceCreator {
@@ -71,7 +72,8 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?> deployable) {
         deployment = deploymentClient
-                .createOrPatchDeployment(entandoCustomResource, newDeployment(imageResolver, deployable));
+                .createOrPatchDeployment(entandoCustomResource,
+                        newDeployment(imageResolver, deployable, deploymentClient.supportsStartupProbes()));
         return deployment;
     }
 
@@ -87,7 +89,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return deployment;
     }
 
-    private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver, Deployable<?> deployable) {
+    private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver, Deployable<?> deployable, boolean supportStartupProbe) {
         return new DeploymentBuilder()
                 .withNewSpec()
                 .withNewSelector()
@@ -102,7 +104,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .endMetadata()
                 .withNewSpec()
                 .withSecurityContext(buildSecurityContext(deployable))
-                .withContainers(buildContainers(imageResolver, deployable))
+                .withContainers(buildContainers(imageResolver, deployable, supportStartupProbe))
                 .withDnsPolicy("ClusterFirst")
                 .withRestartPolicy("Always")
                 .withServiceAccountName(deployable.getServiceAccountToUse())
@@ -154,18 +156,21 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?> deployable) {
-        return deployable.getContainers().stream().map(deployableContainer -> this.newContainer(imageResolver, deployableContainer))
+    private List<Container> buildContainers(EntandoImageResolver imageResolver, Deployable<?> deployable, boolean supportStartupProbes) {
+        return deployable.getContainers().stream()
+                .map(deployableContainer -> this.newContainer(imageResolver, deployableContainer, supportStartupProbes))
                 .collect(Collectors.toList());
     }
 
     private Container newContainer(EntandoImageResolver imageResolver,
-            DeployableContainer deployableContainer) {
+            DeployableContainer deployableContainer, boolean supportStartupProbes) {
         return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + CONTAINER_SUFFIX)
                 .withImage(imageResolver.determineImageUri(deployableContainer.getDockerImageInfo()))
                 .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse("IfNotPresent"))
                 .withPorts(buildPorts(deployableContainer))
-                .withReadinessProbe(buildReadinessProbe(deployableContainer))
+                .withReadinessProbe(buildReadinessProbe(deployableContainer, supportStartupProbes))
+                .withLivenessProbe(buildLivenessProbe(deployableContainer, supportStartupProbes))
+                .withStartupProbe(buildStartupProbe(deployableContainer, supportStartupProbes))
                 .withVolumeMounts(buildVolumeMounts(deployableContainer))
                 .withEnv(determineEnvironmentVariables(deployableContainer))
                 .withNewResources()
@@ -242,33 +247,65 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .withMountPath(s.getMountPath()).withReadOnly(true).build();
     }
 
-    private Probe buildReadinessProbe(DeployableContainer deployableContainer) {
-        Probe probe = null;
+    private Probe buildReadinessProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
+        int maximumStartupTimeSeconds = deployableContainer.getMaximumStartupTimeSeconds().orElse(120);
+        ProbeBuilder builder = buildHealthProbe(deployableContainer);
+        if (assumeStartupProbe) {
+            //No delay, only allow one failure for accuracy, check every 10 seconds
+            builder = builder.withPeriodSeconds(10).withFailureThreshold(1);
+        } else {
+            //Delay half of the maximum allowed startup time
+            //allow for four failures that are spaced out enough time for the
+            //container only to fail after the maximum startup time
+            builder = builder.withInitialDelaySeconds(maximumStartupTimeSeconds / 3)
+                    .withPeriodSeconds(maximumStartupTimeSeconds / 6)
+                    .withFailureThreshold(3);
+        }
+        //Healthchecks should be fast but we can be a bit forgiving for readiness probes
+        return builder.withTimeoutSeconds(5).build();
+    }
+
+    private Probe buildLivenessProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
+        int maximumStartupTimeSeconds = deployableContainer.getMaximumStartupTimeSeconds().orElse(120);
+        ProbeBuilder builder = buildHealthProbe(deployableContainer).withPeriodSeconds(10).withFailureThreshold(1).withTimeoutSeconds(3);
+        if (!assumeStartupProbe) {
+            //Delay the entire maximum allowed startup time and a bit. We don't want the container to get caught in a crash loop
+            builder = builder.withInitialDelaySeconds(Math.round(maximumStartupTimeSeconds * 1.2F));
+        }
+        return builder.build();
+    }
+
+    private Probe buildStartupProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
+        if (assumeStartupProbe) {
+            int maximumStartupTimeSeconds = deployableContainer.getMaximumStartupTimeSeconds().orElse(120);
+            ProbeBuilder builder = buildHealthProbe(deployableContainer);
+            //Stretch out the periodSeconds to allow for 10 attempts during startup
+            builder = builder.withPeriodSeconds(maximumStartupTimeSeconds / 10)
+                    //Allow for one extra failure after the maximumStartupTime
+                    .withFailureThreshold(11);
+            return builder.withTimeoutSeconds(5).build();
+        } else {
+            return null;
+        }
+    }
+
+    private ProbeBuilder buildHealthProbe(DeployableContainer deployableContainer) {
+        ProbeBuilder builder = null;
         if (deployableContainer instanceof HasHealthCommand) {
-            probe = new ProbeBuilder().withNewExec().addToCommand("/bin/sh", "-i", "-c",
-                    ((HasHealthCommand) deployableContainer).getHealthCheckCommand()).endExec()
-                    .withPeriodSeconds(10)
-                    .withInitialDelaySeconds(15)
-                    .withTimeoutSeconds(5)
-                    .withFailureThreshold(20)
-                    .build();
+            builder = new ProbeBuilder().withNewExec().addToCommand("/bin/sh", "-i", "-c",
+                    ((HasHealthCommand) deployableContainer).getHealthCheckCommand()).endExec();
         } else if (deployableContainer instanceof HasWebContext) {
             Optional<String> healthCheckPath = ((HasWebContext) deployableContainer).getHealthCheckPath();
             if (healthCheckPath.isPresent()) {
-                probe = new ProbeBuilder().withNewHttpGet().withNewPort(deployableContainer.getPrimaryPort())
-                        .withPath(healthCheckPath.get()).endHttpGet()
-                        .withPeriodSeconds(6)
-                        .withInitialDelaySeconds(30)
-                        .withTimeoutSeconds(3)
-                        .withFailureThreshold(40)
-                        .build();
+                builder = new ProbeBuilder().withNewHttpGet().withNewPort(deployableContainer.getPrimaryPort())
+                        .withPath(healthCheckPath.get()).endHttpGet();
             }
-        } else {
-            probe = new ProbeBuilder().withNewTcpSocket().withNewPort(deployableContainer.getPrimaryPort())
-                    .withHost("localhost").endTcpSocket()
-                    .build();
         }
-        return probe;
+        if (builder == null) {
+            builder = new ProbeBuilder().withNewTcpSocket().withNewPort(deployableContainer.getPrimaryPort())
+                    .withHost("localhost").endTcpSocket();
+        }
+        return builder;
     }
 
     private List<EnvVar> determineEnvironmentVariables(DeployableContainer container) {
@@ -306,11 +343,11 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return resolveName(container.getNameQualifier(), VOLUME_SUFFIX);
     }
 
-    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable) {
+    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable, boolean supportStartupProbes) {
         return new DeploymentBuilder()
                 .withMetadata(fromCustomResource(true, resolveName(deployable.getNameQualifier(), DEPLOYMENT_SUFFIX),
                         deployable.getNameQualifier()))
-                .withSpec(buildDeploymentSpec(imageResolver, deployable))
+                .withSpec(buildDeploymentSpec(imageResolver, deployable, supportStartupProbes))
                 .build();
     }
 

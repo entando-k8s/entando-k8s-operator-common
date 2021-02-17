@@ -29,12 +29,12 @@ public enum EntandoOperatorConfigProperty implements ConfigProperty {
     ENTANDO_DOCKER_IMAGE_ORG_FALLBACK("entando.docker.image.org.fallback"),
     ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE("entando.docker.image.org.override"),
     ENTANDO_DOCKER_IMAGE_INFO_CONFIGMAP("entando.docker.image.info.configmap"),
+    ENTANDO_DOCKER_IMAGE_INFO_NAMESPACE("entando.docker.image.info.namespace"),
 
     /*
     K8S Operator operational config
      */
     // the specified namespace is used to find the config-map from which create the entando app
-    ENTANDO_K8S_OPERATOR_CONFIGMAP_NAMESPACE("entando.k8s.operator.configmap.namespace"),
     ENTANDO_K8S_OPERATOR_SCOPE("entando.k8s.operator.scope"),
     ENTANDO_K8S_OPERATOR_SECURITY_MODE("entando.k8s.operator.security.mode"),
     ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE("entando.k8s.operator.compliance.mode"),

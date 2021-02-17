@@ -27,6 +27,7 @@ public interface PublicIngressingDeployableBase<T extends ExposedDeploymentResul
         PublicIngressingDeployable<T> {
 
     @Override
+    @SuppressWarnings("unchecked")
     default Optional<KeycloakToUse> getPreferredKeycloakToUse() {
         EntandoBaseCustomResource<KeycloakAwareSpec> ka = (EntandoBaseCustomResource<KeycloakAwareSpec>) getCustomResource();
         return ka.getSpec().getKeycloakToUse();

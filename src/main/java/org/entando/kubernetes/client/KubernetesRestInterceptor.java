@@ -18,6 +18,7 @@ package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
@@ -43,16 +44,36 @@ public class KubernetesRestInterceptor implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Logger logger = Logger.getLogger(method.getDeclaringClass().getName());
-        logger.log(Level.SEVERE, () -> {
-            StringBuilder message = new StringBuilder(
-                    String.format("Entering method %s in class %s", method.getName(),
+        logger.log(Level.INFO, () -> buildEnterMessage(method, args));
+        try {
+            return method.invoke(delegate, args);
+        } catch (InvocationTargetException e) {
+            logger.log(Level.SEVERE, e.getTargetException(), () -> String.format("Failure executing method %s in class %s",
+                    method.getName(),
+                    method.getDeclaringClass().getName()));
+            throw e.getTargetException();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, e, () -> String.format("Failure executing method %s in class %s",
+                    method.getName(),
+                    method.getDeclaringClass().getName()));
+            throw e;
+        } finally {
+            logger.log(Level.INFO, () ->
+                    String.format("Exiting method %s in class %s", method.getName(),
                             method.getDeclaringClass().getName()));
+
+        }
+    }
+
+    private String buildEnterMessage(Method method, Object[] args) {
+        StringBuilder message = new StringBuilder(
+                String.format("Entering method %s in class %s", method.getName(),
+                        method.getDeclaringClass().getName()));
+        if (args != null) {
             Optional<EntandoCustomResource> first = Arrays.stream(args)
                     .filter(EntandoCustomResource.class::isInstance)
                     .map(EntandoCustomResource.class::cast).findFirst();
-            if (first.isPresent()) {
-                message.append(format(first.get()));
-            }
+            first.ifPresent(entandoCustomResource -> message.append(format(entandoCustomResource)));
             Optional<HasMetadata> second = Arrays.stream(args)
                     .filter(o -> o instanceof HasMetadata && o.getClass().getName().startsWith("io.fabric8.kubernetes"))
                     .map(HasMetadata.class::cast).findFirst();
@@ -63,23 +84,11 @@ public class KubernetesRestInterceptor implements InvocationHandler {
                 message.append(format(second.get()));
             }
             if (!(first.isPresent() || second.isPresent())) {
-                message.append(" with ").append(String.join(",", Arrays.stream(args).map(Object::toString).collect(Collectors.toList())));
+                message.append(" with ")
+                        .append(Arrays.stream(args).map(Object::toString).collect(Collectors.joining(",")));
             }
-            return message.toString();
-        });
-        try {
-            return method.invoke(delegate, args);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, e, () -> String.format("Failure executing method %s in class %s",
-                    method.getName(),
-                    method.getDeclaringClass().getName()));
-            throw e;
-        } finally {
-            logger.log(Level.SEVERE, () ->
-                    String.format("Exiting method %s in class %s", method.getName(),
-                            method.getDeclaringClass().getName()));
-
         }
+        return message.toString();
     }
 
 }

@@ -17,10 +17,10 @@
 package org.entando.kubernetes.controller.spi.common;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -43,8 +43,10 @@ class NameUtilsTest {
             String found = NameUtils.shortenTo63Chars(FIFTY_NINE_CHARS + "asdfasdfasdfasdfasdfasdfasdfasdfasdf");
             assertThat(found, startsWith(FIFTY_NINE_CHARS));
             assertThat(found.length(), is(63));
-            String suffix = found.substring(59);
-            assertThat(Integer.parseInt(suffix), greaterThan(999));
+            char[] suffix = found.substring(59).toCharArray();
+            for (char c : suffix) {
+                assertTrue(Character.isDigit(c));
+            }
             assertFalse(existing.contains(found));
             existing.add(found);
         }

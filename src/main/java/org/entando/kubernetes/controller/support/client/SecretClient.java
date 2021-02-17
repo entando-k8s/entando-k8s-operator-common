@@ -46,7 +46,9 @@ public interface SecretClient {
 
     ConfigMap loadConfigMap(EntandoCustomResource peerInNamespace, String name);
 
+    @Deprecated
     void overwriteControllerConfigMap(ConfigMap newKeycloakConnectionConfigMap);
 
+    @Deprecated
     ConfigMap loadControllerConfigMap(String configMapName);
 }

@@ -46,8 +46,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     /*
     K8S Operator operational config
      */
-    public static Optional<String> getOperatorConfigMapNamespace() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_CONFIGMAP_NAMESPACE);
+    public static Optional<String> getEntandoDockerImageInfoNamespace() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_INFO_NAMESPACE);
     }
 
     public static Optional<String> getOperatorServiceAccount() {

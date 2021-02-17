@@ -223,7 +223,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     @Override
     public String prepareClientAndReturnSecret(KeycloakClientConfig config) {
         String id = findOrCreateClient(config);
-        updateClient(config, id);
+        updateClientWithId(config, id);
         return keycloak.realm(config.getRealm()).clients().get(id).getSecret().getValue();
     }
 
@@ -260,11 +260,16 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
     @Override
     public void updateClient(KeycloakClientConfig config) {
-        findClient(config).ifPresent(client -> updateClient(config, client.getId()));
+        findClient(config).ifPresent(client -> updateClientWithId(config, client.getId()));
     }
 
-    @SuppressWarnings("squid:S1155")//Because having a double negative in an if statement reduces readibility
-    private void updateClient(KeycloakClientConfig config, String id) {
+    Keycloak getKeycloak() {
+        return keycloak;
+    }
+
+    //Because having a negative in an if statement reduces readability
+    @SuppressWarnings("squid:S1155")
+    private void updateClientWithId(KeycloakClientConfig config, String id) {
         RealmResource realmResource = keycloak.realm(config.getRealm());
         ClientResource clientResource = realmResource.clients().get(id);
         List<ExpectedRole> desiredRoles = config.getRoles().stream().filter(distinctByKey(ExpectedRole::getCode))

@@ -21,12 +21,12 @@ import static org.hamcrest.core.Is.is;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import java.util.HashMap;
-import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
-import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.PersistentVolumentClaimClientDouble;
+import org.entando.kubernetes.controller.spi.examples.SamplePublicIngressingDbAwareDeployable;
+import org.entando.kubernetes.controller.support.client.doubles.PersistentVolumentClaimClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
+import org.entando.kubernetes.test.common.InProcessTestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-class PersistentVolumeClaimCreatorTest implements InProcessTestUtil {
+class PersistentVolumeClaimCreatorTest implements InProcessTestData {
 
     private EntandoApp entandoApp = newTestEntandoApp();
     private SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(

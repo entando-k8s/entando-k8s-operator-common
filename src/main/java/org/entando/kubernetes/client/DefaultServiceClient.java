@@ -21,6 +21,7 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -33,15 +34,22 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
-    public void createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
+    public Endpoints createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
         //TODO remove the namespace overriding once we create delegate services from the correct context (the App)
         String namespace = ofNullable(endpoints.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
         if (client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).get() != null) {
             client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
         }
-
-        client.endpoints().inNamespace(namespace).create(endpoints);
+        endpoints.getMetadata().setResourceVersion(null);
+        for (int i = 0; i < 10; i++) {
+            try {
+                return client.endpoints().inNamespace(namespace).create(endpoints);
+            } catch (KubernetesClientException e) {
+                //Waiting for K8S to delete it.
+            }
+        }
+        throw new IllegalStateException("Could not create Endpoints.");
     }
 
     @Override

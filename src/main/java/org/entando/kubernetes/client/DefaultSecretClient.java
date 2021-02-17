@@ -21,7 +21,6 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.support.client.SecretClient;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class DefaultSecretClient implements SecretClient {
@@ -72,12 +71,6 @@ public class DefaultSecretClient implements SecretClient {
     }
 
     @Override
-    public ConfigMap loadControllerConfigMap(String configMapName) {
-        return client.configMaps().inNamespace(EntandoOperatorConfig.getOperatorConfigMapNamespace().orElse(client.getNamespace()))
-                .withName(configMapName).get();
-    }
-
-    @Override
     public void createConfigMapIfAbsent(EntandoCustomResource peerInNamespace, ConfigMap configMap) {
         try {
             client.configMaps().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(configMap);
@@ -95,6 +88,24 @@ public class DefaultSecretClient implements SecretClient {
         }
     }
 
+    /**
+     * Loads configmap from controller namespace.
+     *
+     * @deprecated will be removed once all the downstream projects use the correct equivalents in EntandoResourceClient
+     */
+    @Override
+    @Deprecated(since = "6.3.2")
+    public ConfigMap loadControllerConfigMap(String configMapName) {
+        return client.configMaps().inNamespace(client.getNamespace())
+                .withName(configMapName).get();
+    }
+
+    /**
+     * Overwrites configmap in controller namespace.
+     *
+     * @deprecated will be removed once all the downstream projects use the correct equivalents in EntandoResourceClient
+     */
+    @Deprecated(since = "6.3.2")
     @Override
     public void overwriteControllerConfigMap(ConfigMap configMap) {
         try {

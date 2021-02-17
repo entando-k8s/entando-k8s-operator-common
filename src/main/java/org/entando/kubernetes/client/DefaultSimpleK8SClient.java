@@ -17,6 +17,7 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
+import java.lang.reflect.Proxy;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.IngressClient;
@@ -47,7 +48,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     public ServiceClient services() {
 
         if (this.serviceClient == null) {
-            this.serviceClient = new DefaultServiceClient(kubernetesClient);
+            this.serviceClient = intercepted(new DefaultServiceClient(kubernetesClient));
 
         }
         return this.serviceClient;
@@ -56,7 +57,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     @Override
     public PodClient pods() {
         if (this.podClient == null) {
-            this.podClient = new DefaultPodClient(kubernetesClient);
+            this.podClient = intercepted(new DefaultPodClient(kubernetesClient));
         }
         return this.podClient;
     }
@@ -64,7 +65,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     @Override
     public SecretClient secrets() {
         if (this.secretClient == null) {
-            this.secretClient = new DefaultSecretClient(kubernetesClient);
+            this.secretClient = intercepted(new DefaultSecretClient(kubernetesClient));
         }
         return this.secretClient;
     }
@@ -73,7 +74,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     public EntandoResourceClient entandoResources() {
         if (this.entandoResourceClient == null) {
 
-            this.entandoResourceClient = new DefaultEntandoResourceClient(kubernetesClient);
+            this.entandoResourceClient = intercepted(new DefaultEntandoResourceClient(kubernetesClient));
         }
         return this.entandoResourceClient;
     }
@@ -81,7 +82,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     @Override
     public ServiceAccountClient serviceAccounts() {
         if (this.serviceAccountClient == null) {
-            this.serviceAccountClient = new DefaultServiceAccountClient(kubernetesClient);
+            this.serviceAccountClient = intercepted(new DefaultServiceAccountClient(kubernetesClient));
         }
         return this.serviceAccountClient;
     }
@@ -89,7 +90,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     @Override
     public DeploymentClient deployments() {
         if (this.deploymentClient == null) {
-            this.deploymentClient = new DefaultDeploymentClient(kubernetesClient);
+            this.deploymentClient = intercepted(new DefaultDeploymentClient(kubernetesClient));
         }
         return this.deploymentClient;
     }
@@ -97,7 +98,7 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     @Override
     public IngressClient ingresses() {
         if (this.ingressClient == null) {
-            this.ingressClient = new DefaultIngressClient(kubernetesClient);
+            this.ingressClient = intercepted(new DefaultIngressClient(kubernetesClient));
         }
         return this.ingressClient;
     }
@@ -105,9 +106,16 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     @Override
     public PersistentVolumeClaimClient persistentVolumeClaims() {
         if (this.persistentVolumeClaimClient == null) {
-            this.persistentVolumeClaimClient = new DefaultPersistentVolumeClaimClient(kubernetesClient);
+            this.persistentVolumeClaimClient = intercepted(new DefaultPersistentVolumeClaimClient(kubernetesClient));
         }
         return this.persistentVolumeClaimClient;
     }
 
+    @SuppressWarnings("unchecked")
+    private <T> T intercepted(T delegate) {
+        return (T) Proxy.newProxyInstance(
+                Thread.currentThread().getContextClassLoader(),
+                delegate.getClass().getInterfaces(),
+                new KubernetesRestInterceptor(delegate));
+    }
 }

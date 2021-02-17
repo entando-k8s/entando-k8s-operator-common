@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.util.HashMap;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.SecretToMount;
 import org.entando.kubernetes.controller.spi.container.TlsAware;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
@@ -30,35 +31,32 @@ import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class SecretCreator extends AbstractK8SResourceCreator {
 
-    public static final String CERT_SECRET_MOUNT_ROOT = "/etc/entando/certs";
     public static final SecretToMount DEFAULT_CERTIFICATE_AUTHORITY_SECRET_TO_MOUNT = new SecretToMount(
             TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME,
-            CERT_SECRET_MOUNT_ROOT + "/" + TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME);
+            SecretUtils.CERT_SECRET_MOUNT_ROOT + "/" + TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME);
     public static final String TRUST_STORE_FILE = "store.jks";
-    public static final String TRUST_STORE_PATH = standardCertPathOf(TRUST_STORE_FILE);
+    public static final String TRUST_STORE_PATH = SecretUtils.standardCertPathOf(TRUST_STORE_FILE);
 
     public SecretCreator(EntandoCustomResource entandoCustomResource) {
         super(entandoCustomResource);
     }
 
-    public static String standardCertPathOf(String filename) {
-        return format("%s/%s/%s", CERT_SECRET_MOUNT_ROOT, TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, filename);
-    }
     //TODO simplify the secret creation. In each namespace, we really only need:
-    // 1. one secret for the TLS keypair
-    // 2. one TLS secret with and empty keypair
-    // 3. one secret for the Java truststore
-    // 4. one secret for the CA certs
+    // 1. one secret for the provided TLS keypair or the empty keypair if autogeneration supported. none if done externally
+    // 2. one secret for the Java truststore
+    // 3. one secret for the CA certs
     // See ControllerExecutor for further complexity that can be eliminated
     // Proposed approach:
-    // 1. Extract all CA and TLS info on Operator startup
-    // 2. Create all secrets with predefined names in operator namespace
-    // 3. ensure secrets are in deployment namespace
+    // 1. Extract all CA certs, build the trust store and create a secret for it with a predictable name
+    // 2. Now all possible secrets used will be in the operator namespace
+    // 3. On deployment, ensure secrets are in deployment namespace
     // 4. Bind all deployments to the correct standard certs as required
+    // 5. Use the TrustStore by programmatically resolving the secret from controller pods
 
     public void createSecrets(SecretClient client, Deployable<?> deployable) {
         if (TlsHelper.getInstance().isTrustStoreAvailable()) {

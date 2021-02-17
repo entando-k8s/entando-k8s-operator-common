@@ -52,7 +52,7 @@ public class NameUtils {
             //+1 to avoid Long.MIN_VALUE that stays negative after Math.abs
             suffix = String.valueOf(Math.abs(SECURE_RANDOM.nextLong() + 1));
         } while (suffix.length() < size);
-        return suffix.substring(0, size);
+        return suffix.substring(suffix.length() - size);
     }
 
     public static String camelCaseToDashDelimited(String in) {

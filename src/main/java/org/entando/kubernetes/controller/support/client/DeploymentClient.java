@@ -19,9 +19,12 @@ package org.entando.kubernetes.controller.support.client;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
-public interface DeploymentClient {
+public interface DeploymentClient extends PodWaitingClient {
+
+    boolean supportsStartupProbes();
 
     Deployment createOrPatchDeployment(EntandoCustomResource customResource, Deployment deployment);
 
     Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name);
+
 }

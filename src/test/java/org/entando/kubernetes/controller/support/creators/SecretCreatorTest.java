@@ -21,14 +21,14 @@ import static org.hamcrest.core.Is.is;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import org.entando.kubernetes.controller.common.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.inprocesstest.InProcessTestUtil;
-import org.entando.kubernetes.controller.inprocesstest.k8sclientdouble.SimpleK8SClientDouble;
+import org.entando.kubernetes.controller.spi.examples.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
+import org.entando.kubernetes.test.common.InProcessTestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-class SecretCreatorTest implements InProcessTestUtil {
+class SecretCreatorTest implements InProcessTestData {
 
     private static final String MY_IMAGE_PULL_SECRET = "my-image-pull-secret";
     public static final String DOCKER_CONFIG_JSON = "{asdfasdfasd:asdfasdfasd}";

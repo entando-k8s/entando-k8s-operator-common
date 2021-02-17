@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.support.creators;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.entando.kubernetes.controller.common.examples.springboot.SampleSpringBootDeployableContainer;
+import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
