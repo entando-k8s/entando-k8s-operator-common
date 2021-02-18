@@ -52,6 +52,13 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
+    public void removeSuccessfullyCompletedPods(String namespace, Map<String, String> labels) {
+        client.pods().inNamespace(namespace).withLabels(labels).list().getItems().stream()
+                .filter(pod -> PodResult.of(pod).getState() == State.COMPLETED && !PodResult.of(pod).hasFailed())
+                .forEach(client.pods().inNamespace(namespace)::delete);
+    }
+
+    @Override
     public void removeAndWait(String namespace, Map<String, String> labels) {
         FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client
                 .pods().inNamespace(namespace).withLabels(labels);
@@ -71,6 +78,11 @@ public class DefaultPodClient implements PodClient {
         Pod running = this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
         return waitFor(running, got -> PodResult.of(got).getState() == State.COMPLETED,
                 EntandoOperatorConfig.getPodCompletionTimeoutSeconds());
+    }
+
+    @Override
+    public void deletePod(Pod pod) {
+        this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName()).delete();
     }
 
     @Override

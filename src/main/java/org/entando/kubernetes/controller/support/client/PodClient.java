@@ -94,5 +94,9 @@ public interface PodClient extends PodWaitingClient {
      */
     BlockingQueue<EntandoExecListener> getExecListenerHolder();
 
+    void removeSuccessfullyCompletedPods(String namespace, Map<String, String> labels);
+
     void removeAndWait(String namespace, Map<String, String> labels);
+
+    void deletePod(Pod pod);
 }

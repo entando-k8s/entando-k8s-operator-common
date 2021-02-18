@@ -36,6 +36,7 @@ public enum EntandoOperatorConfigProperty implements ConfigProperty {
      */
     // the specified namespace is used to find the config-map from which create the entando app
     ENTANDO_K8S_OPERATOR_SCOPE("entando.k8s.operator.scope"),
+    ENTANDO_K8S_OPERATOR_GC_CONTROLLER_PODS("entando.k8s.operator.gc.controller.pods"),
     ENTANDO_K8S_OPERATOR_SECURITY_MODE("entando.k8s.operator.security.mode"),
     ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE("entando.k8s.operator.compliance.mode"),
     ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS("entando.k8s.operator.image.pull.secrets"),

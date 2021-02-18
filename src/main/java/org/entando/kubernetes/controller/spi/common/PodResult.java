@@ -31,7 +31,7 @@ public class PodResult {
             .withInitial(() -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()));
     public static final String RUNNING_PHASE = "Running";
     public static final String SUCCEEDED_PHASE = "Succeeded";
-    private static final String FAILED_PHASE = "Failed";
+    public static final String FAILED_PHASE = "Failed";
     private static final String PENDING_PHASE = "Pending";
     private boolean someContainersNotDidNotRun;
 

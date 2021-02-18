@@ -160,4 +160,8 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
                 .orElse(false);
     }
 
+    public static boolean garbageCollectSuccessfullyCompletedPods() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_GC_CONTROLLER_PODS).map(Boolean::valueOf)
+                .orElse(false);
+    }
 }

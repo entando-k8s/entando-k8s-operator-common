@@ -16,15 +16,20 @@
 
 package org.entando.kubernetes.client;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
+import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.Watcher.Action;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -73,7 +78,7 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         if (EntandoOperatorTestConfig.emulateKubernetes()) {
             scheduler.schedule(() -> {
                 final Pod ready = getFabric8Client().pods().inNamespace(startedPod.getMetadata().getNamespace())
-                        .withName(startedPod.getMetadata().getName()).edit().withStatus(podWithReadyStatus(startedPod).getStatus()).done();
+                        .withName(startedPod.getMetadata().getName()).patch(podWithReadyStatus(startedPod));
                 takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED, ready);
             }, 200, TimeUnit.MILLISECONDS);
         }
@@ -111,6 +116,68 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         assertThat(
                 getSimpleK8SClient().pods().loadPod(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "123")),
                 is(nullValue()));
+    }
+
+    @Test
+    void shouldRemoveSuccessfullyCompletedPods() {
+        //Given I have started a new Pod
+        if (EntandoOperatorTestConfig.emulateKubernetes()) {
+            scheduler.schedule(() -> {
+                final NonNamespaceOperation<Pod, PodList, DoneablePod, PodResource<Pod, DoneablePod>> podResource = getFabric8Client()
+                        .pods().inNamespace(entandoApp.getMetadata().getNamespace());
+                takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED,
+                        podResource.withName("successful-pod")
+                                .patch(podWithSucceededStatus(podResource.withName("successful-pod").fromServer().get())));
+                takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED,
+                        podResource.withName("failed-pod")
+                                .patch(podWithFailedStatus(podResource.withName("failed-pod").fromServer().get())));
+                System.out.println();
+            }, 300, TimeUnit.MILLISECONDS);
+        }
+        getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
+                .withNewMetadata()
+                .withName("successful-pod")
+                .withNamespace(entandoApp.getMetadata().getNamespace())
+                .addToLabels("pod-label", "successful-pod")
+                .addToLabels("label", "value")
+                .endMetadata()
+                .withNewSpec()
+                .addNewContainer()
+                .withImage("busybox")
+                .withName("sleep")
+                .withCommand("sleep")
+                .withArgs("1")
+                .endContainer()
+                .withRestartPolicy("Never")
+                .endSpec()
+                .build());
+        getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
+                .withNewMetadata()
+                .withName("failed-pod")
+                .withNamespace(entandoApp.getMetadata().getNamespace())
+                .addToLabels("label", "value")
+                .addToLabels("pod-label", "failed-pod")
+                .endMetadata()
+                .withNewSpec()
+                .addNewContainer()
+                .withImage("busybox")
+                .withName("exit")
+                .withCommand("exit")
+                .withArgs("128")
+                .endContainer()
+                .withRestartPolicy("Never")
+                .endSpec()
+                .build());
+        //When I wait for the pod
+        getSimpleK8SClient().pods()
+                .removeSuccessfullyCompletedPods(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("label", "value"));
+        //Then the current thread only proceeds once the pod is ready
+        await().atMost(10, TimeUnit.SECONDS).until(() -> getSimpleK8SClient().pods()
+                .loadPod(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "successful-pod")) == null);
+        assertThat(
+                getSimpleK8SClient().pods()
+                        .loadPod(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "failed-pod")),
+                is(notNullValue()));
     }
 
     @Test
@@ -183,7 +250,7 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         if (EntandoOperatorTestConfig.emulateKubernetes()) {
             scheduler.schedule(() -> {
                 final Pod ready = getFabric8Client().pods().inNamespace(pod.getMetadata().getNamespace())
-                        .withName(pod.getMetadata().getName()).edit().withStatus(podWithSucceededStatus(pod).getStatus()).done();
+                        .withName(pod.getMetadata().getName()).patch(podWithSucceededStatus(pod));
                 takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED, ready);
             }, 200, TimeUnit.MILLISECONDS);
         }

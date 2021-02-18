@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.client.EntandoExecListener;
 import org.entando.kubernetes.client.PodWatcher;
+import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.support.client.PodClient;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
@@ -83,6 +84,14 @@ public interface PodBehavior {
 
     default Pod podWithSucceededStatus(Deployment deployment) {
         return podWithSucceededStatus(podFrom(deployment));
+    }
+
+    default Pod podWithFailedStatus(Pod pod) {
+        PodStatus status = new PodStatusBuilder().withPhase(PodResult.FAILED_PHASE)
+                .withContainerStatuses(statusesFor(pod.getSpec().getContainers()))
+                .withInitContainerStatuses(statusesFor(pod.getSpec().getInitContainers())).build();
+        pod.setStatus(status);
+        return pod;
     }
 
     default Pod podFrom(Deployment deployment) {

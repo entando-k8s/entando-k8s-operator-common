@@ -85,7 +85,6 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
         this.keycloakClient = keycloakClient;
         this.autoExit = autoExit;
         this.entandoImageResolver = new EntandoImageResolver(k8sClient.entandoResources().loadDockerImageInfoConfigMap());
-        EntandoOperatorConfigBase.setConfigMap(k8sClient.entandoResources().loadOperatorConfig());
         Class<?> cls = getClass();
         List<Class<T>> types = new ArrayList<>();
         while (cls != AbstractDbAwareController.class) {
@@ -123,6 +122,7 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
 
     protected void processCommand() {
         try {
+            EntandoOperatorConfigBase.setConfigMap(k8sClient.entandoResources().loadOperatorConfig());
             TlsHelper.getInstance().init();
             if (actionRequiresSync(resolveAction())) {
                 performSync(resolveResource());

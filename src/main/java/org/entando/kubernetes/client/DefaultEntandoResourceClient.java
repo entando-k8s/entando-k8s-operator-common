@@ -318,6 +318,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
                 .endMetadata()
                 .withCount(1)
+                .withFirstTimestamp(dateTimeFormatter.format(LocalDateTime.now()))
                 .withLastTimestamp(dateTimeFormatter.format(LocalDateTime.now()))
                 .withNewSource(NameUtils.controllerNameOf(customResource), null)
                 .withNewInvolvedObject()

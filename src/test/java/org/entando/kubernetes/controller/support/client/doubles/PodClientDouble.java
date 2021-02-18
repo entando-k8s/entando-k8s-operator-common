@@ -61,6 +61,18 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
+    public void removeSuccessfullyCompletedPods(String namespace, Map<String, String> labels) {
+        getNamespace(namespace).getPods().values().removeIf(
+                pod -> labels.entrySet().stream()
+                        .allMatch(labelEntry ->
+                                !PodResult.of(pod).hasFailed()
+                                        && PodResult.of(pod).getState() == State.COMPLETED
+                                        && pod.getMetadata().getLabels().containsKey(labelEntry.getKey())
+                                        && pod.getMetadata().getLabels().get(
+                                        labelEntry.getKey()).equals(labelEntry.getValue())));
+    }
+
+    @Override
     public void removeAndWait(String namespace, Map<String, String> labels) {
         getNamespace(namespace).getPods().values().removeIf(
                 pod -> labels.entrySet().stream()
@@ -72,7 +84,11 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
                     EntandoOperatorConfig.getPodShutdownTimeoutSeconds(), new DummyWatchable());
 
         }
+    }
 
+    @Override
+    public void deletePod(Pod pod) {
+        getNamespace(pod.getMetadata().getNamespace()).getPods().remove(pod.getMetadata().getName());
     }
 
     @Override
