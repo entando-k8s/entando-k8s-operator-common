@@ -29,10 +29,11 @@ import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.command.IngressingDeployCommand;
 import org.entando.kubernetes.controller.support.controller.AbstractDbAwareController;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public abstract class SampleController<S extends KeycloakAwareSpec, C extends EntandoBaseCustomResource<S>,
+public abstract class SampleController<S extends KeycloakAwareSpec, C extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>,
         R extends ServiceDeploymentResult<R>> extends
         AbstractDbAwareController<S, C> {
 
@@ -56,7 +57,7 @@ public abstract class SampleController<S extends KeycloakAwareSpec, C extends En
         );
         // Create the Keycloak service using the provided database
         KeycloakConnectionConfig keycloakConnectionConfig = null;
-        final EntandoBaseCustomResource<? extends KeycloakAwareSpec> entandoBaseCustomResource = newEntandoResource;
+        final EntandoBaseCustomResource<? extends KeycloakAwareSpec, EntandoCustomResourceStatus> entandoBaseCustomResource = newEntandoResource;
         keycloakConnectionConfig = k8sClient.entandoResources()
                 .findKeycloak(entandoBaseCustomResource, entandoBaseCustomResource.getSpec()::getKeycloakToUse);
         Deployable<R> deployable = createDeployable(newEntandoResource, databaseServiceResult,

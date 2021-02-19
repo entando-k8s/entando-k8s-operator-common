@@ -36,7 +36,7 @@ public interface PodWaitingClient {
      */
     BlockingQueue<PodWatcher> getPodWatcherQueue();
 
-    default Pod watchPod(Predicate<Pod> podPredicate, long timeoutSeconds, Watchable<Watch, Watcher<Pod>> podResource) {
+    default Pod watchPod(Predicate<Pod> podPredicate, long timeoutSeconds, Watchable<Watcher<Pod>> podResource) {
         try {
             Object mutex = new Object();
             synchronized (mutex) {

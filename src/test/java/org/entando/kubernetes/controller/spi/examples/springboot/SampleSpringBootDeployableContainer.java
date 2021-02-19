@@ -34,10 +34,11 @@ import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.spibase.KeycloakAwareContainerBase;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoResourceRequirements;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 
-public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec>> implements
+public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec, EntandoCustomResourceStatus>> implements
         SpringBootDeployableContainer, KeycloakAwareContainerBase,
         ParameterizableContainer, PersistentVolumeAware, ConfigurableResourceContainer {
 

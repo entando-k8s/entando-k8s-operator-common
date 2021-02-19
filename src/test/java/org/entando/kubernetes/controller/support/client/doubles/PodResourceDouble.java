@@ -26,7 +26,7 @@ import io.fabric8.kubernetes.client.dsl.TtyExecErrorChannelable;
 import io.fabric8.kubernetes.client.dsl.TtyExecErrorable;
 import io.fabric8.kubernetes.client.dsl.TtyExecOutputErrorable;
 import io.fabric8.kubernetes.client.dsl.internal.PodOperationContext;
-import io.fabric8.kubernetes.client.dsl.internal.PodOperationsImpl;
+import io.fabric8.kubernetes.client.dsl.internal.core.v1.PodOperationsImpl;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
@@ -43,9 +43,8 @@ public class PodResourceDouble extends PodOperationsImpl {
     }
 
     @Override
-    public ContainerResource<
-            String, LogWatch, InputStream, PipedOutputStream, OutputStream, PipedInputStream, String, ExecWatch, Boolean, InputStream,
-            Boolean> inContainer(
+    public ContainerResource<LogWatch, InputStream, PipedOutputStream, OutputStream, PipedInputStream, String, ExecWatch, Boolean,
+            InputStream, Boolean> inContainer(
             String containerId) {
         return new PodResourceDouble(getContext().withContainerId(containerId));
     }

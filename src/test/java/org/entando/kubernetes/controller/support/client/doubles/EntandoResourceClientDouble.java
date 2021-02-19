@@ -43,6 +43,7 @@ import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
@@ -143,9 +144,8 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         return Optional.empty();
     }
 
-    @Override
     public <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
-            EntandoBaseCustomResource<T> resource) {
+            EntandoBaseCustomResource<T, EntandoCustomResourceStatus> resource) {
         Optional<ResourceReference> reference = determineClusterInfrastructureToUse(resource);
         return reference.map(rr -> new InfrastructureConfig(
                 getNamespace(rr.getNamespace().orElseThrow(IllegalStateException::new))

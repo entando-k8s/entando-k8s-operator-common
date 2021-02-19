@@ -16,28 +16,24 @@
 
 package org.entando.kubernetes.test.e2etest.common;
 
-import io.fabric8.kubernetes.client.CustomResourceList;
-import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
-import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import io.fabric8.kubernetes.client.WatcherException;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.runtime.StartupEvent;
 import java.util.Optional;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
-public class ControllerStartupEventFiringListener<
-        R extends EntandoCustomResource,
-        L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<R, D>
-        > {
+public class ControllerStartupEventFiringListener<R extends EntandoCustomResource> {
 
-    private final CustomResourceOperationsImpl<R, L, D> operations;
+    private final MixedOperation<R, KubernetesResourceList<R>, Resource<R>> operations;
     private boolean shouldListen = true;
     private Watch watch;
 
-    public ControllerStartupEventFiringListener(CustomResourceOperationsImpl<R, L, D> operations) {
+    public ControllerStartupEventFiringListener(MixedOperation<R, KubernetesResourceList<R>, Resource<R>> operations) {
         this.operations = operations;
     }
 
@@ -67,7 +63,7 @@ public class ControllerStartupEventFiringListener<
             }
 
             @Override
-            public void onClose(KubernetesClientException cause) {
+            public void onClose(WatcherException cause) {
                 Optional.ofNullable(cause).ifPresent(Throwable::printStackTrace);
             }
         });

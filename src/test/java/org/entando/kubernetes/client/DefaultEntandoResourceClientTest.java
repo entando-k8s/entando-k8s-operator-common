@@ -68,7 +68,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
     @Override
     protected String[] getNamespacesToUse() {
         return new String[]{
-                APP_NAMESPACE, INFRA_NAMESPACE, KEYCLOAK_NAMESPACE
+                APP_NAMESPACE, INFRA_NAMESPACE, KEYCLOAK_NAMESPACE, newTestEntandoApp().getMetadata().getNamespace()
         };
     }
 
@@ -129,6 +129,8 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
         //But it is represented in an opaque format
         SerializedEntandoResource serializedEntandoResource = mapper
                 .readValue(mapper.writeValueAsBytes(entandoApp), SerializedEntandoResource.class);
+        serializedEntandoResource.setDefinition(
+                getFabric8Client().apiextensions().v1beta1().customResourceDefinitions().withName(entandoApp.getDefinitionName()).get());
         //When I update its status
         getSimpleK8SClient().entandoResources().updateStatus(serializedEntandoResource, new WebServerStatus("my-webapp"));
         //The updated status reflects on the custom resource

@@ -25,22 +25,18 @@ import org.entando.kubernetes.client.EntandoOperatorTestConfig;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.plugin.DoneableEntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
-import org.entando.kubernetes.model.plugin.EntandoPluginList;
-import org.entando.kubernetes.model.plugin.EntandoPluginOperationFactory;
 import org.entando.kubernetes.test.e2etest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 
-public class EntandoPluginE2ETestHelper extends
-        E2ETestHelperBase<EntandoPlugin, EntandoPluginList, DoneableEntandoPlugin> {
+public class EntandoPluginE2ETestHelper extends E2ETestHelperBase<EntandoPlugin> {
 
     public static final String TEST_PLUGIN_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("plugin-namespace");
     public static final String TEST_PLUGIN_NAME = EntandoOperatorTestConfig.calculateName("test-plugin-a");
     public static final String PAM_CONNECTION_CONFIG = "pam-connection-config";
 
     public EntandoPluginE2ETestHelper(DefaultKubernetesClient client) {
-        super(client, EntandoPluginOperationFactory::produceAllEntandoPlugins);
+        super(client, EntandoPlugin.class);
     }
 
     public void createAndWaitForPlugin(EntandoPlugin plugin, boolean hasContainerizedDb) {
@@ -69,7 +65,7 @@ public class EntandoPluginE2ETestHelper extends
         }
         waitForServicePod(new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(240)),
                 plugin.getMetadata().getNamespace(), plugin.getMetadata().getName() + "-server");
-        Resource<EntandoPlugin, DoneableEntandoPlugin> pluginResource = getOperations()
+        Resource<EntandoPlugin> pluginResource = getOperations()
                 .inNamespace(plugin.getMetadata().getNamespace()).withName(plugin.getMetadata().getName());
         //Wait for widget registration too - sometimes we get 503's for about 3 attempts
         await().atMost(240, SECONDS).until(() -> {

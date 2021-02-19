@@ -23,7 +23,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.PodList;
@@ -123,7 +122,7 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         //Given I have started a new Pod
         if (EntandoOperatorTestConfig.emulateKubernetes()) {
             scheduler.schedule(() -> {
-                final NonNamespaceOperation<Pod, PodList, DoneablePod, PodResource<Pod, DoneablePod>> podResource = getFabric8Client()
+                final NonNamespaceOperation<Pod, PodList, PodResource<Pod>> podResource = getFabric8Client()
                         .pods().inNamespace(entandoApp.getMetadata().getNamespace());
                 takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED,
                         podResource.withName("successful-pod")

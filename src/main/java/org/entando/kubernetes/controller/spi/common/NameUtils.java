@@ -92,4 +92,8 @@ public class NameUtils {
     public static String standardServiceName(EntandoCustomResource resource) {
         return resource.getMetadata().getName() + "-" + DEFAULT_SERVER_QUALIFIER + "-" + DEFAULT_SERVICE_SUFFIX;
     }
+
+    public static String lowerDashDelimitedOf(String name) {
+        return name.replace("_", "-").toLowerCase(Locale.ROOT);
+    }
 }

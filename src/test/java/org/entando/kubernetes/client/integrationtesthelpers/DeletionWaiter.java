@@ -19,7 +19,6 @@ package org.entando.kubernetes.client.integrationtesthelpers;
 import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
 
-import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -36,42 +35,40 @@ import java.util.logging.Logger;
 public class DeletionWaiter<
         R extends HasMetadata,
         L extends KubernetesResourceList<R>,
-        D extends Doneable<R>,
-        O extends Resource<R, D>> {
+        O extends Resource<R>> {
 
     private static final Logger LOGGER = Logger.getLogger(DeletionWaiter.class.getName());
-    private final MixedOperation<R, L, D, O> operation;
+    private final MixedOperation<R, L, O> operation;
     private String name;
     private String namespace;
     private final Map<String, String> labels = new HashMap<>();
 
-    public DeletionWaiter(MixedOperation<R, L, D, O> operation) {
+    public DeletionWaiter(MixedOperation<R, L, O> operation) {
         this.operation = operation;
     }
 
     public static <R extends HasMetadata,
             L extends KubernetesResourceList<R>,
-            D extends Doneable<R>,
-            O extends Resource<R, D>> DeletionWaiter<R, L, D, O> delete(MixedOperation<R, L, D, O> operation) {
+            O extends Resource<R>> DeletionWaiter<R, L, O> delete(MixedOperation<R, L, O> operation) {
         return new DeletionWaiter<>(operation);
     }
 
-    public DeletionWaiter<R, L, D, O> named(String name) {
+    public DeletionWaiter<R, L, O> named(String name) {
         this.name = name;
         return this;
     }
 
-    public DeletionWaiter<R, L, D, O> withLabel(String labelName, String labelValue) {
+    public DeletionWaiter<R, L, O> withLabel(String labelName, String labelValue) {
         labels.put(labelName, labelValue);
         return this;
     }
 
-    public DeletionWaiter<R, L, D, O> withLabel(String labelName) {
+    public DeletionWaiter<R, L, O> withLabel(String labelName) {
         labels.put(labelName, null);
         return this;
     }
 
-    public DeletionWaiter<R, L, D, O> fromNamespace(String namespace) {
+    public DeletionWaiter<R, L, O> fromNamespace(String namespace) {
         this.namespace = namespace;
         return this;
     }
@@ -109,7 +106,7 @@ public class DeletionWaiter<
                         }
                         LOGGER.log(Level.WARNING,
                                 (format("Deleting %s  %s/%s", ((OperationSupport) operation).getResourceT(), namespace, name)));
-                        this.operation.inNamespace(namespace).withName(name).cascading(true).withGracePeriod(0).delete();
+                        this.operation.inNamespace(namespace).withName(name).withGracePeriod(0).delete();
                     } catch (KubernetesClientException e) {
                         LOGGER.log(Level.WARNING, format("Deletion of %s/%s failed.", namespace, name), e);
                     }
