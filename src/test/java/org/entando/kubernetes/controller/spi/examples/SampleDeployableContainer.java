@@ -34,6 +34,7 @@ import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
@@ -43,10 +44,10 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     public static final String DEFAULT_IMAGE_NAME = "entando/entando-keycloak:6.0.0-SNAPSHOT";
     public static final String VAR_LIB_MYDATA = "/var/lib/mydata";
 
-    private final EntandoBaseCustomResource<S> entandoResource;
+    private final EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource;
     private final List<DatabaseSchemaConnectionInfo> databaseSchemaInfo;
 
-    public SampleDeployableContainer(EntandoBaseCustomResource<S> entandoResource, DatabaseServiceResult databaseServiceResult) {
+    public SampleDeployableContainer(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource, DatabaseServiceResult databaseServiceResult) {
         this.entandoResource = entandoResource;
         if (databaseServiceResult == null) {
             this.databaseSchemaInfo = Collections.emptyList();

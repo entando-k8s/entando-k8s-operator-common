@@ -28,16 +28,17 @@ import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoIngressingDeploymentSpec;
 
 public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngressingDeploymentSpec> implements
         IngressingDeployableBase<SampleExposedDeploymentResult>, DbAwareDeployable<SampleExposedDeploymentResult> {
 
-    protected final EntandoBaseCustomResource<S> entandoResource;
+    protected final EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource;
     protected final List<DeployableContainer> containers;
     protected final DatabaseServiceResult databaseServiceResult;
 
-    public SampleIngressingDbAwareDeployable(EntandoBaseCustomResource<S> entandoResource, DatabaseServiceResult databaseServiceResult) {
+    public SampleIngressingDbAwareDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource, DatabaseServiceResult databaseServiceResult) {
         this.entandoResource = entandoResource;
         this.databaseServiceResult = databaseServiceResult;
         this.containers = createContainers(entandoResource);
@@ -48,7 +49,7 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
         return entandoResource.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
     }
 
-    protected abstract List<DeployableContainer> createContainers(EntandoBaseCustomResource<S> entandoResource);
+    protected abstract List<DeployableContainer> createContainers(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource);
 
     @Override
     public List<DeployableContainer> getContainers() {
@@ -61,7 +62,7 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
     }
 
     @Override
-    public EntandoBaseCustomResource<S> getCustomResource() {
+    public EntandoBaseCustomResource<S, EntandoCustomResourceStatus> getCustomResource() {
         return entandoResource;
     }
 

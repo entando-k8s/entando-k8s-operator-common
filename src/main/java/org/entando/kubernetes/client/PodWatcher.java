@@ -17,8 +17,8 @@
 package org.entando.kubernetes.client;
 
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.WatcherException;
 import java.util.function.Predicate;
 
 public class PodWatcher implements Watcher<Pod> {
@@ -52,7 +52,7 @@ public class PodWatcher implements Watcher<Pod> {
     }
 
     @Override
-    public void onClose(KubernetesClientException cause) {
+    public void onClose(WatcherException cause) {
         synchronized (mutex) {
             mutex.notifyAll();
         }

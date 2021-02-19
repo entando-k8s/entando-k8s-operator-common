@@ -55,8 +55,8 @@ import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientD
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.app.DoneableEntandoApp;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.componenttest.InProcessTestUtil;
@@ -234,11 +234,11 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
     @Test
     void testPostgresqlDeployment() {
         //Given I have an EntandoApp custom resource with MySQL as database
-        EntandoApp newEntandoApp = new DoneableEntandoApp(entandoApp, s -> s)
+        EntandoApp newEntandoApp = new EntandoAppBuilder(entandoApp)
                 .editSpec()
                 .withDbms(DbmsVendor.POSTGRESQL)
                 .endSpec()
-                .done();
+                .build();
         client.entandoResources().createOrPatchEntandoResource(newEntandoApp);
         //And K8S is receiving Deployment requests
         DeploymentStatus dbDeploymentStatus = new DeploymentStatus();

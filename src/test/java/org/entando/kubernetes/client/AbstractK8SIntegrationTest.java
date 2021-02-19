@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.client;
 
-import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -49,8 +48,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
 
     protected <R extends HasMetadata,
             L extends KubernetesResourceList<R>,
-            D extends Doneable<R>,
-            O extends Resource<R, D>> void deleteAll(MixedOperation<R, L, D, O> operation) {
+            O extends Resource<R>> void deleteAll(MixedOperation<R, L, O> operation) {
         for (String s : getNamespacesToUse()) {
             new DeletionWaiter<>(operation).fromNamespace(s).waitingAtMost(100, TimeUnit.SECONDS);
         }

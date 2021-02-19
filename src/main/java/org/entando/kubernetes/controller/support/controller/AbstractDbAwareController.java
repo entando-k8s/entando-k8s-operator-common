@@ -45,9 +45,11 @@ import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 
-public abstract class AbstractDbAwareController<S extends Serializable, T extends EntandoBaseCustomResource<S>> {
+public abstract class AbstractDbAwareController<S extends Serializable, T extends EntandoBaseCustomResource<S,
+        EntandoCustomResourceStatus>> {
 
     protected final SimpleK8SClient<?> k8sClient;
     protected final SimpleKeycloakClient keycloakClient;

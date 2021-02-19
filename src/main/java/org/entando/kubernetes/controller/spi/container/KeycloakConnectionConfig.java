@@ -45,10 +45,12 @@ public class KeycloakConnectionConfig {
         }
     }
 
+    //TODO only needed by operator-common - to org.entando.kubernetes.controller.support
     public String getUsername() {
         return decodeSecretValue(SecretUtils.USERNAME_KEY);
     }
 
+    //TODO only needed by operator-common - move to org.entando.kubernetes.controller.support
     public String getPassword() {
         return decodeSecretValue(SecretUtils.PASSSWORD_KEY);
     }
@@ -66,10 +68,12 @@ public class KeycloakConnectionConfig {
         return adminSecret;
     }
 
+    //TODO put these in this in the ProvidedCapability ConfigMap
     public String getExternalBaseUrl() {
         return configMap.getData().get(NameUtils.URL_KEY);
     }
 
+    //TODO derive thi from the ProvidedCapability service
     public Optional<String> getInternalBaseUrl() {
         return Optional.ofNullable(configMap.getData().get(NameUtils.INTERNAL_URL_KEY));
     }

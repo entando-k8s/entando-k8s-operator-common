@@ -17,28 +17,27 @@
 package org.entando.kubernetes.test.e2etest.helpers;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.DoneableConfigMap;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.client.DefaultIngressClient;
 import org.entando.kubernetes.client.EntandoOperatorTestConfig;
-import org.entando.kubernetes.client.OperationsSupplier;
 import org.entando.kubernetes.client.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.client.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.client.integrationtesthelpers.TestFixtureRequest;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.controller.ControllerExecutor;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
-import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.KeycloakAwareSpec;
 import org.entando.kubernetes.test.common.CommonLabels;
@@ -48,21 +47,18 @@ import org.entando.kubernetes.test.e2etest.common.ControllerStartupEventFiringLi
 import org.entando.kubernetes.test.e2etest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 
-public class E2ETestHelperBase<
-        R extends EntandoBaseCustomResource<?>,
-        L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<R, D>
-        > implements FluentIntegrationTesting, CommonLabels {
+public class E2ETestHelperBase<R extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>>
+        implements FluentIntegrationTesting, CommonLabels {
 
     protected final DefaultKubernetesClient client;
-    protected final CustomResourceOperationsImpl<R, L, D> operations;
+    protected final MixedOperation<R, KubernetesResourceList<R>, Resource<R>> operations;
     private final String domainSuffix;
-    private final ControllerStartupEventFiringListener<R, L, D> startupEventFiringListener;
-    private final ControllerContainerStartingListener<R, L, D> containerStartingListener;
+    private final ControllerStartupEventFiringListener<R> startupEventFiringListener;
+    private final ControllerContainerStartingListener<R> containerStartingListener;
 
-    protected E2ETestHelperBase(DefaultKubernetesClient client, OperationsSupplier<R, L, D> producer) {
+    protected E2ETestHelperBase(DefaultKubernetesClient client, Class<R> type) {
         this.client = client;
-        this.operations = producer.get(client);
+        this.operations = client.customResources(type);
         domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(client));
         containerStartingListener = new ControllerContainerStartingListener<>(this.operations);
         startupEventFiringListener = new ControllerStartupEventFiringListener<>(getOperations());
@@ -77,7 +73,7 @@ public class E2ETestHelperBase<
         containerStartingListener.stopListening();
     }
 
-    public CustomResourceOperationsImpl<R, L, D> getOperations() {
+    public MixedOperation<R, KubernetesResourceList<R>, Resource<R>> getOperations() {
         return operations;
     }
 
@@ -101,7 +97,8 @@ public class E2ETestHelperBase<
         return domainSuffix;
     }
 
-    public <S extends EntandoDeploymentSpec> JobPodWaiter waitForDbJobPod(JobPodWaiter mutex, EntandoBaseCustomResource<S> resource,
+    public <S extends EntandoDeploymentSpec> JobPodWaiter waitForDbJobPod(JobPodWaiter mutex,
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentQualifier) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
                 () -> client.pods().inNamespace(resource.getMetadata().getNamespace())
@@ -152,14 +149,15 @@ public class E2ETestHelperBase<
     }
 
     public DoneableConfigMap loadDefaultCapabilitiesConfigMap() {
-        Resource<ConfigMap, DoneableConfigMap> resource = client.configMaps().inNamespace(client.getNamespace())
+        Resource<ConfigMap> resource = client.configMaps().inNamespace(client.getNamespace())
                 .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME);
         DoneableConfigMap configMap;
         if (resource.get() == null) {
-            configMap = resource.createNew().withNewMetadata().withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME)
+            configMap = new DoneableConfigMap(resource::create).withNewMetadata()
+                    .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME)
                     .withNamespace(client.getNamespace()).endMetadata();
         } else {
-            configMap = resource.edit();
+            configMap = new DoneableConfigMap(resource.get(), resource::patch);
         }
         return configMap;
     }

@@ -28,9 +28,11 @@ import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.model.AbstractServerStatus;
 
+//TODO move to org.entando.kubernetes.controller.support
 public class DatabaseDeploymentResult extends AbstractServiceResult implements DatabaseServiceResult,
         ServiceDeploymentResult<DatabaseDeploymentResult> {
 
+    /*migrate to DbmsVendorConfig*/
     private final DbmsDockerVendorStrategy vendor;
     private final String databaseName;
     private final String databaseSecretName;

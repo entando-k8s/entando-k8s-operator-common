@@ -19,9 +19,13 @@ package org.entando.kubernetes.client;
 import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.Endpoints;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
@@ -36,20 +40,7 @@ public class DefaultServiceClient implements ServiceClient {
     @Override
     public Endpoints createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
         //TODO remove the namespace overriding once we create delegate services from the correct context (the App)
-        String namespace = ofNullable(endpoints.getMetadata().getNamespace())
-                .orElse(peerInNamespace.getMetadata().getNamespace());
-        if (client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).get() != null) {
-            client.endpoints().inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
-        }
-        endpoints.getMetadata().setResourceVersion(null);
-        for (int i = 0; i < 10; i++) {
-            try {
-                return client.endpoints().inNamespace(namespace).create(endpoints);
-            } catch (KubernetesClientException e) {
-                //Waiting for K8S to delete it.
-            }
-        }
-        throw new IllegalStateException("Could not create Endpoints.");
+        return createOrReplace(peerInNamespace, endpoints, client.endpoints());
     }
 
     @Override
@@ -58,9 +49,26 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
-    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
-        String namespace = ofNullable(service.getMetadata().getNamespace())
+    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service endpoints) {
+        return createOrReplace(peerInNamespace, endpoints, client.services());
+    }
+
+    private <T extends HasMetadata, L extends KubernetesResourceList<T>, R extends Resource<T>> T createOrReplace(
+            EntandoCustomResource peerInNamespace, T endpoints,
+            MixedOperation<T, L, R> oper) {
+        String namespace = ofNullable(endpoints.getMetadata().getNamespace())
                 .orElse(peerInNamespace.getMetadata().getNamespace());
-        return client.services().inNamespace(namespace).createOrReplace(service);
+        if (oper.inNamespace(namespace).withName(endpoints.getMetadata().getName()).get() != null) {
+            oper.inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
+        }
+        endpoints.getMetadata().setResourceVersion(null);
+        for (int i = 0; i < 10; i++) {
+            try {
+                return oper.inNamespace(namespace).create(endpoints);
+            } catch (KubernetesClientException e) {
+                //Waiting for K8S to delete it.
+            }
+        }
+        throw new IllegalStateException("Could not create.");
     }
 }

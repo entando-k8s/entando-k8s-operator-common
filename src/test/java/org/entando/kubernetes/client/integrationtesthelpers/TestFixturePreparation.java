@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.client.integrationtesthelpers;
 
+import io.fabric8.kubernetes.api.model.NamespaceBuilder;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
@@ -34,6 +36,7 @@ import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.test.common.CertificateSecretHelper;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 
 public final class TestFixturePreparation {
 
@@ -88,21 +91,21 @@ public final class TestFixturePreparation {
     private static void ensureRedHatRegistryCredentials(AutoAdaptableKubernetesClient result) {
         if (result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).withName("redhat-registry").get() == null) {
             EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s ->
-                    result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).createNew().withNewMetadata()
+                    result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).create(new SecretBuilder().withNewMetadata()
                             .withNamespace(ENTANDO_CONTROLLERS_NAMESPACE)
                             .withName("redhat-registry")
                             .endMetadata()
                             .addToStringData(".dockerconfigjson", s)
                             .withType("kubernetes.io/dockerconfigjson")
-                            .done());
+                            .build()));
         }
     }
 
     public static void prepareTestFixture(KubernetesClient client, TestFixtureRequest testFixtureRequest) {
-        for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?>>>> entry :
+        for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>>>> entry :
                 testFixtureRequest.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
-                for (Class<? extends EntandoBaseCustomResource<?>> type : entry.getValue()) {
+                for (Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> type : entry.getValue()) {
                     //This is a bit heavy-handed, but we need  to make absolutely sure the pods are deleted before the test starts
                     //Pods are considered 'deleted' even if they are still gracefully shutting down and the second or two
                     // it takes to shut down can interfere with subsequent pod watchers.
@@ -125,8 +128,8 @@ public final class TestFixturePreparation {
     }
 
     public static void createNamespace(KubernetesClient client, String namespace) {
-        client.namespaces().createNew().withNewMetadata().withName(namespace)
+        client.namespaces().create(new NamespaceBuilder().withNewMetadata().withName(namespace)
                 .addToLabels("testType", "end-to-end")
-                .endMetadata().done();
+                .endMetadata().build());
     }
 }

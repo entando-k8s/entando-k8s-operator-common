@@ -16,27 +16,24 @@
 
 package org.entando.kubernetes.test.e2etest.common;
 
-import io.fabric8.kubernetes.client.CustomResourceList;
-import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
-import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import io.fabric8.kubernetes.client.WatcherException;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Optional;
 import org.entando.kubernetes.controller.support.controller.ControllerExecutor;
-import org.entando.kubernetes.model.DoneableEntandoCustomResource;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 
-public class ControllerContainerStartingListener<
-        R extends EntandoBaseCustomResource<?>,
-        L extends CustomResourceList<R>,
-        D extends DoneableEntandoCustomResource<R, D>
-        > {
+public class ControllerContainerStartingListener<R extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> {
 
-    protected final CustomResourceOperationsImpl<R, L, D> operations;
+    protected final MixedOperation<R, KubernetesResourceList<R>, Resource<R>> operations;
     private boolean shouldListen = true;
     private Watch watch;
 
-    public ControllerContainerStartingListener(CustomResourceOperationsImpl<R, L, D> operations) {
+    public ControllerContainerStartingListener(MixedOperation<R, KubernetesResourceList<R>, Resource<R>> operations) {
         this.operations = operations;
     }
 
@@ -63,7 +60,7 @@ public class ControllerContainerStartingListener<
             }
 
             @Override
-            public void onClose(KubernetesClientException cause) {
+            public void onClose(WatcherException cause) {
                 Optional.ofNullable(cause).ifPresent(Throwable::printStackTrace);
             }
         });

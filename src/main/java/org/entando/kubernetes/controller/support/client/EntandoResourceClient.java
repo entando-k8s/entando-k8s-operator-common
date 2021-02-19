@@ -29,6 +29,7 @@ import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.KeycloakToUse;
 import org.entando.kubernetes.model.ResourceReference;
@@ -58,7 +59,7 @@ public interface EntandoResourceClient {
     Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace);
 
     <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
-            EntandoBaseCustomResource<T> resource);
+            EntandoBaseCustomResource<T, EntandoCustomResourceStatus> resource);
 
     ExposedService loadExposedService(EntandoCustomResource resource);
 
@@ -94,7 +95,7 @@ public interface EntandoResourceClient {
     }
 
     default <T extends ClusterInfrastructureAwareSpec> Optional<ResourceReference> determineClusterInfrastructureToUse(
-            EntandoBaseCustomResource<T> resource) {
+            EntandoBaseCustomResource<T, EntandoCustomResourceStatus> resource) {
         ResourceReference resourceReference = null;
         Optional<ResourceReference> clusterInfrastructureToUse = resource.getSpec().getClusterInfrastructureToUse();
         if (clusterInfrastructureToUse.isPresent()) {
