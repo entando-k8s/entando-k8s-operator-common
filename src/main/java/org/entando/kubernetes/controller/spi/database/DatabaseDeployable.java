@@ -44,7 +44,8 @@ public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>,
     public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoCustomResource customResource, Integer portOverride) {
         this.dbmsVendor = dbmsVendor;
         this.customResource = customResource;
-        this.containers = Collections.singletonList(new DatabaseContainer(buildVariableInitializer(dbmsVendor), dbmsVendor, portOverride));
+        this.containers = Collections
+                .singletonList(new DatabaseContainer(buildVariableInitializer(dbmsVendor), dbmsVendor, portOverride));
     }
 
     @Override
@@ -52,7 +53,7 @@ public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>,
         return getDefaultServiceAccountName();
     }
 
-    private DatabaseVariableInitializer buildVariableInitializer(DbmsDockerVendorStrategy vendorStrategy) {
+    protected DatabaseVariableInitializer buildVariableInitializer(DbmsDockerVendorStrategy vendorStrategy) {
         switch (vendorStrategy) {
             case CENTOS_MYSQL:
             case RHEL_MYSQL:

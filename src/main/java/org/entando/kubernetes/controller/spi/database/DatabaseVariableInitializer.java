@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.spi.database;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;
 
-interface DatabaseVariableInitializer {
+public interface DatabaseVariableInitializer {
 
     void addEnvironmentVariables(List<EnvVar> vars);
 }
