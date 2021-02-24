@@ -44,7 +44,13 @@ public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>,
     public DatabaseDeployable(DbmsDockerVendorStrategy dbmsVendor, EntandoCustomResource customResource, Integer portOverride) {
         this.dbmsVendor = dbmsVendor;
         this.customResource = customResource;
-        this.containers = Collections.singletonList(new DatabaseContainer(buildVariableInitializer(dbmsVendor), dbmsVendor, portOverride));
+        this.containers = Collections
+                .singletonList(createDatabaseContainer(buildVariableInitializer(dbmsVendor), dbmsVendor, portOverride));
+    }
+
+    protected DatabaseContainer createDatabaseContainer(DatabaseVariableInitializer variableInitializer,
+            DbmsDockerVendorStrategy dbmsVendor, Integer portOverride) {
+        return new DatabaseContainer(variableInitializer, dbmsVendor, portOverride);
     }
 
     @Override
