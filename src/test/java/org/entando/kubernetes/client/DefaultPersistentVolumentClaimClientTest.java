@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.is;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
+import org.awaitility.core.ConditionTimeoutException;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -37,7 +38,11 @@ class DefaultPersistentVolumentClaimClientTest extends AbstractK8SIntegrationTes
 
     @BeforeEach
     void deletePersistentVolumeClaims() {
-        super.deleteAll(getFabric8Client().persistentVolumeClaims());
+        try {
+            super.deleteAll(getFabric8Client().persistentVolumeClaims());
+        } catch (ConditionTimeoutException e) {
+            //Happens on the build server depending test sequence. Not too big an issue. Just slows down the build
+        }
     }
 
     @Test
