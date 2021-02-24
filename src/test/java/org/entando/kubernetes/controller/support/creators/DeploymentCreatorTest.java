@@ -143,8 +143,9 @@ class DeploymentCreatorTest implements InProcessTestData, FluentTraversals {
         ResourceRequirements resources = executeCreateDeploymentTest();
         assertThat(resources.getLimits().get("cpu").getAmount(), is("800"));
         assertThat(resources.getLimits().get("memory").getAmount(), is("256"));
-        assertThat(resources.getRequests().get("cpu").getAmount(), is("80"));
-        assertThat(resources.getRequests().get("memory").getAmount(), is("25.6"));
+        assertThat(resources.getRequests().get("cpu").getAmount(), is("200"));
+        //Rounded
+        assertThat(resources.getRequests().get("memory").getAmount(), is("64"));
     }
 
     @Test

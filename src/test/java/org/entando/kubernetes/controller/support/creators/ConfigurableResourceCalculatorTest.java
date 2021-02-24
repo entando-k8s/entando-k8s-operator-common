@@ -45,8 +45,8 @@ class ConfigurableResourceCalculatorTest {
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null, null));
         assertThat(resourceCalculator.getCpuLimit(), is("1000m"));
         assertThat(resourceCalculator.getMemoryLimit(), is("1024Mi"));
-        assertThat(resourceCalculator.getCpuRequest(), is("100m"));
-        assertThat(resourceCalculator.getMemoryRequest(), is("102.4Mi"));
+        assertThat(resourceCalculator.getCpuRequest(), is("250m"));
+        assertThat(resourceCalculator.getMemoryRequest(), is("256Mi"));
     }
 
     @Test
@@ -57,20 +57,22 @@ class ConfigurableResourceCalculatorTest {
         assertThat(resourceCalculator.getCpuLimit(), is("1000m"));
         assertThat(resourceCalculator.getMemoryLimit(), is("1024Mi"));
         assertThat(resourceCalculator.getCpuRequest(), is("200m"));
-        assertThat(resourceCalculator.getMemoryRequest(), is("204.8Mi"));
+        //rounded
+        assertThat(resourceCalculator.getMemoryRequest(), is("205Mi"));
     }
 
     @Test
     void calculateRequestsWithDefaultRatioButWithALimitOverride() {
         ConfigurableResourceCalculator resourceCalculator = new ConfigurableResourceCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
-                        .withMemoryLimit("2048Mi")
-                        .withCpuLimit("2000m")
+                        .withMemoryLimit("2Gi")
+                        .withCpuLimit("10.4")
                         .endResourceRequirements().build()), null, null));
-        assertThat(resourceCalculator.getCpuLimit(), is("2000m"));
-        assertThat(resourceCalculator.getMemoryLimit(), is("2048Mi"));
-        assertThat(resourceCalculator.getCpuRequest(), is("200m"));
-        assertThat(resourceCalculator.getMemoryRequest(), is("204.8Mi"));
+        assertThat(resourceCalculator.getCpuLimit(), is("10.4"));
+        assertThat(resourceCalculator.getMemoryLimit(), is("2Gi"));
+        //Note: decrease the UOM here by one level
+        assertThat(resourceCalculator.getCpuRequest(), is("2600m"));
+        assertThat(resourceCalculator.getMemoryRequest(), is("500Mi"));
     }
 
     @Test
@@ -84,7 +86,7 @@ class ConfigurableResourceCalculatorTest {
         assertThat(resourceCalculator.getCpuLimit(), is("2000m"));
         assertThat(resourceCalculator.getMemoryLimit(), is("2048Mi"));
         assertThat(resourceCalculator.getCpuRequest(), is("400m"));
-        assertThat(resourceCalculator.getMemoryRequest(), is("409.6Mi"));
+        assertThat(resourceCalculator.getMemoryRequest(), is("410Mi"));
     }
 
     @Test

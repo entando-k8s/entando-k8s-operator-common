@@ -44,7 +44,7 @@ class ConfigurableStorageCalculatorTest {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));
-        assertThat(resourceCalculator.getStorageRequest(), is("204.8Mi"));
+        assertThat(resourceCalculator.getStorageRequest(), is("512Mi"));
     }
 
     @Test
@@ -53,17 +53,18 @@ class ConfigurableStorageCalculatorTest {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpec()), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));
-        assertThat(resourceCalculator.getStorageRequest(), is("409.6Mi"));
+        assertThat(resourceCalculator.getStorageRequest(), is("410Mi"));
     }
 
     @Test
     void calculateRequestsWithDefaultRatioButWithALimitOverride() {
         ConfigurableStorageCalculator resourceCalculator = new ConfigurableStorageCalculator(
                 new SampleSpringBootDeployableContainer<>(new EntandoApp(new EntandoAppSpecBuilder().withNewResourceRequirements()
-                        .withStorageLimit("4096Mi")
+                        .withStorageLimit("4Gi")
                         .endResourceRequirements().build()), null, null));
-        assertThat(resourceCalculator.getStorageLimit(), is("4096Mi"));
-        assertThat(resourceCalculator.getStorageRequest(), is("409.6Mi"));
+        assertThat(resourceCalculator.getStorageLimit(), is("4Gi"));
+        //Converted to Mi to avoid decimal
+        assertThat(resourceCalculator.getStorageRequest(), is("1Gi"));
     }
 
     @Test
@@ -74,7 +75,7 @@ class ConfigurableStorageCalculatorTest {
                         .withStorageLimit("4096Mi")
                         .endResourceRequirements().build()), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("4096Mi"));
-        assertThat(resourceCalculator.getStorageRequest(), is("819.2Mi"));
+        assertThat(resourceCalculator.getStorageRequest(), is("819Mi"));
     }
 
     @Test

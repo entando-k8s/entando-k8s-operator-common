@@ -41,8 +41,9 @@ class ResourceCalculatorTest {
         ResourceCalculator resourceCalculator = new ResourceCalculator(new BareBonesContainer());
         assertThat(resourceCalculator.getCpuLimit(), is("800m"));
         assertThat(resourceCalculator.getMemoryLimit(), is("256Mi"));
-        assertThat(resourceCalculator.getCpuRequest(), is("80m"));
-        assertThat(resourceCalculator.getMemoryRequest(), is("25.6Mi"));
+        //0.25
+        assertThat(resourceCalculator.getCpuRequest(), is("200m"));
+        assertThat(resourceCalculator.getMemoryRequest(), is("64Mi"));
     }
 
     @Test
@@ -52,6 +53,6 @@ class ResourceCalculatorTest {
         assertThat(resourceCalculator.getCpuLimit(), is("800m"));
         assertThat(resourceCalculator.getMemoryLimit(), is("256Mi"));
         assertThat(resourceCalculator.getCpuRequest(), is("160m"));
-        assertThat(resourceCalculator.getMemoryRequest(), is("51.2Mi"));
+        assertThat(resourceCalculator.getMemoryRequest(), is("51Mi"));
     }
 }
