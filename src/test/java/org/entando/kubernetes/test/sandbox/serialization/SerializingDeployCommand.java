@@ -58,7 +58,7 @@ import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
-import org.entando.kubernetes.controller.spi.container.TlsAware;
+import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Ingressing;
@@ -95,7 +95,7 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
             ServiceBackingContainer.class,
             ServiceDeploymentResult.class,
             ServiceResult.class,
-            TlsAware.class,
+            TrustStoreAware.class,
             SerializableDeploymentResult.class
     );
 

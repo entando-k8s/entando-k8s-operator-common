@@ -34,7 +34,7 @@ The DeploymentCreator class is responsible to create Deployable instances.
 This interface has to be implemented by those Deployable that need Kubernetes secrets for working.
 Currently all you have to do with this interface is to override `buildSecrets()` method returning all needed secrets and they will be bound to the pod that is about to be deployed.
 
-### org.entando.kubernetes.controller.spi.container.TlsAware
+### org.entando.kubernetes.controller.spi.container.TrustStoreAware
 
 This interface offers a predefined way to add some TLS environment variable to the implementing DeployableContainer.
 

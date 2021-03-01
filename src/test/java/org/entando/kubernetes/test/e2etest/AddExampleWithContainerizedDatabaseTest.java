@@ -99,6 +99,8 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         helper.releaseAllFinalizers();
         helper.afterTest();
         helper.keycloak().deleteDefaultKeycloakAdminSecret();
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_TLS_SECRET_NAME.getJvmSystemProperty());
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty());
     }

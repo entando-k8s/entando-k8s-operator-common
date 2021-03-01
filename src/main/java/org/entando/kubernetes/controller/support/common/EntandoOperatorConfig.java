@@ -16,17 +16,11 @@
 
 package org.entando.kubernetes.controller.support.common;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
-import org.entando.kubernetes.controller.spi.container.TlsAware;
 
 public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
@@ -96,30 +90,6 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
         return Boolean.parseBoolean(lookupProperty(EntandoOperatorConfigProperty.ENTANDO_USE_AUTO_CERT_GENERATION).orElse("false"));
     }
 
-    public static List<Path> getCertificateAuthorityCertPaths() {
-        //TODO get rid of this. We can always assume a CA cert rootFolder.
-        String[] paths = getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS,
-                "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").split(SEPERATOR_PATTERN);
-        List<Path> result = Arrays.stream(paths)
-                .map(Paths::get)
-                .filter(path -> path.toFile().exists())
-                .collect(Collectors.toList());
-        File caCertRoot = Paths.get(getProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_ROOT_FOLDER, TlsAware.ETC_ENTANDO_CA))
-                .toFile();
-        if (caCertRoot.exists() && caCertRoot.isDirectory()) {
-            result.addAll(Arrays.stream(Objects.requireNonNull(caCertRoot.listFiles()))
-                    .filter(File::isFile)
-                    .map(file -> Paths.get(file.getAbsolutePath()))
-                    .collect(Collectors.toList()));
-        }
-        return result;
-    }
-
-    public static Optional<Path> getPathToDefaultTlsKeyPair() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR).filter(s -> Paths.get(s).toFile().exists())
-                .map(Paths::get);
-    }
-
     public static Optional<String> getPullPolicyOverride() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_PULL_POLICY_OVERRIDE);
     }
@@ -163,5 +133,14 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     public static boolean garbageCollectSuccessfullyCompletedPods() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_GC_CONTROLLER_PODS).map(Boolean::valueOf)
                 .orElse(false);
+    }
+
+    public static Optional<String> getCertificateAuthoritySecretName() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_CA_SECRET_NAME);
+    }
+
+    public static Optional<String> getTlsSecretName() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_TLS_SECRET_NAME);
+
     }
 }
