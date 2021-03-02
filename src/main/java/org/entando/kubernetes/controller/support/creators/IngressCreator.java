@@ -34,12 +34,12 @@ import java.util.Locale;
 import java.util.Map;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.deployable.Ingressing;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class IngressCreator extends AbstractK8SResourceCreator {
@@ -146,7 +146,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
     private Map<String, String> forNginxIngress(IngressingDeployable<?> deployable) {
         Map<String, String> result = new HashMap<>();
         EntandoOperatorConfig.getIngressClass().ifPresent(s -> result.put("kubernetes.io/ingress.class", s));
-        if (TlsHelper.canAutoCreateTlsSecret() || deployable.getTlsSecretName().isPresent()) {
+        if (EntandoOperatorConfig.getTlsSecretName().isPresent() || EntandoOperatorConfig.useAutoCertGeneration()) {
 
             //for cases where we have https available but the Keycloak redirect was specified as http
             result.put("nginx.ingress.kubernetes.io/force-ssl-redirect", "true");
@@ -160,10 +160,14 @@ public class IngressCreator extends AbstractK8SResourceCreator {
 
         deployable.getTlsSecretName().ifPresent(s ->
                 result.add(new IngressTLSBuilder().withSecretName(s).withHosts(determineIngressHost(ingressClient, deployable)).build()));
-        if (result.isEmpty() && TlsHelper.canAutoCreateTlsSecret()) {
+        if (result.isEmpty()) {
+            EntandoOperatorConfig.getTlsSecretName().ifPresent(s ->
+                    result.add(new IngressTLSBuilder().withHosts(determineIngressHost(ingressClient, deployable))
+                            .withSecretName(s).build()));
+        }
+        if (result.isEmpty() && EntandoOperatorConfig.useAutoCertGeneration()) {
             result.add(new IngressTLSBuilder().withHosts(determineIngressHost(ingressClient, deployable))
-                    .withSecretName(entandoCustomResource.getMetadata().getName() + "-tls-secret").build());
-
+                    .withSecretName(SecretUtils.EMPTY_TLS_SECRET_NAME).build());
         }
         return result;
     }

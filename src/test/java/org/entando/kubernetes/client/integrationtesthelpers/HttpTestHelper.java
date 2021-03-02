@@ -33,7 +33,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.entando.kubernetes.controller.support.common.TlsHelper;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 
 public final class HttpTestHelper {
 
@@ -140,6 +140,6 @@ public final class HttpTestHelper {
     }
 
     public static String getDefaultProtocol() {
-        return TlsHelper.canAutoCreateTlsSecret() ? "https" : "http";
+        return EntandoOperatorConfig.useAutoCertGeneration() || EntandoOperatorConfig.getTlsSecretName().isPresent() ? "https" : "http";
     }
 }

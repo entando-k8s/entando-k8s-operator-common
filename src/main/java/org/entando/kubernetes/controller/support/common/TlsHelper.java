@@ -16,6 +16,11 @@
 
 package org.entando.kubernetes.controller.support.common;
 
+import static java.lang.String.format;
+
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,118 +36,86 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
 
 public final class TlsHelper {
 
     public static final String TLS_KEY = "tls.key";
     public static final String TLS_CRT = "tls.crt";
-    private static final TlsHelper INSTANCE = new TlsHelper();
-    private final char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();
-    private Optional<KeyStore> trustStore = Optional.empty();
-    private Optional<String> trustStoreBase64 = Optional.empty();
 
     private TlsHelper() {
     }
 
-    public static TlsHelper getInstance() {
-        return INSTANCE;
+    @SuppressWarnings("squid:S2068")//Because it is not a hardcoded password
+    public static Secret newTrustStoreSecret(Secret caCertSecret) {
+        char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();
+        return new SecretBuilder()
+                .withNewMetadata()
+                .withNamespace(caCertSecret.getMetadata().getNamespace())
+                .withName(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET)
+                .endMetadata()
+                .addToData(TrustStoreAware.TRUST_STORE_FILE, buildBase64TrustStoreFrom(caCertSecret, trustStorePassword))
+                .addToStringData(
+                        TrustStoreAware.TRUSTSTORE_SETTINGS_KEY,
+                        format("-Djavax.net.ssl.trustStore=%s -Djavax.net.ssl.trustStorePassword=%s", TrustStoreAware.TRUST_STORE_PATH,
+                                new String(trustStorePassword)))
+                .build();
     }
 
-    public static boolean isDefaultTlsKeyPairAvailable() {
-        return EntandoOperatorConfig.getPathToDefaultTlsKeyPair()
-                .map(path -> path.resolve(TLS_CRT).toFile().exists() && path.resolve(TLS_KEY).toFile().exists()).orElse(false);
-    }
-
-    public static boolean canAutoCreateTlsSecret() {
-        return EntandoOperatorConfig.useAutoCertGeneration() || isDefaultTlsKeyPairAvailable();
-    }
-
-    public void init() {
-        List<Path> caPaths = EntandoOperatorConfig.getCertificateAuthorityCertPaths();
-        if (caPaths.isEmpty()) {
-            this.trustStore = Optional.empty();
-        } else {
-            populateTrustStore(caPaths);
-        }
-    }
-
-    public String getTrustStoreBase64() {
-        return trustStoreBase64.orElseThrow(IllegalStateException::new);
-    }
-
-    public String getTlsCaCertBase64(Path path) {
-        return base64EncodeContent(path);
-    }
-
-    public String getTlsCertBase64() {
-        return loadSslFile(TLS_CRT);
-    }
-
-    public String getTlsKeyBase64() {
-        return loadSslFile(TLS_KEY);
-    }
-
-    public boolean isTrustStoreAvailable() {
-        return trustStore.isPresent();
-    }
-
-    public String getTrustStorePassword() {
-        return new String(trustStorePassword);
-    }
-
-    private void populateTrustStore(List<Path> caPaths) {
+    public static void trustCertificateAuthoritiesIn(Secret secret) {
         try {
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keyStore.load(null, null);
-            caPaths.forEach(certPath -> importCert(keyStore, certPath));
+            char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();
+            KeyStore keyStore = buildKeystoreFrom(secret.getData());
             Path tempFile = Files.createTempFile("trust-store", ".jks");
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
-            trustManagerFactory.init((KeyStore) null);
-            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-            X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-            for (X509Certificate certificate : trustManager.getAcceptedIssuers()) {
-                keyStore.setCertificateEntry(certificate.getSubjectX500Principal().getName(), certificate);
-            }
             try (OutputStream stream = Files.newOutputStream(tempFile)) {
                 keyStore.store(stream, trustStorePassword);
             }
-            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-                keyStore.store(outputStream, trustStorePassword);
-                trustStoreBase64 = Optional.of(new String(Base64.getEncoder().encode(outputStream.toByteArray()), StandardCharsets.UTF_8));
-            }
             System.setProperty("javax.net.ssl.trustStore", tempFile.normalize().toAbsolutePath().toString());
             System.setProperty("javax.net.ssl.trustStorePassword", new String(trustStorePassword));
-            this.trustStore = Optional.of(keyStore);
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private void importCert(KeyStore keyStore, Path certPath) {
-        try (InputStream stream = Files.newInputStream(certPath)) {
-            Certificate cert = CertificateFactory.getInstance("x.509").generateCertificate(stream);
-            keyStore.setCertificateEntry(certPath.getFileName().toString(), cert);
-        } catch (IOException | KeyStoreException | CertificateException e) {
+    private static String buildBase64TrustStoreFrom(Secret caSecret, char[] trustStorePassword) {
+        try {
+            KeyStore keyStore = buildKeystoreFrom(caSecret.getData());
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                keyStore.store(outputStream, trustStorePassword);
+                return new String(Base64.getEncoder().encode(outputStream.toByteArray()), StandardCharsets.UTF_8);
+            }
+        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private String loadSslFile(String other) {
-        return EntandoOperatorConfig.getPathToDefaultTlsKeyPair().map(path -> base64EncodeContent(path.resolve(other)))
-                .orElseThrow(IllegalStateException::new);
+    private static KeyStore buildKeystoreFrom(Map<String, String> certs)
+            throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(null, null);
+        certs.entrySet().forEach(cert -> importCert(keyStore, cert));
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
+        trustManagerFactory.init((KeyStore) null);
+        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+        X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+        for (X509Certificate certificate : trustManager.getAcceptedIssuers()) {
+            keyStore.setCertificateEntry(certificate.getSubjectX500Principal().getName(), certificate);
+        }
+        return keyStore;
     }
 
-    private String base64EncodeContent(Path path) {
-        try {
-            return new String(Base64.getEncoder().encode(Files.readAllBytes(path)),
-                    StandardCharsets.UTF_8);
-        } catch (IOException e) {
+    private static void importCert(KeyStore keyStore, Entry<String, String> certPath) {
+        try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(certPath.getValue()))) {
+            for (Certificate cert : CertificateFactory.getInstance("x.509").generateCertificates(stream)) {
+                keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectX500Principal().getName(), cert);
+            }
+        } catch (IOException | KeyStoreException | CertificateException e) {
             throw new IllegalStateException(e);
         }
     }

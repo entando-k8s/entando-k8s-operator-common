@@ -16,11 +16,13 @@
 
 package org.entando.kubernetes.client.integrationtesthelpers;
 
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.utils.HttpClientUtils;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -30,9 +32,9 @@ import okhttp3.OkHttpClient;
 import org.entando.kubernetes.client.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.test.common.CertificateSecretHelper;
 
 public final class TestFixturePreparation {
 
@@ -44,25 +46,23 @@ public final class TestFixturePreparation {
     }
 
     public static AutoAdaptableKubernetesClient newClient() {
-        AutoAdaptableKubernetesClient result = buildKubernetesClient();
-        initializeTls(result);
-        return result;
+        try {
+            AutoAdaptableKubernetesClient result = buildKubernetesClient();
+            initializeTls(result);
+            return result;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
-    private static void initializeTls(AutoAdaptableKubernetesClient result) {
+    private static void initializeTls(AutoAdaptableKubernetesClient result) throws IOException {
         String domainSuffix = IngressCreator.determineRoutingSuffix(result.getMasterUrl().getHost());
         Path certRoot = Paths.get(EntandoOperatorTestConfig.getTestsCertRoot());
         Path tlsPath = certRoot.resolve(domainSuffix);
-        Path caCert = tlsPath.resolve("ca.crt");
-        if (caCert.toFile().exists()) {
-            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.getJvmSystemProperty(),
-                    caCert.toAbsolutePath().toString());
+        List<Secret> secrets = CertificateSecretHelper.buildCertificateSecretsFromDirectory(result.getNamespace(), tlsPath);
+        if (!secrets.isEmpty()) {
+            result.secrets().createOrReplace(secrets.toArray(new Secret[0]));
         }
-        if (tlsPath.resolve("tls.crt").toFile().exists() && tlsPath.resolve("tls.key").toFile().exists()) {
-            System.setProperty(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.getJvmSystemProperty(),
-                    tlsPath.toAbsolutePath().toString());
-        }
-        TlsHelper.getInstance().init();
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(),
                 String.valueOf(HttpTestHelper.getDefaultProtocol().equals("http")));
     }

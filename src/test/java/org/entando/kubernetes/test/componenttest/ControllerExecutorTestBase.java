@@ -32,6 +32,7 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.PodClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.controller.ControllerExecutor;
+import org.entando.kubernetes.controller.support.controller.DefaultControllerImageResolver;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
@@ -64,7 +65,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     void testStart() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
         this.client = getClient();
-        ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
+        ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client, new DefaultControllerImageResolver());
         resource = newEntandoKeycloakServer();
         emulatePodWaitingBehaviour();
         controllerExecutor.startControllerFor(Action.ADDED, resource, "6.0.0");
@@ -84,7 +85,7 @@ public abstract class ControllerExecutorTestBase implements InProcessTestUtil, F
     void testRun() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS.getJvmSystemProperty(), "9000000");
         this.client = getClient();
-        ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client);
+        ControllerExecutor controllerExecutor = new ControllerExecutor(CONTROLLER_NAMESPACE, client, new DefaultControllerImageResolver());
         resource = newEntandoKeycloakServer();
         emulatePodWaitingBehaviour();
         Pod pod = controllerExecutor.runControllerFor(Action.ADDED, resource, "6.0.0");

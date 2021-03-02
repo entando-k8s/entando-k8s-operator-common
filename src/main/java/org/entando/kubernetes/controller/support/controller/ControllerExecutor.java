@@ -21,12 +21,6 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
-import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import java.util.ArrayList;
@@ -34,58 +28,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.container.TlsAware;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ControllerExecutor {
 
-    public static final String ETC_ENTANDO_TLS = TlsAware.ETC_ENTANDO_TLS;
-    public static final String ETC_ENTANDO_CA = TlsAware.ETC_ENTANDO_CA;
-
-    private static final Map<String, String> resourceKindToImageNames = buildImageMap();
     private final SimpleK8SClient<?> client;
     private final EntandoImageResolver imageResolver;
     private final String controllerNamespace;
+    private ControllerImageResolver controllerImageResolver;
 
     public ControllerExecutor(String controllerNamespace, KubernetesClient client) {
-        this(controllerNamespace, new DefaultSimpleK8SClient(client));
+        this(controllerNamespace, new DefaultSimpleK8SClient(client), new DefaultControllerImageResolver());
     }
 
-    public ControllerExecutor(String controllerNamespace, SimpleK8SClient<?> client) {
+    public ControllerExecutor(String controllerNamespace, SimpleK8SClient<?> client, ControllerImageResolver controllerImageResolver) {
         this.controllerNamespace = controllerNamespace;
         this.client = client;
         this.imageResolver = new EntandoImageResolver(client.entandoResources().loadDockerImageInfoConfigMap());
-    }
-
-    private static Map<String, String> buildImageMap() {
-        Map<String, String> map = new ConcurrentHashMap<>();
-        map.put("EntandoKeycloakServer", "entando-k8s-keycloak-controller");
-        map.put("EntandoClusterInfrastructure", "entando-k8s-cluster-infrastructure-controller");
-        map.put("EntandoPlugin", "entando-k8s-plugin-controller");
-        map.put("EntandoApp", "entando-k8s-app-controller");
-        map.put("EntandoAppPluginLink", "entando-k8s-app-plugin-link-controller");
-        map.put("EntandoCompositeApp", "entando-k8s-composite-app-controller");
-        map.put("EntandoDatabaseService", "entando-k8s-database-service-controller");
-        return map;
-    }
-
-    public static String resolveControllerImageName(EntandoCustomResource resource) {
-        return resolveControllerImageNameByKind(resource.getKind());
-    }
-
-    private static String resolveControllerImageNameByKind(String kind) {
-        return resourceKindToImageNames.get(kind);
+        this.controllerImageResolver = controllerImageResolver;
     }
 
     public Pod startControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
@@ -107,8 +73,7 @@ public class ControllerExecutor {
                 resource.getKind(), resource.getMetadata().getName()));
     }
 
-    private Pod buildControllerPod(Action action, EntandoCustomResource resource,
-            String imageVersionToUse) {
+    private Pod buildControllerPod(Action action, EntandoCustomResource resource, String imageVersionToUse) {
         return new PodBuilder().withNewMetadata()
                 .withName(resource.getMetadata().getName() + "-deployer-" + NameUtils.randomNumeric(4).toLowerCase())
                 .withNamespace(this.controllerNamespace)
@@ -124,9 +89,7 @@ public class ControllerExecutor {
                 .withImage(determineControllerImage(resource, imageVersionToUse))
                 .withImagePullPolicy("IfNotPresent")
                 .withEnv(buildEnvVars(action, resource))
-                .withVolumeMounts(maybeCreateTlsVolumeMounts())
                 .endContainer()
-                .withVolumes(maybeCreateTlsVolumes(resource))
                 .endSpec()
                 .build();
     }
@@ -137,7 +100,8 @@ public class ControllerExecutor {
 
     private String determineControllerImage(EntandoCustomResource resource, String imageVersionToUse) {
         return this.imageResolver.determineImageUri(
-                "entando/" + resolveControllerImageName(resource) + ofNullable(imageVersionToUse).map(s -> ":" + s).orElse(""));
+                controllerImageResolver.getControllerImageFor(resource) + ofNullable(imageVersionToUse).map(s -> ":" + s)
+                        .orElse(""));
     }
 
     private void addTo(Map<String, EnvVar> result, EnvVar envVar) {
@@ -146,10 +110,6 @@ public class ControllerExecutor {
 
     private List<EnvVar> buildEnvVars(Action action, EntandoCustomResource resource) {
         Map<String, EnvVar> result = new HashMap<>();
-        //TODO test if we can remove this line now given that we are copying all system properties and environment variables.
-        Stream.of(EntandoOperatorConfigProperty.values())
-                .filter(prop -> EntandoOperatorConfigBase.lookupProperty(prop).isPresent())
-                .forEach(prop -> addTo(result, new EnvVar(prop.name(), EntandoOperatorConfigBase.lookupProperty(prop).get(), null)));
         System.getProperties().entrySet().stream()
                 .filter(this::matchesKnownSystemProperty).forEach(objectObjectEntry -> addTo(result,
                 new EnvVar(objectObjectEntry.getKey().toString().toUpperCase(Locale.ROOT).replace(".", "_").replace("-", "_"),
@@ -158,18 +118,6 @@ public class ControllerExecutor {
                 .filter(this::matchesKnownEnvironmentVariable)
                 .forEach(objectObjectEntry -> addTo(result, new EnvVar(objectObjectEntry.getKey(),
                         objectObjectEntry.getValue(), null)));
-        if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
-            //TODO no need to propagate the raw CA certs. But we do need to mount the resulting Java Truststore and override the
-            // _JAVA_OPTS variable
-            StringBuilder sb = new StringBuilder();
-            EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path ->
-                    sb.append(TlsAware.ETC_ENTANDO_CA).append("/").append(path.getFileName().toString()).append(" "));
-            addTo(result, new EnvVar(EntandoOperatorConfigProperty.ENTANDO_CA_CERT_PATHS.name(), sb.toString().trim(), null));
-        }
-        if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            //TODO no need to propagate the Tls certs.
-            addTo(result, new EnvVar(EntandoOperatorConfigProperty.ENTANDO_PATH_TO_TLS_KEYPAIR.name(), TlsAware.ETC_ENTANDO_TLS, null));
-        }
         //Make sure we overwrite previously set resource info
         addTo(result, new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
         addTo(result, new EnvVar("ENTANDO_RESOURCE_NAMESPACE", resource.getMetadata().getNamespace(), null));
@@ -184,48 +132,6 @@ public class ControllerExecutor {
     private boolean matchesKnownSystemProperty(Map.Entry<Object, Object> objectObjectEntry) {
         String propertyName = objectObjectEntry.getKey().toString().toLowerCase(Locale.ROOT).replace("_", ".");
         return propertyName.startsWith("related.image") || propertyName.startsWith("entando.");
-    }
-
-    private List<Volume> maybeCreateTlsVolumes(EntandoCustomResource resource) {
-        List<Volume> result = new ArrayList<>();
-        if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
-            //TODO no need to propagate the raw CA certs. But we do need to mount the resulting Java Truststore and override the
-            // _JAVA_OPTS var
-            Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-controller-ca-cert-secret")
-                    .endMetadata().withData(new ConcurrentHashMap<>()).build();
-            //Add all available CA Certs. No need to map the trustStore itself - the controller will build this up internally
-            EntandoOperatorConfig.getCertificateAuthorityCertPaths().forEach(path -> secret.getData()
-                    .put(path.getFileName().toString(), TlsHelper.getInstance().getTlsCaCertBase64(path)));
-            client.secrets().overwriteControllerSecret(secret);
-            result.add(new VolumeBuilder().withName("ca-cert-volume").withNewSecret()
-                    .withSecretName(resource.getMetadata().getName() + "-controller-ca-cert-secret").endSecret()
-                    .build());
-        }
-        if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            //TODO no need to propagate the Tls certs. It can just be mounted in deployments
-            Secret secret = new SecretBuilder().withNewMetadata().withName(resource.getMetadata().getName() + "-controller-tls-secret")
-                    .endMetadata()
-                    .withType("kubernetes.io/tls")
-                    .addToData(TlsHelper.TLS_KEY, TlsHelper.getInstance().getTlsKeyBase64())
-                    .addToData(TlsHelper.TLS_CRT, TlsHelper.getInstance().getTlsCertBase64())
-                    .build();
-            client.secrets().overwriteControllerSecret(secret);
-            result.add(new VolumeBuilder().withName("tls-volume").withNewSecret()
-                    .withSecretName(resource.getMetadata().getName() + "-controller-tls-secret").endSecret()
-                    .build());
-        }
-        return result;
-    }
-
-    private List<VolumeMount> maybeCreateTlsVolumeMounts() {
-        List<VolumeMount> result = new ArrayList<>();
-        if (!EntandoOperatorConfig.getCertificateAuthorityCertPaths().isEmpty()) {
-            result.add(new VolumeMountBuilder().withName("ca-cert-volume").withMountPath(TlsAware.ETC_ENTANDO_CA).build());
-        }
-        if (TlsHelper.isDefaultTlsKeyPairAvailable()) {
-            result.add(new VolumeMountBuilder().withName("tls-volume").withMountPath(TlsAware.ETC_ENTANDO_TLS).build());
-        }
-        return result;
     }
 
 }

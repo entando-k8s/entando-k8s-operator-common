@@ -25,7 +25,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.model.DbmsVendor;
 
-public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareContainer, IngressingContainer, TlsAware {
+public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareContainer, IngressingContainer, TrustStoreAware {
 
     Optional<DatabaseSchemaConnectionInfo> getDatabaseSchema();
 

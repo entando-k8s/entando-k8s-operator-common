@@ -16,21 +16,18 @@
 
 package org.entando.kubernetes.controller.spi.common;
 
-import static java.lang.String.format;
-
 import io.fabric8.kubernetes.api.model.EnvVarSource;
 import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.util.UUID;
-import org.entando.kubernetes.controller.spi.container.TlsAware;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class SecretUtils {
 
     public static final String PASSSWORD_KEY = "password";//Funny name because a variable named 'PASSWORD' is considered a vulnerability
     public static final String USERNAME_KEY = "username";
-    public static final String CERT_SECRET_MOUNT_ROOT = "/etc/entando/certs";
+    public static final String EMPTY_TLS_SECRET_NAME = "entando-empty-tls-secret";
 
     private SecretUtils() {
     }
@@ -59,7 +56,4 @@ public class SecretUtils {
         return UUID.randomUUID().toString().replace("-", "").substring(0, length);
     }
 
-    public static String standardCertPathOf(String filename) {
-        return format("%s/%s/%s", CERT_SECRET_MOUNT_ROOT, TlsAware.DEFAULT_CERTIFICATE_AUTHORITY_SECRET_NAME, filename);
-    }
 }

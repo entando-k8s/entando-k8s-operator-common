@@ -26,6 +26,8 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +36,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
@@ -42,7 +45,9 @@ import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeplo
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoCustomResource;
@@ -51,6 +56,7 @@ import org.entando.kubernetes.model.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
+import org.entando.kubernetes.test.common.CertificateSecretHelper;
 import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
@@ -81,6 +87,8 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
         scheduler.shutdownNow();
         getClient().pods().getPodWatcherQueue().clear();
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_TLS_SECRET_NAME.getJvmSystemProperty());
     }
 
     @Test
@@ -123,6 +131,62 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
                 ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
         assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
                 Matchers.is(8084));
+    }
+
+    @Test
+    void testDeploymentWithCertificates() {
+        //Given I have a controller that processes EntandoPlugins
+        controller = new SampleController<>(getClient(), getKeycloakClient()) {
+            @Override
+            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
+                    DatabaseServiceResult databaseServiceResult,
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
+            }
+        };
+        //And I have configured an additional trusted CA Certificate and a TLS certificate/key pair
+        final Path tlsPath = Paths.get("src", "test", "resources", "tls", "ampie.dynu.net");
+        CertificateSecretHelper.buildCertificateSecretsFromDirectory(getClient().entandoResources().getNamespace(), tlsPath)
+                .forEach(getClient().secrets()::overwriteControllerSecret);
+        //And I have prepared the Standard KeycloakAdminSecert
+        emulateKeycloakDeployment(getClient());
+        //And we can observe the pod lifecycle
+        emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
+        //When I create a new EntandoPlugin
+        onAdd(plugin1);
+
+        await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
+                getClient().entandoResources()
+                        .load(plugin1.getClass(), plugin1.getMetadata().getNamespace(), plugin1.getMetadata().getName())
+                        .getStatus()
+                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
+        //Then I expect a server deployment
+        Deployment serverDeployment = getClient().deployments()
+                .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
+        assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), Matchers.is(1));
+        verifyThatAllVariablesAreMapped(plugin1, getClient(), serverDeployment);
+        verifyThatAllVolumesAreMapped(plugin1, getClient(), serverDeployment);
+        //With a secret mount to the default truststore secret
+        assertThat(
+                theVolumeNamed(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET + DeploymentCreator.VOLUME_SUFFIX).on(serverDeployment).getSecret()
+                        .getSecretName(),
+                is(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET));
+        assertThat(theVolumeMountNamed(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET + DeploymentCreator.VOLUME_SUFFIX)
+                        .on(thePrimaryContainerOn(serverDeployment)).getMountPath(),
+                is(TrustStoreAware.CERT_SECRET_MOUNT_ROOT + "/" + TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET));
+        assertThat(theVariableReferenceNamed(TrustStoreAware.JAVA_TOOL_OPTIONS).on(thePrimaryContainerOn(serverDeployment))
+                .getSecretKeyRef().getName(), is(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET));
+        assertThat(theVariableReferenceNamed(TrustStoreAware.JAVA_TOOL_OPTIONS).on(thePrimaryContainerOn(serverDeployment))
+                .getSecretKeyRef().getKey(), is(TrustStoreAware.TRUSTSTORE_SETTINGS_KEY));
+        //And I an ingress path
+        Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
+                ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
+        assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
+                Matchers.is(8084));
+        //Exposed over TLS using the previously created TLS secret
+        assertThat(ingress.getSpec().getTls().get(0).getHosts().get(0), Matchers.is(ingress.getSpec().getRules().get(0).getHost()));
+        assertThat(ingress.getSpec().getTls().get(0).getSecretName(), Matchers.is(CertificateSecretHelper.TEST_TLS_SECRET));
+
     }
 
     protected abstract SimpleKeycloakClient getKeycloakClient();
