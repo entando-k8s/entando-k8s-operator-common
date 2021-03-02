@@ -60,7 +60,9 @@ public final class TestFixturePreparation {
         Path certRoot = Paths.get(EntandoOperatorTestConfig.getTestsCertRoot());
         Path tlsPath = certRoot.resolve(domainSuffix);
         List<Secret> secrets = CertificateSecretHelper.buildCertificateSecretsFromDirectory(result.getNamespace(), tlsPath);
-        result.secrets().createOrReplace(secrets.toArray(new Secret[0]));
+        if (!secrets.isEmpty()) {
+            result.secrets().createOrReplace(secrets.toArray(new Secret[0]));
+        }
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(),
                 String.valueOf(HttpTestHelper.getDefaultProtocol().equals("http")));
     }

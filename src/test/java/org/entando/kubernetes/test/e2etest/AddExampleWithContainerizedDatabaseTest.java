@@ -106,7 +106,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
     }
 
     @ParameterizedTest
-    @MethodSource("provideStringsForIsBlank")
+    @MethodSource("provideVendorAndModeArgs")
     void create(DbmsVendor dbmsVendor, EntandoOperatorComplianceMode complianceMode) {
         //When I create a EntandoPlugin and I specify it to use PostgreSQL
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
@@ -130,7 +130,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         verifyPluginDeployment();
     }
 
-    private static Stream<Arguments> provideStringsForIsBlank() {
+    private static Stream<Arguments> provideVendorAndModeArgs() {
         return Stream.of(
                 Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.COMMUNITY),
                 Arguments.of(DbmsVendor.POSTGRESQL, EntandoOperatorComplianceMode.REDHAT),
