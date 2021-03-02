@@ -104,7 +104,6 @@ public final class TlsHelper {
         trustManagerFactory.init((KeyStore) null);
         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
         X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-        String base64TrustStore = null;
         for (X509Certificate certificate : trustManager.getAcceptedIssuers()) {
             keyStore.setCertificateEntry(certificate.getSubjectX500Principal().getName(), certificate);
         }
@@ -113,9 +112,8 @@ public final class TlsHelper {
 
     private static void importCert(KeyStore keyStore, Entry<String, String> certPath) {
         try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(certPath.getValue()))) {
-            Certificate[] certs = CertificateFactory.getInstance("x.509").generateCertificates(stream).toArray(new Certificate[0]);
-            for (int i = 0; i < certs.length; i++) {
-                keyStore.setCertificateEntry(certPath.getKey() + i, certs[i]);
+            for (Certificate cert : CertificateFactory.getInstance("x.509").generateCertificates(stream)) {
+                keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectX500Principal().getName(), cert);
             }
         } catch (IOException | KeyStoreException | CertificateException e) {
             throw new IllegalStateException(e);

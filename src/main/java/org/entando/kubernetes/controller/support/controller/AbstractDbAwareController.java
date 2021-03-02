@@ -40,7 +40,9 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.DbmsVendor;
 import org.entando.kubernetes.model.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.EntandoDeploymentPhase;
@@ -122,6 +124,8 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
     protected void processCommand() {
         try {
             EntandoOperatorConfigBase.setConfigMap(k8sClient.entandoResources().loadOperatorConfig());
+            EntandoOperatorConfig.getCertificateAuthoritySecretName()
+                    .ifPresent(s -> TlsHelper.trustCertificateAuthoritiesIn(k8sClient.secrets().loadControllerSecret(s)));
             if (actionRequiresSync(resolveAction())) {
                 performSync(resolveResource());
             }
