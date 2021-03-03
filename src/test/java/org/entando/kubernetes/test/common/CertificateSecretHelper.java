@@ -64,6 +64,7 @@ public class CertificateSecretHelper {
                 secrets.add(
                         new SecretBuilder().withNewMetadata().withName(TEST_TLS_SECRET).withNamespace(namespace)
                                 .endMetadata()
+                                .withType("kubernetes.io/tls")
                                 .addToData("tls.crt", Base64.getEncoder().encodeToString(Files.readAllBytes(tlsPath.resolve("tls.crt"))))
                                 .addToData("tls.key", Base64.getEncoder().encodeToString(Files.readAllBytes(tlsPath.resolve("tls.key"))))
                                 .build());
