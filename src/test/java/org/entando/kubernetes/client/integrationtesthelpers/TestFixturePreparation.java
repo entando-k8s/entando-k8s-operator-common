@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.client.integrationtesthelpers;
 
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
@@ -59,10 +58,8 @@ public final class TestFixturePreparation {
         String domainSuffix = IngressCreator.determineRoutingSuffix(result.getMasterUrl().getHost());
         Path certRoot = Paths.get(EntandoOperatorTestConfig.getTestsCertRoot());
         Path tlsPath = certRoot.resolve(domainSuffix);
-        List<Secret> secrets = CertificateSecretHelper.buildCertificateSecretsFromDirectory(result.getNamespace(), tlsPath);
-        if (!secrets.isEmpty()) {
-            result.secrets().createOrReplace(secrets.toArray(new Secret[0]));
-        }
+        CertificateSecretHelper.buildCertificateSecretsFromDirectory(result.getNamespace(), tlsPath)
+                .forEach(result.secrets()::createOrReplace);
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(),
                 String.valueOf(HttpTestHelper.getDefaultProtocol().equals("http")));
     }
