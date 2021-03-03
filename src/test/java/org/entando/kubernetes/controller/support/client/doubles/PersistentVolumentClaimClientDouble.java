@@ -17,15 +17,14 @@
 package org.entando.kubernetes.controller.support.client.doubles;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class PersistentVolumentClaimClientDouble extends AbstractK8SClientDouble implements
         PersistentVolumeClaimClient {
 
-    public PersistentVolumentClaimClientDouble(
-            Map<String, NamespaceDouble> namespaces) {
+    public PersistentVolumentClaimClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
         super(namespaces);
     }
 
