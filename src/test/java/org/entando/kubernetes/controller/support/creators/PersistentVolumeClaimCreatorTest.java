@@ -20,7 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.spi.examples.SamplePublicIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.support.client.doubles.PersistentVolumentClaimClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
@@ -76,7 +76,8 @@ class PersistentVolumeClaimCreatorTest implements InProcessTestData {
      */
     private PersistentVolumeClaim executeCreateDeploymentTest() {
 
-        PersistentVolumentClaimClientDouble persistentVolumentClaimClientDouble = new PersistentVolumentClaimClientDouble(new HashMap<>());
+        PersistentVolumentClaimClientDouble persistentVolumentClaimClientDouble = new PersistentVolumentClaimClientDouble(
+                new ConcurrentHashMap<>());
         PersistentVolumeClaimCreator persistentVolumeClaimCreator = new PersistentVolumeClaimCreator(entandoApp);
 
         persistentVolumeClaimCreator.createPersistentVolumeClaimsFor(persistentVolumentClaimClientDouble, deployable);

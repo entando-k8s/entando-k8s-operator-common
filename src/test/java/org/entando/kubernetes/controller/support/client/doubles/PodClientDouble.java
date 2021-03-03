@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.client.EntandoExecListener;
 import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.spi.common.PodResult;
@@ -46,7 +47,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     private final BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
     private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
 
-    public PodClientDouble(Map<String, NamespaceDouble> namespaces) {
+    public PodClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
         super(namespaces);
     }
 
@@ -139,11 +140,10 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
         if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
-            Pod result = watchPod(
+            return watchPod(
                     got -> PodResult.of(got).getState() == State.READY || PodResult.of(got).getState() == State.COMPLETED,
                     EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),
                     new DummyWatchable());
-            return result;
         } else if (!getNamespace(namespace).getPods().isEmpty()) {
             Pod result = getNamespace(namespace).getPods().values().stream()
                     .filter(pod -> labelValue.equals(pod.getMetadata().getLabels().get(labelName))).findFirst()

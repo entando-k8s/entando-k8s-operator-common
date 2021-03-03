@@ -20,7 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.entando.kubernetes.client.EntandoExecListener;
 import org.entando.kubernetes.controller.support.client.doubles.PodClientDouble;
@@ -34,7 +34,7 @@ class PodClientTest {
 
     @Test
     void testExec() throws IOException {
-        PodClientDouble podClientDouble = new PodClientDouble(new HashMap<>());
+        PodClientDouble podClientDouble = new PodClientDouble(new ConcurrentHashMap<>());
         PodResourceDouble podResource = new PodResourceDouble();
         EntandoExecListener execWatchDouble = podClientDouble
                 .executeAndWait(podResource, "some-container", 10, "echo hello world");

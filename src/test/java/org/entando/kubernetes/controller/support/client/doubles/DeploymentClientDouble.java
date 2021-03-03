@@ -20,9 +20,9 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.VersionInfo;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.client.PodWatcher;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
@@ -32,7 +32,7 @@ public class DeploymentClientDouble extends AbstractK8SClientDouble implements D
     private final VersionInfo versionInfo;
     private BlockingQueue<PodWatcher> queue = new ArrayBlockingQueue<>(5);
 
-    public DeploymentClientDouble(Map<String, NamespaceDouble> namespaces, VersionInfo versionInfo) {
+    public DeploymentClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, VersionInfo versionInfo) {
         super(namespaces);
         this.versionInfo = versionInfo;
     }

@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
@@ -51,7 +52,7 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
-    public EntandoResourceClientDouble(Map<String, NamespaceDouble> namespaces) {
+    public EntandoResourceClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
         super(namespaces);
     }
 

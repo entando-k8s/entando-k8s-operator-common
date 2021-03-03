@@ -20,14 +20,14 @@ import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.model.EntandoCustomResource;
 
 public class ServiceAccountClientDouble extends AbstractK8SClientDouble implements ServiceAccountClient {
 
-    public ServiceAccountClientDouble(Map<String, NamespaceDouble> namespaces) {
+    public ServiceAccountClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
         super(namespaces);
     }
 
