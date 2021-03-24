@@ -24,7 +24,7 @@
         <artifactId>entando-quarkus-parent</artifactId>
         <relativePath/>
     </parent>
-    <version>6.3.0-SNAPSHOT</version>
+    <version>6.3.13</version>
     <artifactId>entando-k8s-operator-common</artifactId>
     <name>Entando K8S Operator Common Library</name>
     <description>Entando's K8S Operator Common Library</description>
