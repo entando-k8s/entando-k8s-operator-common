@@ -70,7 +70,7 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
                 .withMetadata(fromCustomResource(!EntandoOperatorConfig.disablePvcGarbageCollection(),
                         resolveName(container.getNameQualifier(), "-pvc"),
                         deployable.getNameQualifier()))
-                .withNewSpec().withAccessModes("ReadWriteOnce")
+                .withNewSpec().withAccessModes(EntandoOperatorConfig.getPvcAccessModeOverride().orElse("ReadWriteOnce"))
                 .withNewResources()
                 .withRequests(singletonMap("storage", new Quantity(resourceCalculator.getStorageRequest())))
                 .withLimits(singletonMap("storage", new Quantity(resourceCalculator.getStorageLimit())))
