@@ -50,6 +50,7 @@ public enum EntandoOperatorConfigProperty implements ConfigProperty {
     ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET("entando.k8s.operator.force.db.password.reset"),
     ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE("entando.k8s.operator.deployment.type"),
     ENTANDO_K8S_OPERATOR_PULL_POLICY_OVERRIDE("entando.k8s.operator.pull.policy.override"),
+    ENTANDO_K8S_OPERATOR_PVC_ACCESSMODE_OVERRIDE("entando.k8s.operator.pvc.accessmode.override"),
 
     /*
     TLS config
