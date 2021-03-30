@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DockerImageInfo;
 import org.entando.kubernetes.controller.spi.container.HasHealthCommand;
@@ -40,6 +41,11 @@ public class DatabaseContainer implements ServiceBackingContainer, PersistentVol
         this.variableInitializer = variableInitializer;
         this.dbmsVendorDockerStrategy = dbmsVendorDockerStrategy;
         this.portOverride = portOverride;
+    }
+
+    @Override
+    public Optional<String> getStorageClass() {
+        return EntandoOperatorSpiConfig.getDefaultNonClusteredStorageClass();
     }
 
     @Override
@@ -82,6 +88,11 @@ public class DatabaseContainer implements ServiceBackingContainer, PersistentVol
         List<EnvVar> vars = new ArrayList<>();
         variableInitializer.addEnvironmentVariables(vars);
         return vars;
+    }
+
+    @Override
+    public Optional<String> getAccessMode() {
+        return Optional.empty();
     }
 
 }
