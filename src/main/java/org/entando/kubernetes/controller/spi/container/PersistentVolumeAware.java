@@ -16,12 +16,23 @@
 
 package org.entando.kubernetes.controller.spi.container;
 
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+
 public interface PersistentVolumeAware extends DeployableContainer {
 
     String getVolumeMountPath();
 
     default int getStorageLimitMebibytes() {
         return 2048;
+    }
+
+    default Optional<String> getStorageClass() {
+        return EntandoOperatorSpiConfig.getDefaultClusteredStorageClass();
+    }
+
+    default Optional<String> getAccessMode() {
+        return EntandoOperatorSpiConfig.getPvcAccessModeOverride();
     }
 
 }

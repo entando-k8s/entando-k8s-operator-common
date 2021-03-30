@@ -144,7 +144,6 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     }
 
-    public static Optional<String> getPvcAccessModeOverride() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_PVC_ACCESSMODE_OVERRIDE);
-    }
+
+
 }
