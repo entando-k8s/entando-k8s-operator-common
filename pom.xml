@@ -62,7 +62,6 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <owaspSuppressionFileLocation>/home/ampie/Code/entando-k8s/entando-quarkus-parent/owasp-dependency-check-suppression.xml</owaspSuppressionFileLocation>
         <github.organization>entando-k8s</github.organization>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
