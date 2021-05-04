@@ -47,12 +47,16 @@ public interface SecretClient {
     ConfigMap loadConfigMap(EntandoCustomResource peerInNamespace, String name);
 
     /**
+     * No longer used.
+     *
      * @deprecated we have no need for controllerConfigMaps anymore
      */
     @Deprecated(forRemoval = true)
     void overwriteControllerConfigMap(ConfigMap newKeycloakConnectionConfigMap);
 
     /**
+     * No longer used.
+     *
      * @deprecated we have no need for controllerConfigMaps anymore
      */
     @Deprecated(forRemoval = true)
