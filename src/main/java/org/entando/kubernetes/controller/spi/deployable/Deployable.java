@@ -20,12 +20,13 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public interface Deployable<T extends ServiceDeploymentResult<T>> {
 
@@ -33,6 +34,10 @@ public interface Deployable<T extends ServiceDeploymentResult<T>> {
      * NB!!! Implementations need to implement this as a non-modifiable list with the exact same instances returned consistently.
      */
     List<DeployableContainer> getContainers();
+
+    default Optional<ExternalService> getExternalService(){
+        return Optional.empty();
+    }
 
     String getNameQualifier();
 

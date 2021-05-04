@@ -33,8 +33,9 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
+//TODO move to org.entando.kubernetes.controller.support
 public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>, Secretive {
 
     private final DbmsDockerVendorStrategy dbmsVendor;

@@ -16,7 +16,7 @@
 
 package org.entando.kubernetes.controller.support.controller;
 
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public interface ControllerImageResolver {
 

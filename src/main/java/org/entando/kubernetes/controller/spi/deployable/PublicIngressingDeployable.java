@@ -21,7 +21,7 @@ import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
-import org.entando.kubernetes.model.KeycloakToUse;
+import org.entando.kubernetes.model.common.KeycloakToUse;
 
 public interface PublicIngressingDeployable<T extends ExposedDeploymentResult<T>> extends IngressingDeployable<T>, KeycloakPreference {
 

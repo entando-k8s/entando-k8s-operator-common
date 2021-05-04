@@ -53,10 +53,11 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
@@ -124,7 +125,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
                 k8sClient.entandoResources()
                         .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
                         .getStatus()
-                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
+                        .getPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect one deployment.
         Deployment serverDeployment = k8sClient.deployments()
                 .loadDeployment(plugin, format("%s-%s-deployment", SAMPLE_NAME, BareBonesDeployable.NAME_QUALIFIER));
@@ -165,7 +166,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
                 k8sClient.entandoResources()
                         .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
                         .getStatus()
-                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
+                        .getPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect one deployment.
         Deployment serverDeployment = k8sClient.deployments()
                 .loadDeployment(plugin, format("%s-%s-deployment", SAMPLE_NAME, BareBonesDeployable.NAME_QUALIFIER));
@@ -221,7 +222,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
                 k8sClient.entandoResources()
                         .load(plugin.getClass(), plugin.getMetadata().getNamespace(), plugin.getMetadata().getName())
                         .getStatus()
-                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
+                        .getPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect a namespace scoped RoleBinding
         RoleBinding editorRoleBinding = this.k8sClient.serviceAccounts().loadRoleBinding(plugin, "my-service-account-entando-editor");
         assertThat(editorRoleBinding, notNullValue());
@@ -242,7 +243,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         assertThat(viewRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
@@ -257,7 +258,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         }, 200, TimeUnit.MILLISECONDS);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onAdd(T resource) {
         scheduler.schedule(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());

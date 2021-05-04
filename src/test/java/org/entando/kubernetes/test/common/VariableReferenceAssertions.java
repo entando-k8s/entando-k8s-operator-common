@@ -26,7 +26,7 @@ import io.fabric8.kubernetes.api.model.SecretKeySelector;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.Collection;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public interface VariableReferenceAssertions {
 

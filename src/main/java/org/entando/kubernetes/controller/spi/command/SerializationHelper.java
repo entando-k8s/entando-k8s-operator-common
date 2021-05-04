@@ -14,14 +14,15 @@
  *
  */
 
-package org.entando.kubernetes.test.sandbox.serialization;
+package org.entando.kubernetes.controller.spi.command;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext.Builder;
 import java.beans.Introspector;
 import java.io.IOException;
@@ -67,13 +68,10 @@ import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployab
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
-import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
-import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.support.command.DeployCommand;
 
-public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
+public class SerializationHelper<T extends ServiceDeploymentResult<T>> {
 
-    private final KubernetesClient kubernetesClient;
+    protected final KubernetesClient kubernetesClient;
     List<Class<?>> knownInterfaces = Arrays.asList(
             ConfigurableResourceContainer.class,
             DatabasePopulator.class,
@@ -99,23 +97,40 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
             SerializableDeploymentResult.class
     );
 
-    private final Deployable<T> deployable;
-
-    public SerializingDeployCommand(KubernetesClient kubernetesClient, Deployable<T> deployable) {
-        this.deployable = deployable;
+    public SerializationHelper(KubernetesClient kubernetesClient) {
         this.kubernetesClient = kubernetesClient;
     }
 
-    public T execute(SimpleK8SClient<?> client, SimpleKeycloakClient keycloakClient) {
-        DeployCommand<DefaultSerializableDeploymentResult> command = new DeployCommand<>(getSerializedDeployable());
-        final DefaultSerializableDeploymentResult result = command.execute(client, keycloakClient);
-        SerializableDeploymentResult<?> serializedResult = serializeThenDeserialize(result);
-        return this.deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),
-                serializedResult.getPod())
-                .withStatus(serializedResult.getStatus());
+    @SuppressWarnings("unchecked")
+    public <S> S deserialize(String json) {
+        return (S) rethrowsAsRuntimes(() -> {
+            Map<String, Object> map = new ObjectMapper().readValue(new StringReader(json), Map.class);
+            return (S) Proxy.newProxyInstance(
+                    Thread.currentThread().getContextClassLoader(),
+                    getImplementedInterfaces(map),
+                    getInvocationHandler(map)
+            );
+        });
     }
 
-    <A extends Annotation> A getAnnotation(Class<?> c, String methodName, Class<A> annotationType) {
+    public String serialize(Object deployable) {
+        Map<String, Object> map = toJsonFriendlyMap(deployable);
+        final String json = rethrowsAsRuntimes(() -> new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(map));
+        System.out.println(json);
+        return json;
+    }
+
+    private static String propertyName(Method m) {
+        String name = m.getName();
+        if (name.startsWith("get")) {
+            return Introspector.decapitalize(name.substring(3));
+        } else if (name.startsWith("is") && m.getReturnType() == Boolean.TYPE) {
+            return Introspector.decapitalize(name.substring(2));
+        }
+        return null;
+    }
+
+    private <A extends Annotation> A getAnnotation(Class<?> c, String methodName, Class<A> annotationType) {
         final Method method;
         try {
             method = c.getMethod(methodName);
@@ -128,12 +143,11 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
         }
         if (annotation == null) {
             annotation = getAnnotationFromInterfaces(c.getInterfaces(), methodName, annotationType);
-
         }
         return annotation;
     }
 
-    private <A extends Annotation> A getAnnotationFromInterfaces(Class<?>[] interfaces, String methodName, Class<A> annotationType) {
+    protected <A extends Annotation> A getAnnotationFromInterfaces(Class<?>[] interfaces, String methodName, Class<A> annotationType) {
         for (Class<?> intf : interfaces) {
             A annotation = getAnnotation(intf, methodName, annotationType);
             if (annotation != null) {
@@ -141,6 +155,77 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
             }
         }
         return null;
+    }
+
+    private Map<String, Object> toJsonFriendlyMap(Object nonSerializableObject) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("mixins", Arrays.stream(getAllImplementedInterfaces(nonSerializableObject.getClass()))
+                .filter(knownInterfaces::contains)
+                .map(Class::getSimpleName)
+                .collect(Collectors.toList()));
+        map.putAll(Arrays.stream(nonSerializableObject.getClass().getMethods())
+                .filter(method -> (method.getName().startsWith("get") || method.getName().startsWith("is"))
+                        && method.getReturnType() != void.class
+                        && method.getParameterCount() == 0)
+                .map(method -> processGetter(nonSerializableObject, method))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Pair::getKey, Pair::getValue)));
+        return map;
+    }
+
+    private Class<?>[] getAllImplementedInterfaces(Class<?> clazz) {
+        Set<Class<?>> result = new HashSet<>();
+        while (clazz != Object.class) {
+            result.addAll(Arrays.asList(clazz.getInterfaces()));
+            clazz = clazz.getSuperclass();
+        }
+        return result.toArray(Class[]::new);
+    }
+
+    private Pair<String, Object> processGetter(Object nonSerializableObject, Method method) {
+        return rethrowsAsRuntimes(() -> {
+            Object value = method.invoke(nonSerializableObject);
+            if (value != null) {
+                if (getAnnotation(nonSerializableObject.getClass(), method.getName(), SerializeByReference.class) != null) {
+                    return new ImmutablePair<>(propertyName(method), new ResourceReference((HasMetadata) value));
+                } else if (getAnnotation(nonSerializableObject.getClass(), method.getName(), JsonIgnore.class) == null) {
+                    return Optional.ofNullable(toJsonSafeValue(value))
+                            .map(jsonSafeValue -> new ImmutablePair<>(propertyName(method), jsonSafeValue))
+                            .orElse(null);
+                }
+            }
+            return null;
+        });
+    }
+
+    private Object toJsonSafeValue(Object value) {
+        if (value instanceof Number || value instanceof Boolean || value instanceof String) {
+            return value;
+        } else if (value instanceof Optional) {
+            return ((Optional<?>) value).map(this::toJsonSafeValue).orElse(null);
+        } else if (value instanceof List) {
+            List<?> list = (List<?>) value;
+            return list.stream().map(this::toJsonSafeValue).collect(Collectors.toList());
+        } else if (value != null) {
+            if (value.getClass().getAnnotation(JsonDeserialize.class) != null) {
+                //We know how to serialize this
+                return value;
+            } else if (value.getClass().getName().startsWith("org.entando.kubernetes.controller")) {
+                //Can't serialize, but is known, so translate to map
+                return this.toJsonFriendlyMap(value);
+            }
+        }
+        return null;
+    }
+
+    protected <S> S rethrowsAsRuntimes(FailableSupplier<S> supplier) {
+        try {
+            return supplier.supply();
+        } catch (RuntimeException r) {
+            throw r;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Object coerce(Object object, Class<?> type) {
@@ -177,7 +262,8 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
                             .readValue(new StringReader(objectMapper.writeValueAsString(result)),
                                     ResourceReference.class);
                     if (resourceReference.isCustomResource()) {
-                        final CustomResourceDefinition definition = kubernetesClient.customResourceDefinitions().list().getItems()
+                        final CustomResourceDefinition definition = kubernetesClient.apiextensions().v1beta1().customResourceDefinitions()
+                                .list().getItems()
                                 .stream().filter(crd ->
                                         crd.getSpec().getNames().getKind().equals(resourceReference.getKind()) && resourceReference
                                                 .getApiVersion()
@@ -195,7 +281,7 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
                         final SerializedEntandoResource serializedEntandoResource = objectMapper
                                 .readValue(new StringReader(objectMapper.writeValueAsString(crMap)),
                                         SerializedEntandoResource.class);
-                        serializedEntandoResource.setDefinition(definition);
+                        serializedEntandoResource.setDefinition(CustomResourceDefinitionContext.fromCrd(definition));
                         return serializedEntandoResource;
                     } else {
                         return SupportedResourceKind.resolveFromKind(resourceReference.getKind())
@@ -258,112 +344,10 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
         return (Class<?>) ((ParameterizedType) method.getGenericReturnType()).getActualTypeArguments()[0];
     }
 
-    public static String propertyName(Method m) {
-        String name = m.getName();
-        if (name.startsWith("get")) {
-            return Introspector.decapitalize(name.substring(3));
-        } else if (name.startsWith("is") && m.getReturnType() == Boolean.TYPE) {
-            return Introspector.decapitalize(name.substring(2));
-        }
-        return null;
-    }
-
     @SuppressWarnings("unchecked")
     Class<?>[] getImplementedInterfaces(Map<String, Object> map) {
         List<String> mixins = (List<String>) map.get("mixins");
         return knownInterfaces.stream().filter(aClass -> mixins.contains(aClass.getSimpleName())).toArray(Class<?>[]::new);
     }
 
-    private String toJson(Object deployable) {
-        Map<String, Object> map = toMap(deployable);
-        final String json = rethrowsAsRuntimes(() -> new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(map));
-        System.out.println(json);
-        return json;
-    }
-
-    private Map<String, Object> toMap(Object nonSerializableObject) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("mixins", Arrays.stream(getAllImplementedInterfaces(nonSerializableObject.getClass()))
-                .filter(knownInterfaces::contains)
-                .map(Class::getSimpleName)
-                .collect(Collectors.toList()));
-        map.putAll(Arrays.stream(nonSerializableObject.getClass().getMethods())
-                .filter(method -> (method.getName().startsWith("get") || method.getName().startsWith("is"))
-                        && method.getReturnType() != void.class
-                        && method.getParameterCount() == 0)
-                .map(method -> processGetter(nonSerializableObject, method))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Pair::getKey, Pair::getValue)));
-        return map;
-    }
-
-    private Class<?>[] getAllImplementedInterfaces(Class<?> clazz) {
-        Set<Class<?>> result = new HashSet<>();
-        while (clazz != Object.class) {
-            result.addAll(Arrays.asList(clazz.getInterfaces()));
-            clazz = clazz.getSuperclass();
-        }
-        return result.toArray(Class[]::new);
-    }
-
-    private Pair<String, Object> processGetter(Object nonSerializableObject, Method method) {
-        return rethrowsAsRuntimes(() -> {
-            Object value = method.invoke(nonSerializableObject);
-            if (value != null) {
-                if (getAnnotation(nonSerializableObject.getClass(), method.getName(), SerializeByReference.class) != null) {
-                    return new ImmutablePair<>(propertyName(method), new ResourceReference((HasMetadata) value));
-                } else if (getAnnotation(nonSerializableObject.getClass(), method.getName(), JsonIgnore.class) == null) {
-                    return Optional.ofNullable(toJsonSafeValue(value))
-                            .map(jsonSafeValue -> new ImmutablePair<>(propertyName(method), jsonSafeValue))
-                            .orElse(null);
-                }
-            }
-            return null;
-        });
-    }
-
-    private Object toJsonSafeValue(Object value) {
-        if (value instanceof Number || value instanceof Boolean || value instanceof String) {
-            return value;
-        } else if (value instanceof Optional) {
-            return ((Optional<?>) value).map(this::toJsonSafeValue).orElse(null);
-        } else if (value instanceof List) {
-            List<?> list = (List<?>) value;
-            return list.stream().map(this::toJsonSafeValue).collect(Collectors.toList());
-        } else if (value != null) {
-            if (value.getClass().getAnnotation(JsonDeserialize.class) != null) {
-                //We know how to serialize this
-                return value;
-            } else if (value.getClass().getName().startsWith("org.entando.kubernetes.controller")) {
-                //Can't serialize, but is known, so translate to map
-                return this.toMap(value);
-            }
-        }
-        return null;
-    }
-
-    public Deployable<DefaultSerializableDeploymentResult> getSerializedDeployable() {
-        return serializeThenDeserialize(deployable);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T serializeThenDeserialize(Object deployable) {
-        return (T) rethrowsAsRuntimes(() -> {
-            Map<String, Object> map = new ObjectMapper().readValue(new StringReader(toJson(deployable)), Map.class);
-            return (T) Proxy
-                    .newProxyInstance(Thread.currentThread().getContextClassLoader(), getImplementedInterfaces(map),
-                            getInvocationHandler(map)
-                    );
-        });
-    }
-
-    private <S> S rethrowsAsRuntimes(FailableSupplier<S> supplier) {
-        try {
-            return supplier.supply();
-        } catch (RuntimeException r) {
-            throw r;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

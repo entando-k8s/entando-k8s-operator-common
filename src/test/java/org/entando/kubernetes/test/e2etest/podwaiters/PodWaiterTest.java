@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.PodCondition;
@@ -55,10 +54,10 @@ class PodWaiterTest {
     private static final String READY_CONDITION = "Ready";
     private static final String CONTAINERS_READY_CONDITION = "ContainersReady";
     @Mock
-    private PodResource<Pod, DoneablePod> podOperationMock;
+    private PodResource<Pod> podOperationMock;
 
     @Test
-    void initialStateNull() throws Exception {
+    void initialStateNull() {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(300)).limitReadinessTo(Duration.ofMillis(300))
@@ -69,7 +68,7 @@ class PodWaiterTest {
     }
 
     @Test
-    void ready() throws Exception {
+    void ready() {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(RUNNING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(300)).limitReadinessTo(Duration.ofMillis(300))
@@ -82,7 +81,7 @@ class PodWaiterTest {
     }
 
     @Test()
-    void failedRunning() throws Exception {
+    void failedRunning() {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(RUNNING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(1000)).limitReadinessTo(Duration.ofMillis(1000))
@@ -97,7 +96,7 @@ class PodWaiterTest {
     }
 
     @Test
-    void happyFlowToCompletion() throws Exception {
+    void happyFlowToCompletion() {
         JobPodWaiter mutex = new JobPodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(3000)).limitCompletionTo(Duration.ofMillis(3000))
@@ -128,7 +127,7 @@ class PodWaiterTest {
     }
 
     @Test
-    void completionTimeout() throws Exception {
+    void completionTimeout() {
         JobPodWaiter mutex = new JobPodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitContainerCreationTo(Duration.ofMillis(300)).limitCompletionTo(Duration.ofMillis(300))
@@ -146,7 +145,7 @@ class PodWaiterTest {
     }
 
     @Test
-    void happyFlowToReady() throws Exception {
+    void happyFlowToReady() {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitReadinessTo(Duration.ofMillis(3000)).waitOn(podOperationMock));
@@ -162,7 +161,7 @@ class PodWaiterTest {
     }
 
     @Test
-    void readyTimeout() throws Exception {
+    void readyTimeout() {
         ServicePodWaiter mutex = new ServicePodWaiter();
         when(podOperationMock.get()).thenReturn(podWithCondition(PENDING_PHASE, POD_SCHEDULED));
         asyncUntilNewThreadWaits(() -> mutex.limitReadinessTo(Duration.ofMillis(300)).waitOn(podOperationMock));
@@ -219,7 +218,7 @@ class PodWaiterTest {
 
     //
     //    @Test
-    //    void exceptionOnPulling() throws Exception {
+    //    void exceptionOnPulling()  {
     //        ServicePodWaiter mutex = new ServicePodWaiter();
     //        when(podOperationMock.get()).thenReturn(podWithContainerStatus(
     //                builder -> builder.withNewState().withNewWaiting().withReason(CONTAINER_CREATING).endWaiting()

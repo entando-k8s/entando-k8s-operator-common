@@ -45,17 +45,19 @@ import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
 import org.entando.kubernetes.test.common.CommonLabels;
+import org.entando.kubernetes.test.common.ExternalDatabaseService;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
@@ -111,7 +113,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                 getClient().entandoResources()
                         .load(plugin1.getClass(), plugin1.getMetadata().getNamespace(), plugin1.getMetadata().getName())
                         .getStatus()
-                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
+                        .getPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect a server deployment
         Deployment serverDeployment = getClient().deployments()
                 .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
@@ -139,7 +141,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         getClient().secrets().createSecretIfAbsent(databaseService,
                 new SecretBuilder().withNewMetadata().withNamespace(SAMPLE_NAMESPACE).withName(secretName).endMetadata()
                         .addToData(SecretUtils.USERNAME_KEY, "username").addToData(SecretUtils.PASSSWORD_KEY, "asdf123").build());
-        new CreateExternalServiceCommand(databaseService).execute(getClient());
+        new CreateExternalServiceCommand(new ExternalDatabaseService(databaseService), databaseService).execute(getClient());
     }
 
     protected abstract SimpleKeycloakClient getKeycloakClient();
@@ -171,7 +173,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                 .endSpec().build();
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
@@ -193,7 +195,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         }, 100, TimeUnit.MILLISECONDS);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onAdd(T resource) {
         scheduler.schedule(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());

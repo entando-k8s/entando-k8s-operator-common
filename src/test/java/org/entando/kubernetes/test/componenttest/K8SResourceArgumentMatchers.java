@@ -21,8 +21,8 @@ import io.fabric8.kubernetes.api.model.PersistentVolumeClaimStatus;
 import io.fabric8.kubernetes.api.model.ServiceStatus;
 import io.fabric8.kubernetes.api.model.apps.DeploymentStatus;
 import io.fabric8.kubernetes.api.model.extensions.IngressStatus;
-import org.entando.kubernetes.model.AbstractServerStatus;
-import org.entando.kubernetes.model.WebServerStatus;
+import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.common.WebServerStatus;
 import org.mockito.ArgumentMatcher;
 
 public interface K8SResourceArgumentMatchers {

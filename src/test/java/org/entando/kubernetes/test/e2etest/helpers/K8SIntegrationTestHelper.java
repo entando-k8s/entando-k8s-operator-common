@@ -30,7 +30,8 @@ import org.entando.kubernetes.client.integrationtesthelpers.FluentIntegrationTes
 import org.entando.kubernetes.client.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.client.integrationtesthelpers.TestFixtureRequest;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -94,9 +95,9 @@ public class K8SIntegrationTestHelper implements FluentIntegrationTesting {
     }
 
     public void releaseFinalizers(TestFixtureRequest request) {
-        for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?>>>> entry : request.getRequiredDeletions().entrySet()) {
+        for (Entry<String, List<Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>>>> entry : request.getRequiredDeletions().entrySet()) {
             if (client.namespaces().withName(entry.getKey()).get() != null) {
-                for (Class<? extends EntandoBaseCustomResource<?>> type : entry.getValue()) {
+                for (Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> type : entry.getValue()) {
                     if (type.equals(EntandoKeycloakServer.class)) {
                         this.keycloak().releaseAllFinalizers(entry.getKey());
                     } else if (type.equals(EntandoApp.class)) {

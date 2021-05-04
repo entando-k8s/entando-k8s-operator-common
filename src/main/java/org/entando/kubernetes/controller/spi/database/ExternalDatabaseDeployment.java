@@ -26,9 +26,10 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
+//TODO move to org.entando.kubernetes.controller.support
 public class ExternalDatabaseDeployment extends AbstractServiceResult implements DatabaseServiceResult {
 
     public static final String NAME_QUALIFIER = NameUtils.DB_NAME_QUALIFIER;

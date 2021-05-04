@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.spi.container;
 import static java.lang.String.format;
 
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
-import org.entando.kubernetes.model.ResourceReference;
+import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class KeycloakName {

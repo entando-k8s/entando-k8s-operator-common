@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.support.client.DoneableIngress;
 import org.entando.kubernetes.controller.support.client.IngressClient;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DefaultIngressClient implements IngressClient {
 
@@ -37,7 +37,7 @@ public class DefaultIngressClient implements IngressClient {
     }
 
     public static String resolveMasterHostname(KubernetesClient client) {
-        String host = client.settings().getMasterUrl().getHost();
+        String host = client.getMasterUrl().getHost();
         if ("127.0.0.1".equals(host)) {
             //This will only happen on single node installations. Generally it will return some ip/domain name that resolves to the master
             // Retrieve IP from node API and discard local IP

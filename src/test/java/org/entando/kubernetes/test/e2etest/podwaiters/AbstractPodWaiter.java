@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.test.e2etest.podwaiters;
 
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
@@ -41,7 +40,7 @@ public abstract class AbstractPodWaiter<T extends AbstractPodWaiter> extends Abs
     protected Duration containerCreationTimeout = Duration.ofSeconds(600);//10 Minutes to allow for images to be pulled
     private Long containerCreationStarted;
 
-    public void waitOn(PodResource<Pod, DoneablePod> pod) {
+    public void waitOn(PodResource<Pod> pod) {
         synchronized (this) {
             determineState(pod.get());
             try (Watch ignored = pod.watch(this)) {

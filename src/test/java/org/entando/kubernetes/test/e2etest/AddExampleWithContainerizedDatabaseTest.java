@@ -43,8 +43,9 @@ import org.entando.kubernetes.controller.spi.examples.SampleIngressingDbAwareDep
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
@@ -74,7 +75,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                         DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
                     return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult) {
                         @Override
-                        protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
+                        protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
                             return Collections.singletonList(new SampleSpringBootDeployableContainer<>(
                                     entandoResource,
                                     keycloakConnectionConfig,

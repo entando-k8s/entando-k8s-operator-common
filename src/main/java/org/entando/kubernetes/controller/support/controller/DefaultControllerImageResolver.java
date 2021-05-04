@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.support.controller;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DefaultControllerImageResolver implements ControllerImageResolver {
 
@@ -27,7 +27,6 @@ public class DefaultControllerImageResolver implements ControllerImageResolver {
     private static Map<String, String> buildImageMap() {
         Map<String, String> map = new ConcurrentHashMap<>();
         map.put("EntandoKeycloakServer", "entando-k8s-keycloak-controller");
-        map.put("EntandoClusterInfrastructure", "entando-k8s-cluster-infrastructure-controller");
         map.put("EntandoPlugin", "entando-k8s-plugin-controller");
         map.put("EntandoApp", "entando-k8s-app-controller");
         map.put("EntandoAppPluginLink", "entando-k8s-app-plugin-link-controller");

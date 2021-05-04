@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
@@ -30,22 +31,17 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
-import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.WebServerStatus;
+import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.WebServerStatus;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
-import org.entando.kubernetes.model.app.EntandoAppOperationFactory;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureBuilder;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructureOperationFactory;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
+import org.entando.kubernetes.test.common.ExternalDatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -68,16 +64,15 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
     @Override
     protected String[] getNamespacesToUse() {
         return new String[]{
-                APP_NAMESPACE, INFRA_NAMESPACE, KEYCLOAK_NAMESPACE
+                APP_NAMESPACE, INFRA_NAMESPACE, KEYCLOAK_NAMESPACE, newTestEntandoApp().getMetadata().getNamespace()
         };
     }
 
     @BeforeEach
     void clearNamespaces() {
         deleteAll(getFabric8Client().configMaps());
-        deleteAll(EntandoAppOperationFactory.produceAllEntandoApps(getFabric8Client()));
-        deleteAll(EntandoKeycloakServerOperationFactory.produceAllEntandoKeycloakServers(getFabric8Client()));
-        deleteAll(EntandoClusterInfrastructureOperationFactory.produceAllEntandoClusterInfrastructures(getFabric8Client()));
+        deleteAll(getFabric8Client().customResources(EntandoApp.class));
+        deleteAll(getFabric8Client().customResources(EntandoKeycloakServer.class));
     }
 
     @Test
@@ -90,7 +85,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
         final EntandoApp actual = getSimpleK8SClient().entandoResources()
                 .load(EntandoApp.class, entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName());
         //The failure reflects on the custom resource
-        assertThat(actual.getStatus().getEntandoDeploymentPhase(), is(EntandoDeploymentPhase.FAILED));
+        assertThat(actual.getStatus().getPhase(), is(EntandoDeploymentPhase.FAILED));
         assertThat(actual.getStatus().findCurrentServerStatus().get().getEntandoControllerFailure().getFailedObjectName(),
                 is(entandoApp.getMetadata().getNamespace() + "/" + entandoApp.getMetadata().getName()));
 
@@ -117,7 +112,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
         getSimpleK8SClient().entandoResources().updatePhase(entandoApp, EntandoDeploymentPhase.SUCCESSFUL);
         final EntandoApp actual = getSimpleK8SClient().entandoResources()
                 .load(EntandoApp.class, entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName());
-        assertThat(actual.getStatus().getEntandoDeploymentPhase(), is(EntandoDeploymentPhase.SUCCESSFUL));
+        assertThat(actual.getStatus().getPhase(), is(EntandoDeploymentPhase.SUCCESSFUL));
 
     }
 
@@ -129,6 +124,10 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
         //But it is represented in an opaque format
         SerializedEntandoResource serializedEntandoResource = mapper
                 .readValue(mapper.writeValueAsBytes(entandoApp), SerializedEntandoResource.class);
+        serializedEntandoResource.setDefinition(
+                CustomResourceDefinitionContext.fromCrd(
+                        getFabric8Client().apiextensions().v1beta1().customResourceDefinitions().withName(entandoApp.getDefinitionName())
+                                .get()));
         //When I update its status
         getSimpleK8SClient().entandoResources().updateStatus(serializedEntandoResource, new WebServerStatus("my-webapp"));
         //The updated status reflects on the custom resource
@@ -182,34 +181,6 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
     }
 
     @Test
-    void shouldResolveClusterInfrastructureInTheSameNamespace() {
-        //Given I have deployed an EntandoClusterInfrastructure
-        EntandoClusterInfrastructure r = new EntandoClusterInfrastructureBuilder(newEntandoClusterInfrastructure())
-                .editMetadata()
-                .withNamespace(APP_NAMESPACE)
-                .endMetadata().build();
-        getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(r);
-        //and the connection configmap was created in the EntandoClusterInfrastructure's namespace
-        prepareInfrastructureConnectionInfo(r);
-        //And an entandoApp was created in the same namespace as the EntandoClusterInfrastructure with no ClusterInfrastructureToUse
-        // specified
-        EntandoApp resource = new EntandoAppBuilder(newTestEntandoApp())
-                .editMetadata()
-                .withNamespace(APP_NAMESPACE)
-                .endMetadata()
-                .build();
-        getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(resource);
-        //When I try to resolve a InfrastructureConfig for the EntandoApp
-        Optional<InfrastructureConfig> config = getSimpleK8SClient().entandoResources().findInfrastructureConfig(resource);
-        //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
-        //associated with the Keycloak in the SAME namespace as the EntadoApp.
-        assertThat(config.get().getK8SExternalServiceUrl(), is(HTTP_TEST_COM));
-        assertThat(config.get().getK8SInternalServiceUrl(), is(HTTP_TEST_SVC_CLUSTER_LOCAL));
-        assertThat(config.get().getK8sServiceClientId(), is(MY_ECI_CLIENTID));
-
-    }
-
-    @Test
     void shouldResolveDatabaseServiceInSameNamespace() {
         //Given I have deployed an EntandoDatabaseService
         EntandoDatabaseService r = getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(new EntandoDatabaseServiceBuilder()
@@ -230,7 +201,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
                 .build();
         getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(resource);
         //And the deployments for the database have been created
-        new CreateExternalServiceCommand(r).execute(getSimpleK8SClient());
+        new CreateExternalServiceCommand(new ExternalDatabaseService(r), r).execute(getSimpleK8SClient());
         //When I try to resolve a ExternalDatabaseDeployment for the EntandoApp
         Optional<ExternalDatabaseDeployment> config = getSimpleK8SClient().entandoResources()
                 .findExternalDatabase(resource, DbmsVendor.POSTGRESQL);
@@ -282,37 +253,6 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
     }
 
     @Test
-    void shouldFallBackOntoTheDefaultInfrastructure() {
-        //Given I have deployed an EntandoClusterInfrastructure
-        EntandoClusterInfrastructure r = new EntandoClusterInfrastructureBuilder(newEntandoClusterInfrastructure())
-                .editMetadata()
-                .withNamespace(INFRA_NAMESPACE)
-                .endMetadata().build();
-        getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(r);
-        //and the connection configmap was created in the EntandoClusterInfrastructure's namespace
-        prepareInfrastructureConnectionInfo(r);
-        //and the EntandoClusterInfrastructure in question is marked as the default
-        getSimpleK8SClient().entandoResources().loadDefaultCapabilitiesConfigMap()
-                .addToData(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAME_KEY, r.getMetadata().getName())
-                .addToData(InfrastructureConfig.DEFAULT_CLUSTER_INFRASTRUCTURE_NAMESPACE_KEY, r.getMetadata().getNamespace())
-                .done();
-        //And an entandoApp was created in a different namespace as the EntandoClusterInfrastructure
-        EntandoApp resource = new EntandoAppBuilder(newTestEntandoApp())
-                .editMetadata()
-                .withNamespace(APP_NAMESPACE)
-                .endMetadata()
-                .build();
-        //When I try to resolve a InfrastructureConfig for the EntandoApp
-        Optional<InfrastructureConfig> config = getSimpleK8SClient().entandoResources().findInfrastructureConfig(resource);
-        //Then the EntandoResourceClient has resolved the Connection Configmap
-        //associated with the EntandoClusterInfrastructure in the different namespace
-        assertThat(config.get().getK8SExternalServiceUrl(), is(HTTP_TEST_COM));
-        assertThat(config.get().getK8SInternalServiceUrl(), is(HTTP_TEST_SVC_CLUSTER_LOCAL));
-        assertThat(config.get().getK8sServiceClientId(), is(MY_ECI_CLIENTID));
-
-    }
-
-    @Test
     void shouldResolveExplicitlySpecifiedKeycloakServerToUse() {
         //Given I have deployed a keycloak instance
         EntandoKeycloakServer r = getSimpleK8SClient().entandoResources()
@@ -348,43 +288,4 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
 
     }
 
-    @Test
-    void shouldResolveExplicitlySpecifiedInfrastructureConfigToUse() {
-        //Given I have deployed an EntandoClusterInfrastructure
-        EntandoClusterInfrastructure r = new EntandoClusterInfrastructureBuilder(newEntandoClusterInfrastructure())
-                .editMetadata()
-                .withNamespace(INFRA_NAMESPACE)
-                .endMetadata().build();
-        getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(r);
-        //and the connection configmap was created in the EntandoClusterInfrastructure's namespace
-        prepareInfrastructureConnectionInfo(r);
-        //And an entandoApp was created in a different namespace as the EntandoClusterInfrastructure,
-        //  but explicitly specifying to  use the previously created EntandoClusterInfrastructure
-        EntandoApp resource = new EntandoAppBuilder(newTestEntandoApp())
-                .editMetadata()
-                .withNamespace(APP_NAMESPACE)
-                .endMetadata()
-                .editSpec()
-                .withClusterInfrastructureToUse(r.getMetadata().getNamespace(), r.getMetadata().getName())
-                .endSpec()
-                .build();
-        //When I try to resolve a InfrastructureConfig for the EntandoApp
-        Optional<InfrastructureConfig> config = getSimpleK8SClient().entandoResources().findInfrastructureConfig(resource);
-        //Then the EntandoResourceClient has resolved the Connection Configmap
-        //associated with the EntandoClusterInfrastructure in the different namespace
-        assertThat(config.get().getK8SExternalServiceUrl(), is(HTTP_TEST_COM));
-        assertThat(config.get().getK8SInternalServiceUrl(), is(HTTP_TEST_SVC_CLUSTER_LOCAL));
-        assertThat(config.get().getK8sServiceClientId(), is(MY_ECI_CLIENTID));
-
-    }
-
-    private void prepareInfrastructureConnectionInfo(EntandoClusterInfrastructure r) {
-        getSimpleK8SClient().secrets().createConfigMapIfAbsent(r, new ConfigMapBuilder()
-                .withNewMetadata().withName(InfrastructureConfig.connectionConfigMapNameFor(r))
-                .endMetadata()
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_EXTERNAL_URL_KEY, HTTP_TEST_COM)
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_INTERNAL_URL_KEY, HTTP_TEST_SVC_CLUSTER_LOCAL)
-                .addToData(InfrastructureConfig.ENTANDO_K8S_SERVICE_CLIENT_ID_KEY, MY_ECI_CLIENTID)
-                .build());
-    }
 }

@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.client.integrationtesthelpers;
 
-import io.fabric8.kubernetes.api.model.Doneable;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -25,7 +24,8 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
 import org.entando.kubernetes.client.integrationtesthelpers.TestFixtureRequest.DeletionRequestBuilder;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.test.common.FluentTraversals;
 
 public interface FluentIntegrationTesting extends FluentTraversals {
@@ -33,7 +33,7 @@ public interface FluentIntegrationTesting extends FluentTraversals {
     TimeUnit SECONDS = TimeUnit.SECONDS;
     TimeUnit MINUTES = TimeUnit.MINUTES;
 
-    default DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource<?>> type) {
+    default DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> type) {
         return new TestFixtureRequest().deleteAll(type);
     }
 
@@ -43,8 +43,7 @@ public interface FluentIntegrationTesting extends FluentTraversals {
 
     default <R extends HasMetadata,
             L extends KubernetesResourceList<R>,
-            D extends Doneable<R>,
-            O extends Resource<R, D>> DeletionWaiter<R, L, D, O> delete(MixedOperation<R, L, D, O> operation) {
+            O extends Resource<R>> DeletionWaiter<R, L, O> delete(MixedOperation<R, L, O> operation) {
         return new DeletionWaiter<>(operation);
     }
 }

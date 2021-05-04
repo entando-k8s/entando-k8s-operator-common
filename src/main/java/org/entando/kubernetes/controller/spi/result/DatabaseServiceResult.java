@@ -24,6 +24,11 @@ public interface DatabaseServiceResult extends ServiceResult {
 
     String getDatabaseSecretName();
 
+    @Override
+    default String getAdminSecretName() {
+        return getDatabaseSecretName();
+    }
+
     Map<String, String> getJdbcParameters();
 
     String getDatabaseName();

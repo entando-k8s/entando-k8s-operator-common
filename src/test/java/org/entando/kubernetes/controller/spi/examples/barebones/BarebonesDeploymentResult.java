@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
-import org.entando.kubernetes.model.AbstractServerStatus;
+import org.entando.kubernetes.model.common.AbstractServerStatus;
 
 public class BarebonesDeploymentResult extends AbstractServiceResult implements ServiceDeploymentResult<BarebonesDeploymentResult> {
 

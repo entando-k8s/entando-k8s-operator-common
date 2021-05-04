@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.ForInternalUseOnly;
 import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
-import org.entando.kubernetes.model.KeycloakToUse;
+import org.entando.kubernetes.model.common.KeycloakAwareSpec;
+import org.entando.kubernetes.model.common.KeycloakToUse;
 
 public interface KeycloakAwareContainerBase extends KeycloakAwareContainer {
 

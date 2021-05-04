@@ -17,7 +17,7 @@
 package org.entando.kubernetes.controller.spi.common;
 
 import java.util.Optional;
-import org.entando.kubernetes.model.KeycloakToUse;
+import org.entando.kubernetes.model.common.KeycloakToUse;
 
 public interface KeycloakPreference {
 

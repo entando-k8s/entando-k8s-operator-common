@@ -14,12 +14,13 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.test.common;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
+import org.entando.kubernetes.controller.support.controller.AbstractDbAwareController;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 
@@ -47,6 +48,7 @@ public class EntandoDatabaseServiceController extends AbstractDbAwareController<
 
     @Override
     protected void synchronizeDeploymentState(EntandoDatabaseService entandoDatabaseService) {
-        new CreateExternalServiceCommand(entandoDatabaseService).execute(super.k8sClient);
+        new CreateExternalServiceCommand(new ExternalDatabaseService(entandoDatabaseService), entandoDatabaseService)
+                .execute(super.k8sClient);
     }
 }

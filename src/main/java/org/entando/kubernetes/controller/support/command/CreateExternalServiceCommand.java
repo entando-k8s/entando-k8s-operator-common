@@ -20,27 +20,28 @@ import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.EndpointsBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
-import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.spi.deployable.ExternalService;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.DbServerStatus;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.common.DbServerStatus;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class CreateExternalServiceCommand {
 
     private static final int TCP4_NUMBER_OF_BYTES = 4;
     private static final int TCP6_NUMBER_OF_SEGMENTS = 8;
-    private final EntandoDatabaseService externalDatabase;
+    private final ExternalService externalService;
+    private final EntandoCustomResource entandoCustomResource;
     private final DbServerStatus status = new DbServerStatus();
 
-    public CreateExternalServiceCommand(EntandoDatabaseService externalDatabase) {
-        this.externalDatabase = externalDatabase;
+    public CreateExternalServiceCommand(ExternalService externalService, EntandoCustomResource entandoCustomResource) {
+        this.externalService = externalService;
+        this.entandoCustomResource = entandoCustomResource;
         status.setQualifier(ExternalDatabaseDeployment.NAME_QUALIFIER);
     }
 
@@ -48,18 +49,18 @@ public class CreateExternalServiceCommand {
         return status;
     }
 
-    public ExternalDatabaseDeployment execute(SimpleK8SClient<?> k8sClient) {
-        Service service = k8sClient.services().createOrReplaceService(externalDatabase, newExternalService());
+    public Service execute(SimpleK8SClient<?> k8sClient) {
+        Service service = k8sClient.services().createOrReplaceService(entandoCustomResource, newExternalService());
         maybeCreateEndpoints(k8sClient);
         this.status.setServiceStatus(service.getStatus());
-        return new ExternalDatabaseDeployment(service, externalDatabase);
+        return service;
     }
 
     public Endpoints maybeCreateEndpoints(SimpleK8SClient<?> k8sClient) {
         Endpoints endpoints = null;
         if (isIpAddress()) {
             endpoints = newEndpoints();
-            k8sClient.services().createOrReplaceEndpoints(externalDatabase, endpoints);
+            k8sClient.services().createOrReplaceEndpoints(entandoCustomResource, endpoints);
         }
         return endpoints;
     }
@@ -67,44 +68,36 @@ public class CreateExternalServiceCommand {
     private Endpoints newEndpoints() {
         return new EndpointsBuilder()
                 //Needs to match the service name exactly
-                .withMetadata(fromCustomResource(ExternalDatabaseDeployment.DATABASE_SERVICE_SUFFIX, true))
+                .withMetadata(fromCustomResource(ExternalDatabaseDeployment.DATABASE_SERVICE_SUFFIX))
                 .addNewSubset()
                 .addNewAddress()
-                .withIp(externalDatabase.getSpec().getHost().orElseThrow(IllegalStateException::new))
+                .withIp(externalService.getHost())
                 .endAddress()
                 .addNewPort()
-                .withPort(getPort())
+                .withPort(externalService.getPort())
                 .endPort()
                 .endSubset()
                 .build();
     }
 
-    private Integer getPort() {
-        return externalDatabase.getSpec().getPort()
-                .orElse(
-                        DbmsDockerVendorStrategy
-                                .forVendor(externalDatabase.getSpec().getDbms(), EntandoOperatorSpiConfig.getComplianceMode())
-                                .getPort());
-    }
-
     private Service newExternalService() {
         return new ServiceBuilder()
-                .withMetadata(fromCustomResource(ExternalDatabaseDeployment.DATABASE_SERVICE_SUFFIX, true))
+                .withMetadata(fromCustomResource(ExternalDatabaseDeployment.DATABASE_SERVICE_SUFFIX))
                 .withNewSpec()
                 .withExternalName(FluentTernary.useNull(String.class).when(isIpAddress())
-                        .orElse(externalDatabase.getSpec().getHost().orElseThrow(IllegalStateException::new)))
+                        .orElse(externalService.getHost()))
                 .withType(FluentTernary.use("ClusterIP").when(isIpAddress()).orElse("ExternalName"))
                 .addNewPort()
                 .withNewTargetPort(
-                        getPort())
-                .withPort(getPort())
+                        externalService.getPort())
+                .withPort(externalService.getPort())
                 .endPort()
                 .endSpec()
                 .build();
     }
 
     private boolean isIpAddress() {
-        String host = externalDatabase.getSpec().getHost().orElseThrow(IllegalStateException::new);
+        String host = externalService.getHost();
         try {
             String[] split = host.split("\\.");
             if (split.length == TCP4_NUMBER_OF_BYTES) {
@@ -131,21 +124,13 @@ public class CreateExternalServiceCommand {
         return false;
     }
 
-    private ObjectMeta fromCustomResource(String suffix, boolean ownedByCustomResource) {
+    private ObjectMeta fromCustomResource(String suffix) {
         ObjectMetaBuilder metaBuilder = new ObjectMetaBuilder()
-                .withName(externalDatabase.getMetadata().getName() + suffix)
-                .withNamespace(externalDatabase.getMetadata().getNamespace())
-                .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, externalDatabase.getKind())
-                .addToLabels(externalDatabase.getKind(), externalDatabase.getMetadata().getName());
-        if (ownedByCustomResource) {
-            metaBuilder = metaBuilder.withOwnerReferences(new OwnerReferenceBuilder()
-                    .withApiVersion(externalDatabase.getApiVersion())
-                    .withBlockOwnerDeletion(true)
-                    .withController(true)
-                    .withKind(externalDatabase.getKind())
-                    .withName(externalDatabase.getMetadata().getName())
-                    .withUid(externalDatabase.getMetadata().getUid()).build());
-        }
+                .withName(entandoCustomResource.getMetadata().getName() + suffix)
+                .withNamespace(entandoCustomResource.getMetadata().getNamespace())
+                .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, entandoCustomResource.getKind())
+                .addToLabels(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName());
+        metaBuilder = metaBuilder.withOwnerReferences(ResourceUtils.buildOwnerReference(this.entandoCustomResource));
         return metaBuilder.build();
     }
 }

@@ -22,7 +22,7 @@ import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
-import org.entando.kubernetes.model.WebServerStatus;
+import org.entando.kubernetes.model.common.WebServerStatus;
 
 /**
  * On addition of an Entando CustomResource, the DeployCommand is invoked for every service and database that needs to be deployed.

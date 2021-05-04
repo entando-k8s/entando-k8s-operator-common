@@ -29,17 +29,18 @@ import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
+import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
+import org.entando.kubernetes.model.common.KeycloakAwareSpec;
 
 public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
         IngressingDeployableBase<SampleExposedDeploymentResult>,
         DbAwareDeployable<SampleExposedDeploymentResult> {
 
-    private final EntandoBaseCustomResource<S> customResource;
+    private final EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource;
     private final DeployableContainer container;
 
-    public SpringBootDeployable(EntandoBaseCustomResource<S> customResource,
+    public SpringBootDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource,
             KeycloakConnectionConfig keycloakConnectionConfig,
             DatabaseServiceResult databaseServiceResult) {
         this.customResource = customResource;
@@ -70,7 +71,7 @@ public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
     }
 
     @Override
-    public EntandoBaseCustomResource<S> getCustomResource() {
+    public EntandoBaseCustomResource<S, EntandoCustomResourceStatus> getCustomResource() {
         return customResource;
     }
 

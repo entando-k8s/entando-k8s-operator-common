@@ -21,14 +21,16 @@ import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.EventBuilder;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -50,33 +52,26 @@ import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
-import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.AbstractServerStatus;
-import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.DoneableEntandoCustomResource;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
-import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.EntandoResourceOperationsRegistry;
-import org.entando.kubernetes.model.ResourceReference;
+import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DefaultEntandoResourceClient implements EntandoResourceClient, PatchableClient {
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
     private final KubernetesClient client;
-    private final EntandoResourceOperationsRegistry entandoResourceRegistry;
     private final Map<String, CustomResourceDefinition> definitions = new ConcurrentHashMap<>();
 
     public DefaultEntandoResourceClient(KubernetesClient client) {
         this.client = client;
-        entandoResourceRegistry = new EntandoResourceOperationsRegistry(client);
     }
 
     @Override
@@ -112,7 +107,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     @Override
     public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace) {
-        List<EntandoKeycloakServer> items = entandoResourceRegistry.getOperations(EntandoKeycloakServer.class)
+        List<EntandoKeycloakServer> items = getOperations(EntandoKeycloakServer.class)
                 .inNamespace(peerInNamespace.getMetadata().getNamespace()).list().getItems();
         if (items.size() == 1) {
             return Optional.of(items.get(0));
@@ -122,7 +117,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
 
     @Override
     public DoneableConfigMap loadDefaultCapabilitiesConfigMap() {
-        Resource<ConfigMap, io.fabric8.kubernetes.api.model.DoneableConfigMap> resource = client.configMaps()
+        Resource<ConfigMap> resource = client.configMaps()
                 .inNamespace(client.getNamespace())
                 .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME);
         final ConfigMap configMap = resource.get();
@@ -156,28 +151,6 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    public Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(EntandoCustomResource resource) {
-        List<EntandoClusterInfrastructure> items = entandoResourceRegistry
-                .getOperations(EntandoClusterInfrastructure.class)
-                .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
-        if (items.size() == 1) {
-            return Optional.of(items.get(0));
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
-            EntandoBaseCustomResource<T> resource) {
-        Optional<ResourceReference> clusterInfrastructureToUse = determineClusterInfrastructureToUse(resource);
-        return clusterInfrastructureToUse.map(resourceReference -> new InfrastructureConfig(
-                this.client.configMaps()
-                        .inNamespace(resourceReference.getNamespace().orElseThrow(IllegalStateException::new))
-                        .withName(InfrastructureConfig.connectionConfigMapNameFor(resourceReference))
-                        .get()));
-    }
-
-    @Override
     public ExposedService loadExposedService(EntandoCustomResource resource) {
         return new ExposedService(
                 loadService(resource, NameUtils.standardServiceName(resource)),
@@ -208,15 +181,17 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     @Override
     @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
-        Class<T> type = (Class<T>) r.getClass();
-        return createOrPatch(r, r, this.getOperations(type));
-
+        final MixedOperation<T, KubernetesResourceList<T>, Resource<T>> operations = getOperations((Class<T>) r.getClass());
+        if (operations.inNamespace(r.getMetadata().getNamespace()).withName(r.getMetadata().getName()).get() == null) {
+            return operations.inNamespace(r.getMetadata().getNamespace()).create(r);
+        } else {
+            return operations.inNamespace(r.getMetadata().getNamespace()).withName(r.getMetadata().getName()).patch(r);
+        }
     }
 
-    private <T extends EntandoCustomResource,
-            D extends DoneableEntandoCustomResource<T, D>> CustomResourceOperationsImpl<T, CustomResourceList<T>, D> getOperations(
-            Class<T> c) {
-        return entandoResourceRegistry.getOperations(c);
+    @SuppressWarnings("unchecked")
+    private <T extends EntandoCustomResource> MixedOperation<T, KubernetesResourceList<T>, Resource<T>> getOperations(Class<T> c) {
+        return client.customResources((Class) c);
     }
 
     @Override
@@ -236,17 +211,19 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public <T extends EntandoCustomResource> T reload(T customResource) {
         if (customResource instanceof EntandoBaseCustomResource) {
             return (T) load(customResource.getClass(), customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
         } else {
-            return (T) client.customResources(
-                    resolveDefinition((SerializedEntandoResource) customResource),
-                    SerializedEntandoResource.class,
-                    CustomResourceList.class,
-                    DoneableCustomResource.class
-            )
+            final MixedOperation<SerializedEntandoResource, KubernetesResourceList<SerializedEntandoResource>,
+                    Resource<SerializedEntandoResource>> operation = (MixedOperation) client
+                    .customResources(
+                            resolveDefinition((SerializedEntandoResource) customResource),
+                            SerializedEntandoResource.class,
+                            KubernetesResourceList.class
+                    );
+            return (T) operation
                     .inNamespace(customResource.getMetadata().getNamespace())
                     .withName(customResource.getMetadata().getName())
                     .fromServer()
@@ -309,7 +286,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private <T extends EntandoCustomResource> void performStatusUpdate(EntandoCustomResource customResource,
+    private <T extends EntandoCustomResource> void performStatusUpdate(T customResource,
             Consumer<T> consumer, UnaryOperator<EventBuilder> eventPopulator) {
         final EventBuilder doneableEvent = new EventBuilder()
                 .withNewMetadata()
@@ -330,36 +307,42 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
                 .withApiVersion(customResource.getApiVersion())
                 .withFieldPath("status")
                 .endInvolvedObject();
-        client.events().inNamespace(customResource.getMetadata().getNamespace()).create(eventPopulator.apply(doneableEvent).build());
-        final CustomResourceOperationsImpl<T, CustomResourceList<T>, ?> operations;
+        client.v1().events().inNamespace(customResource.getMetadata().getNamespace()).create(eventPopulator.apply(doneableEvent).build());
+        final MixedOperation<T, KubernetesResourceList<T>, Resource<T>> operations;
+        T latest;
+        Resource<T> resource;
         if (customResource instanceof EntandoBaseCustomResource) {
             operations = getOperations((Class<T>) customResource.getClass());
+            resource = operations
+                    .inNamespace(customResource.getMetadata().getNamespace())
+                    .withName(customResource.getMetadata().getName());
+            latest = resource.fromServer().get();
         } else {
             SerializedEntandoResource ser = (SerializedEntandoResource) customResource;
-            if (ser.getDefinition() == null) {
-                ser.setDefinition(resolveDefinition(ser));
-            }
+            CustomResourceDefinitionContext definition = Optional.ofNullable(ser.getDefinition()).orElse(resolveDefinition(ser));
+            ser.setDefinition(definition);
             operations = (CustomResourceOperationsImpl) client
-                    .customResources(ser.getDefinition(), SerializedEntandoResource.class, CustomResourceList.class,
-                            DoneableCustomResource.class);
+                    .customResources(ser.getDefinition(), SerializedEntandoResource.class, KubernetesResourceList.class);
+            resource = operations
+                    .inNamespace(customResource.getMetadata().getNamespace())
+                    .withName(customResource.getMetadata().getName());
+            ser = (SerializedEntandoResource) resource.fromServer().get();
+            ser.setDefinition(definition);
+            latest = (T) ser;
         }
-
-        Resource<T, ?> resource = operations
-                .inNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName());
-        T latest = resource.fromServer().get();
         consumer.accept(latest);
         resource.updateStatus(latest);
     }
 
-    private CustomResourceDefinition resolveDefinition(SerializedEntandoResource ser) {
+    private CustomResourceDefinitionContext resolveDefinition(SerializedEntandoResource ser) {
         final String key = ser.getApiVersion() + "/" + ser.getKind();
-        return definitions.computeIfAbsent(key, s -> client.customResourceDefinitions().list().getItems()
-                .stream().filter(crd ->
-                        crd.getSpec().getNames().getKind().equals(ser.getKind()) && ser
-                                .getApiVersion()
-                                .startsWith(crd.getSpec().getGroup())).findFirst()
-                .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + ser.getKind())));
+        return CustomResourceDefinitionContext.fromCrd(
+                definitions.computeIfAbsent(key, s -> client.apiextensions().v1beta1().customResourceDefinitions().list().getItems()
+                        .stream().filter(crd ->
+                                crd.getSpec().getNames().getKind().equals(ser.getKind()) && ser
+                                        .getApiVersion()
+                                        .startsWith(crd.getSpec().getGroup())).findFirst()
+                        .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + ser.getKind()))));
     }
 
 }

@@ -34,7 +34,7 @@ import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Ingressing;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class ServiceCreator extends AbstractK8SResourceCreator {
 
@@ -114,7 +114,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
     }
 
     private List<EndpointPort> toEndpointPorts(List<ServicePort> ports) {
-        return ports.stream().map(servicePort -> new EndpointPort(servicePort.getName(), servicePort.getPort(), servicePort.getProtocol()))
+        return ports.stream().map(servicePort -> new EndpointPort(servicePort.getAppProtocol(), servicePort.getName(), servicePort.getPort(), servicePort.getProtocol()))
                 .collect(Collectors.toList());
 
     }

@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.support.client.DoneableIngress;
 import org.entando.kubernetes.controller.support.client.IngressClient;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class IngressClientDouble extends AbstractK8SClientDouble implements IngressClient {
 

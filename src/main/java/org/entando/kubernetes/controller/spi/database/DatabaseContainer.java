@@ -30,6 +30,7 @@ import org.entando.kubernetes.controller.spi.container.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 
+//TODO move to org.entando.kubernetes.controller.support
 public class DatabaseContainer implements ServiceBackingContainer, PersistentVolumeAware, HasHealthCommand {
 
     private final DbmsDockerVendorStrategy dbmsVendorDockerStrategy;

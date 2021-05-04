@@ -19,11 +19,8 @@ package org.entando.kubernetes.client;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.VersionInfo;
-import io.fabric8.kubernetes.client.Watch;
-import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -31,7 +28,7 @@ import java.util.concurrent.BlockingQueue;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClient {
 
@@ -44,9 +41,14 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
 
     @Override
     public boolean supportsStartupProbes() {
-        final VersionInfo version = client.getVersion();
-        //Is null when using the MockServer. Return true because that is the most common scenario we want to test
-        return version == null || parseVersion(version) >= 16;
+        try {
+            final VersionInfo version = client.getVersion();
+            //Is null when using the MockServer. Return true because that is the most common scenario we want to test
+            return version == null || parseVersion(version) >= 16;
+        } catch (NullPointerException e) {
+            //Happens on the mock server
+            return true;
+        }
     }
 
     private int parseVersion(VersionInfo version) {
@@ -71,7 +73,7 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
         } else {
             //Don't wait because watching the pods until they have been removed is safer than to Fabric8's polling
             getDeploymenResourceFor(peerInNamespace, deployment).scale(0, false);
-            FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client.pods()
+            FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
             if (!podResource.list().getItems().isEmpty()) {
@@ -83,7 +85,7 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
         }
     }
 
-    private RollableScalableResource<Deployment, DoneableDeployment> getDeploymenResourceFor(
+    private RollableScalableResource<Deployment> getDeploymenResourceFor(
             EntandoCustomResource peerInNamespace,
             Deployment deployment) {
         return client.apps()

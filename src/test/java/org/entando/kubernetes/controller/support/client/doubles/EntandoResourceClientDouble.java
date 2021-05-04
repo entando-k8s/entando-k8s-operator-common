@@ -35,19 +35,15 @@ import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
-import org.entando.kubernetes.controller.support.client.InfrastructureConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.AbstractServerStatus;
-import org.entando.kubernetes.model.ClusterInfrastructureAwareSpec;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoControllerFailureBuilder;
-import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.ResourceReference;
+import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
-import org.entando.kubernetes.model.infrastructure.EntandoClusterInfrastructure;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
@@ -145,15 +141,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public <T extends ClusterInfrastructureAwareSpec> Optional<InfrastructureConfig> findInfrastructureConfig(
-            EntandoBaseCustomResource<T> resource) {
-        Optional<ResourceReference> reference = determineClusterInfrastructureToUse(resource);
-        return reference.map(rr -> new InfrastructureConfig(
-                getNamespace(rr.getNamespace().orElseThrow(IllegalStateException::new))
-                        .getConfigMap(InfrastructureConfig.connectionConfigMapNameFor(rr))));
-    }
-
-    @Override
     public ExposedService loadExposedService(EntandoCustomResource resource) {
         NamespaceDouble namespace = getNamespace(resource);
         Service service = namespace.getService(
@@ -194,11 +181,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     @Override
     public ConfigMap loadOperatorConfig() {
         return getNamespace(CONTROLLER_NAMESPACE).getConfigMap(KubeUtils.ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME);
-    }
-
-    @Override
-    public Optional<EntandoClusterInfrastructure> findClusterInfrastructureInNamespace(EntandoCustomResource resource) {
-        return getNamespace(resource).getCustomResources(EntandoClusterInfrastructure.class).values().stream().findAny();
     }
 
 }

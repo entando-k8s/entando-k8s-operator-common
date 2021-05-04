@@ -20,7 +20,7 @@ import java.beans.Introspector;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.regex.Pattern;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class NameUtils {
 
@@ -91,5 +91,9 @@ public class NameUtils {
 
     public static String standardServiceName(EntandoCustomResource resource) {
         return resource.getMetadata().getName() + "-" + DEFAULT_SERVER_QUALIFIER + "-" + DEFAULT_SERVICE_SUFFIX;
+    }
+
+    public static String lowerDashDelimitedOf(String name) {
+        return name.replace("_", "-").toLowerCase(Locale.ROOT);
     }
 }

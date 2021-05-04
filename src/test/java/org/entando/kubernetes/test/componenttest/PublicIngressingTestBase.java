@@ -52,12 +52,13 @@ import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.spibase.KeycloakAwareContainerBase;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.EntandoBaseCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.EntandoDeploymentSpec;
-import org.entando.kubernetes.model.KeycloakAwareSpec;
+import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.common.KeycloakAwareSpec;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
@@ -128,7 +129,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                     }
 
                     @Override
-                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
+                    protected List<DeployableContainer> createContainers(
+                            EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
                         return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult) {
                             @Override
                             public int getPrimaryPort() {
@@ -153,7 +155,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 k8sClient.entandoResources()
                         .load(plugin2.getClass(), plugin2.getMetadata().getNamespace(), plugin2.getMetadata().getName())
                         .getStatus()
-                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
+                        .getPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect two deployments. This is where we can put all the assertions
         Deployment serverDeployment = k8sClient.deployments()
                 .loadDeployment(plugin2, OTHER_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
@@ -185,7 +187,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 return new SamplePublicIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
-                    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource) {
+                    protected List<DeployableContainer> createContainers(
+                            EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
                         return Arrays.asList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult),
                                 new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig,
                                         databaseServiceResult));
@@ -204,7 +207,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 k8sClient.entandoResources()
                         .load(plugin1.getClass(), plugin1.getMetadata().getNamespace(), plugin1.getMetadata().getName())
                         .getStatus()
-                        .getEntandoDeploymentPhase() == EntandoDeploymentPhase.SUCCESSFUL);
+                        .getPhase() == EntandoDeploymentPhase.SUCCESSFUL);
         //Then I expect two deployments. This is where we can put all the assertions
         Deployment serverDeployment = k8sClient.deployments()
                 .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
@@ -234,7 +237,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                 .endSpec().build();
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
@@ -258,7 +262,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         }, 500, TimeUnit.MILLISECONDS);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S>> void onAdd(T resource) {
+    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onAdd(T resource) {
         scheduler.schedule(() -> {
             T createResource = k8sClient.entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
@@ -273,7 +277,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
         private final KeycloakConnectionConfig keycloakConnectionConfig;
 
-        public EntandoPluginSampleDeployableContainer(EntandoBaseCustomResource<EntandoPluginSpec> entandoResource,
+        public EntandoPluginSampleDeployableContainer(
+                EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource,
                 KeycloakConnectionConfig keycloakConnectionConfig,
                 DatabaseServiceResult databaseServiceResult) {
             super(entandoResource, databaseServiceResult);

@@ -21,9 +21,20 @@ import io.fabric8.kubernetes.api.model.Service;
 public abstract class AbstractServiceResult implements ServiceResult {
 
     protected final Service service;
+    private final String adminSecretName;
 
     protected AbstractServiceResult(Service service) {
+        this(service, null);
+    }
+
+    protected AbstractServiceResult(Service service, String adminSecretName) {
         this.service = service;
+        this.adminSecretName = adminSecretName;
+    }
+
+    @Override
+    public String getAdminSecretName() {
+        return adminSecretName;
     }
 
     @Override

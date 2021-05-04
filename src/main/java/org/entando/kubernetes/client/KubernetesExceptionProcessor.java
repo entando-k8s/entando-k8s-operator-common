@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.entando.kubernetes.controller.support.client.DuplicateExcepion;
 import org.entando.kubernetes.controller.support.client.UnauthorizedExcepion;
-import org.entando.kubernetes.model.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public final class KubernetesExceptionProcessor {
 

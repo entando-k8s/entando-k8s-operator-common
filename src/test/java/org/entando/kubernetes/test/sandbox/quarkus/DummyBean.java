@@ -17,13 +17,15 @@
 package org.entando.kubernetes.test.sandbox.quarkus;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.runtime.StartupEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,12 +46,9 @@ import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentRes
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.keycloakserver.DoneableEntandoKeycloakServer;
+import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerList;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerOperationFactory;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -76,7 +75,7 @@ public class DummyBean {
     private final KubernetesClient kubernetesClient;
     private final DefaultSimpleK8SClient simpleK8SClient;
     private final String domainSuffix;
-    private final CustomResourceOperationsImpl<EntandoKeycloakServer, EntandoKeycloakServerList, DoneableEntandoKeycloakServer> operations;
+    private final MixedOperation<EntandoKeycloakServer, KubernetesResourceList<EntandoKeycloakServer>, Resource<EntandoKeycloakServer>> operations;
     private DefaultKeycloakClient keycloakClient;
     private EntandoKeycloakServer keycloakServer;
 
@@ -85,7 +84,7 @@ public class DummyBean {
         this.kubernetesClient = kubernetesClient;
         this.simpleK8SClient = new DefaultSimpleK8SClient(kubernetesClient);
         this.domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(kubernetesClient));
-        this.operations = EntandoKeycloakServerOperationFactory.produceAllEntandoKeycloakServers(kubernetesClient);
+        this.operations = kubernetesClient.customResources(EntandoKeycloakServer.class);
         this.keycloakServer = new EntandoKeycloakServerBuilder().editMetadata()
                 .withName("test-kc")
                 .withNamespace(KC_TEST_NAMESPACE)

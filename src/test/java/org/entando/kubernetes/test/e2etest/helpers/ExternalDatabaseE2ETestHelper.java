@@ -16,9 +16,9 @@
 
 package org.entando.kubernetes.test.e2etest.helpers;
 
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -35,19 +35,17 @@ import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.DbmsVendor;
-import org.entando.kubernetes.model.externaldatabase.DoneableEntandoDatabaseService;
+import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceList;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceOperationFactory;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpecBuilder;
+import org.entando.kubernetes.test.common.ExternalDatabaseService;
 import org.entando.kubernetes.test.e2etest.common.SampleWriter;
 import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 
 public class ExternalDatabaseE2ETestHelper extends
-        E2ETestHelperBase<EntandoDatabaseService, EntandoDatabaseServiceList, DoneableEntandoDatabaseService> {
+        E2ETestHelperBase<EntandoDatabaseService> {
 
     public static final String MY_EXTERNAL_DB = EntandoOperatorTestConfig.calculateName("my-external-db");
     private static final String ORACLE_INTERNAL_HOST = EntandoOperatorTestConfig.getOracleInternalHost().orElse("localhost");
@@ -60,14 +58,15 @@ public class ExternalDatabaseE2ETestHelper extends
     private static final String TEST_SECRET = "test-secret";
 
     public ExternalDatabaseE2ETestHelper(DefaultKubernetesClient client) {
-        super(client, EntandoDatabaseServiceOperationFactory::produceAllEntandoDatabaseServices);
+        super(client, EntandoDatabaseService.class);
     }
 
     @SuppressWarnings("unchecked")
     public void prepareExternalPostgresqlDatabase(String namespace, String resourceKind) {
         deletePgTestPod(namespace);
         deleteCommonPreviousState(namespace);
-        client.pods().inNamespace(namespace).createNew().withNewMetadata().withName("pg-test").addToLabels(resourceKind, null)
+        client.pods().inNamespace(namespace).create(
+        new PodBuilder().withNewMetadata().withName("pg-test").addToLabels(resourceKind, null)
                 .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resourceKind).endMetadata()
                 .withNewSpec().addNewContainer()
                 .withName("pg-container")
@@ -82,8 +81,8 @@ public class ExternalDatabaseE2ETestHelper extends
                         new EnvVar("POSTGRESQL_PASSWORD", "test123", null),
                         new EnvVar("POSTGRESQL_DATABASE", "testdb", null),
                         new EnvVar("POSTGRESQL_ADMIN_PASSWORD", "postgres", null))
-                .endContainer().endSpec().done();
-        PodResource<Pod, DoneablePod> podResource = client.pods().inNamespace(namespace).withName("pg-test");
+                .endContainer().endSpec().build());
+        PodResource<Pod> podResource = client.pods().inNamespace(namespace).withName("pg-test");
         new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(60)).throwException(RuntimeException.class)
                 .waitOn(podResource);
         String podIP = podResource.fromServer().get().getStatus().getPodIP();
@@ -147,8 +146,9 @@ public class ExternalDatabaseE2ETestHelper extends
 
     protected void createAndWaitForDbService(String namespace, EntandoDatabaseService externalDatabase) {
         getOperations().inNamespace(namespace).create(externalDatabase);
-        new CreateExternalServiceCommand(getOperations().inNamespace(namespace)
-                .withName(externalDatabase.getMetadata().getName()).get())
+        final EntandoDatabaseService entandoDatabaseService = getOperations().inNamespace(namespace)
+                .withName(externalDatabase.getMetadata().getName()).get();
+        new CreateExternalServiceCommand(new ExternalDatabaseService(entandoDatabaseService), entandoDatabaseService)
                 .execute(new DefaultSimpleK8SClient(client));
         await().atMost(60, SECONDS).until(
                 () -> client.services().inNamespace(namespace).withName(MY_EXTERNAL_DB + "-db-service").fromServer().get()

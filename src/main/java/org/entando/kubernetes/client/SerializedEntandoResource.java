@@ -24,11 +24,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
-import io.fabric8.kubernetes.client.CustomResource;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import org.entando.kubernetes.model.EntandoCustomResource;
-import org.entando.kubernetes.model.EntandoCustomResourceStatus;
+import java.util.Optional;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 
 @JsonSerialize
 @JsonDeserialize
@@ -44,17 +45,21 @@ import org.entando.kubernetes.model.EntandoCustomResourceStatus;
         ignoreUnknown = true
 )
 
-public class SerializedEntandoResource extends CustomResource implements EntandoCustomResource {
+public class SerializedEntandoResource implements EntandoCustomResource {
 
     private EntandoCustomResourceStatus status;
+    private ObjectMeta metadata;
+    private String kind;
     @JsonIgnore
-    private CustomResourceDefinition definition;
+    private CustomResourceDefinitionContext definition;
+    private String apiVersion;
 
-    public void setDefinition(CustomResourceDefinition definition) {
+    public void setDefinition(CustomResourceDefinitionContext definition) {
         this.definition = definition;
+        this.kind = definition.getKind();
     }
 
-    public CustomResourceDefinition getDefinition() {
+    public CustomResourceDefinitionContext getDefinition() {
         return definition;
     }
 
@@ -74,5 +79,30 @@ public class SerializedEntandoResource extends CustomResource implements Entando
     @Override
     public String getDefinitionName() {
         return null;
+    }
+
+    @Override
+    public ObjectMeta getMetadata() {
+        return metadata;
+    }
+
+    @Override
+    public String getApiVersion() {
+        return Optional.ofNullable(definition).map(d -> d.getGroup() + "/" + d.getVersion()).orElse(apiVersion);
+    }
+
+    @Override
+    public String getKind() {
+        return kind;
+    }
+
+    @Override
+    public void setMetadata(ObjectMeta metadata) {
+        this.metadata = metadata;
+    }
+
+    @Override
+    public void setApiVersion(String version) {
+        this.apiVersion = version;
     }
 }
