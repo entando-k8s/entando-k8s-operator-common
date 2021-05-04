@@ -136,7 +136,7 @@ class CapabilityProviderTest implements InProcessTestData {
                 StandardCapabilityImplementation.MYSQL, CapabilityScope.LABELED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
                 Collections.singletonMap("Environment", "Stage"), null,
                 null, null);
-        when(client.providedCapabilityByLabels(eq(Collections.singletonMap("Environment", "Stage"))))
+        when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME, CapabilityScope.DEDICATED.getCamelCaseName())
                         .build(), new CapabilityRequirement())));
@@ -154,7 +154,7 @@ class CapabilityProviderTest implements InProcessTestData {
                 StandardCapabilityImplementation.MYSQL, CapabilityScope.LABELED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
                 Collections.singletonMap("Environment", "Stage"), null,
                 null, null);
-        when(client.providedCapabilityByLabels(eq(Collections.singletonMap("Environment", "Stage"))))
+        when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME,
                                 CapabilityScope.LABELED.getCamelCaseName())
@@ -177,7 +177,7 @@ class CapabilityProviderTest implements InProcessTestData {
                 null, null);
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "mysql-dbms"));
-        when(client.providedCapabilityByLabels(eq(Collections.singletonMap("Environment", "Stage"))))
+        when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         //When I attempt to fulfill the capability
         final ProvidedCapability providedCapability = new CapabilityProvider(client).provideCapability(forResource,

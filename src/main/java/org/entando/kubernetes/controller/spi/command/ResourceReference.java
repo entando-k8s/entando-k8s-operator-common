@@ -71,7 +71,7 @@ public class ResourceReference implements HasMetadata {
 
     @Override
     public void setMetadata(ObjectMeta metadata) {
-
+        //This is a read-only class. Don't override metadata
     }
 
     @Override
@@ -86,6 +86,6 @@ public class ResourceReference implements HasMetadata {
 
     @Override
     public void setApiVersion(String version) {
-
+        //This is a read-only class. Don't override apiVersion
     }
 }

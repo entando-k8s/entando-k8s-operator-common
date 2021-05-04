@@ -243,7 +243,8 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         assertThat(viewRoleBinding.getSubjects().get(0).getNamespace(), is(SAMPLE_NAMESPACE));
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {

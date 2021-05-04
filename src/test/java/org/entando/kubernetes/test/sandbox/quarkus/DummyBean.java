@@ -75,7 +75,10 @@ public class DummyBean {
     private final KubernetesClient kubernetesClient;
     private final DefaultSimpleK8SClient simpleK8SClient;
     private final String domainSuffix;
-    private final MixedOperation<EntandoKeycloakServer, KubernetesResourceList<EntandoKeycloakServer>, Resource<EntandoKeycloakServer>> operations;
+    private final MixedOperation<
+            EntandoKeycloakServer,
+            KubernetesResourceList<EntandoKeycloakServer>,
+            Resource<EntandoKeycloakServer>> operations;
     private DefaultKeycloakClient keycloakClient;
     private EntandoKeycloakServer keycloakServer;
 

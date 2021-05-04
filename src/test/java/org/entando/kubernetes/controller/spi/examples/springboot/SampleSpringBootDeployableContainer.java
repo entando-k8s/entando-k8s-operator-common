@@ -38,7 +38,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoResourceRequirements;
 import org.entando.kubernetes.model.common.KeycloakAwareSpec;
 
-public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec, EntandoCustomResourceStatus>> implements
+public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec,
+        EntandoCustomResourceStatus>> implements
         SpringBootDeployableContainer, KeycloakAwareContainerBase,
         ParameterizableContainer, PersistentVolumeAware, ConfigurableResourceContainer {
 

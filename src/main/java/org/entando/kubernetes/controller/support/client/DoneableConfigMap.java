@@ -35,7 +35,7 @@ public class DoneableConfigMap extends ConfigMapFluentImpl<DoneableConfigMap> {
     }
 
     public ConfigMap done() {
-        ConfigMap built = new ConfigMap(getApiVersion(),getBinaryData(), getData(), getImmutable(), getKind(), buildMetadata());
+        ConfigMap built = new ConfigMap(getApiVersion(), getBinaryData(), getData(), getImmutable(), getKind(), buildMetadata());
         return action.apply(built);
     }
 

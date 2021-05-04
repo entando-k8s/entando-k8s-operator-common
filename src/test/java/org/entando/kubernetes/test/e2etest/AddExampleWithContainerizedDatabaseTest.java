@@ -75,7 +75,8 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                         DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
                     return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult) {
                         @Override
-                        protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
+                        protected List<DeployableContainer> createContainers(
+                                EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
                             return Collections.singletonList(new SampleSpringBootDeployableContainer<>(
                                     entandoResource,
                                     keycloakConnectionConfig,

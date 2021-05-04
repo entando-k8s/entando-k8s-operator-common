@@ -35,6 +35,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -103,7 +104,7 @@ public class SerializationHelper<T extends ServiceDeploymentResult<T>> {
 
     @SuppressWarnings("unchecked")
     public <S> S deserialize(String json) {
-        return (S) rethrowsAsRuntimes(() -> {
+        return rethrowsAsRuntimes(() -> {
             Map<String, Object> map = new ObjectMapper().readValue(new StringReader(json), Map.class);
             return (S) Proxy.newProxyInstance(
                     Thread.currentThread().getContextClassLoader(),
@@ -115,9 +116,7 @@ public class SerializationHelper<T extends ServiceDeploymentResult<T>> {
 
     public String serialize(Object deployable) {
         Map<String, Object> map = toJsonFriendlyMap(deployable);
-        final String json = rethrowsAsRuntimes(() -> new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(map));
-        System.out.println(json);
-        return json;
+        return rethrowsAsRuntimes(() -> new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(map));
     }
 
     private static String propertyName(Method m) {
@@ -218,6 +217,8 @@ public class SerializationHelper<T extends ServiceDeploymentResult<T>> {
         return null;
     }
 
+    @SuppressWarnings("java:S112")
+    //Because this is generic exception handling code
     protected <S> S rethrowsAsRuntimes(FailableSupplier<S> supplier) {
         try {
             return supplier.supply();
@@ -256,79 +257,103 @@ public class SerializationHelper<T extends ServiceDeploymentResult<T>> {
                 }
             } else {
                 if (getAnnotationFromInterfaces(getImplementedInterfaces(map), method.getName(), SerializeByReference.class) != null) {
-                    //TODO support lists
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    final ResourceReference resourceReference = objectMapper
-                            .readValue(new StringReader(objectMapper.writeValueAsString(result)),
-                                    ResourceReference.class);
-                    if (resourceReference.isCustomResource()) {
-                        final CustomResourceDefinition definition = kubernetesClient.apiextensions().v1beta1().customResourceDefinitions()
-                                .list().getItems()
-                                .stream().filter(crd ->
-                                        crd.getSpec().getNames().getKind().equals(resourceReference.getKind()) && resourceReference
-                                                .getApiVersion()
-                                                .startsWith(crd.getSpec().getGroup())).findFirst()
-                                .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + resourceReference.getKind()));
-                        final Map<String, Object> crMap = kubernetesClient.customResource(new Builder()
-                                .withName(definition.getMetadata().getName())
-                                .withGroup(definition.getSpec().getGroup())
-                                .withScope(definition.getSpec().getScope())
-                                .withVersion(definition.getSpec().getVersion())
-                                .withPlural(definition.getSpec().getNames().getPlural())
-                                .build())
-                                .get(resourceReference.getMetadata().getNamespace(), resourceReference.getMetadata().getName());
-
-                        final SerializedEntandoResource serializedEntandoResource = objectMapper
-                                .readValue(new StringReader(objectMapper.writeValueAsString(crMap)),
-                                        SerializedEntandoResource.class);
-                        serializedEntandoResource.setDefinition(CustomResourceDefinitionContext.fromCrd(definition));
-                        return serializedEntandoResource;
-                    } else {
-                        return SupportedResourceKind.resolveFromKind(resourceReference.getKind())
-                                .map(k -> k.getOperation(kubernetesClient)
-                                        .inNamespace(resourceReference.getMetadata().getNamespace())
-                                        .withName(resourceReference.getMetadata().getName())
-                                        .fromServer()
-                                        .get())
-                                .orElseThrow(() -> new IllegalStateException(
-                                        "Resource kind '" + resourceReference.getKind() + "' not supported."));
-                    }
-                }
-                if (Optional.class.isAssignableFrom(method.getReturnType())) {
+                    return resolveByReference(result);
+                } else if (Optional.class.isAssignableFrom(method.getReturnType())) {
                     return Optional.ofNullable(coerce(result, resolveFirstTypeArgument(method)));
                 } else if (method.getReturnType().getAnnotation(JsonDeserialize.class) != null) {
                     ObjectMapper objectMapper = new ObjectMapper();
                     return objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(result)),
                             method.getReturnType());
                 } else if (method.getReturnType() == List.class) {
-                    Class<?> typeArgument = (Class<?>) ((ParameterizedType) method.getGenericReturnType())
-                            .getActualTypeArguments()[0];
-                    if (typeArgument.getAnnotation(JsonDeserialize.class) != null) {
-                        List<Map<String, Object>> value = (List<Map<String, Object>>) result;
-                        return value.stream().map(deserializedMap -> {
-                            ObjectMapper objectMapper = new ObjectMapper();
-                            try {
-                                return objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(deserializedMap)),
-                                        typeArgument);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }).collect(Collectors.toList());
-                    } else if (method.getName().equals("getContainers")) {
-                        List<Map<String, Object>> value = (List<Map<String, Object>>) result;
-                        return value.stream().map(deserializedMap ->
-                                Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                                        getImplementedInterfaces(deserializedMap), getInvocationHandler(deserializedMap)))
-                                .collect(Collectors.toList());
-                    } else {
-                        return null;
-                    }
+                    return serializeList(method, (List<Map<String, Object>>) result);
 
                 }
             }
             return result;
 
         };
+    }
+
+    private List<?> serializeList(Method method, List<Map<String, Object>> result) {
+        Class<?> typeArgument = (Class<?>) ((ParameterizedType) method.getGenericReturnType())
+                .getActualTypeArguments()[0];
+        if (typeArgument.getAnnotation(JsonDeserialize.class) != null) {
+            return deserializeListOfMaps(result, typeArgument);
+        } else if (method.getName().equals("getContainers")) {
+            return deserializeContainers(result);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private HasMetadata resolveByReference(Object result) throws IOException {
+        //TODO support lists
+        ObjectMapper objectMapper = new ObjectMapper();
+        final ResourceReference resourceReference = objectMapper
+                .readValue(new StringReader(objectMapper.writeValueAsString(result)),
+                        ResourceReference.class);
+        if (resourceReference.isCustomResource()) {
+            return serializeCustomResource(objectMapper, resourceReference);
+        } else {
+            return resolveStandardResource(resourceReference);
+        }
+    }
+
+    private List<Object> deserializeContainers(List<Map<String, Object>> result) {
+        return result.stream().map(deserializedMap ->
+                Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+                        getImplementedInterfaces(deserializedMap), getInvocationHandler(deserializedMap)))
+                .collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("java:S112")
+    //Because this is generic exception handling code
+    private List<?> deserializeListOfMaps(List<Map<String, Object>> result, Class<?> typeArgument) {
+        return result.stream().map(deserializedMap -> {
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                return objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(deserializedMap)),
+                        typeArgument);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
+    }
+
+    private HasMetadata resolveStandardResource(ResourceReference resourceReference) {
+        return SupportedResourceKind.resolveFromKind(resourceReference.getKind())
+                .map(k -> k.getOperation(kubernetesClient)
+                        .inNamespace(resourceReference.getMetadata().getNamespace())
+                        .withName(resourceReference.getMetadata().getName())
+                        .fromServer()
+                        .get())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Resource kind '" + resourceReference.getKind() + "' not supported."));
+    }
+
+    private SerializedEntandoResource serializeCustomResource(ObjectMapper objectMapper, ResourceReference resourceReference)
+            throws IOException {
+        final CustomResourceDefinition definition = kubernetesClient.apiextensions().v1beta1().customResourceDefinitions()
+                .list().getItems()
+                .stream().filter(crd ->
+                        crd.getSpec().getNames().getKind().equals(resourceReference.getKind()) && resourceReference
+                                .getApiVersion()
+                                .startsWith(crd.getSpec().getGroup())).findFirst()
+                .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + resourceReference.getKind()));
+        final Map<String, Object> crMap = kubernetesClient.customResource(new Builder()
+                .withName(definition.getMetadata().getName())
+                .withGroup(definition.getSpec().getGroup())
+                .withScope(definition.getSpec().getScope())
+                .withVersion(definition.getSpec().getVersion())
+                .withPlural(definition.getSpec().getNames().getPlural())
+                .build())
+                .get(resourceReference.getMetadata().getNamespace(), resourceReference.getMetadata().getName());
+
+        final SerializedEntandoResource serializedEntandoResource = objectMapper
+                .readValue(new StringReader(objectMapper.writeValueAsString(crMap)),
+                        SerializedEntandoResource.class);
+        serializedEntandoResource.setDefinition(CustomResourceDefinitionContext.fromCrd(definition));
+        return serializedEntandoResource;
     }
 
     private Object createResult(Object[] objects)

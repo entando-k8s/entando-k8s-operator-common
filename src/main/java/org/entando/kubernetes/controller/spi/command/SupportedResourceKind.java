@@ -40,6 +40,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 public enum SupportedResourceKind {
     SERVICE {
         @SuppressWarnings("unchecked")
+        @Override
         public MixedOperation<
                 Service,
                 ServiceList,
@@ -50,6 +51,7 @@ public enum SupportedResourceKind {
     },
     DEPLOYMENT {
         @SuppressWarnings("unchecked")
+        @Override
         public MixedOperation<
                 Deployment,
                 DeploymentList,
@@ -60,6 +62,7 @@ public enum SupportedResourceKind {
     },
     POD {
         @SuppressWarnings("unchecked")
+        @Override
         public MixedOperation<
                 Pod,
                 PodList,
@@ -70,6 +73,7 @@ public enum SupportedResourceKind {
     },
     INGRESS {
         @SuppressWarnings("unchecked")
+        @Override
         public MixedOperation<
                 Ingress,
                 IngressList,
@@ -80,6 +84,7 @@ public enum SupportedResourceKind {
     },
     PERSISTENT_VOLUME_CLAIM {
         @SuppressWarnings("unchecked")
+        @Override
         public MixedOperation<
                 PersistentVolumeClaim,
                 PersistentVolumeClaimList,
@@ -93,6 +98,8 @@ public enum SupportedResourceKind {
 
     }
 
+    @SuppressWarnings("java:S1172")
+    //Because it should have been an abstract method but Java doesn't support that here.
     public <T extends HasMetadata,
             L extends KubernetesResourceList<T>,
             R extends Resource<T>

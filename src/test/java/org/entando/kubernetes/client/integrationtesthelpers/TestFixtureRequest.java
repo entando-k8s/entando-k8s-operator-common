@@ -26,9 +26,11 @@ import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 
 public class TestFixtureRequest {
 
-    private final Map<String, List<Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>>>> requiredDeletions = new ConcurrentHashMap<>();
+    private final Map<String, List<Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>>>> requiredDeletions =
+            new ConcurrentHashMap<>();
 
-    private final Map<String, List<EntandoBaseCustomResource<?, EntandoCustomResourceStatus>>> requiredAdditions = new ConcurrentHashMap<>();
+    private final Map<String, List<EntandoBaseCustomResource<?, EntandoCustomResourceStatus>>> requiredAdditions =
+            new ConcurrentHashMap<>();
 
     public DeletionRequestBuilder deleteAll(Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> type) {
         return new DeletionRequestBuilder(type, this);
@@ -52,7 +54,8 @@ public class TestFixtureRequest {
         private final Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> typesToDelete;
         private final TestFixtureRequest request;
 
-        private DeletionRequestBuilder(Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> typesToDelete, TestFixtureRequest request) {
+        private DeletionRequestBuilder(Class<? extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> typesToDelete,
+                TestFixtureRequest request) {
             this.typesToDelete = typesToDelete;
             this.request = request;
         }
@@ -70,7 +73,8 @@ public class TestFixtureRequest {
         private final List<EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> objectsToAdd;
         private final TestFixtureRequest request;
 
-        private AdditionRequestBuilder(List<EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> objectsToAdd, TestFixtureRequest request) {
+        private AdditionRequestBuilder(List<EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> objectsToAdd,
+                TestFixtureRequest request) {
             this.objectsToAdd = new ArrayList<>(objectsToAdd);
             this.request = request;
         }

@@ -47,7 +47,8 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     private final EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource;
     private final List<DatabaseSchemaConnectionInfo> databaseSchemaInfo;
 
-    public SampleDeployableContainer(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource, DatabaseServiceResult databaseServiceResult) {
+    public SampleDeployableContainer(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource,
+            DatabaseServiceResult databaseServiceResult) {
         this.entandoResource = entandoResource;
         if (databaseServiceResult == null) {
             this.databaseSchemaInfo = Collections.emptyList();

@@ -21,10 +21,10 @@ import java.time.Duration;
 import org.entando.kubernetes.client.EntandoOperatorTestConfig;
 import org.entando.kubernetes.client.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.client.integrationtesthelpers.HttpTestHelper;
+import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.test.e2etest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
 

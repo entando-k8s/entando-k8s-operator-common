@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.test.e2etest.podwaiters;
 
-import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.WatcherException;
 import java.time.Duration;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;

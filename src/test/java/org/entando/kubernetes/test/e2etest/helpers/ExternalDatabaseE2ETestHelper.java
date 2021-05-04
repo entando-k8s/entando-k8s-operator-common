@@ -66,22 +66,22 @@ public class ExternalDatabaseE2ETestHelper extends
         deletePgTestPod(namespace);
         deleteCommonPreviousState(namespace);
         client.pods().inNamespace(namespace).create(
-        new PodBuilder().withNewMetadata().withName("pg-test").addToLabels(resourceKind, null)
-                .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resourceKind).endMetadata()
-                .withNewSpec().addNewContainer()
-                .withName("pg-container")
-                .withImage("centos/postgresql-96-centos7:latest")
-                .withNewReadinessProbe()
-                .withNewExec()
-                .addToCommand("/bin/sh", "-i", "-c",
-                        "psql -h 127.0.0.1 -U ${POSTGRESQL_USER} -q -d postgres -c '\\l'|grep ${POSTGRESQL_DATABASE}")
-                .endExec()
-                .endReadinessProbe()
-                .withEnv(new EnvVar("POSTGRESQL_USER", "testUser", null),
-                        new EnvVar("POSTGRESQL_PASSWORD", "test123", null),
-                        new EnvVar("POSTGRESQL_DATABASE", "testdb", null),
-                        new EnvVar("POSTGRESQL_ADMIN_PASSWORD", "postgres", null))
-                .endContainer().endSpec().build());
+                new PodBuilder().withNewMetadata().withName("pg-test").addToLabels(resourceKind, null)
+                        .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resourceKind).endMetadata()
+                        .withNewSpec().addNewContainer()
+                        .withName("pg-container")
+                        .withImage("centos/postgresql-96-centos7:latest")
+                        .withNewReadinessProbe()
+                        .withNewExec()
+                        .addToCommand("/bin/sh", "-i", "-c",
+                                "psql -h 127.0.0.1 -U ${POSTGRESQL_USER} -q -d postgres -c '\\l'|grep ${POSTGRESQL_DATABASE}")
+                        .endExec()
+                        .endReadinessProbe()
+                        .withEnv(new EnvVar("POSTGRESQL_USER", "testUser", null),
+                                new EnvVar("POSTGRESQL_PASSWORD", "test123", null),
+                                new EnvVar("POSTGRESQL_DATABASE", "testdb", null),
+                                new EnvVar("POSTGRESQL_ADMIN_PASSWORD", "postgres", null))
+                        .endContainer().endSpec().build());
         PodResource<Pod> podResource = client.pods().inNamespace(namespace).withName("pg-test");
         new ServicePodWaiter().limitReadinessTo(Duration.ofSeconds(60)).throwException(RuntimeException.class)
                 .waitOn(podResource);

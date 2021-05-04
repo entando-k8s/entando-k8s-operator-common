@@ -54,10 +54,10 @@ import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceC
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
+import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.componenttest.InProcessTestUtil;
 import org.entando.kubernetes.test.componenttest.argumentcaptors.NamedArgumentCaptor;

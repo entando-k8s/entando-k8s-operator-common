@@ -51,7 +51,7 @@ public class SerializedEntandoResource implements EntandoCustomResource {
     private ObjectMeta metadata;
     private String kind;
     @JsonIgnore
-    private CustomResourceDefinitionContext definition;
+    private transient CustomResourceDefinitionContext definition;
     private String apiVersion;
 
     public void setDefinition(CustomResourceDefinitionContext definition) {

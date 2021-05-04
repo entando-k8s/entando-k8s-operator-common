@@ -211,7 +211,10 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({"unchecked", "rawtypes","java:S1905", "java:S1874"})
+    //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
+    //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
+    //TODO find a way to serialize to our generic objects using the HashMaps from the Raw custom resources
     public <T extends EntandoCustomResource> T reload(T customResource) {
         if (customResource instanceof EntandoBaseCustomResource) {
             return (T) load(customResource.getClass(), customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
@@ -285,7 +288,10 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes","java:S1905", "java:S1874"})
+    //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
+    //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
+    //TODO find a way to serialize to our generic objects using the HashMaps from the Raw custom resources
     private <T extends EntandoCustomResource> void performStatusUpdate(T customResource,
             Consumer<T> consumer, UnaryOperator<EventBuilder> eventPopulator) {
         final EventBuilder doneableEvent = new EventBuilder()

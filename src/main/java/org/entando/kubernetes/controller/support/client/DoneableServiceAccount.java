@@ -36,7 +36,8 @@ public class DoneableServiceAccount extends ServiceAccountFluentImpl<DoneableSer
     }
 
     public ServiceAccount done() {
-        ServiceAccount buildable = new ServiceAccount(getApiVersion(), getAutomountServiceAccountToken(), buildImagePullSecrets(), getKind(),
+        ServiceAccount buildable = new ServiceAccount(getApiVersion(), getAutomountServiceAccountToken(), buildImagePullSecrets(),
+                getKind(),
                 buildMetadata(), buildSecrets());
         return action.apply(buildable);
     }

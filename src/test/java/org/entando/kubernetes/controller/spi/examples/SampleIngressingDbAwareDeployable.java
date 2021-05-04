@@ -38,7 +38,8 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
     protected final List<DeployableContainer> containers;
     protected final DatabaseServiceResult databaseServiceResult;
 
-    public SampleIngressingDbAwareDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource, DatabaseServiceResult databaseServiceResult) {
+    public SampleIngressingDbAwareDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource,
+            DatabaseServiceResult databaseServiceResult) {
         this.entandoResource = entandoResource;
         this.databaseServiceResult = databaseServiceResult;
         this.containers = createContainers(entandoResource);
@@ -49,7 +50,8 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
         return entandoResource.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
     }
 
-    protected abstract List<DeployableContainer> createContainers(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource);
+    protected abstract List<DeployableContainer> createContainers(
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource);
 
     @Override
     public List<DeployableContainer> getContainers() {

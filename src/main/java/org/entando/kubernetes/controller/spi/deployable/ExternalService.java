@@ -17,6 +17,8 @@
 package org.entando.kubernetes.controller.spi.deployable;
 
 public interface ExternalService {
+
     String getHost();
+
     int getPort();
 }

@@ -104,7 +104,7 @@ class DefaultDeploymentClientTest extends AbstractK8SIntegrationTest {
 
     private Deployment emulateUpscaling(EntandoApp customResource) {
         //Scale up (NB! resource.updateStatus doesn't work on the K8S Mock Server)
-        return scaleTo(customResource,1);
+        return scaleTo(customResource, 1);
     }
 
     @Override

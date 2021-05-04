@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.spi.command;
 
 public interface FailableSupplier<T> {
-
+    @SuppressWarnings("java:S112")
+    //Because the purpose of this method is to generically catch exceptions
     T supply() throws Exception;
 }

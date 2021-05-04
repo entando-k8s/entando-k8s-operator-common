@@ -173,7 +173,8 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                 .endSpec().build();
     }
 
-    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
+    protected final <S extends EntandoDeploymentSpec> void emulatePodWaitingBehaviour(
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             String deploymentName) {
         scheduler.schedule(() -> {
             try {

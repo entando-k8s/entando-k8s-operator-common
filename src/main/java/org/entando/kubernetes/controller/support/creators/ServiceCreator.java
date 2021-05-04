@@ -114,7 +114,9 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
     }
 
     private List<EndpointPort> toEndpointPorts(List<ServicePort> ports) {
-        return ports.stream().map(servicePort -> new EndpointPort(servicePort.getAppProtocol(), servicePort.getName(), servicePort.getPort(), servicePort.getProtocol()))
+        return ports.stream()
+                .map(servicePort -> new EndpointPort(servicePort.getAppProtocol(), servicePort.getName(), servicePort.getPort(),
+                        servicePort.getProtocol()))
                 .collect(Collectors.toList());
 
     }

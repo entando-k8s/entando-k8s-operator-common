@@ -20,7 +20,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
@@ -35,7 +34,7 @@ public interface Deployable<T extends ServiceDeploymentResult<T>> {
      */
     List<DeployableContainer> getContainers();
 
-    default Optional<ExternalService> getExternalService(){
+    default Optional<ExternalService> getExternalService() {
         return Optional.empty();
     }
 

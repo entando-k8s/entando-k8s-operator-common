@@ -144,6 +144,4 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     }
 
-
-
 }

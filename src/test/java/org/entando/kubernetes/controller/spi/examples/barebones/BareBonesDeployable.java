@@ -44,7 +44,8 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
         this(customResource, new BareBonesContainer());
     }
 
-    public BareBonesDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource, DeployableContainer... containers) {
+    public BareBonesDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource,
+            DeployableContainer... containers) {
         this.customResource = customResource;
         this.containers = Arrays.asList(containers);
     }

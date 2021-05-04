@@ -35,7 +35,8 @@ import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
 
 public interface VolumeMatchAssertions {
 
-    default <S extends EntandoDeploymentSpec> void verifyThatAllVolumesAreMapped(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
+    default <S extends EntandoDeploymentSpec> void verifyThatAllVolumesAreMapped(
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
             SimpleK8SClient client,
             Deployment deployment) {
         PodSpec podSpec = deployment.getSpec().getTemplate().getSpec();
@@ -45,7 +46,8 @@ public interface VolumeMatchAssertions {
         podSpec.getVolumes().forEach(volume -> assertMatchingClaim(resource, client, volume));
     }
 
-    default <S extends EntandoDeploymentSpec> void assertMatchingClaim(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource, SimpleK8SClient client,
+    default <S extends EntandoDeploymentSpec> void assertMatchingClaim(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> resource,
+            SimpleK8SClient client,
             Volume volume) {
         if (ofNullable(volume.getPersistentVolumeClaim()).isPresent()) {
             assertThat(

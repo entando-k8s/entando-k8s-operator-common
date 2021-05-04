@@ -43,7 +43,8 @@ public class CapabilityProvider {
         return match.orElse(makeNewCapabilityAvailable(forResource, capabilityRequirement, requirementScope));
     }
 
-    private void validateCapabilityCriteria(CapabilityRequirement capabilityRequirement, CapabilityScope requirementScope, ProvidedCapability c) {
+    private void validateCapabilityCriteria(CapabilityRequirement capabilityRequirement, CapabilityScope requirementScope,
+            ProvidedCapability c) {
         if (!requirementScope.getCamelCaseName()
                 .equals(c.getMetadata().getLabels().get(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME))) {
             throw new IllegalArgumentException(
@@ -85,7 +86,8 @@ public class CapabilityProvider {
 
                 return client.providedCapabilityByLabels(capabilityRequirement.getSelector());
             case NAMESPACE:
-                return client.providedCapabilityByLabels(forResource.getMetadata().getNamespace(), capabilityRequirement.getCapabilityLabels());
+                return client
+                        .providedCapabilityByLabels(forResource.getMetadata().getNamespace(), capabilityRequirement.getCapabilityLabels());
             case CLUSTER:
             default:
                 return client.providedCapabilityByLabels(capabilityRequirement.getCapabilityLabels());
@@ -115,7 +117,8 @@ public class CapabilityProvider {
             case LABELED:
                 metaBuilder = metaBuilder.withNamespace(forResource.getMetadata().getNamespace())
                         .withName(
-                                capabilityRequirement.getImplementation().map(i -> i.getHypenatedName() + "-").orElse("") + capabilityRequirement
+                                capabilityRequirement.getImplementation().map(i -> i.getHypenatedName() + "-").orElse("")
+                                        + capabilityRequirement
                                         .getCapability().getHypenatedName() + "-" + NameUtils
                                         .randomNumeric(4));
                 break;
