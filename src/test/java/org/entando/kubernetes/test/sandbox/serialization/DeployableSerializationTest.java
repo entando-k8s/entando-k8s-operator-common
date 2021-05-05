@@ -80,7 +80,7 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
         NonNamespaceOperation<CustomResourceDefinition, CustomResourceDefinitionList, Resource<CustomResourceDefinition>> crds = server
                 .getClient().apiextensions().v1beta1().customResourceDefinitions();
-        crds.createOrReplace(crds.load(EntandoApp.class.getResource("/crd/EntandoAppCRD.yaml")).get());
+        crds.createOrReplace(crds.load(EntandoApp.class.getResource("/crd/entandoapps.entando.org.crd.yaml")).get());
     }
 
     @AfterEach
