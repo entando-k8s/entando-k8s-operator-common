@@ -26,7 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import org.entando.kubernetes.client.EntandoExecListener;
+import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 
 public interface PodClient extends PodWaitingClient {
 

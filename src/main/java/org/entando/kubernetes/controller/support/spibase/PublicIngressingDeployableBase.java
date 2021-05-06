@@ -16,10 +16,10 @@
 
 package org.entando.kubernetes.controller.support.spibase;
 
+import io.fabric8.kubernetes.client.CustomResource;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
-import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.KeycloakAwareSpec;
 import org.entando.kubernetes.model.common.KeycloakToUse;
@@ -30,9 +30,8 @@ public interface PublicIngressingDeployableBase<T extends ExposedDeploymentResul
     @Override
     @SuppressWarnings("unchecked")
     default Optional<KeycloakToUse> getPreferredKeycloakToUse() {
-        EntandoBaseCustomResource<KeycloakAwareSpec, EntandoCustomResourceStatus> ka = (EntandoBaseCustomResource<KeycloakAwareSpec,
-                EntandoCustomResourceStatus>) getCustomResource();
-        return ka.getSpec().getKeycloakToUse();
+        return ((CustomResource<KeycloakAwareSpec,
+                EntandoCustomResourceStatus>) getCustomResource()).getSpec().getKeycloakToUse();
     }
 
 }

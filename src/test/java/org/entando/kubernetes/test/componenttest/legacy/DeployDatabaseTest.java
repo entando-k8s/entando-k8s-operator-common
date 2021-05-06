@@ -41,6 +41,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Map;
+import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
@@ -105,8 +107,8 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
             }
         };
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, entandoApp.getMetadata().getNamespace());
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, entandoApp.getMetadata().getName());
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(), entandoApp.getMetadata().getNamespace());
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(), entandoApp.getMetadata().getName());
         emulateKeycloakDeployment(client);
     }
 
@@ -179,7 +181,7 @@ class DeployDatabaseTest implements InProcessTestUtil, FluentTraversals {
         EntandoApp newEntandoApp = entandoApp;
         //And a name longer than 32 chars
         newEntandoApp.getMetadata().setName(MY_APP + "-name-longer-than-32-characters");
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, entandoApp.getMetadata().getName());
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(), entandoApp.getMetadata().getName());
         client.entandoResources().createOrPatchEntandoResource(entandoApp);
         //And K8S is receiving Deployment requests
         DeploymentStatus dbDeploymentStatus = new DeploymentStatus();

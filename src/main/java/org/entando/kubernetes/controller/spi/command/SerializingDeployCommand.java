@@ -16,30 +16,26 @@
 
 package org.entando.kubernetes.controller.spi.command;
 
-import io.fabric8.kubernetes.client.KubernetesClient;
-import org.entando.kubernetes.client.DefaultKeycloakClient;
+import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
-import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
-import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 
-public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
+public class SerializingDeployCommand {
 
-    private CommandStream commandStream;
+    private final CustomResourceClient entandoResourceClient;
+    private final CommandStream commandStream;
+    private Deployable<?> deployable;
 
-    private final Deployable<T> deployable;
-    private final SerializationHelper<T> helper;
-
-    public SerializingDeployCommand(KubernetesClient kubernetesClient, Deployable<T> deployable, SimpleK8SClient<?> client) {
-        this.deployable = deployable;
-        this.helper = new SerializationHelper<>(kubernetesClient);
-        this.commandStream = new InProcessCommandStream(helper, client, new DefaultKeycloakClient());
+    public SerializingDeployCommand(CustomResourceClient entandoResourceClient, CommandStream commandStream) {
+        this.entandoResourceClient = entandoResourceClient;
+        this.commandStream = commandStream;
     }
 
-    public T execute() {
-        String result = commandStream.process(helper.serialize(deployable));
-        SerializableDeploymentResult<?> serializedResult = helper.deserialize(result);
-        return this.deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),
+    public <T extends ServiceDeploymentResult<T>> T processDeployable(Deployable<T> deployable) {
+        this.deployable = deployable;
+        String result = commandStream.process(SerializationHelper.serialize(deployable));
+        SerializableDeploymentResult<?> serializedResult = DeserializationHelper.deserialize(entandoResourceClient, result);
+        return deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),
                 serializedResult.getPod())
                 .withStatus(serializedResult.getStatus());
     }
@@ -49,8 +45,8 @@ public class SerializingDeployCommand<T extends ServiceDeploymentResult<T>> {
     }
 
     private <S> S serializeThenDeserialize(Object deployable) {
-        final String json = helper.serialize(deployable);
-        return helper.deserialize(json);
+        final String json = SerializationHelper.serialize(deployable);
+        return DeserializationHelper.deserialize(entandoResourceClient, json);
     }
 
 }

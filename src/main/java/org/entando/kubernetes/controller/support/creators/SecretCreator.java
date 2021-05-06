@@ -21,8 +21,9 @@ import static java.util.Optional.ofNullable;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
+import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.support.client.SecretClient;
@@ -36,9 +37,9 @@ public class SecretCreator extends AbstractK8SResourceCreator {
     }
 
     public void createSecrets(SecretClient client, Deployable<?> deployable) {
-        EntandoOperatorConfig.getCertificateAuthoritySecretName().ifPresent(s -> {
+        EntandoOperatorSpiConfig.getCertificateAuthoritySecretName().ifPresent(s -> {
             cloneControllerSecret(client, s);
-            cloneControllerSecret(client, TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET);
+            cloneControllerSecret(client, TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET);
         });
         EntandoOperatorConfig.getTlsSecretName().ifPresent(s -> cloneControllerSecret(client, s));
         if (EntandoOperatorConfig.useAutoCertGeneration()) {

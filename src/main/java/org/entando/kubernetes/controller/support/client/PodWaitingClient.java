@@ -25,7 +25,7 @@ import io.fabric8.kubernetes.client.dsl.Watchable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-import org.entando.kubernetes.client.PodWatcher;
+import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 
 public interface PodWaitingClient {
 

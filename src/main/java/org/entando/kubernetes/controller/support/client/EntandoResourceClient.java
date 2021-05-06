@@ -19,34 +19,24 @@ package org.entando.kubernetes.controller.support.client;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.KeycloakToUse;
 import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
-public interface EntandoResourceClient {
+public interface EntandoResourceClient extends CustomResourceClient {
 
     String getNamespace();
 
-    void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status);
-
     <T extends EntandoCustomResource> T reload(T customResource);
 
-    <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
-
-    <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
-
-    void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase);
-
-    void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason);
 
     Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource peerInNamespace, DbmsVendor vendor);
 

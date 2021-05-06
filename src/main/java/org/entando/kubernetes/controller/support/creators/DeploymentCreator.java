@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.container.DbAware;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
@@ -126,7 +127,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
-        if (deployable.getContainers().stream().anyMatch(TrustStoreAware.class::isInstance) && EntandoOperatorConfig
+        if (deployable.getContainers().stream().anyMatch(TrustStoreAware.class::isInstance) && EntandoOperatorSpiConfig
                 .getCertificateAuthoritySecretName().isPresent()) {
             volumeList.add(newSecretVolume(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT));
         }
@@ -226,7 +227,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 deployableContainer.getSecretsToMount().stream()
                         .map(this::newSecretVolumeMount)
                         .collect(Collectors.toList()));
-        if (deployableContainer instanceof TrustStoreAware && EntandoOperatorConfig.getCertificateAuthoritySecretName().isPresent()) {
+        if (deployableContainer instanceof TrustStoreAware && EntandoOperatorSpiConfig.getCertificateAuthoritySecretName().isPresent()) {
 
             volumeMounts.add(newSecretVolumeMount(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT));
         }
@@ -321,7 +322,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         if (container instanceof HasWebContext) {
             vars.add(new EnvVar("SERVER_SERVLET_CONTEXT_PATH", ((HasWebContext) container).getWebContextPath(), null));
         }
-        if (container instanceof TrustStoreAware && EntandoOperatorConfig.getCertificateAuthoritySecretName().isPresent()) {
+        if (container instanceof TrustStoreAware && EntandoOperatorSpiConfig.getCertificateAuthoritySecretName().isPresent()) {
             vars.addAll(((TrustStoreAware) container).getTrustStoreVariables());
         }
         vars.add(new EnvVar("CONNECTION_CONFIG_ROOT", DeployableContainer.ENTANDO_SECRET_MOUNTS_ROOT, null));

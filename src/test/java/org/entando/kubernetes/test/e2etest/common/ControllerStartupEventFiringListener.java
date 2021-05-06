@@ -24,6 +24,8 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.runtime.StartupEvent;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -53,8 +55,8 @@ public class ControllerStartupEventFiringListener<R extends EntandoCustomResourc
                     try {
                         System.out.println("!!!!!!!On " + resource.getKind() + " add!!!!!!!!!");
                         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name());
-                        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, resource.getMetadata().getNamespace());
-                        System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, resource.getMetadata().getName());
+                        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(), resource.getMetadata().getNamespace());
+                        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(), resource.getMetadata().getName());
                         onStartupMethod.onStartup(new StartupEvent());
                     } catch (Exception e) {
                         e.printStackTrace();

@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.client.DefaultSimpleK8SClient;
-import org.entando.kubernetes.client.PodWatcher;
+import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.spi.command.DefaultSerializableDeploymentResult;
 import org.entando.kubernetes.controller.spi.command.SerializingDeployCommand;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
@@ -52,6 +52,7 @@ import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.PodClientDouble;
+import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.test.common.InProcessTestData;
 import org.entando.kubernetes.test.common.PodBehavior;
@@ -113,6 +114,9 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
                 controllerPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(pod));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }, 30, TimeUnit.MILLISECONDS);
     }
@@ -123,11 +127,9 @@ class DeployableSerializationTest implements InProcessTestData, InProcessTestUti
         getClient().entandoResources().createOrPatchEntandoResource(entandoApp);
         emulatePodWaitingBehaviour(entandoApp);
         final DatabaseDeployable originalDeployable = new DatabaseDeployable(DbmsDockerVendorStrategy.CENTOS_MYSQL, entandoApp, null);
-        final SerializingDeployCommand<DatabaseDeploymentResult> serializingDeployCommand = new SerializingDeployCommand<>(
-                server.getClient(),
-                originalDeployable,
-                getClient());
-        final DatabaseDeploymentResult databaseDeploymentResult = serializingDeployCommand.execute();
+        final SerializingDeployCommand serializingDeployCommand = new SerializingDeployCommand(getClient().entandoResources(),
+                new InProcessCommandStream(getClient(), null));
+        final DatabaseDeploymentResult databaseDeploymentResult = serializingDeployCommand.processDeployable(originalDeployable);
         Deployable<DefaultSerializableDeploymentResult> serializedDeployable = serializingDeployCommand.getSerializedDeployable();
         verifyDeployable(serializedDeployable);
         verifyDeployableContainer(serializedDeployable);

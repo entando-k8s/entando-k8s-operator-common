@@ -27,22 +27,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.entando.kubernetes.client.DefaultKeycloakClient;
-import org.entando.kubernetes.client.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
+import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.controller.spi.database.DatabaseDeployable;
 import org.entando.kubernetes.controller.spi.database.DatabaseDeploymentResult;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
+import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.common.TlsHelper;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
@@ -126,8 +127,8 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
     protected void processCommand() {
         try {
             EntandoOperatorConfigBase.setConfigMap(k8sClient.entandoResources().loadOperatorConfig());
-            EntandoOperatorConfig.getCertificateAuthoritySecretName()
-                    .ifPresent(s -> TlsHelper.trustCertificateAuthoritiesIn(k8sClient.secrets().loadControllerSecret(s)));
+            EntandoOperatorSpiConfig.getCertificateAuthoritySecretName()
+                    .ifPresent(s -> TrustStoreHelper.trustCertificateAuthoritiesIn(k8sClient.secrets().loadControllerSecret(s)));
             if (actionRequiresSync(resolveAction())) {
                 performSync(resolveResource());
             }
@@ -143,9 +144,9 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
     }
 
     private T resolveResource() {
-        String resourceName = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAME)
+        String resourceName = EntandoOperatorConfigBase.lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME)
                 .orElseThrow(IllegalArgumentException::new);
-        String resourceNamespace = EntandoOperatorConfigBase.lookupProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE)
+        String resourceNamespace = EntandoOperatorConfigBase.lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE)
                 .orElseThrow(IllegalArgumentException::new);
         return k8sClient.entandoResources().load(resourceType, resourceNamespace, resourceName);
     }

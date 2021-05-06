@@ -18,9 +18,9 @@ package org.entando.kubernetes.test.e2etest.helpers;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.time.Duration;
-import org.entando.kubernetes.client.EntandoOperatorTestConfig;
-import org.entando.kubernetes.client.integrationtesthelpers.FluentIntegrationTesting;
-import org.entando.kubernetes.client.integrationtesthelpers.HttpTestHelper;
+import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
+import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
+import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;

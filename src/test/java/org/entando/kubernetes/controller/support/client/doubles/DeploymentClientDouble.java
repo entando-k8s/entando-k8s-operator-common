@@ -23,7 +23,7 @@ import io.fabric8.kubernetes.client.VersionInfo;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.client.PodWatcher;
+import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 

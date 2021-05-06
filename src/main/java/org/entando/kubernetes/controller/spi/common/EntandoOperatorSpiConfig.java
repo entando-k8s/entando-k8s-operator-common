@@ -52,4 +52,7 @@ public class EntandoOperatorSpiConfig {
                 .lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_DEFAULT_NON_CLUSTERED_STORAGE_CLASS);
     }
 
+    public static Optional<String> getCertificateAuthoritySecretName() {
+        return EntandoOperatorConfigBase.lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CA_SECRET_NAME);
+    }
 }

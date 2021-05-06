@@ -135,10 +135,6 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
                 .orElse(false);
     }
 
-    public static Optional<String> getCertificateAuthoritySecretName() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_CA_SECRET_NAME);
-    }
-
     public static Optional<String> getTlsSecretName() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_TLS_SECRET_NAME);
 

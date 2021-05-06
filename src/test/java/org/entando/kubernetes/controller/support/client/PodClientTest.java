@@ -22,7 +22,7 @@ import static org.hamcrest.core.Is.is;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
-import org.entando.kubernetes.client.EntandoExecListener;
+import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.controller.support.client.doubles.PodClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.PodResourceDouble;
 import org.junit.jupiter.api.Tag;

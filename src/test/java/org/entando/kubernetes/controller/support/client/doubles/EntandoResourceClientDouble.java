@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller.support.client.doubles;
 import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
@@ -27,6 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.lang.NotImplementedException;
+import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
+import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
@@ -65,6 +69,11 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     @Override
     public String getNamespace() {
         return CONTROLLER_NAMESPACE;
+    }
+
+    @Override
+    public void prepareConfig() {
+        throw new NotImplementedException();
     }
 
     @Override
@@ -180,7 +189,17 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @Override
     public ConfigMap loadOperatorConfig() {
-        return getNamespace(CONTROLLER_NAMESPACE).getConfigMap(KubeUtils.ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME);
+        return getNamespace(CONTROLLER_NAMESPACE).getConfigMap(CustomResourceClient.ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME);
+    }
+
+    @Override
+    public SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public HasMetadata loadStandardResource(String kind, String namespace, String name) {
+        throw new NotImplementedException();
     }
 
 }

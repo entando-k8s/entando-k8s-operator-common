@@ -31,12 +31,12 @@ import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.client.PodWatcher;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
-import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
@@ -45,6 +45,7 @@ import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeplo
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
@@ -88,7 +89,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
         scheduler.shutdownNow();
         getClient().pods().getPodWatcherQueue().clear();
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_TLS_SECRET_NAME.getJvmSystemProperty());
     }
 
@@ -169,16 +170,17 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         verifyThatAllVolumesAreMapped(plugin1, getClient(), serverDeployment);
         //With a secret mount to the default truststore secret
         assertThat(
-                theVolumeNamed(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET + DeploymentCreator.VOLUME_SUFFIX).on(serverDeployment).getSecret()
+                theVolumeNamed(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET + DeploymentCreator.VOLUME_SUFFIX).on(serverDeployment)
+                        .getSecret()
                         .getSecretName(),
-                is(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET));
-        assertThat(theVolumeMountNamed(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET + DeploymentCreator.VOLUME_SUFFIX)
+                is(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET));
+        assertThat(theVolumeMountNamed(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET + DeploymentCreator.VOLUME_SUFFIX)
                         .on(thePrimaryContainerOn(serverDeployment)).getMountPath(),
-                is(TrustStoreAware.CERT_SECRET_MOUNT_ROOT + "/" + TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET));
-        assertThat(theVariableReferenceNamed(TrustStoreAware.JAVA_TOOL_OPTIONS).on(thePrimaryContainerOn(serverDeployment))
-                .getSecretKeyRef().getName(), is(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET));
-        assertThat(theVariableReferenceNamed(TrustStoreAware.JAVA_TOOL_OPTIONS).on(thePrimaryContainerOn(serverDeployment))
-                .getSecretKeyRef().getKey(), is(TrustStoreAware.TRUSTSTORE_SETTINGS_KEY));
+                is(TrustStoreHelper.CERT_SECRET_MOUNT_ROOT + "/" + TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET));
+        assertThat(theVariableReferenceNamed(TrustStoreHelper.JAVA_TOOL_OPTIONS).on(thePrimaryContainerOn(serverDeployment))
+                .getSecretKeyRef().getName(), is(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET));
+        assertThat(theVariableReferenceNamed(TrustStoreHelper.JAVA_TOOL_OPTIONS).on(thePrimaryContainerOn(serverDeployment))
+                .getSecretKeyRef().getKey(), is(TrustStoreHelper.TRUSTSTORE_SETTINGS_KEY));
         //And I an ingress path
         Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
                 ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
@@ -245,8 +247,10 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         new Thread(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
-            System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, createResource.getMetadata().getNamespace());
-            System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, createResource.getMetadata().getName());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
+                    createResource.getMetadata().getNamespace());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
+                    createResource.getMetadata().getName());
             controller.onStartup(new StartupEvent());
         }).start();
     }
@@ -254,8 +258,10 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onDelete(T resource) {
         new Thread(() -> {
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.DELETED.name());
-            System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAMESPACE, resource.getMetadata().getNamespace());
-            System.setProperty(KubeUtils.ENTANDO_RESOURCE_NAME, resource.getMetadata().getName());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
+                    resource.getMetadata().getNamespace());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
+                    resource.getMetadata().getName());
             controller.onStartup(new StartupEvent());
         }).start();
     }

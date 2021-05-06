@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.support.command;
 
 import org.entando.kubernetes.controller.spi.command.CommandStream;
 import org.entando.kubernetes.controller.spi.command.DefaultSerializableDeploymentResult;
+import org.entando.kubernetes.controller.spi.command.DeserializationHelper;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
@@ -26,23 +27,24 @@ import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 
 public class InProcessCommandStream implements CommandStream {
 
-    private final SerializationHelper<?> helper;
-    private final SimpleK8SClient<?> client;
+    private final SimpleK8SClient<?> simpleK8SClient;
     private final SimpleKeycloakClient keycloakClient;
 
-    public InProcessCommandStream(
-            SerializationHelper<?> helper,
-            SimpleK8SClient<?> client, SimpleKeycloakClient keycloakClient) {
-        this.helper = helper;
-        this.client = client;
+    /**
+     * This class is mainly for some intial testing. It will eventually be replaced by a CommandStream that runs the CLI. NB!!!! Keep thie
+     * SimpleK8SClient there for testing purposes to ensure the test uses the same podWatcherQueue.
+     */
+    public InProcessCommandStream(SimpleK8SClient<?> simpleK8SClient, SimpleKeycloakClient keycloakClient) {
+        this.simpleK8SClient = simpleK8SClient;
         this.keycloakClient = keycloakClient;
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public String process(String deployable) {
-        DeployCommand<? extends ServiceDeploymentResult> command = new DeployCommand(helper.deserialize(deployable));
-        final ServiceDeploymentResult result = command.execute(client, keycloakClient);
+        DeployCommand<? extends ServiceDeploymentResult> command = new DeployCommand(
+                DeserializationHelper.deserialize(simpleK8SClient.entandoResources(), deployable));
+        final ServiceDeploymentResult result = command.execute(simpleK8SClient, keycloakClient);
         DefaultSerializableDeploymentResult serializableDeploymentResult = null;
         if (result instanceof ExposedDeploymentResult) {
             serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),
@@ -53,6 +55,6 @@ public class InProcessCommandStream implements CommandStream {
                     result.getService(), null);
         }
 
-        return helper.serialize(serializableDeploymentResult);
+        return SerializationHelper.serialize(serializableDeploymentResult);
     }
 }

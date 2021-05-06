@@ -36,15 +36,9 @@ public final class KubeUtils {
     public static final String JOB_KIND_LABEL_NAME = "jobKind";
     public static final String DEPLOYMENT_QUALIFIER_LABEL_NAME = "deploymentQualifier";
     public static final String ENTANDO_RESOURCE_ACTION = "entando.resource.action";
-    public static final String ENTANDO_RESOURCE_NAMESPACE = "entando.resource.namespace";
-    public static final String ENTANDO_RESOURCE_NAME = "entando.resource.name";
-    public static final String ENTANDO_APP_ROLE = "entandoApp";
-    public static final String ENTANDO_PLUGIN_ROLE = "entandoPlugin";
     public static final String ENTANDO_RESOURCE_KIND_LABEL_NAME = "EntandoResourceKind";
     public static final String ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME = "EntandoResourceNamespace";
     public static final String ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME = "entando-operator-default-capabilities-config-map";
-    public static final String ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME = "entando-operator-config";
-    public static final String DEFAULT_KEYCLOAK_NAME = "default";
     public static final String JOB_KIND_DB_PREPARATION = "db-preparation-job";
     public static final String DEPLOYMENT_LABEL_NAME = "deployment";
 

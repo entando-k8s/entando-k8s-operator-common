@@ -96,7 +96,7 @@ The notified creator optionally processes some business logic and then delegates
 
 ## Interactions with clusters
 
-Because of the main goal of this project is to supply a unified interface to interact with Kubernetes clusters, the class `org.entando.kubernetes.client.DefaultSimpleK8SClient` is another pivotal component.
+Because of the main goal of this project is to supply a unified interface to interact with Kubernetes clusters, the class `org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient` is another pivotal component.
 In contains a list of clients, each one leveraging Fabric8's `KubernetesClient` in order to supply a "separated by concerns" cluster interaction interface.
 
 So in particolar
