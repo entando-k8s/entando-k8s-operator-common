@@ -36,6 +36,7 @@ import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.deployable.ExternalService;
 import org.entando.kubernetes.controller.spi.deployable.Ingressing;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
@@ -52,6 +53,7 @@ public class ReflectionUtil {
             DbAwareDeployable.class,
             Deployable.class,
             DeployableContainer.class,
+            ExternalService.class,
             HasHealthCommand.class,
             HasWebContext.class,
             Ingressing.class,

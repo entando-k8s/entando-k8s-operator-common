@@ -26,6 +26,8 @@ public interface ServiceClient {
 
     Service loadService(EntandoCustomResource peerInNamespace, String name);
 
+    Service loadControllerService(String name);
+
     Endpoints createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints);
 
 }

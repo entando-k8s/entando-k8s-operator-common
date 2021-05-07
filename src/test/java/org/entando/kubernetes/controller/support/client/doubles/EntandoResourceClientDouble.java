@@ -18,6 +18,8 @@ package org.entando.kubernetes.controller.support.client.doubles;
 
 import static java.lang.String.format;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -28,11 +30,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.commons.lang.NotImplementedException;
 import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
+import org.entando.kubernetes.controller.spi.client.SupportedStandardResourceKind;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
@@ -73,7 +78,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @Override
     public void prepareConfig() {
-        throw new NotImplementedException();
+        EntandoOperatorConfigBase.setConfigMap(loadOperatorConfig());
     }
 
     @Override
@@ -194,12 +199,32 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @Override
     public SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
-        throw new NotImplementedException();
+        try {
+            final ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(objectMapper.writeValueAsString(getNamespace(namespace).getCustomResources(kind).get(name)),
+                    SerializedEntandoResource.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
     public HasMetadata loadStandardResource(String kind, String namespace, String name) {
-        throw new NotImplementedException();
+        switch (SupportedStandardResourceKind.resolveFromKind(kind).get()) {
+            case DEPLOYMENT:
+                return getNamespace(namespace).getDeployment(name);
+            case INGRESS:
+                return getNamespace(namespace).getIngress(name);
+            case SERVICE:
+                return getNamespace(namespace).getService(name);
+            case POD:
+                return getNamespace(namespace).getPod(name);
+            case PERSISTENT_VOLUME_CLAIM:
+                return getNamespace(namespace).getPersistentVolumeClaim(name);
+            default:
+                return null;
+        }
+
     }
 
 }

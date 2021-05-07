@@ -146,6 +146,12 @@ public class NamespaceDouble {
         return (Map<String, T>) customResources.computeIfAbsent(customResource, aClass -> new ConcurrentHashMap<>());
     }
 
+    public <T extends EntandoCustomResource> Map<String, T> getCustomResources(String kind) {
+        return (Map<String, T>) customResources.entrySet().stream()
+                .filter(classMapEntry -> classMapEntry.getKey().getSimpleName().equals(kind)).findFirst()
+                .orElseThrow(IllegalArgumentException::new).getValue();
+    }
+
     public ConfigMap getConfigMap(String configMapName) {
         return configMaps.get(configMapName);
     }

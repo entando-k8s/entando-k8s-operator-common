@@ -24,7 +24,6 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
-import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -35,7 +34,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -53,7 +51,7 @@ public class DefaultCustomResourceClient implements CustomResourceClient {
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
     protected final KubernetesClient client;
-    private final Map<String, CustomResourceDefinition> definitions = new ConcurrentHashMap<>();
+    protected ConfigMap crdNameMap;
 
     public DefaultCustomResourceClient(KubernetesClient client) {
         this.client = client;
@@ -61,6 +59,7 @@ public class DefaultCustomResourceClient implements CustomResourceClient {
 
     @Override
     public void prepareConfig() {
+        crdNameMap = client.configMaps().inNamespace(client.getNamespace()).withName("entando-crd-names").get();
         EntandoOperatorConfigBase.setConfigMap(loadOperatorConfig());
         EntandoOperatorSpiConfig.getCertificateAuthoritySecretName()
                 .ifPresent(s -> TrustStoreHelper
@@ -252,14 +251,7 @@ public class DefaultCustomResourceClient implements CustomResourceClient {
     }
 
     private CustomResourceDefinitionContext resolveDefinitionContext(String kind, String apiVersion) {
-        final String key = apiVersion + "/" + kind;
-        return CustomResourceDefinitionContext.fromCrd(
-                definitions.computeIfAbsent(key, s -> client.apiextensions().v1beta1().customResourceDefinitions()
-                        .withLabel(CRD_KIND_LABEL_NAME, kind)
-                        .list().getItems()
-                        .stream().filter(crd ->
-                                crd.getSpec().getNames().getKind().equals(kind) && apiVersion
-                                        .startsWith(crd.getSpec().getGroup())).findFirst()
-                        .orElseThrow(() -> new IllegalStateException("Could not find CRD for " + kind))));
+        return CustomResourceDefinitionContext.fromCrd(client.apiextensions().v1beta1().customResourceDefinitions()
+                .withName(crdNameMap.getData().get(kind + "." + apiVersion.substring(0, apiVersion.indexOf("/")))).get());
     }
 }

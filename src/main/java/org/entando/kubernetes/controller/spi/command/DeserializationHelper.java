@@ -16,8 +16,6 @@
 
 package org.entando.kubernetes.controller.spi.command;
 
-import static java.lang.String.format;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -30,7 +28,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -87,56 +84,49 @@ public class DeserializationHelper implements InvocationHandler {
         if (result == null) {
             if (Optional.class.isAssignableFrom(method.getReturnType())) {
                 return Optional.empty();
+            } else {
+                return null;
             }
         } else {
-            if (ReflectionUtil
-                    .getAnnotationFromInterfaces(getImplementedInterfaces(map), method.getName(),
-                            SerializeByReference.class) != null) {
-                return resolveByReference(result);
-            } else if (Optional.class.isAssignableFrom(method.getReturnType())) {
-                return Optional.ofNullable(coerceSimpletype(result, resolveFirstTypeArgument(method)));
-            } else if (method.getReturnType().getAnnotation(JsonDeserialize.class) != null) {
-                return objectMapper.readValue(objectMapper.writeValueAsString(result), method.getReturnType());
-            } else if (method.getReturnType() == List.class) {
-                return deserializeList(method, (List<Map<String, Object>>) result);
-
+            if (method.getReturnType() == List.class) {
+                Class<?> typeArgument = resolveFirstTypeArgument(method);
+                return ((List<?>) result).stream()
+                        .map(deserializedMap -> resolveRawObjectOrMap(method, deserializedMap, typeArgument))
+                        .collect(Collectors.toList());
+            } else if (method.getReturnType() == Optional.class) {
+                final Class<?> type = resolveFirstTypeArgument(method);
+                return Optional.of(resolveRawObjectOrMap(method, result, type));
+            } else {
+                return resolveRawObjectOrMap(method, result, method.getReturnType());
             }
         }
-        return result;
+    }
 
+    @SuppressWarnings("unchecked")
+    private Object resolveRawObjectOrMap(Method method, Object rawObjectOrMap, Class<?> type) {
+        if (ReflectionUtil.getAnnotationFromInterfaces(getImplementedInterfaces(map), method.getName(), SerializeByReference.class)
+                != null) {
+            return resolveByReference(rawObjectOrMap);
+        } else if (type.getAnnotation(JsonDeserialize.class) != null) {
+            try {
+                return objectMapper.readValue(objectMapper.writeValueAsString(rawObjectOrMap), type);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else if (ReflectionUtil.KNOWN_INTERFACES.contains(type)) {
+            return fromMap(kubernetesClient, (Map<String, Object>) rawObjectOrMap, objectMapper);
+        } else {
+            //Could be a simple type. Look for String constructor
+            try {
+                return type.getConstructor(String.class).newInstance(rawObjectOrMap.toString());
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                return rawObjectOrMap;
+            }
+        }
     }
 
     private Class<?> resolveFirstTypeArgument(Method method) {
         return (Class<?>) ((ParameterizedType) method.getGenericReturnType()).getActualTypeArguments()[0];
-    }
-
-    private List<?> deserializeList(Method method, List<Map<String, Object>> result) {
-        Class<?> typeArgument = (Class<?>) ((ParameterizedType) method.getGenericReturnType())
-                .getActualTypeArguments()[0];
-        if (typeArgument.getAnnotation(JsonDeserialize.class) != null) {
-            return deserializeListOfMaps(result, typeArgument);
-        } else if (method.getName().equals("getContainers")) {
-            return deserializeContainers(result);
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    private List<Object> deserializeContainers(List<Map<String, Object>> result) {
-        return result.stream().map(deserializedMap -> fromMap(kubernetesClient, deserializedMap, objectMapper))
-                .collect(Collectors.toList());
-    }
-
-    @SuppressWarnings("java:S112")
-    //Because this is generic exception handling code
-    private List<?> deserializeListOfMaps(List<Map<String, Object>> result, Class<?> typeArgument) {
-        return result.stream().map(deserializedMap -> {
-            try {
-                return objectMapper.readValue(objectMapper.writeValueAsString(deserializedMap), typeArgument);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toList());
     }
 
     private Object createResult(Object[] objects)
@@ -148,28 +138,20 @@ public class DeserializationHelper implements InvocationHandler {
         return selectedConstructor.newInstance(arguments);
     }
 
-    private HasMetadata resolveByReference(Object result) throws IOException {
-        //TODO support lists
-        final ResourceReference resourceReference = objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(result)),
-                ResourceReference.class);
-        if (resourceReference.isCustomResource()) {
-            return kubernetesClient.loadCustomResource(resourceReference.getApiVersion(),
-                    resourceReference.getKind(), resourceReference.getMetadata().getNamespace(), resourceReference.getMetadata().getName());
-        } else {
-            return kubernetesClient.loadStandardResource(resourceReference.getKind(), resourceReference.getMetadata().getNamespace(),
-                    resourceReference.getMetadata().getName());
-        }
-    }
-
-    private Object coerceSimpletype(Object object, Class<?> type) {
-        if (object == null) {
-            return null;
-        }
+    private HasMetadata resolveByReference(Object result) {
         try {
-            return type.getConstructor(String.class).newInstance(object.toString());
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new IllegalStateException(
-                    format("Could not coerce %s to %s: no single String constructor found.", object, type.getName()), e);
+            final ResourceReference resourceReference = objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(result)),
+                    ResourceReference.class);
+            if (resourceReference.isCustomResource()) {
+                return kubernetesClient.loadCustomResource(resourceReference.getApiVersion(),
+                        resourceReference.getKind(), resourceReference.getMetadata().getNamespace(),
+                        resourceReference.getMetadata().getName());
+            } else {
+                return kubernetesClient.loadStandardResource(resourceReference.getKind(), resourceReference.getMetadata().getNamespace(),
+                        resourceReference.getMetadata().getName());
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
     }
 

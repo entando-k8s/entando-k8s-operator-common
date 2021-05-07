@@ -51,4 +51,9 @@ public class ServiceClientDouble extends AbstractK8SClientDouble implements Serv
         }
         return getNamespace(peerInNamespace).getService(name);
     }
+
+    @Override
+    public Service loadControllerService(String name) {
+        return getNamespace(CONTROLLER_NAMESPACE).getService(name);
+    }
 }

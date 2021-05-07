@@ -48,11 +48,11 @@ public class InProcessCommandStream implements CommandStream {
         DefaultSerializableDeploymentResult serializableDeploymentResult = null;
         if (result instanceof ExposedDeploymentResult) {
             serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),
-                    result.getService(), ((ExposedDeploymentResult) result).getIngress());
+                    result.getService(), ((ExposedDeploymentResult) result).getIngress()).withStatus(result.getStatus());
 
         } else {
             serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),
-                    result.getService(), null);
+                    result.getService(), null).withStatus(result.getStatus());
         }
 
         return SerializationHelper.serialize(serializableDeploymentResult);

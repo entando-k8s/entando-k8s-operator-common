@@ -49,6 +49,11 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
+    public Service loadControllerService(String name) {
+        return client.services().inNamespace(client.getNamespace()).withName(name).fromServer().get();
+    }
+
+    @Override
     public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service endpoints) {
         return createOrReplace(peerInNamespace, endpoints, client.services());
     }
