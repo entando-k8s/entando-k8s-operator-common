@@ -23,13 +23,13 @@ import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
-import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;
+import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.model.common.DbServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.InternalServerStatus;
 
 public class CreateExternalServiceCommand {
 
@@ -37,7 +37,7 @@ public class CreateExternalServiceCommand {
     private static final int TCP6_NUMBER_OF_SEGMENTS = 8;
     private final ExternalService externalService;
     private final EntandoCustomResource entandoCustomResource;
-    private final DbServerStatus status = new DbServerStatus();
+    private final InternalServerStatus status = new InternalServerStatus();
 
     public CreateExternalServiceCommand(ExternalService externalService, EntandoCustomResource entandoCustomResource) {
         this.externalService = externalService;
@@ -45,14 +45,14 @@ public class CreateExternalServiceCommand {
         status.setQualifier(ExternalDatabaseDeployment.NAME_QUALIFIER);
     }
 
-    public DbServerStatus getStatus() {
+    public InternalServerStatus getStatus() {
         return status;
     }
 
     public Service execute(SimpleK8SClient<?> k8sClient) {
         Service service = k8sClient.services().createOrReplaceService(entandoCustomResource, newExternalService());
         maybeCreateEndpoints(k8sClient);
-        this.status.setServiceStatus(service.getStatus());
+        this.status.setServiceName(service.getMetadata().getName());
         return service;
     }
 

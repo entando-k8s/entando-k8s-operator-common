@@ -14,17 +14,29 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.capability;
+package org.entando.kubernetes.controller.spi.capability.impl;
 
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watch;
 import java.util.Map;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.capability.CapabilityRequirementWatcher;
+import org.entando.kubernetes.controller.spi.capability.CapabilityClient;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.common.ExposedServerStatus;
 
-public class DefaultCapabilityClient implements SimpleCapabilityClient {
+public class DefaultCapabilityClient implements CapabilityClient {
 
-    KubernetesClient client;
+    private final KubernetesClient client;
+
+    public DefaultCapabilityClient(KubernetesClient client) {
+        this.client = client;
+    }
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByName(String namespace, String name) {
@@ -34,7 +46,7 @@ public class DefaultCapabilityClient implements SimpleCapabilityClient {
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByLabels(Map<String, String> labels) {
-        return client.customResources(ProvidedCapability.class).withLabels(labels).list().getItems().stream().findFirst();
+        return client.customResources(ProvidedCapability.class).inAnyNamespace().withLabels(labels).list().getItems().stream().findFirst();
     }
 
     @Override
@@ -55,5 +67,22 @@ public class DefaultCapabilityClient implements SimpleCapabilityClient {
     @Override
     public String getNamespace() {
         return client.getNamespace();
+    }
+
+    @Override
+    public CapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability) {
+        final AbstractServerStatus serverStatus = providedCapability.getStatus().findCurrentServerStatus()
+                .orElseThrow(IllegalStateException::new);
+        Service service = client.services().inNamespace(providedCapability.getMetadata().getNamespace())
+                .withName(serverStatus.getServiceName()).get();
+        Secret adminSecret = serverStatus.getAdminSecretName()
+                .map(s -> client.secrets().inNamespace(providedCapability.getMetadata().getNamespace()).withName(s).get())
+                .orElse(null);
+        Ingress ingress = null;
+        if (serverStatus instanceof ExposedServerStatus) {
+            ingress = client.extensions().ingresses().inNamespace(providedCapability.getMetadata().getNamespace())
+                    .withName(((ExposedServerStatus) serverStatus).getIngressName()).get();
+        }
+        return new CapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);
     }
 }

@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.EndpointsBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -32,7 +33,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
-class DefaultServiceClientTest extends AbstractK8SIntegrationTest {
+class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
 
     private final EntandoApp entandoApp = newTestEntandoApp();
 

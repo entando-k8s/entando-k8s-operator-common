@@ -45,7 +45,6 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 public class PodClientDouble extends AbstractK8SClientDouble implements PodClient {
 
     private final BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
-    private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
 
     public PodClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
         super(namespaces);
@@ -54,11 +53,6 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     @Override
     public BlockingQueue<PodWatcher> getPodWatcherQueue() {
         return podWatcherHolder;
-    }
-
-    @Override
-    public BlockingQueue<EntandoExecListener> getExecListenerHolder() {
-        return execListenerHolder;
     }
 
     @Override
@@ -115,14 +109,6 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
         return pod;
     }
 
-    @Override
-    public EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
-        if (pod != null) {
-            PodResource<Pod> podResource = new PodResourceDouble();
-            return executeAndWait(podResource, containerName, timeoutSeconds, commands);
-        }
-        return null;
-    }
 
     @Override
     public Pod start(Pod pod) {

@@ -16,12 +16,13 @@
 
 package org.entando.kubernetes.controller.support.command;
 
+import static java.util.Optional.ofNullable;
+
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimStatus;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
@@ -43,9 +44,9 @@ import org.entando.kubernetes.controller.support.creators.SecretCreator;
 import org.entando.kubernetes.controller.support.creators.ServiceAccountCreator;
 import org.entando.kubernetes.controller.support.creators.ServiceCreator;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
-import org.entando.kubernetes.model.common.DbServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.common.WebServerStatus;
+import org.entando.kubernetes.model.common.ExposedServerStatus;
+import org.entando.kubernetes.model.common.InternalServerStatus;
 
 public class DeployCommand<T extends ServiceDeploymentResult<T>> {
 
@@ -72,11 +73,11 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
         keycloakClientCreator = new KeycloakClientCreator(entandoCustomResource);
         serviceAccountCreator = new ServiceAccountCreator(entandoCustomResource);
         if (deployable instanceof IngressingDeployable) {
-            status = new WebServerStatus();
+            status = new ExposedServerStatus();
         } else {
-            status = new DbServerStatus();
+            status = new InternalServerStatus();
         }
-        status.setQualifier(deployable.getNameQualifier());
+        status.setQualifier(deployable.getQualifier().orElse("main"));
     }
 
     public T execute(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient potentiallyNullKeycloakClient) {
@@ -85,7 +86,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
                     entandoCustomResource);
             return deployable.createResult(null, command.execute(k8sClient), null, null).withStatus(getStatus());
         } else {
-            Optional<SimpleKeycloakClient> keycloakClient = Optional.ofNullable(potentiallyNullKeycloakClient);
+            Optional<SimpleKeycloakClient> keycloakClient = ofNullable(potentiallyNullKeycloakClient);
             EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
                     k8sClient.entandoResources().loadDockerImageInfoConfigMap());
             if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
@@ -108,7 +109,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
                         k8sClient.secrets(),
                         keycloakClient.orElseThrow(IllegalStateException::new),
                         deployable,
-                        Optional.ofNullable(ingress));
+                        ofNullable(ingress));
             }
             createDeployment(k8sClient, entandoImageResolver);
             waitForPod(k8sClient);
@@ -131,31 +132,33 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
     private void waitForPod(SimpleK8SClient<?> k8sClient) {
         pod = k8sClient.pods()
                 .waitForPod(entandoCustomResource.getMetadata().getNamespace(), KubeUtils.DEPLOYMENT_LABEL_NAME, resolveName(deployable));
-        status.setPodStatus(pod.getStatus());
+        status.putPodPhase(pod.getMetadata().getName(), pod.getStatus().getPhase());
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
     private String resolveName(Deployable<T> deployable) {
-        return entandoCustomResource.getMetadata().getName() + "-" + deployable.getNameQualifier();
+        return entandoCustomResource.getMetadata().getName() + deployable.getQualifier().map(s -> "-" + s).orElse("");
     }
 
     private void createDeployment(SimpleK8SClient<?> k8sClient, EntandoImageResolver entandoImageResolver) {
         deploymentCreator.createDeployment(entandoImageResolver, k8sClient.deployments(), deployable);
-        status.setDeploymentStatus(deploymentCreator.reloadDeployment(k8sClient.deployments()));
+        status.setDeploymentName(deploymentCreator.getDeployment().getMetadata().getName());
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
     private void createService(SimpleK8SClient<?> k8sClient) {
         serviceCreator.createService(k8sClient.services(), deployable);
-        status.setServiceStatus(serviceCreator.reloadPrimaryService(k8sClient.services()));
+        status.setServiceName(serviceCreator.getService().getMetadata().getName());
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
     private void createPersistentVolumeClaims(SimpleK8SClient<?> k8sClient) {
         persistentVolumeClaimCreator.createPersistentVolumeClaimsFor(k8sClient.persistentVolumeClaims(), deployable);
-        List<PersistentVolumeClaimStatus> statuses = persistentVolumeClaimCreator
-                .reloadPersistentVolumeClaims(k8sClient.persistentVolumeClaims());
-        status.setPersistentVolumeClaimStatuses(statuses);
+        persistentVolumeClaimCreator
+                .reloadPersistentVolumeClaims(k8sClient.persistentVolumeClaims()).forEach(
+                persistentVolumeClaim -> status.putPersistentVolumeClaimPhase(persistentVolumeClaim.getMetadata().getName(),
+                        ofNullable(persistentVolumeClaim.getStatus()).map(PersistentVolumeClaimStatus::getPhase).orElse("Pending"))
+        );
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 
@@ -165,7 +168,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
             DbAwareDeployable<?> dbAwareDeployable
     ) {
         Pod completedPod = databasePreparationJobCreator.runToCompletion(k8sClient, dbAwareDeployable, entandoImageResolver);
-        status.setInitPodStatus(completedPod.getStatus());
+        status.putPodPhase(completedPod.getMetadata().getName(), completedPod.getStatus().getPhase());
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
         PodResult podResult = PodResult.of(completedPod);
         if (podResult.hasFailed()) {

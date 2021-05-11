@@ -14,12 +14,20 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.database;
+package org.entando.kubernetes.controller.spi.client;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
-import java.util.List;
+import org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest;
+import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
 
-public interface DatabaseVariableInitializer {
+public abstract class AbstractSupportK8SIntegrationTest extends AbstractK8SIntegrationTest {
 
-    void addEnvironmentVariables(List<EnvVar> vars);
+    private DefaultSimpleK8SClient defaultSimpleK8SClient;
+
+    protected DefaultSimpleK8SClient getSimpleK8SClient() {
+        if (defaultSimpleK8SClient == null) {
+            defaultSimpleK8SClient = new DefaultSimpleK8SClient(fabric8Client);
+        }
+        return defaultSimpleK8SClient;
+    }
+
 }

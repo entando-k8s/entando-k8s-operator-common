@@ -23,6 +23,7 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.model.common.DbmsVendor;
 
 public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareContainer, IngressingContainer, TrustStoreAware {
@@ -75,7 +76,7 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareCon
     @Override
     default List<EnvVar> getKeycloakVariables() {
         List<EnvVar> vars = KeycloakAwareContainer.super.getKeycloakVariables();
-        KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
+        ConfigMapBasedKeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
                 keycloakDeployment.getExternalBaseUrl() + "/realms/" + getKeycloakRealmToUse(),
                 null));

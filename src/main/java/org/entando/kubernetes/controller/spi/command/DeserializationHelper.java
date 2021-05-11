@@ -32,23 +32,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 
 public class DeserializationHelper implements InvocationHandler {
 
     private final Map<String, Object> map;
-    private final CustomResourceClient kubernetesClient;
+    private final KubernetesClientForControllers kubernetesClient;
     private final ObjectMapper objectMapper;
 
-    private DeserializationHelper(CustomResourceClient kubernetesClient, Map<String, Object> map, ObjectMapper objectMapper) {
+    private DeserializationHelper(KubernetesClientForControllers kubernetesClient, Map<String, Object> map, ObjectMapper objectMapper) {
         this.kubernetesClient = kubernetesClient;
         this.map = map;
         this.objectMapper = objectMapper;
     }
 
     @SuppressWarnings("unchecked")
-    public static <S> S deserialize(CustomResourceClient kubernetesClient, String json) {
+    public static <S> S deserialize(KubernetesClientForControllers kubernetesClient, String json) {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> map = objectMapper.readValue(json, Map.class);
@@ -59,7 +59,7 @@ public class DeserializationHelper implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private static <S> S fromMap(CustomResourceClient kubernetesClient, Map<String, Object> map,
+    private static <S> S fromMap(KubernetesClientForControllers kubernetesClient, Map<String, Object> map,
             ObjectMapper objectMapper) {
         return (S) Proxy.newProxyInstance(
                 Thread.currentThread().getContextClassLoader(),

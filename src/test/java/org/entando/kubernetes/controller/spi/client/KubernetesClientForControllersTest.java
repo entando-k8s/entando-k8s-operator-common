@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.client;
+package org.entando.kubernetes.controller.spi.client;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -22,19 +22,19 @@ import static org.hamcrest.core.Is.is;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
-import org.entando.kubernetes.controller.support.client.doubles.PodClientDouble;
+import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.PodResourceDouble;
+import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
-
+//NB!! This class only tests the interface default methods
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
-class PodClientTest {
+class KubernetesClientForControllersTest {
 
     @Test
     void testExec() throws IOException {
-        PodClientDouble podClientDouble = new PodClientDouble(new ConcurrentHashMap<>());
+        KubernetesClientForControllers podClientDouble = new EntandoResourceClientDouble(new ConcurrentHashMap<>());
         PodResourceDouble podResource = new PodResourceDouble();
         EntandoExecListener execWatchDouble = podClientDouble
                 .executeAndWait(podResource, "some-container", 10, "echo hello world");

@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 
-public interface SimpleCapabilityClient {
+public interface CapabilityClient {
 
     Optional<ProvidedCapability> providedCapabilityByName(String namespace, String name);
 
@@ -32,4 +32,6 @@ public interface SimpleCapabilityClient {
     Watch createAndWatchResource(ProvidedCapability capabilityRequirement, CapabilityRequirementWatcher watcher);
 
     String getNamespace();
+
+    CapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability);
 }

@@ -24,7 +24,6 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.runtime.StartupEvent;
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -58,6 +57,29 @@ public class ControllerStartupEventFiringListener<R extends EntandoCustomResourc
                         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(), resource.getMetadata().getNamespace());
                         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(), resource.getMetadata().getName());
                         onStartupMethod.onStartup(new StartupEvent());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onClose(WatcherException cause) {
+                Optional.ofNullable(cause).ifPresent(Throwable::printStackTrace);
+            }
+        });
+    }
+    public void listen(String namespace, Runnable runnable) {
+        this.watch = operations.inNamespace(namespace).watch(new Watcher<R>() {
+            @Override
+            public void eventReceived(Action action, R resource) {
+                if (shouldListen && action == Action.ADDED) {
+                    try {
+                        System.out.println("!!!!!!!On " + resource.getKind() + " add!!!!!!!!!");
+                        System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name());
+                        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(), resource.getMetadata().getNamespace());
+                        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(), resource.getMetadata().getName());
+                        runnable.run();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

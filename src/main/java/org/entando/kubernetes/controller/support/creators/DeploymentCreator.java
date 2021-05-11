@@ -60,10 +60,10 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DeploymentCreator extends AbstractK8SResourceCreator {
 
-    public static final String VOLUME_SUFFIX = "-volume";
-    public static final String DEPLOYMENT_SUFFIX = "-deployment";
-    public static final String CONTAINER_SUFFIX = "-container";
-    public static final String PORT_SUFFIX = "-port";
+    public static final String VOLUME_SUFFIX = "volume";
+    public static final String DEPLOYMENT_SUFFIX = "deployment";
+    public static final String CONTAINER_SUFFIX = "container";
+    public static final String PORT_SUFFIX = "port";
     private Deployment deployment;
 
     public DeploymentCreator(EntandoCustomResource entandoCustomResource) {
@@ -90,17 +90,18 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver, Deployable<?> deployable, boolean supportStartupProbe) {
+        final String nameQualifier = deployable.getQualifier().orElse(null);
         return new DeploymentBuilder()
                 .withNewSpec()
                 .withNewSelector()
-                .withMatchLabels(labelsFromResource(deployable.getNameQualifier()))
+                .withMatchLabels(labelsFromResource(nameQualifier))
                 .endSelector()
                 //We don't support 0 because we will be waiting for a pod after this
                 .withReplicas(Math.max(1, deployable.getReplicas()))
                 .withNewTemplate()
                 .withNewMetadata()
-                .withName(resolveName(deployable.getNameQualifier(), "-pod"))
-                .withLabels(labelsFromResource(deployable.getNameQualifier()))
+                .withName(resolveName(nameQualifier, "pod"))
+                .withLabels(labelsFromResource(nameQualifier))
                 .endMetadata()
                 .withNewSpec()
                 .withSecurityContext(buildSecurityContext(deployable))
@@ -139,7 +140,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         if (container instanceof PersistentVolumeAware) {
             volumes.add(new VolumeBuilder()
                     .withName(volumeName(container))
-                    .withNewPersistentVolumeClaim(resolveName(container.getNameQualifier(), "-pvc"), false)
+                    .withNewPersistentVolumeClaim(resolveName(container.getNameQualifier(), "pvc"), false)
                     .build());
         }
         volumes.addAll(container.getSecretsToMount().stream()
@@ -165,7 +166,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private Container newContainer(EntandoImageResolver imageResolver,
             DeployableContainer deployableContainer, boolean supportStartupProbes) {
-        return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + CONTAINER_SUFFIX)
+        return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + "-" + CONTAINER_SUFFIX)
                 .withImage(imageResolver.determineImageUri(deployableContainer.getDockerImageInfo()))
                 .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse("IfNotPresent"))
                 .withPorts(buildPorts(deployableContainer))
@@ -183,7 +184,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private List<ContainerPort> buildPorts(DeployableContainer deployableContainer) {
         List<ContainerPort> result = new ArrayList<>();
-        result.add(new ContainerPortBuilder().withName(deployableContainer.getNameQualifier() + PORT_SUFFIX)
+        result.add(new ContainerPortBuilder().withName(deployableContainer.getNameQualifier() + "-" + PORT_SUFFIX)
                 .withContainerPort(deployableContainer.getPrimaryPort()).withProtocol("TCP").build());
         result.addAll(deployableContainer.getAdditionalPorts().stream()
                 .map(portSpec -> new ContainerPortBuilder()
@@ -347,8 +348,8 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable, boolean supportStartupProbes) {
         return new DeploymentBuilder()
-                .withMetadata(fromCustomResource(true, resolveName(deployable.getNameQualifier(), DEPLOYMENT_SUFFIX),
-                        deployable.getNameQualifier()))
+                .withMetadata(fromCustomResource(true, resolveName(deployable.getQualifier().orElse(null), DEPLOYMENT_SUFFIX),
+                        deployable.getQualifier().orElse(null)))
                 .withSpec(buildDeploymentSpec(imageResolver, deployable, supportStartupProbes))
                 .build();
     }

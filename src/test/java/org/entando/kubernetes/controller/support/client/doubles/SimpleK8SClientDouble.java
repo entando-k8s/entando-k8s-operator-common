@@ -18,6 +18,8 @@ package org.entando.kubernetes.controller.support.client.doubles;
 
 import io.fabric8.kubernetes.client.VersionInfo;
 import java.text.ParseException;
+import org.entando.kubernetes.controller.spi.capability.CapabilityClient;
+import org.entando.kubernetes.controller.spi.capability.doubles.CapabilityClientDouble;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
@@ -40,6 +42,7 @@ public class SimpleK8SClientDouble extends AbstractK8SClientDouble implements Si
     private final EntandoResourceClientDouble entandoResourceClient = Mockito.spy(new EntandoResourceClientDouble(getNamespaces()));
     private final PodClient podClient = Mockito.spy(new PodClientDouble(getNamespaces()));
     private final ServiceAccountClientDouble serviceAccountClient = Mockito.spy(new ServiceAccountClientDouble(getNamespaces()));
+    private final CapabilityClientDouble capabilityClient = Mockito.spy(new CapabilityClientDouble(getNamespaces()));
     private final VersionInfo version;
 
     public SimpleK8SClientDouble() {
@@ -75,6 +78,11 @@ public class SimpleK8SClientDouble extends AbstractK8SClientDouble implements Si
     @Override
     public ServiceClient services() {
         return this.serviceClient;
+    }
+
+    @Override
+    public CapabilityClient capabilities() {
+        return null;
     }
 
     @Override

@@ -22,9 +22,10 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
@@ -41,7 +42,7 @@ public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
     private final DeployableContainer container;
 
     public SpringBootDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource,
-            KeycloakConnectionConfig keycloakConnectionConfig,
+            ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig,
             DatabaseServiceResult databaseServiceResult) {
         this.customResource = customResource;
         container = new SampleSpringBootDeployableContainer<>(customResource, keycloakConnectionConfig, databaseServiceResult);
@@ -66,8 +67,8 @@ public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
     }
 
     @Override
-    public String getNameQualifier() {
-        return NameUtils.DEFAULT_SERVER_QUALIFIER;
+    public Optional<String> getQualifier() {
+        return Optional.of(NameUtils.DEFAULT_SERVER_QUALIFIER);
     }
 
     @Override

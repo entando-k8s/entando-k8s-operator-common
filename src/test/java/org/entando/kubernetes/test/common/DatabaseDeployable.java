@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.database;
+package org.entando.kubernetes.test.common;
 
 import static java.lang.String.format;
 
@@ -31,6 +31,7 @@ import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -92,8 +93,8 @@ public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>,
     }
 
     @Override
-    public String getNameQualifier() {
-        return NameUtils.DB_NAME_QUALIFIER;
+    public Optional<String> getQualifier() {
+        return Optional.of(NameUtils.DB_NAME_QUALIFIER);
     }
 
     @Override
@@ -117,11 +118,11 @@ public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>,
     }
 
     protected String getDatabaseAdminSecretName() {
-        return ExternalDatabaseDeployment.adminSecretName(customResource, getNameQualifier());
+        return ExternalDatabaseDeployment.adminSecretName(customResource, NameUtils.DB_NAME_QUALIFIER);
     }
 
     protected String getDatabaseName() {
-        return NameUtils.databaseCompliantName(customResource, getNameQualifier(), dbmsVendor.getVendorConfig());
+        return NameUtils.databaseCompliantName(customResource, NameUtils.DB_NAME_QUALIFIER, dbmsVendor.getVendorConfig());
     }
 
 }

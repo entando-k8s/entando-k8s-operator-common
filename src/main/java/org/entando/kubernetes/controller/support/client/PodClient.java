@@ -19,14 +19,8 @@ package org.entando.kubernetes.controller.support.client;
 import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.dsl.ExecWatch;
-import io.fabric8.kubernetes.client.dsl.Execable;
-import io.fabric8.kubernetes.client.dsl.PodResource;
-import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 
 public interface PodClient extends PodWaitingClient {
 
@@ -45,53 +39,6 @@ public interface PodClient extends PodWaitingClient {
     Pod loadPod(String namespace, Map<String, String> labels);
 
     Pod runToCompletion(Pod pod);
-
-    EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands);
-
-    @SuppressWarnings({"java:S106"})
-    default EntandoExecListener executeAndWait(PodResource<Pod> podResource, String containerName, int timeoutSeconds,
-            String... script) {
-        StringBuilder sb = new StringBuilder();
-        for (String s : script) {
-            sb.append(s);
-            sb.append('\n');
-        }
-        sb.append("exit 0\n");
-        ByteArrayInputStream in = new ByteArrayInputStream(sb.toString().getBytes());
-        try {
-            Object mutex = new Object();
-            synchronized (mutex) {
-                EntandoExecListener listener = new EntandoExecListener(mutex, timeoutSeconds);
-                if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
-                    getExecListenerHolder().add(listener);//because it should never be full during tests. fail early.
-                }
-                final Execable<String, ExecWatch> execable = podResource.inContainer(containerName)
-                        .readingInput(in)
-                        .writingOutput(listener.getOutWriter())
-                        .redirectingError()
-                        .withTTY()
-                        .usingListener(listener);
-                listener.setExecable(execable);
-                execable.exec();
-
-                while (listener.shouldStillWait()) {
-                    mutex.wait(1000);
-                }
-                if (listener.hasFailed()) {
-                    throw new IllegalStateException(format("Command did not meet the wait condition within 20 seconds: %s", sb.toString()));
-                }
-                return listener;
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
-    }
-
-    /**
-     * A getter for the an AtomicReference to the most recently constructed ExecListener for testing purposes.
-     */
-    BlockingQueue<EntandoExecListener> getExecListenerHolder();
 
     void removeSuccessfullyCompletedPods(String namespace, Map<String, String> labels);
 

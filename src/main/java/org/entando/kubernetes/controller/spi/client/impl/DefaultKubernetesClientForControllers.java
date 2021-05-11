@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.client;
+package org.entando.kubernetes.controller.spi.client.impl;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
@@ -24,8 +24,10 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
@@ -34,32 +36,39 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
+import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
+import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 
-public class DefaultCustomResourceClient implements CustomResourceClient {
+public class DefaultKubernetesClientForControllers implements KubernetesClientForControllers {
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
+    public static final String ENTANDO_CRD_NAMES_CONFIG_MAP = "entando-crd-names";
     protected final KubernetesClient client;
     protected ConfigMap crdNameMap;
+    private BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
 
-    public DefaultCustomResourceClient(KubernetesClient client) {
+    public DefaultKubernetesClientForControllers(KubernetesClient client) {
         this.client = client;
     }
 
     @Override
     public void prepareConfig() {
-        crdNameMap = client.configMaps().inNamespace(client.getNamespace()).withName("entando-crd-names").get();
+        crdNameMap = client.configMaps().inNamespace(client.getNamespace()).withName(ENTANDO_CRD_NAMES_CONFIG_MAP).get();
         EntandoOperatorConfigBase.setConfigMap(loadOperatorConfig());
         EntandoOperatorSpiConfig.getCertificateAuthoritySecretName()
                 .ifPresent(s -> TrustStoreHelper
@@ -69,7 +78,18 @@ public class DefaultCustomResourceClient implements CustomResourceClient {
 
     public ConfigMap loadOperatorConfig() {
         return client.configMaps().inNamespace(client.getNamespace())
-                .withName(CustomResourceClient.ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME).fromServer().get();
+                .withName(KubernetesClientForControllers.ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME).fromServer().get();
+    }
+
+    public BlockingQueue<EntandoExecListener> getExecListenerHolder() {
+        return execListenerHolder;
+    }
+
+    @Override
+    public EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
+        PodResource<Pod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
+                .withName(pod.getMetadata().getName());
+        return executeAndWait(podResource, containerName, timeoutSeconds, commands);
     }
 
     @Override

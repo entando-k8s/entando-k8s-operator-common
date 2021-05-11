@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
@@ -66,8 +67,8 @@ public class BareBonesDeployable<S extends EntandoDeploymentSpec> implements Dep
     }
 
     @Override
-    public String getNameQualifier() {
-        return NAME_QUALIFIER;
+    public Optional<String> getQualifier() {
+        return Optional.of(NAME_QUALIFIER);
     }
 
     @Override

@@ -125,6 +125,9 @@ public class E2ETestHelperBase<R extends EntandoBaseCustomResource<?, EntandoCus
     public void listenAndRespondWithStartupEvent(String namespace, OnStartupMethod onStartupMethod) {
         startupEventFiringListener.listen(namespace, onStartupMethod);
     }
+    public void listenAndRun(String namespace,  Runnable runnable) {
+        startupEventFiringListener.listen(namespace, runnable);
+    }
 
     public void listenAndRespondWithPod(String namespace, Optional<String> imageVersion) {
         String versionToUse = imageVersion.orElse(EntandoOperatorTestConfig.getVersionOfImageUnderTest().orElse("6.0.0-dev"));

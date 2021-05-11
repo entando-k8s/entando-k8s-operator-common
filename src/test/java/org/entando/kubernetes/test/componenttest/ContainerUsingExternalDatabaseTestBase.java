@@ -34,14 +34,16 @@ import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
@@ -89,6 +91,8 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         getClient().pods().getPodWatcherQueue().clear();
     }
 
+    protected abstract SimpleK8SClient<?> getClient();
+
     @Test
     void testSelectingOneOfTwoExternalDatabase() {
         //Given I have a controller that processes EntandoPlugins
@@ -96,7 +100,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
             @Override
             protected SpringBootDeployable<EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
             }
         };
@@ -205,6 +209,8 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                     createResource.getMetadata().getNamespace());
             System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
                     createResource.getMetadata().getName());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND.getJvmSystemProperty(),
+                    createResource.getKind());
             controller.onStartup(new StartupEvent());
         }, 10, TimeUnit.MILLISECONDS);
     }

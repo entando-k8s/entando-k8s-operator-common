@@ -16,9 +16,13 @@
 
 package org.entando.kubernetes.controller.support.client;
 
+import org.entando.kubernetes.controller.spi.capability.CapabilityClient;
+
 public interface SimpleK8SClient<T extends EntandoResourceClient> {
 
     ServiceClient services();
+
+    CapabilityClient capabilities();
 
     IngressClient ingresses();
 

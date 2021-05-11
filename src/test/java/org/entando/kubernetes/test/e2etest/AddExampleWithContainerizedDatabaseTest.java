@@ -36,7 +36,7 @@ import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorComplianceMode;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
@@ -73,7 +73,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                 @Override
                 protected Deployable<SampleExposedDeploymentResult> createDeployable(
                         EntandoPlugin newEntandoPlugin,
-                        DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
+                        DatabaseServiceResult databaseServiceResult, ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                     return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult) {
                         @Override
                         protected List<DeployableContainer> createContainers(

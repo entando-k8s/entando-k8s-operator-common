@@ -22,7 +22,7 @@ import org.entando.kubernetes.test.common.VolumeMatchAssertions;
 /**
  * Mostly a source of test fixture factories. TODO: These need to refactored to be in-process friendly
  */
-public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBasedAnswers, K8SResourceArgumentMatchers,
+public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBasedAnswers,
         StandardArgumentCaptors, InProcessTestData {
 
 }

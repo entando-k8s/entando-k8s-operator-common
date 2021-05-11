@@ -18,63 +18,36 @@ package org.entando.kubernetes.controller.spi.container;
 
 import static java.util.Optional.ofNullable;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
-import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 
-public class KeycloakConnectionConfig {
+public interface KeycloakConnectionConfig {
 
-    private final Secret adminSecret;
-    private final ConfigMap configMap;
+    String determineBaseUrl();
 
-    public KeycloakConnectionConfig(Secret adminSecret, ConfigMap configMap) {
-        this.adminSecret = adminSecret;
-        this.configMap = configMap;
-    }
-
-    public String determineBaseUrl() {
-        if (EntandoOperatorSpiConfig.forceExternalAccessToKeycloak()) {
-            return getExternalBaseUrl();
-        } else {
-            return getInternalBaseUrl().orElse(getExternalBaseUrl());
-        }
-    }
-
-    //TODO only needed by operator-common - to org.entando.kubernetes.controller.support
-    public String getUsername() {
+    default String getUsername() {
         return decodeSecretValue(SecretUtils.USERNAME_KEY);
     }
 
-    //TODO only needed by operator-common - move to org.entando.kubernetes.controller.support
-    public String getPassword() {
+    default String getPassword() {
         return decodeSecretValue(SecretUtils.PASSSWORD_KEY);
     }
 
-    public String decodeSecretValue(String key) {
-        Optional<String> value = ofNullable(adminSecret.getData())
+    default String decodeSecretValue(String key) {
+        Optional<String> value = ofNullable(getAdminSecret().getData())
                 .map(data ->
                         ofNullable(data.get(key)).map(s -> new String(Base64.getDecoder().decode(s), StandardCharsets.UTF_8))
                 )
-                .orElse(ofNullable(adminSecret.getStringData()).map(data -> data.get(key)));
+                .orElse(ofNullable(getAdminSecret().getStringData()).map(data -> data.get(key)));
         return value.orElse(null);
     }
 
-    public Secret getAdminSecret() {
-        return adminSecret;
-    }
+    Secret getAdminSecret();
 
-    //TODO put these in this in the ProvidedCapability ConfigMap
-    public String getExternalBaseUrl() {
-        return configMap.getData().get(NameUtils.URL_KEY);
-    }
+    String getExternalBaseUrl();
 
-    //TODO derive thi from the ProvidedCapability service
-    public Optional<String> getInternalBaseUrl() {
-        return Optional.ofNullable(configMap.getData().get(NameUtils.INTERNAL_URL_KEY));
-    }
+    Optional<String> getInternalBaseUrl();
 }

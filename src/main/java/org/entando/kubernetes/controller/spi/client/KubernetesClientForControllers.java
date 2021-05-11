@@ -19,18 +19,25 @@ package org.entando.kubernetes.controller.spi.client;
 import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.dsl.Execable;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import java.io.ByteArrayInputStream;
 import java.util.Collection;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
+import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 
-public interface CustomResourceClient {
+public interface KubernetesClientForControllers {
 
     String ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME = "entando-operator-config";
-    String CRD_KIND_LABEL_NAME = "entando.org/kind";
-
+    AtomicBoolean ENQUEUE_POD_WATCH_HOLDERS = new AtomicBoolean(false);
     void prepareConfig();
 
     <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
@@ -63,4 +70,50 @@ public interface CustomResourceClient {
     SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name);
 
     HasMetadata loadStandardResource(String kind, String namespace, String name);
+
+    @SuppressWarnings({"java:S106"})
+    default EntandoExecListener executeAndWait(PodResource<Pod> podResource, String containerName, int timeoutSeconds,
+            String... script) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : script) {
+            sb.append(s);
+            sb.append('\n');
+        }
+        sb.append("exit 0\n");
+        ByteArrayInputStream in = new ByteArrayInputStream(sb.toString().getBytes());
+        try {
+            Object mutex = new Object();
+            synchronized (mutex) {
+                EntandoExecListener listener = new EntandoExecListener(mutex, timeoutSeconds);
+                if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
+                    getExecListenerHolder().add(listener);//because it should never be full during tests. fail early.
+                }
+                final Execable<String, ExecWatch> execable = podResource.inContainer(containerName)
+                        .readingInput(in)
+                        .writingOutput(listener.getOutWriter())
+                        .redirectingError()
+                        .withTTY()
+                        .usingListener(listener);
+                listener.setExecable(execable);
+                execable.exec();
+                while (listener.shouldStillWait()) {
+                    mutex.wait(1000);
+                }
+                if (listener.hasFailed()) {
+                    throw new IllegalStateException(format("Command did not meet the wait condition within 20 seconds: %s", sb.toString()));
+                }
+                return listener;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands);
+
+    /**
+     * A getter for the an AtomicReference to the most recently constructed ExecListener for testing purposes.
+     */
+    BlockingQueue<EntandoExecListener> getExecListenerHolder();
 }

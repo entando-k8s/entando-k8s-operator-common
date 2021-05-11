@@ -16,17 +16,17 @@
 
 package org.entando.kubernetes.controller.spi.command;
 
-import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 
 public class SerializingDeployCommand {
 
-    private final CustomResourceClient entandoResourceClient;
+    private final KubernetesClientForControllers entandoResourceClient;
     private final CommandStream commandStream;
     private Deployable<?> deployable;
 
-    public SerializingDeployCommand(CustomResourceClient entandoResourceClient, CommandStream commandStream) {
+    public SerializingDeployCommand(KubernetesClientForControllers entandoResourceClient, CommandStream commandStream) {
         this.entandoResourceClient = entandoResourceClient;
         this.commandStream = commandStream;
     }

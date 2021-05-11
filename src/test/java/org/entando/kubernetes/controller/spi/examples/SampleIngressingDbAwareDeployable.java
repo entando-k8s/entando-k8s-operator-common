@@ -21,6 +21,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.List;
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
@@ -59,8 +60,8 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
     }
 
     @Override
-    public String getNameQualifier() {
-        return NameUtils.DEFAULT_SERVER_QUALIFIER;
+    public Optional<String> getQualifier() {
+        return Optional.of(NameUtils.DEFAULT_SERVER_QUALIFIER);
     }
 
     @Override

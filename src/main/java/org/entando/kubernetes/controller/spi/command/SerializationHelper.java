@@ -112,7 +112,7 @@ public class SerializationHelper {
             if (value.getClass().getAnnotation(JsonDeserialize.class) != null) {
                 //We know how to serialize this
                 return value;
-            } else if (value.getClass().getName().startsWith("org.entando.kubernetes.controller")) {
+            } else if (ReflectionUtil.implementsKnownInterface(value)) {
                 //Can't serialize, but is known, so translate to map
                 return toJsonFriendlyMap(value);
             }

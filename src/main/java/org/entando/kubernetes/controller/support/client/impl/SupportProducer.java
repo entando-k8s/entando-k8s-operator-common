@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import javax.enterprise.inject.Produces;
-import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.CommandStream;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
@@ -41,7 +41,7 @@ public class SupportProducer {
     }
 
     @Produces
-    public CustomResourceClient entandoResourceClient() {
+    public KubernetesClientForControllers entandoResourceClient() {
         return getSimpleKubernetesClient().entandoResources();
     }
 

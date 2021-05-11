@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
 import org.awaitility.core.ConditionTimeoutException;
+import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -32,7 +33,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
-class DefaultPersistentVolumentClaimClientTest extends AbstractK8SIntegrationTest {
+class DefaultPersistentVolumentClaimClientTest extends AbstractSupportK8SIntegrationTest {
 
     private final EntandoApp entandoApp = newTestEntandoApp();
 

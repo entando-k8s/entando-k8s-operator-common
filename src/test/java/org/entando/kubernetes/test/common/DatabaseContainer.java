@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.database;
+package org.entando.kubernetes.test.common;
 
 import static java.util.Optional.ofNullable;
 

@@ -26,18 +26,19 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.WebServerStatus;
+import org.entando.kubernetes.model.common.ExposedServerStatus;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -51,7 +52,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
-class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
+class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest {
 
     public static final String APP_NAMESPACE = EntandoOperatorTestConfig.calculateName("app-namespace");
     public static final String HTTP_TEST_COM = "http://test.com";
@@ -74,68 +75,10 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
         deleteAll(getFabric8Client().configMaps());
         deleteAll(getFabric8Client().customResources(EntandoApp.class));
         deleteAll(getFabric8Client().customResources(EntandoKeycloakServer.class));
+        prepareCrdNameMap();
     }
 
-    @Test
-    void shouldTrackDeploymentFailedStatus() {
-        //Given I have created an EntandoApp
-        final EntandoApp entandoApp = getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(newTestEntandoApp());
-        //When I update its status to DeploymentFailed
-        getSimpleK8SClient().entandoResources().updateStatus(entandoApp, new WebServerStatus("my-webapp"));
-        getSimpleK8SClient().entandoResources().deploymentFailed(entandoApp, new IllegalStateException("nope"));
-        final EntandoApp actual = getSimpleK8SClient().entandoResources()
-                .load(EntandoApp.class, entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName());
-        //The failure reflects on the custom resource
-        assertThat(actual.getStatus().getPhase(), is(EntandoDeploymentPhase.FAILED));
-        assertThat(actual.getStatus().findCurrentServerStatus().get().getEntandoControllerFailure().getFailedObjectName(),
-                is(entandoApp.getMetadata().getNamespace() + "/" + entandoApp.getMetadata().getName()));
 
-    }
-
-    @Test
-    void shouldUpdateStatusOfKnownCustomResource() {
-        //Given I have created an EntandoApp
-        final EntandoApp entandoApp = getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(newTestEntandoApp());
-        //When I update its status
-        getSimpleK8SClient().entandoResources().updateStatus(entandoApp, new WebServerStatus("my-webapp"));
-        final EntandoApp actual = getSimpleK8SClient().entandoResources()
-                .load(EntandoApp.class, entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName());
-        //The updated status reflects on the custom resource
-        assertTrue(actual.getStatus().forServerQualifiedBy("my-webapp").isPresent());
-
-    }
-
-    @Test
-    void shouldUpdatePhaseOfKnownCustomResource() {
-        //Given I have created an EntandoApp
-        final EntandoApp entandoApp = getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(newTestEntandoApp());
-        //When I update its status
-        getSimpleK8SClient().entandoResources().updatePhase(entandoApp, EntandoDeploymentPhase.SUCCESSFUL);
-        final EntandoApp actual = getSimpleK8SClient().entandoResources()
-                .load(EntandoApp.class, entandoApp.getMetadata().getNamespace(), entandoApp.getMetadata().getName());
-        assertThat(actual.getStatus().getPhase(), is(EntandoDeploymentPhase.SUCCESSFUL));
-
-    }
-
-    @Test
-    void shouldUpdateStatusOfOpaqueCustomResource() throws IOException {
-        //Given I have created an EntandoApp
-        final EntandoApp entandoApp = getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(newTestEntandoApp());
-        ObjectMapper mapper = new ObjectMapper();
-        //But it is represented in an opaque format
-        SerializedEntandoResource serializedEntandoResource = mapper
-                .readValue(mapper.writeValueAsBytes(entandoApp), SerializedEntandoResource.class);
-        serializedEntandoResource.setDefinition(
-                CustomResourceDefinitionContext.fromCrd(
-                        getFabric8Client().apiextensions().v1beta1().customResourceDefinitions().withName(entandoApp.getDefinitionName())
-                                .get()));
-        //When I update its status
-        getSimpleK8SClient().entandoResources().updateStatus(serializedEntandoResource, new WebServerStatus("my-webapp"));
-        //The updated status reflects on the custom resource
-        final SerializedEntandoResource actual = getSimpleK8SClient().entandoResources().reload(serializedEntandoResource);
-        assertTrue(actual.getStatus().forServerQualifiedBy("my-webapp").isPresent());
-
-    }
 
     @Test
     void shouldResolveKeycloakServerInTheSameNamespace() {
@@ -155,7 +98,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
                 .endMetadata()
                 .build();
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        ConfigMapBasedKeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the Keycloak in the SAME namespace as the EntadoApp.
@@ -243,7 +186,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
                 .addToData(NameUtils.INTERNAL_URL_KEY, "https://custom.com/auth")
                 .build());
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        ConfigMapBasedKeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the marked as the DEFAULT keycloak server
@@ -278,7 +221,7 @@ class DefaultEntandoResourceClientTest extends AbstractK8SIntegrationTest {
                 .build();
         getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(resource);
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        ConfigMapBasedKeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the marked as the DEFAULT keycloak server

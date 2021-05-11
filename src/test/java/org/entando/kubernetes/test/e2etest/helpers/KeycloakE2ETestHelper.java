@@ -34,7 +34,7 @@ import org.entando.kubernetes.controller.support.client.impl.integrationtesthelp
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
@@ -142,7 +142,7 @@ public class KeycloakE2ETestHelper extends
     }
 
     public Keycloak getKeycloakFor(EntandoBaseCustomResource<? extends KeycloakAwareSpec, EntandoCustomResourceStatus> requiresKeycloak) {
-        KeycloakConnectionConfig keycloak = entandoResourceClient
+        ConfigMapBasedKeycloakConnectionConfig keycloak = entandoResourceClient
                 .findKeycloak(requiresKeycloak, requiresKeycloak.getSpec()::getKeycloakToUse);
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         clientBuilder.register(EntandoJackson2Provider.class);

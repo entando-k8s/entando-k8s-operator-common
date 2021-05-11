@@ -39,7 +39,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.database.DatabaseDeploymentResult;
 import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
@@ -51,10 +50,11 @@ import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
-import org.entando.kubernetes.model.common.DbServerStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ExposedServerStatus;
+import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.entando.kubernetes.model.common.ResourceReference;
-import org.entando.kubernetes.model.common.WebServerStatus;
+import org.entando.kubernetes.test.common.DatabaseDeploymentResult;
 import org.entando.kubernetes.test.common.InProcessTestData;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -69,7 +69,7 @@ import org.mockito.stubbing.Answer;
 class CapabilityProviderTest implements InProcessTestData {
 
     @Mock
-    SimpleCapabilityClient client;
+    CapabilityClient client;
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
     private ProvidedCapability foundCapability;
     private static final String OPERATOR_NAMESPACE = "entando-operator";
@@ -86,9 +86,12 @@ class CapabilityProviderTest implements InProcessTestData {
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "default-mysql-dbms"));
         when(client.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
+        when(client.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
         //When I attempt to fulfill the capability
-        final ProvidedCapability providedCapability = new CapabilityProvider(client).provideCapability(forResource,
-                theCapabilityRequirement);
+        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client)
+                .provideCapability(forResource, theCapabilityRequirement);
+        final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
@@ -97,8 +100,6 @@ class CapabilityProviderTest implements InProcessTestData {
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(OPERATOR_NAMESPACE));
         assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms"));
-        assertThat(providedCapability.getAdminSecretReference().getNamespace().get(), is(OPERATOR_NAMESPACE));
-        assertThat(providedCapability.getAdminSecretReference().getName(), is("default-mysql-dbms"));
     }
 
     private Function<ProvidedCapability, ServiceResult> withServiceResult() {
@@ -179,9 +180,12 @@ class CapabilityProviderTest implements InProcessTestData {
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "mysql-dbms"));
         when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
+        when(client.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
         //When I attempt to fulfill the capability
-        final ProvidedCapability providedCapability = new CapabilityProvider(client).provideCapability(forResource,
+        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
+        final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
@@ -190,8 +194,6 @@ class CapabilityProviderTest implements InProcessTestData {
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), startsWith("mysql-dbms"));
-        assertThat(providedCapability.getAdminSecretReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
-        assertThat(providedCapability.getAdminSecretReference().getName(), startsWith("mysql-dbms"));
     }
 
     @Test
@@ -221,9 +223,12 @@ class CapabilityProviderTest implements InProcessTestData {
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "my-db"));
         when(client.providedCapabilityByName("my-db-namespace", "my-db"))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
+        when(client.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
         //When I attempt to fulfill the capability
-        final ProvidedCapability providedCapability = new CapabilityProvider(client).provideCapability(forResource,
+        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
+        final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
@@ -232,8 +237,6 @@ class CapabilityProviderTest implements InProcessTestData {
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is("my-db-namespace"));
         assertThat(providedCapability.getServiceReference().getName(), startsWith("my-db"));
-        assertThat(providedCapability.getAdminSecretReference().getNamespace().get(), is("my-db-namespace"));
-        assertThat(providedCapability.getAdminSecretReference().getName(), startsWith("my-db"));
     }
 
     @Test
@@ -261,9 +264,12 @@ class CapabilityProviderTest implements InProcessTestData {
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "default-mysql-dbms"));
         when(client.providedCapabilityByLabels(eq(forResource.getMetadata().getNamespace()), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
+        when(client.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
         //When I attempt to fulfill the capability
-        final ProvidedCapability providedCapability = new CapabilityProvider(client).provideCapability(forResource,
+        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
+        final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
@@ -272,8 +278,6 @@ class CapabilityProviderTest implements InProcessTestData {
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms"));
-        assertThat(providedCapability.getAdminSecretReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
-        assertThat(providedCapability.getAdminSecretReference().getName(), is("default-mysql-dbms"));
 
     }
 
@@ -291,9 +295,12 @@ class CapabilityProviderTest implements InProcessTestData {
                         forResource.getMetadata().getName() + "-db-asdf"));
         when(client.providedCapabilityByName(any(), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
+        when(client.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
         //When I attempt to fulfill the capability
-        final ProvidedCapability providedCapability = new CapabilityProvider(client).provideCapability(forResource,
+        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
+        final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
@@ -302,8 +309,6 @@ class CapabilityProviderTest implements InProcessTestData {
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), startsWith(forResource.getMetadata().getName() + "-db"));
-        assertThat(providedCapability.getAdminSecretReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
-        assertThat(providedCapability.getAdminSecretReference().getName(), startsWith(forResource.getMetadata().getName() + "-db"));
     }
 
     @Test
@@ -320,9 +325,12 @@ class CapabilityProviderTest implements InProcessTestData {
                         forResource.getMetadata().getName() + "-sso-asdfasdf"));
         when(client.providedCapabilityByName(any(), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
+        when(client.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
         //When I attempt to fulfill the capability
-        final ProvidedCapability providedCapability = new CapabilityProvider(client).provideCapability(forResource,
+        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
+        final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.SSO));
@@ -330,8 +338,6 @@ class CapabilityProviderTest implements InProcessTestData {
         assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.DEDICATED));
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), startsWith(forResource.getMetadata().getName() + "-sso"));
-        assertThat(providedCapability.getAdminSecretReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
-        assertThat(providedCapability.getAdminSecretReference().getName(), startsWith(forResource.getMetadata().getName() + "-sso"));
         assertThat(providedCapability.getIngressReference().get().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getIngressReference().get().getName(), startsWith(forResource.getMetadata().getName() + "-sso"));
     }
@@ -362,13 +368,13 @@ class CapabilityProviderTest implements InProcessTestData {
                     final ServiceResult serviceResult = serviceResultSupplier.apply(foundCapability);
                     AbstractServerStatus status;
                     if (serviceResult instanceof ExposedService) {
-                        status = new WebServerStatus("server");
-                        ((WebServerStatus) status).setIngressName(((ExposedService) serviceResult).getIngress().getMetadata().getName());
+                        status = new ExposedServerStatus("server");
+                        ((ExposedServerStatus) status)
+                                .setIngressName(((ExposedService) serviceResult).getIngress().getMetadata().getName());
                     } else {
-                        status = new DbServerStatus("server");
+                        status = new InternalServerStatus("server");
                     }
                     status.setServiceName(serviceResult.getService().getMetadata().getName());
-                    status.setAdminSecretName(adminSecretName);
                     foundCapability.getStatus().putServerStatus(status);
                     ((CapabilityRequirementWatcher) invocationOnMock.getArguments()[1]).eventReceived(Action.MODIFIED, foundCapability);
                 } catch (Exception e) {

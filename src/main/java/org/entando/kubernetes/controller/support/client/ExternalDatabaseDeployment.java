@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.database;
+package org.entando.kubernetes.controller.support.client;
 
 import static java.lang.String.format;
 

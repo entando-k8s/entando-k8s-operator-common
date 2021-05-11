@@ -14,20 +14,12 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.deployable;
+package org.entando.kubernetes.test.common;
 
+import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;
-import java.util.Optional;
-import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
 
-public interface Ingressing<T extends IngressingPathOnPort> {
+public interface DatabaseVariableInitializer {
 
-    List<T> getIngressingContainers();
-
-    String getIngressName();
-
-    String getIngressNamespace();
-
-    Optional<String> getQualifier();
-
+    void addEnvironmentVariables(List<EnvVar> vars);
 }

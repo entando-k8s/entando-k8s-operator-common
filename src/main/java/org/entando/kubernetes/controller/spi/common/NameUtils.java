@@ -77,11 +77,14 @@ public class NameUtils {
     }
 
     public static String databaseCompliantName(EntandoCustomResource resource, String nameQualifier, DbmsVendorConfig dbmsVendorConfig) {
-        String databaseName = NameUtils.snakeCaseOf(resource.getMetadata().getName()) + "_" + nameQualifier;
-        if (databaseName.length() > dbmsVendorConfig.getMaxNameLength()) {
-            databaseName = databaseName.substring(0, dbmsVendorConfig.getMaxNameLength() - 3) + randomNumeric(3);
+        StringBuilder idealDatabaseName = new StringBuilder(NameUtils.snakeCaseOf(resource.getMetadata().getName()));
+        if (nameQualifier != null) {
+            idealDatabaseName.append("_").append(NameUtils.snakeCaseOf(nameQualifier));
         }
-        return databaseName;
+        if (idealDatabaseName.length() > dbmsVendorConfig.getMaxNameLength()) {
+            return idealDatabaseName.substring(0, dbmsVendorConfig.getMaxNameLength() - 3) + randomNumeric(3);
+        }
+        return idealDatabaseName.toString();
 
     }
 

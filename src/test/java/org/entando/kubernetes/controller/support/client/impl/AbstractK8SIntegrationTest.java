@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -27,10 +28,10 @@ import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
+import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.DeletionWaiter;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
-import org.entando.kubernetes.controller.support.client.PodWaitingClient;
-import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.InterProcessTestData;
 import org.entando.kubernetes.test.common.PodBehavior;
@@ -40,11 +41,10 @@ import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractK8SIntegrationTest implements FluentTraversals, InterProcessTestData, PodBehavior {
 
+    protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     @Rule
     public KubernetesServer server = new KubernetesServer(false, true);
-    private DefaultSimpleK8SClient defaultSimpleK8SClient;
-    protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-    private KubernetesClient fabric8Client;
+    protected KubernetesClient fabric8Client;
 
     protected <R extends HasMetadata,
             L extends KubernetesResourceList<R>,
@@ -54,11 +54,6 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
         }
     }
 
-    @Override
-    public SimpleK8SClient<?> getClient() {
-        return getSimpleK8SClient();
-    }
-
     @AfterEach
     void teardown() {
         scheduler.shutdownNow();
@@ -66,12 +61,22 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
 
     protected abstract String[] getNamespacesToUse();
 
-    protected DefaultSimpleK8SClient getSimpleK8SClient() {
-        return defaultSimpleK8SClient;
-    }
-
     protected KubernetesClient getFabric8Client() {
         return this.fabric8Client;
+    }
+
+    protected void prepareCrdNameMap() {
+        this.fabric8Client.configMaps().inNamespace(fabric8Client.getNamespace()).createOrReplace(new ConfigMapBuilder()
+                .withNewMetadata()
+                .withNamespace(fabric8Client.getNamespace())
+                .withName(DefaultKubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP)
+                .endMetadata()
+                .addToData("EntandoApp.entando.org", "entandoapps.entando.org")
+                .addToData("EntandoPlugin.entando.org", "entandoplugins.entando.org")
+                .addToData("EntandoDatabaseService.entando.org", "entandodatabaseservices.entando.org")
+                .addToData("EntandoKeycloakServer.entando.org", "entandokeycloakservers.entando.org")
+                .build());
+        new DefaultKubernetesClientForControllers(this.fabric8Client).prepareConfig();
     }
 
     @BeforeEach
@@ -86,7 +91,5 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
                     .filter(s -> fabric8Client.namespaces().withName(s).get() == null)
                     .forEach(s -> TestFixturePreparation.createNamespace(fabric8Client, s));
         }
-        defaultSimpleK8SClient = new DefaultSimpleK8SClient(fabric8Client);
     }
-
 }

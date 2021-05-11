@@ -39,10 +39,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.PortSpec;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
@@ -98,6 +98,8 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         getClient().pods().getPodWatcherQueue().clear();
     }
 
+    protected abstract SimpleK8SClient<?> getClient();
+
     @Test
     void testBasicDeploymentWithAdditionalPorts() {
         //Given I have a controller that processes EntandoPlugins
@@ -108,7 +110,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
                     @Override
                     public List<PortSpec> getAdditionalPorts() {
@@ -149,7 +151,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
                     @Override
                     public Optional<Integer> getMaximumStartupTimeSeconds() {
@@ -208,7 +210,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer());
             }
 

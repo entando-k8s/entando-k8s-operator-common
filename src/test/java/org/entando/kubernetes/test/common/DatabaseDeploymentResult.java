@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.database;
+package org.entando.kubernetes.test.common;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;

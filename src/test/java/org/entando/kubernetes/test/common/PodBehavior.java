@@ -18,6 +18,7 @@ package org.entando.kubernetes.test.common;
 
 import static org.entando.kubernetes.controller.spi.common.PodResult.SUCCEEDED_PHASE;
 
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
@@ -30,13 +31,15 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
-import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
+import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.support.client.PodClient;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
+import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 
 public interface PodBehavior {
 
@@ -63,7 +66,7 @@ public interface PodBehavior {
         }
     }
 
-    default EntandoExecListener takeExecutionListenerFrom(PodClient podWaitingClient) {
+    default EntandoExecListener takeExecutionListenerFrom(KubernetesClientForControllers podWaitingClient) {
         try {
             return podWaitingClient.getExecListenerHolder().take();
         } catch (InterruptedException e) {
@@ -115,8 +118,8 @@ public interface PodBehavior {
                         .endState().build()).collect(Collectors.toList());
     }
 
-    default Pod podWithStatus(PodStatus status, String namespace) {
-        return getClient().pods().start(new PodBuilder().withNewMetadata()
+    default Pod podWithStatus(PodClient client, PodStatus status, String namespace) {
+        return client.start(new PodBuilder().withNewMetadata()
                 .withName("pod-" + RandomStringUtils.randomAlphanumeric(8))
                 .withNamespace(namespace)
                 .endMetadata()
@@ -125,6 +128,5 @@ public interface PodBehavior {
                 .withStatus(status).build());
     }
 
-    SimpleK8SClient<?> getClient();
 
 }

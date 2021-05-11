@@ -26,6 +26,7 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentStatusBuilder;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -34,7 +35,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
-class DefaultDeploymentClientTest extends AbstractK8SIntegrationTest {
+class DefaultDeploymentClientTest extends AbstractSupportK8SIntegrationTest {
 
     private final EntandoApp customResource = newTestEntandoApp();
 

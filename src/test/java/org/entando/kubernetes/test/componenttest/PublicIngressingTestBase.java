@@ -34,13 +34,13 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
@@ -99,8 +99,9 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
         scheduler.shutdownNow();
         getClient().pods().getPodWatcherQueue().clear();
-
     }
+
+    protected abstract SimpleK8SClient<?> getClient();
 
     @BeforeEach
     void setIngressClass() {
@@ -117,7 +118,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
             @Override
             protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin plugin,
                     DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SamplePublicIngressingDbAwareDeployable<>(plugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
@@ -185,7 +186,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
             @Override
             protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SamplePublicIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult,
                         keycloakConnectionConfig) {
                     @Override
@@ -277,11 +278,11 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
     private static class EntandoPluginSampleDeployableContainer extends SampleDeployableContainer<EntandoPluginSpec> implements
             KeycloakAwareContainerBase {
 
-        private final KeycloakConnectionConfig keycloakConnectionConfig;
+        private final ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig;
 
         public EntandoPluginSampleDeployableContainer(
                 EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource,
-                KeycloakConnectionConfig keycloakConnectionConfig,
+                ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig,
                 DatabaseServiceResult databaseServiceResult) {
             super(entandoResource, databaseServiceResult);
             this.keycloakConnectionConfig = keycloakConnectionConfig;
@@ -303,7 +304,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         }
 
         @Override
-        public KeycloakConnectionConfig getKeycloakConnectionConfig() {
+        public ConfigMapBasedKeycloakConnectionConfig getKeycloakConnectionConfig() {
             return keycloakConnectionConfig;
         }
 

@@ -18,14 +18,14 @@ package org.entando.kubernetes.controller.spi.deployable;
 
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.model.common.KeycloakToUse;
 
 public interface PublicIngressingDeployable<T extends ExposedDeploymentResult<T>> extends IngressingDeployable<T>, KeycloakPreference {
 
-    KeycloakConnectionConfig getKeycloakConnectionConfig();
+    ConfigMapBasedKeycloakConnectionConfig getKeycloakConnectionConfig();
 
     Optional<KeycloakToUse> getPreferredKeycloakToUse();
 

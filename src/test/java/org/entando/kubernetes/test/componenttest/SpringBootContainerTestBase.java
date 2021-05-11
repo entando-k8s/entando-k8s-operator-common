@@ -35,7 +35,7 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProp
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
@@ -43,7 +43,9 @@ import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentRes
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
@@ -100,7 +102,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
             @Override
             protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
             }
         };
@@ -142,7 +144,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
             @Override
             protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
+                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
             }
         };
@@ -191,6 +193,8 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         assertThat(ingress.getSpec().getTls().get(0).getSecretName(), Matchers.is(CertificateSecretHelper.TEST_TLS_SECRET));
 
     }
+
+    protected abstract SimpleK8SClient<?> getClient();
 
     protected abstract SimpleKeycloakClient getKeycloakClient();
 

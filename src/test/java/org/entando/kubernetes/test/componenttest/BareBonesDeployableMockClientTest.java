@@ -16,7 +16,9 @@
 
 package org.entando.kubernetes.test.componenttest;
 
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.junit.jupiter.api.AfterEach;
@@ -47,7 +49,7 @@ public class BareBonesDeployableMockClientTest extends BareBonesDeployableTestBa
     }
 
     @Override
-    public SimpleK8SClientDouble getClient() {
+    public SimpleK8SClient<?> getClient() {
         return simpleK8SClientDouble;
     }
 

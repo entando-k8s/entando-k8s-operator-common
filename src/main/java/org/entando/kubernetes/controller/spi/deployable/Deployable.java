@@ -38,7 +38,10 @@ public interface Deployable<T extends ServiceDeploymentResult<T>> {
         return Optional.empty();
     }
 
-    String getNameQualifier();
+    /**
+     * Optional qualifying string for scenarios where a single Custom Resource results in more than one deployment
+     */
+    Optional<String> getQualifier();
 
     @SerializeByReference
     EntandoCustomResource getCustomResource();

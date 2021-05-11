@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.is;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
+import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -30,7 +31,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
-class DefaultServiceAccountClientTest extends AbstractK8SIntegrationTest {
+class DefaultServiceAccountClientTest extends AbstractSupportK8SIntegrationTest {
 
     private final EntandoApp entandoApp = newTestEntandoApp();
 

@@ -114,4 +114,7 @@ public class ReflectionUtil {
         return null;
     }
 
+    public static boolean implementsKnownInterface(Object value) {
+        return KNOWN_INTERFACES.stream().anyMatch(c -> c.isInstance(value));
+    }
 }

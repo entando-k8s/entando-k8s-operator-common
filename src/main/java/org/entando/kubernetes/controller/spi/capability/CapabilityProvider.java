@@ -30,17 +30,21 @@ import org.entando.kubernetes.model.common.ResourceReference;
 
 public class CapabilityProvider {
 
-    private final SimpleCapabilityClient client;
+    private final CapabilityClient client;
 
-    public CapabilityProvider(SimpleCapabilityClient client) {
+    public CapabilityProvider(CapabilityClient client) {
         this.client = client;
     }
 
-    public ProvidedCapability provideCapability(HasMetadata forResource, CapabilityRequirement capabilityRequirement) {
+    public CapabilityProvisioningResult provideCapability(HasMetadata forResource, CapabilityRequirement capabilityRequirement) {
         final CapabilityScope requirementScope = capabilityRequirement.getScope().orElse(CapabilityScope.NAMESPACE);
         Optional<ProvidedCapability> match = findCapability(forResource, capabilityRequirement, requirementScope);
         match.ifPresent(c -> validateCapabilityCriteria(capabilityRequirement, requirementScope, c));
-        return match.orElse(makeNewCapabilityAvailable(forResource, capabilityRequirement, requirementScope));
+        return loadProvisioningResult(match.orElse(makeNewCapabilityAvailable(forResource, capabilityRequirement, requirementScope)));
+    }
+
+    public CapabilityProvisioningResult loadProvisioningResult(ProvidedCapability providedCapability) {
+        return client.buildCapabilityProvisioningResult(providedCapability);
     }
 
     private void validateCapabilityCriteria(CapabilityRequirement capabilityRequirement, CapabilityScope requirementScope,

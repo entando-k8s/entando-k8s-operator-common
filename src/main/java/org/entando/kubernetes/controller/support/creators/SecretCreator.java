@@ -82,7 +82,7 @@ public class SecretCreator extends AbstractK8SResourceCreator {
     }
 
     private void createSecret(SecretClient client, Secret secret) {
-        ObjectMeta metadata = fromCustomResource(true, secret.getMetadata().getName());
+        ObjectMeta metadata = fromCustomResource(secret.getMetadata().getName());
         ofNullable(secret.getMetadata().getLabels()).ifPresent(map -> metadata.getLabels().putAll(map));
         secret.setMetadata(metadata);
         client.createSecretIfAbsent(entandoCustomResource, secret);

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.test.common;
 
 import static java.lang.String.format;
 
@@ -27,15 +27,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.entando.kubernetes.controller.spi.client.CustomResourceClient;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
-import org.entando.kubernetes.controller.spi.database.DatabaseDeployable;
-import org.entando.kubernetes.controller.spi.database.DatabaseDeploymentResult;
-import org.entando.kubernetes.controller.spi.database.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -44,6 +41,8 @@ import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SCli
 import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.controller.support.controller.AutoExit;
+import org.entando.kubernetes.controller.support.controller.EntandoControllerException;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;

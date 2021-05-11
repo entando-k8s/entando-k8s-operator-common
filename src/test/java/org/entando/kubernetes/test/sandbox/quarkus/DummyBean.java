@@ -297,8 +297,8 @@ public class DummyBean {
         }
 
         @Override
-        public String getNameQualifier() {
-            return "server";
+        public Optional<String> getQualifier() {
+            return Optional.of("server");
         }
 
         @Override

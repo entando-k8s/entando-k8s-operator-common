@@ -25,6 +25,7 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -33,7 +34,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
-class DefaultSecretClientTest extends AbstractK8SIntegrationTest {
+class DefaultSecretClientTest extends AbstractSupportK8SIntegrationTest {
 
     private final EntandoApp entandoApp = newTestEntandoApp();
 
@@ -54,7 +55,7 @@ class DefaultSecretClientTest extends AbstractK8SIntegrationTest {
         //Then it has the original Secret remains in tact
         final Secret secondSecret = getSimpleK8SClient().secrets()
                 .loadSecret(entandoApp, "my-local-secret");
-        assertThat(secondSecret.getData().get("test"), is(Base64.getEncoder().encodeToString("123".getBytes(StandardCharsets.UTF_8))));
+        assertThat(new String(Base64.getDecoder().decode(secondSecret.getData().get("test")),StandardCharsets.UTF_8), is("123"));
     }
 
     @Test

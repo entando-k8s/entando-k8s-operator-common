@@ -20,7 +20,6 @@ import static java.util.Collections.singletonMap;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaimStatus;
 import io.fabric8.kubernetes.api.model.Quantity;
 import java.util.Collections;
 import java.util.List;
@@ -57,10 +56,10 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
 
     }
 
-    public List<PersistentVolumeClaimStatus> reloadPersistentVolumeClaims(PersistentVolumeClaimClient k8sClient) {
+    public List<PersistentVolumeClaim> reloadPersistentVolumeClaims(PersistentVolumeClaimClient k8sClient) {
         return Optional.ofNullable(persistentVolumeClaims).orElse(Collections.emptyList()).stream()
                 .map(persistentVolumeClaim -> k8sClient.loadPersistentVolumeClaim(entandoCustomResource,
-                        persistentVolumeClaim.getMetadata().getName()).getStatus())
+                        persistentVolumeClaim.getMetadata().getName()))
                 .collect(Collectors.toList());
     }
 
@@ -68,8 +67,8 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
         StorageCalculator resourceCalculator = buildStorageCalculator(container);
         return new PersistentVolumeClaimBuilder()
                 .withMetadata(fromCustomResource(!EntandoOperatorConfig.disablePvcGarbageCollection(),
-                        resolveName(container.getNameQualifier(), "-pvc"),
-                        deployable.getNameQualifier()))
+                        resolveName(container.getNameQualifier(), "pvc"),
+                        deployable.getQualifier().orElse(null)))
                 .withNewSpec().withAccessModes(container.getAccessMode().orElse("ReadWriteOnce"))
                 .withStorageClassName(container.getStorageClass().orElse(null))
                 .withNewResources()

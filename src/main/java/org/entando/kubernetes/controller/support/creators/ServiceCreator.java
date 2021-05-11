@@ -50,12 +50,13 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
     }
 
     private Service newService(Deployable<?> deployable) {
-        ObjectMeta objectMeta = fromCustomResource(true, resolveName(deployable.getNameQualifier(), "-service"),
-                deployable.getNameQualifier());
+        final String nameQualifier = deployable.getQualifier().orElse(null);
+        ObjectMeta objectMeta = fromCustomResource(true, resolveName(nameQualifier, "service"),
+                nameQualifier);
         return new ServiceBuilder()
                 .withMetadata(objectMeta)
                 .withNewSpec()
-                .withSelector(labelsFromResource(deployable.getNameQualifier()))
+                .withSelector(labelsFromResource(nameQualifier))
                 .withType("ClusterIP")
                 .withPorts(buildPorts(deployable))
                 .endSpec()
@@ -91,7 +92,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
 
     public Service newDelegatingService(ServiceClient services, Ingressing<?> ingressingDeployable) {
         ObjectMeta metaData = new ObjectMetaBuilder()
-                .withLabels(labelsFromResource(ingressingDeployable.getNameQualifier()))
+                .withLabels(labelsFromResource(ingressingDeployable.getQualifier().orElse(null)))
                 .withName(ingressingDeployable.getIngressName() + "-to-" + primaryService.getMetadata().getName())
                 .withNamespace(ingressingDeployable.getIngressNamespace())
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(this.entandoCustomResource)).build();

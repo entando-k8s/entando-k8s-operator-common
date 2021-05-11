@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.client;
+package org.entando.kubernetes.controller.spi.client.impl;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;

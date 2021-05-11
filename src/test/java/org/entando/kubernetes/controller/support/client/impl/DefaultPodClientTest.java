@@ -29,24 +29,21 @@ import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
-class DefaultPodClientTest extends AbstractK8SIntegrationTest {
+class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
 
     private final EntandoApp entandoApp = newTestEntandoApp();
 
@@ -179,52 +176,7 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
                 is(notNullValue()));
     }
 
-    @Test
-    @Disabled("Currently used for optimization only")
-    void testProbes() throws InterruptedException {
-        //Given I have started a new Pod
-        final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
-                .withNewMetadata()
-                .withName("my-pod")
-                .withNamespace(entandoApp.getMetadata().getNamespace())
-                .addToLabels("pod-label", "123")
-                .endMetadata()
-                .withNewSpec()
-                .addNewContainer()
-                .withImage("centos/nginx-116-centos7")
-                .withName("nginx")
-                .withCommand("/usr/libexec/s2i/run")
-                //                .withNewStartupProbe()
-                //                .withNewExec()
-                //                .withCommand("cat", "/tmp/started")
-                //                .endExec()
-                //                .withPeriodSeconds(5)
-                //                .withFailureThreshold(10)
-                //                .endStartupProbe()
-                .withNewLivenessProbe()
-                .withNewExec()
-                .withCommand("cat", "/tmp/live")
-                .endExec()
-                .withInitialDelaySeconds(120)
-                .withPeriodSeconds(5)
-                .withFailureThreshold(1)
-                .withSuccessThreshold(1)
-                .endLivenessProbe()
-                .withNewReadinessProbe()
-                .withNewExec()
-                .withCommand("cat", "/tmp/ready")
-                .endExec()
-                .withPeriodSeconds(5)
-                .endReadinessProbe()
-                .endContainer()
-                .endSpec()
-                .build());
-        //        getSimpleK8SClient().pods().executeOnPod(startedPod, "nginx", 5, "touch /tmp/started");
-        getSimpleK8SClient().pods().executeOnPod(startedPod, "nginx", 5, "touch /tmp/ready");
-        getSimpleK8SClient().pods().executeOnPod(startedPod, "nginx", 5, "touch /tmp/live");
-        getSimpleK8SClient().pods().executeOnPod(startedPod, "nginx", 5, "rm /tmp/live");
-        assertThat(startedPod, is(notNullValue()));
-    }
+
 
     @Test
     void shouldRunPodToCompletion() {
@@ -259,32 +211,7 @@ class DefaultPodClientTest extends AbstractK8SIntegrationTest {
         assertThat(PodResult.of(actual).hasFailed(), is(false));
     }
 
-    @Test
-    @DisabledIfSystemProperty(named = EntandoOperatorTestConfig.ENTANDO_TEST_EMULATE_KUBERNETES, matches = "true")
-    void shouldExecuteCommandOnPodAndWait() throws IOException {
-        //There is no way to emulate this "exec" fails on the Mock server
-        //Given I have started a new Pod
-        final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
-                .withNewMetadata()
-                .withName("my-pod")
-                .withNamespace(entandoApp.getMetadata().getNamespace())
-                .addToLabels("pod-label", "123")
-                .endMetadata()
-                .withNewSpec()
-                .addNewContainer()
-                .withImage("centos/nginx-116-centos7")
-                .withName("nginx")
-                .withCommand("/usr/libexec/s2i/run")
-                .endContainer()
-                .endSpec()
-                .build());
-        //When I wait for the pod
-        final Pod pod = getSimpleK8SClient().pods().waitForPod(entandoApp.getMetadata().getNamespace(), "pod-label", "123");
-        final EntandoExecListener execWatch = getSimpleK8SClient().pods().executeOnPod(pod, "nginx", 10, "echo 'hello world'");
-        //Then the current thread only proceeds once the pod is ready
-        final List<String> lines = execWatch.getOutput();
-        assertThat(lines, hasItem("hello world"));
-    }
+
 
     @Override
     protected String[] getNamespacesToUse() {

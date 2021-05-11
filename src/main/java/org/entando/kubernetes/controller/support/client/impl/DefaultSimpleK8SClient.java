@@ -18,6 +18,8 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.lang.reflect.Proxy;
+import org.entando.kubernetes.controller.spi.capability.CapabilityClient;
+import org.entando.kubernetes.controller.spi.capability.impl.DefaultCapabilityClient;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.IngressClient;
@@ -39,14 +41,20 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     private IngressClient ingressClient;
     private PersistentVolumeClaimClient persistentVolumeClaimClient;
     private ServiceAccountClient serviceAccountClient;
+    private CapabilityClient capabilityClient;
 
     public DefaultSimpleK8SClient(KubernetesClient kubernetesClient) {
         this.kubernetesClient = kubernetesClient;
     }
-
+    @Override
+    public CapabilityClient capabilities(){
+        if(this.capabilityClient==null){
+            this.capabilityClient=intercepted(new DefaultCapabilityClient(kubernetesClient));
+        }
+        return this.capabilityClient;
+    }
     @Override
     public ServiceClient services() {
-
         if (this.serviceClient == null) {
             this.serviceClient = intercepted(new DefaultServiceClient(kubernetesClient));
 

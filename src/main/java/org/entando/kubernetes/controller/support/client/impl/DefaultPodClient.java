@@ -21,7 +21,6 @@ import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
-import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.Map;
@@ -37,16 +36,11 @@ public class DefaultPodClient implements PodClient {
 
     private final KubernetesClient client;
     private BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
-    private BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
 
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;
         //HACK for GraalVM
         KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
-    }
-
-    public BlockingQueue<EntandoExecListener> getExecListenerHolder() {
-        return execListenerHolder;
     }
 
     @Override
@@ -81,13 +75,6 @@ public class DefaultPodClient implements PodClient {
     @Override
     public void deletePod(Pod pod) {
         this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName()).delete();
-    }
-
-    @Override
-    public EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
-        PodResource<Pod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
-                .withName(pod.getMetadata().getName());
-        return executeAndWait(podResource, containerName, timeoutSeconds, commands);
     }
 
     @Override
