@@ -21,4 +21,6 @@ public interface ExternalService {
     String getHost();
 
     int getPort();
+
+    boolean getCreateDelegateService();
 }

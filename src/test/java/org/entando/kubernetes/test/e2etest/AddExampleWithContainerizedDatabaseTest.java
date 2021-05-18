@@ -29,20 +29,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
-import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
-import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixtureRequest;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorComplianceMode;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
-import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.examples.SampleIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
+import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
+import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixtureRequest;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
@@ -67,13 +67,13 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
 
     public static final String TEST_PLUGIN_NAME = EntandoPluginE2ETestHelper.TEST_PLUGIN_NAME + "-name-longer-than-32";
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
-    private final SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller =
+    private final SampleController<EntandoPluginSpec, EntandoPlugin, DefaultExposedDeploymentResult> controller =
             new SampleController<>(
                     helper.getClient()) {
                 @Override
-                protected Deployable<SampleExposedDeploymentResult> createDeployable(
+                protected Deployable<DefaultExposedDeploymentResult> createDeployable(
                         EntandoPlugin newEntandoPlugin,
-                        DatabaseServiceResult databaseServiceResult, ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
+                        DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
                     return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult) {
                         @Override
                         protected List<DeployableContainer> createContainers(

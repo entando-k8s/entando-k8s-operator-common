@@ -26,13 +26,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.impl.DefaultIngressClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixtureRequest;
-import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.controller.ControllerExecutor;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
@@ -125,7 +125,8 @@ public class E2ETestHelperBase<R extends EntandoBaseCustomResource<?, EntandoCus
     public void listenAndRespondWithStartupEvent(String namespace, OnStartupMethod onStartupMethod) {
         startupEventFiringListener.listen(namespace, onStartupMethod);
     }
-    public void listenAndRun(String namespace,  Runnable runnable) {
+
+    public void listenAndRun(String namespace, Runnable runnable) {
         startupEventFiringListener.listen(namespace, runnable);
     }
 

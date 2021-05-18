@@ -33,6 +33,7 @@ import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Ingressing;
+import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -90,7 +91,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
         return this.primaryService.getStatus();
     }
 
-    public Service newDelegatingService(ServiceClient services, Ingressing<?> ingressingDeployable) {
+    public Service newDelegatingService(ServiceClient services, IngressingDeployable<?> ingressingDeployable) {
         ObjectMeta metaData = new ObjectMetaBuilder()
                 .withLabels(labelsFromResource(ingressingDeployable.getQualifier().orElse(null)))
                 .withName(ingressingDeployable.getIngressName() + "-to-" + primaryService.getMetadata().getName())

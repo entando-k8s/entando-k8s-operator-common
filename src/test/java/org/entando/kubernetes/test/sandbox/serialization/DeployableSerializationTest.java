@@ -62,9 +62,11 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 @EnableRuleMigrationSupport
 class DeployableSerializationTest extends AbstractSupportK8SIntegrationTest {
+
     {
         System.setProperty(EntandoOperatorTestConfig.ENTANDO_TEST_EMULATE_KUBERNETES, "true");
     }
+
     @BeforeEach
     public void enableQueueing() {
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
@@ -121,7 +123,7 @@ class DeployableSerializationTest extends AbstractSupportK8SIntegrationTest {
         verifyDeployableContainer(serializedDeployable);
 
         assertThat(databaseDeploymentResult.getDatabaseName(), is("my_app_db"));
-        assertThat(databaseDeploymentResult.getDatabaseSecretName(), is("my-app-db-admin-secret"));
+        assertThat(databaseDeploymentResult.getAdminSecretName(), is("my-app-db-admin-secret"));
         assertThat(databaseDeploymentResult.getInternalServiceHostname(), is("my-app-db-service.my-app-namespace.svc.cluster.local"));
         assertThat(databaseDeploymentResult.getService().getMetadata().getName(), is("my-app-db-service"));
         final ServiceSpec spec = databaseDeploymentResult.getService().getSpec();

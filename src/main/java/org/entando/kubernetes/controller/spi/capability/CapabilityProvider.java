@@ -21,6 +21,8 @@ import static java.lang.String.format;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.Watch;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
@@ -91,11 +93,24 @@ public class CapabilityProvider {
                 return client.providedCapabilityByLabels(capabilityRequirement.getSelector());
             case NAMESPACE:
                 return client
-                        .providedCapabilityByLabels(forResource.getMetadata().getNamespace(), capabilityRequirement.getCapabilityLabels());
+                        .providedCapabilityByLabels(forResource.getMetadata().getNamespace(),
+                                determineCapabilityLabels(capabilityRequirement));
             case CLUSTER:
             default:
-                return client.providedCapabilityByLabels(capabilityRequirement.getCapabilityLabels());
+                return client.providedCapabilityByLabels(determineCapabilityLabels(capabilityRequirement));
         }
+    }
+
+    private Map<String, String> determineCapabilityLabels(CapabilityRequirement capabilityRequirement) {
+        Map<String, String> result = new HashMap<>();
+        result.put(ProvidedCapability.CAPABILITY_LABEL_NAME, capabilityRequirement.getCapability().getCamelCaseName());
+        //In the absence of implementation and scope, it is the Controller's responsibility to make the decions and populate the
+        // ProvidedCapability's labels
+        capabilityRequirement.getImplementation().ifPresent(impl -> result.put(ProvidedCapability.IMPLEMENTATION_LABEL_NAME,
+                impl.getCamelCaseName()));
+        capabilityRequirement.getScope().ifPresent(scope -> result.put(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME,
+                scope.getCamelCaseName()));
+        return result;
     }
 
     private ProvidedCapability makeNewCapabilityAvailable(HasMetadata forResource, CapabilityRequirement requiredCapability,
@@ -128,13 +143,14 @@ public class CapabilityProvider {
                 break;
             case NAMESPACE:
                 metaBuilder = metaBuilder.withNamespace(forResource.getMetadata().getNamespace())
-                        .withName(calculateDefaultName(capabilityRequirement));
+                        .withName(calculateDefaultName(capabilityRequirement) + "-in-namespace");
                 break;
             case CLUSTER:
             default:
                 metaBuilder = metaBuilder.withNamespace(client.getNamespace())
-                        .withName(calculateDefaultName(capabilityRequirement));
+                        .withName(calculateDefaultName(capabilityRequirement) + "-in-cluster");
         }
+        metaBuilder.withLabels(determineCapabilityLabels(capabilityRequirement));
         return new ProvidedCapability(metaBuilder.build(), capabilityRequirement);
     }
 

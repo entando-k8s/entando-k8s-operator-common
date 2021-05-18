@@ -24,10 +24,10 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -63,7 +63,7 @@ public class KeycloakClientCreator {
     }
 
     private void login(SimpleKeycloakClient client, Deployable<?> deployable) {
-        ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig;
+        KeycloakConnectionConfig keycloakConnectionConfig;
         if (deployable instanceof PublicIngressingDeployable) {
             keycloakConnectionConfig = ((PublicIngressingDeployable<?>) deployable).getKeycloakConnectionConfig();
         } else {

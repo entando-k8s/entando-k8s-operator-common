@@ -26,6 +26,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -33,7 +34,7 @@ import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoIngressingDeploymentSpec;
 
 public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngressingDeploymentSpec> implements
-        IngressingDeployableBase<SampleExposedDeploymentResult>, DbAwareDeployable<SampleExposedDeploymentResult> {
+        IngressingDeployableBase<DefaultExposedDeploymentResult>, DbAwareDeployable<DefaultExposedDeploymentResult> {
 
     protected final EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource;
     protected final List<DeployableContainer> containers;
@@ -70,8 +71,8 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
     }
 
     @Override
-    public SampleExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new SampleExposedDeploymentResult(pod, service, ingress);
+    public DefaultExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+        return new DefaultExposedDeploymentResult(pod, service, ingress);
     }
 
     @Override

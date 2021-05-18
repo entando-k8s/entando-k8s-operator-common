@@ -44,9 +44,9 @@ public interface DbAware extends DeployableContainer {
                     String schemaName = NameUtils.databaseCompliantName(
                             entandoBaseCustomResource,
                             schemaQualifier,
-                            databaseServiceResult.getVendor().getVendorConfig()
+                            databaseServiceResult.getVendor()
                     );
-                    return new DatabaseSchemaConnectionInfo(databaseServiceResult,
+                    return new DefaultDatabaseSchemaConnectionInfo(databaseServiceResult,
                             schemaName,
                             SecretUtils.generateSecret(
                                     entandoBaseCustomResource,

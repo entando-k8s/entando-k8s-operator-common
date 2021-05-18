@@ -55,7 +55,7 @@ class DefaultSecretClientTest extends AbstractSupportK8SIntegrationTest {
         //Then it has the original Secret remains in tact
         final Secret secondSecret = getSimpleK8SClient().secrets()
                 .loadSecret(entandoApp, "my-local-secret");
-        assertThat(new String(Base64.getDecoder().decode(secondSecret.getData().get("test")),StandardCharsets.UTF_8), is("123"));
+        assertThat(new String(Base64.getDecoder().decode(secondSecret.getData().get("test")), StandardCharsets.UTF_8), is("123"));
     }
 
     @Test

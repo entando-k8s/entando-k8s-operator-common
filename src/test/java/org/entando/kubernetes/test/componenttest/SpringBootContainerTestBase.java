@@ -35,15 +35,14 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProp
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
-import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
-import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
+import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -78,7 +77,7 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
     public static final String SAMPLE_NAME = "sample-name";
     public static final String SAMPLE_NAME_DB = NameUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
+    private SampleController<EntandoPluginSpec, EntandoPlugin, DefaultExposedDeploymentResult> controller;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
     @BeforeEach
@@ -100,9 +99,9 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         //Given I have a controller that processes EntandoPlugins
         controller = new SampleController<>(getClient(), getKeycloakClient()) {
             @Override
-            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<DefaultExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
             }
         };
@@ -142,9 +141,9 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         //Given I have a controller that processes EntandoPlugins
         controller = new SampleController<>(getClient(), getKeycloakClient()) {
             @Override
-            protected Deployable<SampleExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
+            protected Deployable<DefaultExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
             }
         };

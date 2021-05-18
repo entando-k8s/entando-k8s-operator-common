@@ -90,9 +90,9 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     public List<EnvVar> getDatabaseConnectionVariables() {
         List<EnvVar> vars = new ArrayList<>();
         DatabaseSchemaConnectionInfo databseSchemaConnectionInfo = databaseSchemaInfo.get(0);
-        vars.add(new EnvVar("DB_ADDR", databseSchemaConnectionInfo.getInternalServiceHostname(), null));
-        vars.add(new EnvVar("DB_PORT", databseSchemaConnectionInfo.getPort(), null));
-        vars.add(new EnvVar("DB_DATABASE", databseSchemaConnectionInfo.getDatabase(), null));
+        vars.add(new EnvVar("DB_ADDR", databseSchemaConnectionInfo.getDatabaseServiceResult().getInternalServiceHostname(), null));
+        vars.add(new EnvVar("DB_PORT", databseSchemaConnectionInfo.getDatabaseServiceResult().getPort(), null));
+        vars.add(new EnvVar("DB_DATABASE", databseSchemaConnectionInfo.getDatabaseServiceResult().getDatabaseName(), null));
         vars.add(new EnvVar("DB_PASSWORD", null, databseSchemaConnectionInfo.getPasswordRef()));
         vars.add(new EnvVar("DB_USER", null, databseSchemaConnectionInfo.getUsernameRef()));
         vars.add(new EnvVar("DB_VENDOR", determineKeycloaksNonStandardDbVendorName(databseSchemaConnectionInfo), null));
@@ -106,8 +106,9 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     }
 
     private String determineKeycloaksNonStandardDbVendorName(DatabaseSchemaConnectionInfo databseSchemaConnectionInfo) {
-        return FluentTernary.use("postgres").when(databseSchemaConnectionInfo.getVendor().getVendorConfig() == DbmsVendorConfig.POSTGRESQL)
-                .orElse(databseSchemaConnectionInfo.getVendor().getVendorConfig().getName());
+        return FluentTernary.use("postgres")
+                .when(databseSchemaConnectionInfo.getDatabaseServiceResult().getVendor() == DbmsVendorConfig.POSTGRESQL)
+                .orElse(databseSchemaConnectionInfo.getDatabaseServiceResult().getVendor().getName());
     }
 
     @Override

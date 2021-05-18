@@ -19,33 +19,44 @@ package org.entando.kubernetes.test.common;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
+import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
 //TODO move to org.entando.kubernetes.controller.support
 public class DatabaseDeploymentResult extends AbstractServiceResult implements DatabaseServiceResult,
         ServiceDeploymentResult<DatabaseDeploymentResult> {
 
     /*migrate to DbmsVendorConfig*/
-    private final DbmsDockerVendorStrategy vendor;
+    private final DbmsVendorConfig vendor;
     private final String databaseName;
-    private final String databaseSecretName;
     private final Pod pod;
     private AbstractServerStatus status;
 
-    public DatabaseDeploymentResult(Service service, DbmsDockerVendorStrategy vendor, String databaseName, String databaseSecretName,
+    public DatabaseDeploymentResult(Service service, DbmsVendorConfig vendor, String databaseName, String databaseSecretName,
             Pod pod) {
-        super(service);
+        super(service, databaseSecretName);
         this.pod = pod;
         this.vendor = vendor;
         this.databaseName = databaseName;
-        this.databaseSecretName = databaseSecretName;
+    }
+
+    public DatabaseDeploymentResult(Service service, EntandoDatabaseService entandoDatabaseService) {
+        super(service, entandoDatabaseService.getSpec().getSecretName()
+                .orElse(entandoDatabaseService.getMetadata().getName() + "-db-admin-secret"));
+        this.pod = null;
+        this.vendor = DbmsVendorConfig.valueOf(entandoDatabaseService.getSpec().getDbms().name());
+        this.databaseName = entandoDatabaseService.getSpec().getDatabaseName()
+                .orElse(NameUtils.databaseCompliantName(entandoDatabaseService, NameUtils.DB_NAME_QUALIFIER, vendor));
     }
 
     @Override
@@ -59,17 +70,12 @@ public class DatabaseDeploymentResult extends AbstractServiceResult implements D
     }
 
     @Override
-    public String getDatabaseSecretName() {
-        return databaseSecretName;
-    }
-
-    @Override
     public String getDatabaseName() {
         return databaseName;
     }
 
     @Override
-    public DbmsDockerVendorStrategy getVendor() {
+    public DbmsVendorConfig getVendor() {
         return vendor;
     }
 
@@ -79,6 +85,9 @@ public class DatabaseDeploymentResult extends AbstractServiceResult implements D
 
     @Override
     public DatabaseDeploymentResult withStatus(AbstractServerStatus status) {
+        status.setAdminSecretName(getAdminSecretName());
+        status.putDerivedDeploymentParameter(ProvidedDatabaseCapability.DBMS_VENDOR_PARAMETER, getVendor().name().toLowerCase(Locale.ROOT));
+        status.putDerivedDeploymentParameter(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, getDatabaseName());
         this.status = status;
         return this;
     }

@@ -38,7 +38,10 @@ public interface KubernetesClientForControllers {
 
     String ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME = "entando-operator-config";
     AtomicBoolean ENQUEUE_POD_WATCH_HOLDERS = new AtomicBoolean(false);
+
     void prepareConfig();
+
+    String getNamespace();
 
     <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
 

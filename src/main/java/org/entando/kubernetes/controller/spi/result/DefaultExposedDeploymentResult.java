@@ -14,18 +14,15 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.deployable;
+package org.entando.kubernetes.controller.spi.result;
 
-import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.spi.container.DbAware;
-import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
 
-public interface DbAwareDeployable<T extends ServiceDeploymentResult<T>> extends Deployable<T> {
+public class DefaultExposedDeploymentResult extends ExposedDeploymentResult<DefaultExposedDeploymentResult> {
 
-    default boolean isExpectingDatabaseSchemas() {
-        return getContainers().stream().filter(DbAware.class::isInstance)
-                .map(DbAware.class::cast).collect(Collectors.toList()).stream()
-                .anyMatch(dbAware -> !dbAware.getSchemaConnectionInfo().isEmpty());
+    public DefaultExposedDeploymentResult(Pod pod, Service service, Ingress ingress) {
+        super(pod, service, ingress);
     }
-
 }

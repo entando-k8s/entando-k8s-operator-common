@@ -38,13 +38,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
-import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
+import org.entando.kubernetes.model.capability.CapabilityRequirementBuilder;
 import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
@@ -79,15 +80,16 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.CLUSTER, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY, null, null,
-                null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(
+                        StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         when(client.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "default-mysql-dbms"));
         when(client.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
         final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client)
                 .provideCapability(forResource, theCapabilityRequirement);
@@ -99,7 +101,7 @@ class CapabilityProviderTest implements InProcessTestData {
         assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.CLUSTER));
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(OPERATOR_NAMESPACE));
-        assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms"));
+        assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms-in-cluster"));
     }
 
     private Function<ProvidedCapability, ServiceResult> withServiceResult() {
@@ -108,7 +110,7 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withNamespace(capabilityRequirement.getMetadata().getNamespace())
                 .withName(capabilityRequirement.getMetadata().getName())
                 .endMetadata()
-                .build(), DbmsDockerVendorStrategy.CENTOS_MYSQL, "my_db",
+                .build(), DbmsVendorConfig.MYSQL, "my_db",
                 capabilityRequirement.getMetadata().getName(), null);
     }
 
@@ -117,9 +119,10 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.CLUSTER, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY, null, null,
-                null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(StandardCapabilityImplementation.MYSQL)
+                .withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         when(client.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
         when(client.createAndWatchResource(any(), any())).thenAnswer(andGenerateFailEvent());
         when(client.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
@@ -133,10 +136,11 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.LABELED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
-                Collections.singletonMap("Environment", "Stage"), null,
-                null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(StandardCapabilityImplementation.MYSQL)
+                .withCapabilityRequirementScope(CapabilityScope.LABELED)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
+                .withAdditionalLabelsToMatch(Collections.singletonMap("Environment", "Stage")).build();
         when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME, CapabilityScope.DEDICATED.getCamelCaseName())
@@ -151,10 +155,12 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.LABELED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
-                Collections.singletonMap("Environment", "Stage"), null,
-                null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(StandardCapabilityImplementation.MYSQL)
+                .withCapabilityRequirementScope(CapabilityScope.LABELED)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
+                .withAdditionalLabelsToMatch(Collections.singletonMap("Environment", "Stage"))
+                .build();
         when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME,
@@ -172,16 +178,16 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.LABELED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
-                Collections.singletonMap("Environment", "Stage"), null,
-                null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
+                .withAdditionalLabelsToMatch(Collections.singletonMap("Environment", "Stage")).build();
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "mysql-dbms"));
         when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
         final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
@@ -201,9 +207,9 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.LABELED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
-                Collections.emptyMap(), null, null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
         final CapabilityProvider capabilityProvider = new CapabilityProvider(client);
         assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement));
@@ -214,17 +220,18 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.SPECIFIED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
-                Collections.emptyMap(), null,
-                new ResourceReference("my-db-namespace", "my-db"), null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
+                .withSpecifiedCapability(
+                        new ResourceReference("my-db-namespace", "my-db")).build();
         //When I attempt to fulfill the capability
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "my-db"));
         when(client.providedCapabilityByName("my-db-namespace", "my-db"))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
         final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
@@ -244,9 +251,10 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.SPECIFIED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
-                Collections.emptyMap(), null, null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
+                .withProvisioningStrategy(
+                        CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
         final CapabilityProvider capabilityProvider = new CapabilityProvider(client);
         assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement));
@@ -257,15 +265,16 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.NAMESPACE, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY, null,
-                null, null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
+                .withProvisioningStrategy(
+                        CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "default-mysql-dbms"));
         when(client.providedCapabilityByLabels(eq(forResource.getMetadata().getNamespace()), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
         final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
@@ -277,7 +286,7 @@ class CapabilityProviderTest implements InProcessTestData {
         assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.NAMESPACE));
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
-        assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms"));
+        assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms-in-namespace"));
 
     }
 
@@ -286,9 +295,10 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.DBMS,
-                StandardCapabilityImplementation.MYSQL, CapabilityScope.DEDICATED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
-                Collections.emptyMap(), null, null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
+                .withImplementation(
+                        StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(),
@@ -296,7 +306,7 @@ class CapabilityProviderTest implements InProcessTestData {
         when(client.providedCapabilityByName(any(), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
         final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
@@ -316,9 +326,10 @@ class CapabilityProviderTest implements InProcessTestData {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a Keycloak server
-        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirement(StandardCapability.SSO,
-                StandardCapabilityImplementation.KEYCLOAK, CapabilityScope.DEDICATED, CapabilityProvisioningStrategy.DEPLOY_DIRECTLY,
-                Collections.emptyMap(), null, null, null);
+        final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.SSO)
+                .withImplementation(
+                        StandardCapabilityImplementation.KEYCLOAK).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
+                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withExposedServiceResult(),
@@ -326,7 +337,7 @@ class CapabilityProviderTest implements InProcessTestData {
         when(client.providedCapabilityByName(any(), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability,null,null, null));
+                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
         final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
                 theCapabilityRequirement);
@@ -343,7 +354,7 @@ class CapabilityProviderTest implements InProcessTestData {
     }
 
     private Function<ProvidedCapability, ServiceResult> withExposedServiceResult() {
-        return (capabilityRequirement) -> new SampleExposedDeploymentResult(null, new ServiceBuilder()
+        return (capabilityRequirement) -> new DefaultExposedDeploymentResult(null, new ServiceBuilder()
                 .withNewMetadata()
                 .withNamespace(capabilityRequirement.getMetadata().getNamespace())
                 .withName(capabilityRequirement.getMetadata().getName())

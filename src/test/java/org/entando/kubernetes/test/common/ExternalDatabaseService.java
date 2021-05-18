@@ -38,4 +38,9 @@ public class ExternalDatabaseService implements ExternalService {
         return databaseService.getSpec().getPort()
                 .orElse(DbmsVendorConfig.valueOf(databaseService.getSpec().getDbms().name()).getDefaultPort());
     }
+
+    @Override
+    public boolean getCreateDelegateService() {
+        return true;
+    }
 }

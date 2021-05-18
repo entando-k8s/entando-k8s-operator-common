@@ -39,7 +39,7 @@ public interface Deployable<T extends ServiceDeploymentResult<T>> {
     }
 
     /**
-     * Optional qualifying string for scenarios where a single Custom Resource results in more than one deployment
+     * Optional qualifying string for scenarios where a single Custom Resource results in more than one deployment.
      */
     Optional<String> getQualifier();
 

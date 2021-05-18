@@ -22,12 +22,4 @@ import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
 
 public interface Ingressing<T extends IngressingPathOnPort> {
 
-    List<T> getIngressingContainers();
-
-    String getIngressName();
-
-    String getIngressNamespace();
-
-    Optional<String> getQualifier();
-
 }

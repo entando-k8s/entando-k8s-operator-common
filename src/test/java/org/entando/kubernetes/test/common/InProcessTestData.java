@@ -22,10 +22,11 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
@@ -125,7 +126,7 @@ public interface InProcessTestData {
                 .build();
     }
 
-    default <T extends KeycloakAwareSpec> ConfigMapBasedKeycloakConnectionConfig emulateKeycloakDeployment(SimpleK8SClient<?> client) {
+    default <T extends KeycloakAwareSpec> KeycloakConnectionConfig emulateKeycloakDeployment(SimpleK8SClient<?> client) {
         Secret secret = new SecretBuilder().withNewMetadata().withName(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .endMetadata()
                 .addToStringData(SecretUtils.USERNAME_KEY, MY_KEYCLOAK_ADMIN_USERNAME)
@@ -146,7 +147,7 @@ public interface InProcessTestData {
         final EntandoDatabaseService entandoDatabaseService = newEntandoDatabaseService();
         final CreateExternalServiceCommand command = new CreateExternalServiceCommand(new ExternalDatabaseService(entandoDatabaseService),
                 entandoDatabaseService);
-        return new ExternalDatabaseDeployment(command.execute(client), entandoDatabaseService);
+        return new DatabaseDeploymentResult(command.execute(client), entandoDatabaseService);
     }
 
     default EntandoDatabaseService newEntandoDatabaseService() {

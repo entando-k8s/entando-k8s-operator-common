@@ -27,7 +27,6 @@ import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.PodStatusBuilder;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
-import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
 import java.util.Date;
 import java.util.Map;
@@ -35,11 +34,10 @@ import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
-import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.PodClient;
+import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 
 public class PodClientDouble extends AbstractK8SClientDouble implements PodClient {
@@ -108,7 +106,6 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
         }
         return pod;
     }
-
 
     @Override
     public Pod start(Pod pod) {

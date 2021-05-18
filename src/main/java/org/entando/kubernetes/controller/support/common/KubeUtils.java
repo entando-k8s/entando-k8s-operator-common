@@ -59,12 +59,6 @@ public final class KubeUtils {
         }
     }
 
-    public static boolean customResourceOwns(EntandoCustomResource customResource, HasMetadata resource) {
-        return resource.getMetadata().getOwnerReferences().stream()
-                .anyMatch(ownerReference -> customResource.getMetadata().getName().equals(ownerReference.getName())
-                        && customResource.getKind().equals(ownerReference.getKind()));
-    }
-
     public static OperatorProcessingInstruction resolveProcessingInstruction(EntandoCustomResource resource) {
         return resolveAnnotation(resource, PROCESSING_INSTRUCTION_ANNOTATION_NAME)
                 .map(value -> OperatorProcessingInstruction.valueOf(value.toUpperCase(Locale.ROOT).replace("-", "_")))

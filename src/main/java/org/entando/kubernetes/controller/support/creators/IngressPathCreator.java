@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.creators;
 
+import static java.util.stream.Collectors.toList;
+
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPathBuilder;
@@ -23,6 +25,7 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
 import org.entando.kubernetes.controller.spi.deployable.Ingressing;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
@@ -38,12 +41,15 @@ public class IngressPathCreator {
     }
 
     public List<HTTPIngressPath> buildPaths(IngressingDeployable<?> ingressingDeployable, Service service) {
-        return ingressingDeployable.getIngressingContainers().stream().map(o -> newHttpPath(o, service)).collect(Collectors
+        return ingressingDeployable.getContainers().stream()
+                .filter(IngressingContainer.class::isInstance)
+                .map(IngressingContainer.class::cast)
+                .collect(toList()).stream().map(o -> newHttpPath(o, service)).collect(Collectors
                 .toList());
     }
 
-    public Ingress addMissingHttpPaths(IngressClient ingressClient, Ingressing<?> ingressingDeployable, Ingress ingress, Service service) {
-        List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getIngressingContainers().stream()
+    public Ingress addMissingHttpPaths(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable, Ingress ingress, Service service) {
+        List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream().filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)
                 .filter(path -> this.httpPathIsAbsent(ingress, path))
                 .collect(Collectors.toList());
         for (IngressingPathOnPort ingressingContainer : ingressingContainers) {

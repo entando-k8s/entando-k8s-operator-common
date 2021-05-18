@@ -24,9 +24,11 @@ import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningRe
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
-import org.entando.kubernetes.model.capability.ExternallyProvidedService;
+import org.entando.kubernetes.model.common.ExposedServerStatus;
 
 public class ProvidedKeycloakCapability implements KeycloakConnectionConfig {
+
+    public static final String DEFAULT_REALM_PARAMETER = "defaultRealm";
 
     private final CapabilityProvisioningResult capabilityResult;
     private final ExposedService exposedService;
@@ -39,39 +41,33 @@ public class ProvidedKeycloakCapability implements KeycloakConnectionConfig {
 
     @Override
     public Secret getAdminSecret() {
-        return capabilityResult.getAdminSecret().orElse(null);
+        return capabilityResult.getAdminSecret().orElseThrow(IllegalStateException::new);
     }
 
     @Override
     public String determineBaseUrl() {
-        if (EntandoOperatorSpiConfig.forceExternalAccessToKeycloak()
-                || capabilityResult.getProvidedCapability().getSpec().getProvisioningStrategy().orElse(
-                CapabilityProvisioningStrategy.DEPLOY_DIRECTLY) == CapabilityProvisioningStrategy.USE_EXTERNAL) {
+        if (useExternalService() || EntandoOperatorSpiConfig.forceExternalAccessToKeycloak()) {
             return getExternalBaseUrl();
         } else {
-            return getInternalBaseUrl().orElse(getExternalBaseUrl());
+            return exposedService.getInternalBaseUrl();
         }
+    }
+
+    private boolean useExternalService() {
+        return capabilityResult.getProvidedCapability().getSpec().getProvisioningStrategy()
+                .map(CapabilityProvisioningStrategy.USE_EXTERNAL::equals)
+                .orElse(false);
     }
 
     @Override
     public String getExternalBaseUrl() {
-        return ofNullable(capabilityResult.getProvidedCapability().getSpec().getCapabilityParameters().get("frontEndUrl"))
-                .or(this::buildExternalServiceUrl)
-                .orElse(exposedService.getExternalBaseUrl());
-    }
-
-    private Optional<String> buildExternalServiceUrl() {
-        final Optional<ExternallyProvidedService> providedService = capabilityResult.getProvidedCapability().getSpec()
-                .getExternallyProvisionedService();
-        if (providedService.isPresent()) {
-            final ExternallyProvidedService service = providedService.get();
-            return Optional.of("https://" + service.getHost() + service.getPort().map(integer -> ":" + integer).orElse("") + "/auth");
-        }
-        return Optional.empty();
+        return ((ExposedServerStatus) capabilityResult.getProvidedCapability().getStatus().findCurrentServerStatus()
+                .orElseThrow(IllegalStateException::new)).getExternalBaseUrl();
     }
 
     @Override
     public Optional<String> getInternalBaseUrl() {
         return ofNullable(exposedService.getInternalBaseUrl());
     }
+
 }

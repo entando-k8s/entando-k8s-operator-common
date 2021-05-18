@@ -38,7 +38,7 @@ public class AbstractK8SResourceCreator {
         if (!Strings.isNullOrEmpty(nameQualifier)) {
             sb.append("-").append(nameQualifier);
         }
-        if (!Strings.isNullOrEmpty(nameQualifier)) {
+        if (!Strings.isNullOrEmpty(suffix)) {
             sb.append("-").append(suffix);
         }
         return sb.toString();

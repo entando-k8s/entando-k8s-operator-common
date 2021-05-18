@@ -35,10 +35,8 @@ public class CapabilityRequirementWatcher implements Watcher<ProvidedCapability>
     @Override
     public void eventReceived(Action action, ProvidedCapability resource) {
         this.capabiltyRequirement = resource;
-        if (hasCompleted()) {
-            synchronized (mutex) {
-                mutex.notifyAll();
-            }
+        synchronized (mutex) {
+            mutex.notifyAll();
         }
     }
 

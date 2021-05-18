@@ -18,7 +18,6 @@ package org.entando.kubernetes.test.common;
 
 import static org.entando.kubernetes.controller.spi.common.PodResult.SUCCEEDED_PHASE;
 
-import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
@@ -32,12 +31,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
-import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.support.client.PodClient;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
-import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 
@@ -127,6 +124,5 @@ public interface PodBehavior {
                 .editOrNewSpec().addNewInitContainer().endInitContainer().endSpec()
                 .withStatus(status).build());
     }
-
 
 }

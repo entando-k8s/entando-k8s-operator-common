@@ -53,6 +53,7 @@ import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.InternalServerStatus;
 
 public class DefaultKubernetesClientForControllers implements KubernetesClientForControllers {
 
@@ -64,6 +65,11 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
 
     public DefaultKubernetesClientForControllers(KubernetesClient client) {
         this.client = client;
+    }
+
+    @Override
+    public String getNamespace() {
+        return client.getNamespace();
     }
 
     @Override
@@ -190,6 +196,9 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     public void deploymentFailed(EntandoCustomResource customResource, Exception reason) {
         performStatusUpdate(customResource,
                 t -> {
+                    if(t.getStatus().findCurrentServerStatus().isEmpty()){
+                        t.getStatus().putServerStatus(new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
+                    }
                     t.getStatus().findCurrentServerStatus()
                             .ifPresent(
                                     newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder()

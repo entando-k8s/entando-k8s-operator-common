@@ -32,7 +32,6 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
-import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -170,7 +169,7 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
     }
 
     protected DatabaseServiceResult prepareDatabaseService(T entandoCustomResource, DbmsVendor dbmsVendor) {
-        Optional<ExternalDatabaseDeployment> externalDatabase = k8sClient.entandoResources()
+        Optional<DatabaseServiceResult> externalDatabase = k8sClient.entandoResources()
                 .findExternalDatabase(entandoCustomResource, dbmsVendor);
         if (externalDatabase.isPresent()) {
             return externalDatabase.get();

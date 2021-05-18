@@ -34,15 +34,15 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.ClientErrorException;
-import org.entando.kubernetes.controller.support.client.impl.DefaultIngressClient;
-import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
-import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
-import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
+import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.client.impl.DefaultIngressClient;
+import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
+import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
@@ -272,7 +272,7 @@ public class DummyBean {
         ResteasyProviderFactory.setInstance(instance);
     }
 
-    private static class TestKeycloakDeployable implements IngressingDeployableBase<SampleExposedDeploymentResult> {
+    private static class TestKeycloakDeployable implements IngressingDeployableBase<DefaultExposedDeploymentResult> {
 
         private final List<DeployableContainer> containers = Arrays.asList(new TestKeycloakContainer());
         private final EntandoKeycloakServer keycloakServer;
@@ -307,8 +307,8 @@ public class DummyBean {
         }
 
         @Override
-        public SampleExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-            return new SampleExposedDeploymentResult(pod, service, ingress);
+        public DefaultExposedDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
+            return new DefaultExposedDeploymentResult(pod, service, ingress);
         }
 
         @Override

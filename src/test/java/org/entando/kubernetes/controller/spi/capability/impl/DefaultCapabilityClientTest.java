@@ -90,10 +90,12 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest {
         crateCapabilityWithLabels(MY_OTHER_NAMESPACE, "my-capability-in-other-namespace", Collections.singletonMap("label1", "value3"));
 
         assertThat(getDefaultSimpleK8SClient().capabilities()
-                        .providedCapabilityByLabels(MY_APP_NAMESPACE, Collections.singletonMap("label1", "value1")).get().getMetadata().getName(),
+                        .providedCapabilityByLabels(MY_APP_NAMESPACE, Collections.singletonMap("label1", "value1"))
+                        .get().getMetadata().getName(),
                 is("my-capability"));
         assertThat(getDefaultSimpleK8SClient().capabilities()
-                        .providedCapabilityByLabels(MY_APP_NAMESPACE, Collections.singletonMap("label1", "value2")).get().getMetadata().getName(),
+                        .providedCapabilityByLabels(MY_APP_NAMESPACE, Collections.singletonMap("label1", "value2"))
+                        .get().getMetadata().getName(),
                 is("my-other-capability"));
         assertFalse(getDefaultSimpleK8SClient().capabilities()
                 .providedCapabilityByLabels(MY_APP_NAMESPACE, Collections.singletonMap("label1", "value3")).isPresent());
@@ -140,6 +142,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest {
 
     @Test
     void shouldBuildCapabilityResult() {
+        //Given I have created a ProvidedCapability
         final CapabilityClient defaultCapabilityClient = getDefaultSimpleK8SClient().capabilities();
         final ProvidedCapability providedCapability = new ProvidedCapabilityBuilder()
                 .withNewMetadata()
@@ -148,9 +151,11 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest {
                 .endMetadata()
                 .build();
         defaultCapabilityClient.createAndWatchResource(providedCapability, new CapabilityRequirementWatcher(""));
-        ProvidedCapability actualCapability = getDefaultSimpleK8SClient().entandoResources().reload(providedCapability);
+        final ProvidedCapability createdCapability = getDefaultSimpleK8SClient().entandoResources().reload(providedCapability);
+        //And I have updated its status
         final ExposedServerStatus status = new ExposedServerStatus("main");
         status.finish();
+        //With an adminSecret
         final Secret adminSecret = getFabric8Client().secrets().inNamespace(MY_APP_NAMESPACE).createOrReplace(new SecretBuilder()
                 .withNewMetadata()
                 .withNamespace(MY_APP_NAMESPACE)
@@ -158,6 +163,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest {
                 .endMetadata()
                 .addToData("username", "john")
                 .build());
+        //And with service
         final Service service = getFabric8Client().services().inNamespace(MY_APP_NAMESPACE).createOrReplace(new ServiceBuilder()
                 .withNewMetadata()
                 .withName("my-service")
@@ -171,6 +177,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest {
                 .endPort()
                 .endSpec()
                 .build());
+        //And with an Ingres
         final Ingress ingress = getFabric8Client().extensions().ingresses().inNamespace(MY_APP_NAMESPACE)
                 .createOrReplace(new IngressBuilder()
                         .withNewMetadata()
@@ -194,11 +201,15 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest {
         status.setAdminSecretName(adminSecret.getMetadata().getName());
         status.setIngressName(ingress.getMetadata().getName());
         status.setServiceName(service.getMetadata().getName());
-        getDefaultSimpleK8SClient().entandoResources().updateStatus(actualCapability, status);
-        actualCapability = getDefaultSimpleK8SClient().entandoResources().reload(actualCapability);
+        getDefaultSimpleK8SClient().entandoResources().updateStatus(createdCapability, status);
+        ProvidedCapability capabilityAfterStatusUpdate = getDefaultSimpleK8SClient().entandoResources().reload(createdCapability);
+        //When I build the CapabilityProvisioningResult
         final CapabilityProvisioningResult result = getDefaultSimpleK8SClient().capabilities()
-                .buildCapabilityProvisioningResult(actualCapability);
+                .buildCapabilityProvisioningResult(capabilityAfterStatusUpdate);
+        //The previously specified connection related objects have been set
         assertThat(result.getIngress().get().getMetadata().getName(), is(ingress.getMetadata().getName()));
+        assertThat(result.getService().getMetadata().getName(), is(service.getMetadata().getName()));
+        assertThat(result.getAdminSecret().get().getMetadata().getName(), is(adminSecret.getMetadata().getName()));
     }
 
     private DefaultSimpleK8SClient getDefaultSimpleK8SClient() {

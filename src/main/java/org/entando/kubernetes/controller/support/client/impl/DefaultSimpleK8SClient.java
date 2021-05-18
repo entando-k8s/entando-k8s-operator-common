@@ -46,13 +46,15 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     public DefaultSimpleK8SClient(KubernetesClient kubernetesClient) {
         this.kubernetesClient = kubernetesClient;
     }
+
     @Override
-    public CapabilityClient capabilities(){
-        if(this.capabilityClient==null){
-            this.capabilityClient=intercepted(new DefaultCapabilityClient(kubernetesClient));
+    public CapabilityClient capabilities() {
+        if (this.capabilityClient == null) {
+            this.capabilityClient = intercepted(new DefaultCapabilityClient(kubernetesClient));
         }
         return this.capabilityClient;
     }
+
     @Override
     public ServiceClient services() {
         if (this.serviceClient == null) {

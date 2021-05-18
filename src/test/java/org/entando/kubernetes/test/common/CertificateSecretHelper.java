@@ -26,8 +26,8 @@ import java.util.Base64;
 import java.util.List;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 
 public class CertificateSecretHelper {
 

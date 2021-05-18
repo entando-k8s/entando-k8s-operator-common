@@ -76,7 +76,7 @@ public final class TrustStoreHelper {
         try {
             char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();
             KeyStore keyStore = buildKeystoreFrom(secret.getData());
-            Path tempFile = Files.createTempFile("trust-store", ".jks");
+            Path tempFile = Files.createTempFile(Path.of("/deployments"), "trust-store", ".jks");
             try (OutputStream stream = Files.newOutputStream(tempFile)) {
                 keyStore.store(stream, trustStorePassword);
             }

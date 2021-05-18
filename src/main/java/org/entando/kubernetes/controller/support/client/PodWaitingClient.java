@@ -21,15 +21,10 @@ import static java.lang.String.format;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
-import io.fabric8.kubernetes.client.dsl.ExecWatch;
-import io.fabric8.kubernetes.client.dsl.Execable;
-import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Watchable;
-import java.io.ByteArrayInputStream;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 
 public interface PodWaitingClient {
@@ -40,7 +35,6 @@ public interface PodWaitingClient {
      * A getter for the an AtomicReference to the most recently constructed PodWatcherholder for testing purposes.
      */
     BlockingQueue<PodWatcher> getPodWatcherQueue();
-
 
     default Pod watchPod(Predicate<Pod> podPredicate, long timeoutSeconds, Watchable<Watcher<Pod>> podResource) {
         try {

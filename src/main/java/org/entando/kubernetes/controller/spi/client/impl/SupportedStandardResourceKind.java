@@ -22,6 +22,8 @@ import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimList;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretList;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -80,6 +82,17 @@ public enum SupportedStandardResourceKind {
                 Resource<Ingress>
                 > getOperation(KubernetesClient client) {
             return client.extensions().ingresses();
+        }
+    },
+    SECRET {
+        @SuppressWarnings("unchecked")
+        @Override
+        public MixedOperation<
+                Secret,
+                SecretList,
+                Resource<Secret>
+                > getOperation(KubernetesClient client) {
+            return client.secrets();
         }
     },
     PERSISTENT_VOLUME_CLAIM {

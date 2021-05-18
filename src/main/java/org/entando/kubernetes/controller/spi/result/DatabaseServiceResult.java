@@ -18,22 +18,21 @@ package org.entando.kubernetes.controller.spi.result;
 
 import java.util.Map;
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 
-public interface DatabaseServiceResult extends ServiceResult {
-
-    String getDatabaseSecretName();
-
-    @Override
-    default String getAdminSecretName() {
-        return getDatabaseSecretName();
-    }
+public interface DatabaseServiceResult  {
 
     Map<String, String> getJdbcParameters();
 
     String getDatabaseName();
 
-    DbmsDockerVendorStrategy getVendor();
+    DbmsVendorConfig getVendor();
 
     Optional<String> getTablespace();
+
+    String getInternalServiceHostname();
+
+    String getPort();
+
+    String getAdminSecretName();
 }

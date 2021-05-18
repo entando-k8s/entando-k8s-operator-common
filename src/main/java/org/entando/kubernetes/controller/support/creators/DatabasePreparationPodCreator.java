@@ -57,9 +57,11 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
             DbAwareDeployable<?> dbAwareDeployable,
             EntandoImageResolver entandoImageResolver) {
         client.pods().removeAndWait(
-                entandoCustomResource.getMetadata().getNamespace(), buildUniqueLabels(dbAwareDeployable.getQualifier().orElse(null)));
+                entandoCustomResource.getMetadata().getNamespace(),
+                buildUniqueLabels(dbAwareDeployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER)));
         return client.pods().runToCompletion(
-                buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable, dbAwareDeployable.getQualifier().orElse(null)));
+                buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable,
+                        dbAwareDeployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER)));
     }
 
     private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable<?> dbAwareDeployable,
@@ -91,12 +93,13 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     private List<Container> buildContainers(EntandoImageResolver entandoImageResolver, SecretClient secretClient,
             DbAwareDeployable<?> deployable) {
         List<Container> result = new ArrayList<>();
-        for (DbAware dbAware : deployable.getDbAwareContainers()) {
+
+        deployable.getContainers().stream().filter(DbAware.class::isInstance).map(DbAware.class::cast).forEach(dbAware -> {
             Optional<DatabasePopulator> databasePopulator = dbAware.getDatabasePopulator();
             prepareContainersToCreateSchemas(secretClient, entandoImageResolver, dbAware, result);
             databasePopulator
                     .ifPresent(dbp -> result.add(prepareContainerToPopulateSchemas(entandoImageResolver, dbp, dbAware.getNameQualifier())));
-        }
+        });
         return result;
     }
 
@@ -147,14 +150,14 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
         result.add(new EnvVar("DATABASE_NAME", databaseDeployment.getDatabaseName(), null));
         lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET).ifPresent(s ->
                 result.add(new EnvVar("FORCE_PASSWORD_RESET", s, null)));
-        result.add(new EnvVar("DATABASE_VENDOR", databaseDeployment.getVendor().getVendorConfig().getName(), null));
+        result.add(new EnvVar("DATABASE_VENDOR", databaseDeployment.getVendor().getName(), null));
         result.add(new EnvVar("DATABASE_SCHEMA_COMMAND", "CREATE_SCHEMA", null));
         result.add(new EnvVar("DATABASE_USER", null,
                 SecretUtils.secretKeyRef(schemaConnectionInfo.getSchemaSecretName(), SecretUtils.USERNAME_KEY)));
         result.add(new EnvVar("DATABASE_PASSWORD", null,
                 SecretUtils.secretKeyRef(schemaConnectionInfo.getSchemaSecretName(), SecretUtils.PASSSWORD_KEY)));
         databaseDeployment.getTablespace().ifPresent(s -> result.add(new EnvVar("TABLESPACE", s, null)));
-        if (!databaseDeployment.getJdbcParameters().isEmpty()) {
+        if (Optional.ofNullable(databaseDeployment.getJdbcParameters()).map(params -> !params.isEmpty()).orElse(false)) {
             result.add(new EnvVar("JDBC_PARAMETERS", databaseDeployment.getJdbcParameters().entrySet()
                     .stream()
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
@@ -165,7 +168,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     }
 
     private EnvVarSource buildSecretKeyRef(DatabaseServiceResult databaseDeployment, String configKey) {
-        return SecretUtils.secretKeyRef(databaseDeployment.getDatabaseSecretName(), configKey);
+        return SecretUtils.secretKeyRef(databaseDeployment.getAdminSecretName(), configKey);
     }
 
 }

@@ -28,6 +28,7 @@ import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
+
 //NB!! This class only tests the interface default methods
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
 class KubernetesClientForControllersTest {

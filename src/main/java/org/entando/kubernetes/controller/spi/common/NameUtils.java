@@ -30,6 +30,8 @@ public class NameUtils {
     public static final String DEFAULT_SERVICE_SUFFIX = "service";
     public static final String DEFAULT_SERVER_QUALIFIER = "server";
     public static final String DEFAULT_INGRESS_SUFFIX = "ingress";
+    public static final String MAIN_QUALIFIER = "main";
+    public static final String DEFAULT_DEPLOYMENT_SUFFIX = "deployment";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Pattern pattern = Pattern.compile("(?=[A-Z][a-z])");
 
@@ -93,10 +95,18 @@ public class NameUtils {
     }
 
     public static String standardServiceName(EntandoCustomResource resource) {
-        return resource.getMetadata().getName() + "-" + DEFAULT_SERVER_QUALIFIER + "-" + DEFAULT_SERVICE_SUFFIX;
+        return resource.getMetadata().getName() + "-" + DEFAULT_SERVICE_SUFFIX;
+    }
+
+    public static String standardDeployment(EntandoCustomResource resource) {
+        return resource.getMetadata().getName() + "-" + DEFAULT_DEPLOYMENT_SUFFIX;
     }
 
     public static String lowerDashDelimitedOf(String name) {
         return name.replace("_", "-").toLowerCase(Locale.ROOT);
+    }
+
+    public static String standardAdminSecretName(EntandoCustomResource keycloakServer) {
+        return keycloakServer.getMetadata().getName() + "-admin-secret";
     }
 }

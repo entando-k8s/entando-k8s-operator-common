@@ -82,7 +82,7 @@ public class SimpleK8SClientDouble extends AbstractK8SClientDouble implements Si
 
     @Override
     public CapabilityClient capabilities() {
-        return null;
+        return this.capabilityClient;
     }
 
     @Override

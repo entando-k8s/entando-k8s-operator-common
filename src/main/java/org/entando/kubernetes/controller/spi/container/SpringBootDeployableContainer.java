@@ -23,7 +23,6 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.model.common.DbmsVendor;
 
 public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareContainer, IngressingContainer, TrustStoreAware {
@@ -48,7 +47,7 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareCon
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_PASSWORD.name(), null, databaseSchema.getPasswordRef()));
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_URL.name(), databaseSchema.getJdbcUrl(), null));
             vars.add(new EnvVar(SpringProperty.SPRING_JPA_DATABASE_PLATFORM.name(),
-                    databaseSchema.getVendor().getVendorConfig().getHibernateDialect(), null));
+                    databaseSchema.getDatabaseServiceResult().getVendor().getHibernateDialect(), null));
             /*
             TODO: Set SPRING_JPA_PROPERTIES_HIBERNATE_ID_NEW_GENERATOR_MAPPINGS to 'false' if we ever run into issues with ID Generation
             */
@@ -76,7 +75,7 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareCon
     @Override
     default List<EnvVar> getKeycloakVariables() {
         List<EnvVar> vars = KeycloakAwareContainer.super.getKeycloakVariables();
-        ConfigMapBasedKeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
+        KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
                 keycloakDeployment.getExternalBaseUrl() + "/realms/" + getKeycloakRealmToUse(),
                 null));

@@ -62,6 +62,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         }
         return clientForControllers;
     }
+
     @Test
     void shouldTrackDeploymentFailedStatus() {
         //Given I have created an EntandoApp
@@ -173,7 +174,6 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
     }
 
     @Test
-        //    @DisabledIfSystemProperty(named = EntandoOperatorTestConfig.ENTANDO_TEST_EMULATE_KUBERNETES, matches = "true")
     void shouldExecuteCommandOnPodAndWait() throws IOException, InterruptedException {
         //There is no way to emulate this "exec" fails on the Mock server
         //Given I have started a new Pod

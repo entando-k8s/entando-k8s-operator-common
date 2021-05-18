@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
@@ -34,14 +35,13 @@ import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
-import org.entando.kubernetes.controller.spi.examples.SampleExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
-import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
+import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -54,6 +54,7 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
@@ -76,7 +77,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
     public static final String SAMPLE_NAME = "sample-name";
     public static final String SAMPLE_NAME_DB = NameUtils.snakeCaseOf(SAMPLE_NAME + "_db");
     final EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
-    private SampleController<EntandoPluginSpec, EntandoPlugin, SampleExposedDeploymentResult> controller;
+    private SampleController<EntandoPluginSpec, EntandoPlugin, DefaultExposedDeploymentResult> controller;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
     @BeforeEach
@@ -100,7 +101,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
             @Override
             protected SpringBootDeployable<EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
             }
         };
@@ -146,7 +147,12 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
         getClient().secrets().createSecretIfAbsent(databaseService,
                 new SecretBuilder().withNewMetadata().withNamespace(SAMPLE_NAMESPACE).withName(secretName).endMetadata()
                         .addToData(SecretUtils.USERNAME_KEY, "username").addToData(SecretUtils.PASSSWORD_KEY, "asdf123").build());
-        new CreateExternalServiceCommand(new ExternalDatabaseService(databaseService), databaseService).execute(getClient());
+        final Service service = new CreateExternalServiceCommand(new ExternalDatabaseService(databaseService), databaseService)
+                .execute(getClient());
+        final InternalServerStatus internalServerStatus = new InternalServerStatus(NameUtils.MAIN_QUALIFIER);
+        internalServerStatus.setServiceName(service.getMetadata().getName());
+        internalServerStatus.setAdminSecretName(secretName);
+        getClient().entandoResources().updateStatus(databaseService, internalServerStatus);
     }
 
     protected abstract SimpleKeycloakClient getKeycloakClient();
@@ -162,7 +168,7 @@ abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUt
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
         assertThat(theVariableNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_URL.name())
                 .on(thePrimaryContainerOn(serverDeployment)), is(
-                "jdbc:postgresql://" + SAMPLE_NAME + "-postgresql-db-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/"
+                "jdbc:postgresql://" + SAMPLE_NAME + "-postgresql-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/"
                         + SAMPLE_NAME_DB));
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));

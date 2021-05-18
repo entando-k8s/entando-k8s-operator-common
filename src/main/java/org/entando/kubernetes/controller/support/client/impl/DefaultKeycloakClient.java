@@ -215,7 +215,8 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             credentials.setValue("adminadmin");
             credentials.setTemporary(true);
             credentials.setType(SecretUtils.PASSSWORD_KEY);
-            String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+            final String[] segments = response.getLocation().getPath().split("\\/");
+            String userId = segments[segments.length - 1];
             realmResource.users().get(userId).resetPassword(credentials);
         }
     }
@@ -245,7 +246,8 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             client.setAuthorizationServicesEnabled(false);
             client.setWebOrigins(config.getWebOrigins());
             try (Response response = realmResource.clients().create(client)) {
-                String id = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+                final String[] segments = response.getLocation().getPath().split("\\/");
+                String id = segments[segments.length - 1];
                 realmResource.clients().get(id).generateNewSecret();
                 return id;
             }

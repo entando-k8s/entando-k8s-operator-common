@@ -16,39 +16,46 @@
 
 package org.entando.kubernetes.controller.spi.container;
 
+import static java.util.Optional.ofNullable;
+
+import io.fabric8.kubernetes.api.model.Service;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
-import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
-import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 
 public class ProvidedDatabaseCapability extends AbstractServiceResult implements DatabaseServiceResult {
 
     public static final String DATABASE_NAME_PARAMETER = "databaseName";
-    public static final String DBMS_VENDOR_PARAMETER = "dbmsVendor";
-    public static final String ADMIN_SECRET_NAME_PARAMETER = "adminSecretName";
     public static final String JDBC_PARAMETER_PREFIX = "jdbc-";
-
-    private final ProvidedCapability databaseCapability;
+    public static final String DBMS_VENDOR_PARAMETER = "dbmsVendor";
+    public static final String TABLESPACE_PARAMETER = "tablespace";
+    private final AbstractServerStatus status;
+    private final Map<String, String> capabilityParameters;
 
     public ProvidedDatabaseCapability(CapabilityProvisioningResult capabilityProvisioningResult) {
-        super(capabilityProvisioningResult.getService());
-        this.databaseCapability = capabilityProvisioningResult.getProvidedCapability();
+        this(capabilityProvisioningResult.getService(),
+                capabilityProvisioningResult.getProvidedCapability().getStatus().findCurrentServerStatus()
+                        .orElseThrow(IllegalStateException::new),
+                capabilityProvisioningResult.getProvidedCapability().getSpec().getCapabilityParameters());
     }
 
-    @Override
-    public String getDatabaseSecretName() {
-        return findStatus().getDerivedDeploymentParameters().get(ADMIN_SECRET_NAME_PARAMETER);
+    public ProvidedDatabaseCapability(Service service, AbstractServerStatus status, Map<String, String> capabilityParameters) {
+        super(service, status.getAdminSecretName().orElse(null));
+        this.status = status;
+        this.capabilityParameters = ofNullable(capabilityParameters).orElse(Collections.emptyMap());
     }
 
     @Override
     public Map<String, String> getJdbcParameters() {
         Map<String, String> result = new HashMap<>();
-        databaseCapability.getSpec().getCapabilityParameters().forEach((key, value) -> {
+        capabilityParameters.forEach((key, value) -> {
             if (key.startsWith(JDBC_PARAMETER_PREFIX)) {
                 result.put(key.substring(JDBC_PARAMETER_PREFIX.length()), value);
             }
@@ -62,16 +69,16 @@ public class ProvidedDatabaseCapability extends AbstractServiceResult implements
     }
 
     @Override
-    public DbmsDockerVendorStrategy getVendor() {
-        return DbmsDockerVendorStrategy.valueOf(findStatus().getDerivedDeploymentParameters().get(DBMS_VENDOR_PARAMETER));
+    public DbmsVendorConfig getVendor() {
+        return DbmsVendorConfig.valueOf(findStatus().getDerivedDeploymentParameters().get(DBMS_VENDOR_PARAMETER).toUpperCase(Locale.ROOT));
     }
 
     private AbstractServerStatus findStatus() {
-        return databaseCapability.getStatus().findCurrentServerStatus().orElseThrow(IllegalStateException::new);
+        return status;
     }
 
     @Override
     public Optional<String> getTablespace() {
-        return Optional.ofNullable(databaseCapability.getSpec().getCapabilityParameters().get("tablespace"));
+        return ofNullable(capabilityParameters.get(TABLESPACE_PARAMETER));
     }
 }

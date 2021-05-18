@@ -31,12 +31,10 @@ import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
-import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-//TODO move to org.entando.kubernetes.controller.support
 public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>, Secretive {
 
     private final DbmsDockerVendorStrategy dbmsVendor;
@@ -104,7 +102,7 @@ public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>,
 
     @Override
     public DatabaseDeploymentResult createResult(Deployment deployment, Service service, Ingress ingress, Pod pod) {
-        return new DatabaseDeploymentResult(service, dbmsVendor, getDatabaseName(), getDatabaseAdminSecretName(), pod);
+        return new DatabaseDeploymentResult(service, dbmsVendor.getVendorConfig(), getDatabaseName(), getDatabaseAdminSecretName(), pod);
     }
 
     @Override
@@ -118,7 +116,7 @@ public class DatabaseDeployable implements Deployable<DatabaseDeploymentResult>,
     }
 
     protected String getDatabaseAdminSecretName() {
-        return ExternalDatabaseDeployment.adminSecretName(customResource, NameUtils.DB_NAME_QUALIFIER);
+        return customResource.getMetadata().getName() + "-db-admin-secret";
     }
 
     protected String getDatabaseName() {

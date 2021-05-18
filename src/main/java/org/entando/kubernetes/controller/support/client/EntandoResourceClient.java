@@ -21,7 +21,9 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -31,13 +33,11 @@ import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public interface EntandoResourceClient extends KubernetesClientForControllers {
 
-    String getNamespace();
-
     <T extends EntandoCustomResource> T reload(T customResource);
 
-    Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource peerInNamespace, DbmsVendor vendor);
+    Optional<DatabaseServiceResult> findExternalDatabase(EntandoCustomResource peerInNamespace, DbmsVendor vendor);
 
-    ConfigMapBasedKeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference);
+    KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference);
 
     Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace);
 

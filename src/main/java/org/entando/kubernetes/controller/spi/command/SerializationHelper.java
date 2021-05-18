@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,20 +58,23 @@ public class SerializationHelper {
                 .filter(ReflectionUtil.KNOWN_INTERFACES::contains)
                 .map(Class::getSimpleName)
                 .collect(Collectors.toList()));
-        map.putAll(Arrays.stream(nonSerializableObject.getClass().getMethods())
+        Arrays.stream(nonSerializableObject.getClass().getMethods())
                 .filter(method -> (method.getName().startsWith("get") || method.getName().startsWith("is"))
                         && method.getReturnType() != void.class
                         && method.getParameterCount() == 0)
                 .map(method -> processGetter(nonSerializableObject, method))
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Pair::getKey, Pair::getValue)));
+                .forEach(stringObjectPair -> map.put(stringObjectPair.getKey(), stringObjectPair.getValue()));
         return map;
     }
 
     private static Class<?>[] getAllImplementedInterfaces(Class<?> clazz) {
         Set<Class<?>> result = new HashSet<>();
-        while (clazz != Object.class) {
+        while (clazz != null && clazz != Object.class) {
             result.addAll(Arrays.asList(clazz.getInterfaces()));
+            for (Class<?> intf : clazz.getInterfaces()) {
+                result.addAll(List.of(getAllImplementedInterfaces(intf)));
+            }
             clazz = clazz.getSuperclass();
         }
         return result.toArray(Class[]::new);
@@ -103,6 +107,8 @@ public class SerializationHelper {
     private static Object toJsonSafeValue(Object value) {
         if (value instanceof Number || value instanceof Boolean || value instanceof String) {
             return value;
+        } else if (value instanceof Enum) {
+            return ((Enum<?>) value).name().toUpperCase(Locale.ROOT);
         } else if (value instanceof Optional) {
             return ((Optional<?>) value).map(SerializationHelper::toJsonSafeValue).orElse(null);
         } else if (value instanceof List) {

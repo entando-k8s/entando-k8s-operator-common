@@ -14,17 +14,25 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.examples;
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
+package org.entando.kubernetes.test.common;
 
-public class SampleExposedDeploymentResult extends ExposedDeploymentResult<SampleExposedDeploymentResult> {
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    public SampleExposedDeploymentResult(Pod pod, Service service,
-            Ingress ingress) {
-        super(pod, service, ingress);
-    }
+@Documented
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface SourceLinks {
+
+    SourceLink[] value();
 }

@@ -40,9 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
-import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
-import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.PortSpec;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
@@ -53,6 +51,7 @@ import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.DbmsVendor;
@@ -110,7 +109,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
                     @Override
                     public List<PortSpec> getAdditionalPorts() {
@@ -151,7 +150,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
                     @Override
                     public Optional<Integer> getMaximumStartupTimeSeconds() {
@@ -210,7 +209,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
                     DatabaseServiceResult databaseServiceResult,
-                    ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig) {
+                    KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer());
             }
 
@@ -267,8 +266,10 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         scheduler.schedule(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
-            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(), createResource.getMetadata().getNamespace());
-            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(), createResource.getMetadata().getName());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
+                    createResource.getMetadata().getNamespace());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
+                    createResource.getMetadata().getName());
             controller.onStartup(new StartupEvent());
         }, 0, TimeUnit.MILLISECONDS);
     }

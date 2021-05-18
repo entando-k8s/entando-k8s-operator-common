@@ -16,8 +16,6 @@
 
 package org.entando.kubernetes.controller.support.client;
 
-import static java.lang.String.format;
-
 import io.fabric8.kubernetes.api.model.Pod;
 import java.util.HashMap;
 import java.util.Map;

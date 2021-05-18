@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -176,8 +175,6 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 is(notNullValue()));
     }
 
-
-
     @Test
     void shouldRunPodToCompletion() {
         //Given I have started a new Pod
@@ -210,8 +207,6 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         assertThat(PodResult.of(actual).getState(), is(State.COMPLETED));
         assertThat(PodResult.of(actual).hasFailed(), is(false));
     }
-
-
 
     @Override
     protected String[] getNamespacesToUse() {

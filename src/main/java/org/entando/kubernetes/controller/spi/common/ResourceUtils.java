@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller.spi.common;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class ResourceUtils {
 
@@ -34,5 +35,11 @@ public class ResourceUtils {
                 .withKind(entandoCustomResource.getKind())
                 .withName(entandoCustomResource.getMetadata().getName())
                 .withUid(entandoCustomResource.getMetadata().getUid()).build();
+    }
+
+    public static boolean customResourceOwns(EntandoCustomResource owner, HasMetadata owned) {
+        return owned.getMetadata().getOwnerReferences().stream()
+                .anyMatch(ownerReference -> owner.getMetadata().getName().equals(ownerReference.getName())
+                        && owner.getKind().equals(ownerReference.getKind()));
     }
 }

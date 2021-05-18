@@ -28,6 +28,7 @@ import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.deployable.ExternalService;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
@@ -81,42 +82,54 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
     }
 
     public T execute(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient potentiallyNullKeycloakClient) {
-        if (deployable.getExternalService().isPresent()) {
-            final CreateExternalServiceCommand command = new CreateExternalServiceCommand(deployable.getExternalService().get(),
-                    entandoCustomResource);
+        final Optional<ExternalService> externalService = deployable.getExternalService();
+        if (externalService.isPresent()) {
+            return prepareConnectivityToExternalService(k8sClient, externalService.get());
+        } else {
+            return deployServiceInternally(k8sClient, potentiallyNullKeycloakClient);
+        }
+    }
+
+    private T deployServiceInternally(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient potentiallyNullKeycloakClient) {
+        Optional<SimpleKeycloakClient> keycloakClient = ofNullable(potentiallyNullKeycloakClient);
+        EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
+                k8sClient.entandoResources().loadDockerImageInfoConfigMap());
+        if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
+            prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable<?>) deployable);
+        }
+        if (persistentVolumeClaimCreator.needsPersistentVolumeClaaims(deployable)) {
+            //NB!!! it seems there is some confusion in K8S when a patch is done without any changes.
+            //K8Sseems to increment either the resourceVersion or generation or both and then
+            //subsequent updates fail
+            createPersistentVolumeClaims(k8sClient);
+        }
+        secretCreator.createSecrets(k8sClient.secrets(), deployable);
+        serviceAccountCreator.prepareServiceAccountAccess(k8sClient.serviceAccounts(), deployable);
+        if (shouldCreateService(deployable)) {
+            createService(k8sClient);
+        }
+        Ingress ingress = maybeCreateIngress(k8sClient);
+        if (keycloakClientCreator.requiresKeycloakClients(deployable)) {
+            keycloakClientCreator.createKeycloakClients(
+                    k8sClient.secrets(),
+                    keycloakClient.orElseThrow(IllegalStateException::new),
+                    deployable,
+                    ofNullable(ingress));
+        }
+        createDeployment(k8sClient, entandoImageResolver);
+        waitForPod(k8sClient);
+        if (status.hasFailed()) {
+            throw new EntandoControllerException("Creation of Kubernetes resources has failed");
+        }
+        return deployable.createResult(getDeployment(), getService(), ingress, getPod()).withStatus(getStatus());
+    }
+
+    private T prepareConnectivityToExternalService(SimpleK8SClient<?> k8sClient, ExternalService externalService) {
+        if (externalService.getCreateDelegateService()) {
+            CreateExternalServiceCommand command = new CreateExternalServiceCommand(externalService, entandoCustomResource);
             return deployable.createResult(null, command.execute(k8sClient), null, null).withStatus(getStatus());
         } else {
-            Optional<SimpleKeycloakClient> keycloakClient = ofNullable(potentiallyNullKeycloakClient);
-            EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
-                    k8sClient.entandoResources().loadDockerImageInfoConfigMap());
-            if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
-                prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable<?>) deployable);
-            }
-            if (persistentVolumeClaimCreator.needsPersistentVolumeClaaims(deployable)) {
-                //NB!!! it seems there is some confusion in K8S when a patch is done without any changes.
-                //K8Sseems to increment either the resourceVersion or generation or both and then
-                //subsequent updates fail
-                createPersistentVolumeClaims(k8sClient);
-            }
-            secretCreator.createSecrets(k8sClient.secrets(), deployable);
-            serviceAccountCreator.prepareServiceAccountAccess(k8sClient.serviceAccounts(), deployable);
-            if (shouldCreateService(deployable)) {
-                createService(k8sClient);
-            }
-            Ingress ingress = maybeCreateIngress(k8sClient);
-            if (keycloakClientCreator.requiresKeycloakClients(deployable)) {
-                keycloakClientCreator.createKeycloakClients(
-                        k8sClient.secrets(),
-                        keycloakClient.orElseThrow(IllegalStateException::new),
-                        deployable,
-                        ofNullable(ingress));
-            }
-            createDeployment(k8sClient, entandoImageResolver);
-            waitForPod(k8sClient);
-            if (status.hasFailed()) {
-                throw new EntandoControllerException("Creation of Kubernetes resources has failed");
-            }
-            return deployable.createResult(getDeployment(), getService(), ingress, getPod()).withStatus(getStatus());
+            return deployable.createResult(null, null, null, null).withStatus(getStatus());
         }
     }
 
@@ -154,8 +167,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
 
     private void createPersistentVolumeClaims(SimpleK8SClient<?> k8sClient) {
         persistentVolumeClaimCreator.createPersistentVolumeClaimsFor(k8sClient.persistentVolumeClaims(), deployable);
-        persistentVolumeClaimCreator
-                .reloadPersistentVolumeClaims(k8sClient.persistentVolumeClaims()).forEach(
+        persistentVolumeClaimCreator.reloadPersistentVolumeClaims(k8sClient.persistentVolumeClaims()).forEach(
                 persistentVolumeClaim -> status.putPersistentVolumeClaimPhase(persistentVolumeClaim.getMetadata().getName(),
                         ofNullable(persistentVolumeClaim.getStatus()).map(PersistentVolumeClaimStatus::getPhase).orElse("Pending"))
         );

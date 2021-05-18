@@ -28,16 +28,19 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
-import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.DbmsVendor;
@@ -54,12 +57,7 @@ public class DefaultEntandoResourceClient extends DefaultKubernetesClientForCont
     }
 
     @Override
-    public String getNamespace() {
-        return client.getNamespace();
-    }
-
-    @Override
-    public ConfigMapBasedKeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
+    public KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
         Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource, keycloakPreference);
         String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
                 .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
@@ -131,14 +129,20 @@ public class DefaultEntandoResourceClient extends DefaultKubernetesClientForCont
     }
 
     @Override
-    public Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
+    public Optional<DatabaseServiceResult> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
         List<EntandoDatabaseService> externalDatabaseList = getOperations(EntandoDatabaseService.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
         return externalDatabaseList.stream().filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor)
-                .findFirst().map(externalDatabase ->
-                        new ExternalDatabaseDeployment(
-                                loadService(externalDatabase, ExternalDatabaseDeployment.serviceName(externalDatabase)),
-                                externalDatabase));
+                .findFirst().map(externalDatabase -> {
+                    Map<String, String> capabilityParameters = new HashMap<>();
+                    externalDatabase.getSpec().getTablespace()
+                            .ifPresent(s -> capabilityParameters.put(ProvidedDatabaseCapability.TABLESPACE_PARAMETER, s));
+                    externalDatabase.getSpec().getJdbcParameters().forEach(
+                            (key, value) -> capabilityParameters.put(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX + key, value));
+                    return new ProvidedDatabaseCapability(loadService(externalDatabase, NameUtils.standardServiceName(externalDatabase)),
+                            externalDatabase.getStatus().findCurrentServerStatus().orElseThrow(IllegalStateException::new),
+                            capabilityParameters);
+                });
     }
 
     private Service loadService(EntandoCustomResource peerInNamespace, String name) {

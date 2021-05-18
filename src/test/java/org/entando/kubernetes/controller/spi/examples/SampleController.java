@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.spi.examples;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.quarkus.runtime.StartupEvent;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
@@ -27,11 +27,11 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.command.IngressingDeployCommand;
-import org.entando.kubernetes.test.common.AbstractDbAwareController;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoIngressingDeploymentSpec;
 import org.entando.kubernetes.model.common.KeycloakAwareSpec;
+import org.entando.kubernetes.test.common.AbstractDbAwareController;
 
 public abstract class SampleController<S extends KeycloakAwareSpec, C extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>,
         R extends ServiceDeploymentResult<R>> extends
@@ -56,7 +56,7 @@ public abstract class SampleController<S extends KeycloakAwareSpec, C extends En
         DatabaseServiceResult databaseServiceResult = prepareDatabaseService(newEntandoResource, spec.getDbms().get()
         );
         // Create the Keycloak service using the provided database
-        ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig = null;
+        KeycloakConnectionConfig keycloakConnectionConfig = null;
         final EntandoBaseCustomResource<? extends KeycloakAwareSpec, EntandoCustomResourceStatus> entandoBaseCustomResource =
                 newEntandoResource;
         keycloakConnectionConfig = k8sClient.entandoResources()
@@ -75,6 +75,6 @@ public abstract class SampleController<S extends KeycloakAwareSpec, C extends En
 
     protected abstract Deployable<R> createDeployable(C newEntandoKeycloakServer,
             DatabaseServiceResult databaseServiceResult,
-            ConfigMapBasedKeycloakConnectionConfig keycloakConnectionConfig);
+            KeycloakConnectionConfig keycloakConnectionConfig);
 
 }

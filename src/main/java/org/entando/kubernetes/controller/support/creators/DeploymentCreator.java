@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.container.DbAware;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
@@ -61,7 +62,6 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     public static final String VOLUME_SUFFIX = "volume";
-    public static final String DEPLOYMENT_SUFFIX = "deployment";
     public static final String CONTAINER_SUFFIX = "container";
     public static final String PORT_SUFFIX = "port";
     private Deployment deployment;
@@ -151,7 +151,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private Volume newSecretVolume(SecretToMount secretToMount) {
         return new VolumeBuilder()
-                .withName(secretToMount.getSecretName() + VOLUME_SUFFIX)
+                .withName(secretToMount.getSecretName() + "-" + VOLUME_SUFFIX)
                 .withNewSecret()
                 .withSecretName(secretToMount.getSecretName())
                 .endSecret()
@@ -246,7 +246,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private VolumeMount newSecretVolumeMount(SecretToMount s) {
         return new VolumeMountBuilder()
-                .withName(s.getSecretName() + VOLUME_SUFFIX)
+                .withName(s.getSecretName() + "-" + VOLUME_SUFFIX)
                 .withMountPath(s.getMountPath()).withReadOnly(true).build();
     }
 
@@ -348,8 +348,9 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable, boolean supportStartupProbes) {
         return new DeploymentBuilder()
-                .withMetadata(fromCustomResource(true, resolveName(deployable.getQualifier().orElse(null), DEPLOYMENT_SUFFIX),
-                        deployable.getQualifier().orElse(null)))
+                .withMetadata(
+                        fromCustomResource(true, resolveName(deployable.getQualifier().orElse(null), NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
+                                deployable.getQualifier().orElse(null)))
                 .withSpec(buildDeploymentSpec(imageResolver, deployable, supportStartupProbes))
                 .build();
     }

@@ -61,7 +61,11 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
             return null;
         }
         ingress.getSpec().getRules().get(0).getHttp().getPaths().add(httpIngressPath);
-        ingress.getMetadata().getAnnotations().putAll(annotations);
+        if (ingress.getMetadata().getAnnotations() == null) {
+            ingress.getMetadata().setAnnotations(annotations);
+        } else {
+            ingress.getMetadata().getAnnotations().putAll(annotations);
+        }
         return ingress;
     }
 

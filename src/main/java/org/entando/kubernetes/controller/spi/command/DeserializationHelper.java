@@ -29,6 +29,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -77,6 +78,9 @@ public class DeserializationHelper implements InvocationHandler {
     @SuppressWarnings("unchecked")
     @Override
     public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
+        if(method.getName().equals("getStatus")){
+            System.out.println();
+        }
         if (method.getName().equals("createResult")) {
             return createResult(objects);
         }
@@ -111,10 +115,12 @@ public class DeserializationHelper implements InvocationHandler {
             try {
                 return objectMapper.readValue(objectMapper.writeValueAsString(rawObjectOrMap), type);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         } else if (ReflectionUtil.KNOWN_INTERFACES.contains(type)) {
             return fromMap(kubernetesClient, (Map<String, Object>) rawObjectOrMap, objectMapper);
+        } else if (type.isEnum()) {
+            return Enum.valueOf((Class<? extends Enum>) type, rawObjectOrMap.toString().toUpperCase(Locale.ROOT));
         } else {
             //Could be a simple type. Look for String constructor
             try {

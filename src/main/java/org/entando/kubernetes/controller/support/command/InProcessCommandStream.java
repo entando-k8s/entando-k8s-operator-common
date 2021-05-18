@@ -20,6 +20,8 @@ import org.entando.kubernetes.controller.spi.command.CommandStream;
 import org.entando.kubernetes.controller.spi.command.DefaultSerializableDeploymentResult;
 import org.entando.kubernetes.controller.spi.command.DeserializationHelper;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
@@ -42,8 +44,13 @@ public class InProcessCommandStream implements CommandStream {
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public String process(String deployable) {
-        DeployCommand<? extends ServiceDeploymentResult> command = new DeployCommand(
-                DeserializationHelper.deserialize(simpleK8SClient.entandoResources(), deployable));
+        final Deployable deserializedDeployable = DeserializationHelper.deserialize(simpleK8SClient.entandoResources(), deployable);
+        DeployCommand<? extends ServiceDeploymentResult> command = null;
+        if (deserializedDeployable instanceof IngressingDeployable) {
+            command = new IngressingDeployCommand<>((IngressingDeployable<?>) deserializedDeployable);
+        } else {
+            command = new DeployCommand(deserializedDeployable);
+        }
         final ServiceDeploymentResult result = command.execute(simpleK8SClient, keycloakClient);
         DefaultSerializableDeploymentResult serializableDeploymentResult = null;
         if (result instanceof ExposedDeploymentResult) {

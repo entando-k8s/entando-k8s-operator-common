@@ -18,27 +18,22 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import java.io.IOException;
+import io.fabric8.kubernetes.api.model.Service;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
-import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.common.DbmsVendor;
-import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
+import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
@@ -75,10 +70,9 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
         deleteAll(getFabric8Client().configMaps());
         deleteAll(getFabric8Client().customResources(EntandoApp.class));
         deleteAll(getFabric8Client().customResources(EntandoKeycloakServer.class));
+        deleteAll(getFabric8Client().customResources(EntandoDatabaseService.class));
         prepareCrdNameMap();
     }
-
-
 
     @Test
     void shouldResolveKeycloakServerInTheSameNamespace() {
@@ -98,7 +92,7 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
                 .endMetadata()
                 .build();
         //When I try to resolve a Keycloak config for the EntandoApp
-        ConfigMapBasedKeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the Keycloak in the SAME namespace as the EntadoApp.
@@ -145,13 +139,17 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
                 .build();
         getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(resource);
         //And the deployments for the database have been created
-        new CreateExternalServiceCommand(new ExternalDatabaseService(r), r).execute(getSimpleK8SClient());
+        final CreateExternalServiceCommand externalServiceCommand = new CreateExternalServiceCommand(new ExternalDatabaseService(r),
+                r);
+        final Service service = externalServiceCommand.execute(getSimpleK8SClient());
+        final InternalServerStatus status = externalServiceCommand.getStatus();
+        getSimpleK8SClient().entandoResources().updateStatus(r, status);
         //When I try to resolve a ExternalDatabaseDeployment for the EntandoApp
-        Optional<ExternalDatabaseDeployment> config = getSimpleK8SClient().entandoResources()
+        Optional<DatabaseServiceResult> config = getSimpleK8SClient().entandoResources()
                 .findExternalDatabase(resource, DbmsVendor.POSTGRESQL);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the Keycloak in the SAME namespace as the EntadoApp.
-        assertThat(config.get().getInternalServiceHostname(), is("my-database-service-db-service." + APP_NAMESPACE + ".svc.cluster.local"));
+        assertThat(config.get().getInternalServiceHostname(), is("my-database-service-service." + APP_NAMESPACE + ".svc.cluster.local"));
     }
 
     @Test
@@ -186,7 +184,7 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
                 .addToData(NameUtils.INTERNAL_URL_KEY, "https://custom.com/auth")
                 .build());
         //When I try to resolve a Keycloak config for the EntandoApp
-        ConfigMapBasedKeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the marked as the DEFAULT keycloak server
@@ -221,7 +219,7 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
                 .build();
         getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(resource);
         //When I try to resolve a Keycloak config for the EntandoApp
-        ConfigMapBasedKeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the marked as the DEFAULT keycloak server

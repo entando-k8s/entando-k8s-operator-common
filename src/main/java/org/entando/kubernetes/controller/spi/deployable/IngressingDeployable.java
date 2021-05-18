@@ -32,13 +32,10 @@ public interface IngressingDeployable<T extends ExposedDeploymentResult<T>> exte
 
     Optional<String> getIngressHostName();
 
-    @Override
-    @JsonIgnore
-    default List<IngressingContainer> getIngressingContainers() {
-        return getContainers().stream()
-                .filter(IngressingContainer.class::isInstance)
-                .map(IngressingContainer.class::cast)
-                .collect(toList());
-    }
+    String getIngressName();
+
+    String getIngressNamespace();
+
+    Optional<String> getQualifier();
 
 }

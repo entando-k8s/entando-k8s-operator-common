@@ -25,17 +25,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.client.ClientBuilder;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.support.client.impl.DefaultEntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoJackson2Provider;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.KeycloakTestHelper;
-import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
-import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppSpec;
 import org.entando.kubernetes.model.common.DbmsVendor;
@@ -142,7 +142,7 @@ public class KeycloakE2ETestHelper extends
     }
 
     public Keycloak getKeycloakFor(EntandoBaseCustomResource<? extends KeycloakAwareSpec, EntandoCustomResourceStatus> requiresKeycloak) {
-        ConfigMapBasedKeycloakConnectionConfig keycloak = entandoResourceClient
+        KeycloakConnectionConfig keycloak = entandoResourceClient
                 .findKeycloak(requiresKeycloak, requiresKeycloak.getSpec()::getKeycloakToUse);
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         clientBuilder.register(EntandoJackson2Provider.class);

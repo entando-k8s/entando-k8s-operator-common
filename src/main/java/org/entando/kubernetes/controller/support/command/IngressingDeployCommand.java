@@ -16,8 +16,11 @@
 
 package org.entando.kubernetes.controller.support.command;
 
+import static java.util.stream.Collectors.toList;
+
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
@@ -40,7 +43,10 @@ public class IngressingDeployCommand<T extends ExposedDeploymentResult<T>> exten
 
     @Override
     protected Ingress maybeCreateIngress(SimpleK8SClient<?> k8sClient) {
-        if (ingressingDeployable.getIngressingContainers().isEmpty()) {
+        if (ingressingDeployable.getContainers().stream()
+                .filter(IngressingContainer.class::isInstance)
+                .map(IngressingContainer.class::cast)
+                .collect(toList()).isEmpty()) {
             throw new IllegalStateException(
                     deployable.getClass() + " implements IngressingDeployable but has no IngressingContainers.");
         }

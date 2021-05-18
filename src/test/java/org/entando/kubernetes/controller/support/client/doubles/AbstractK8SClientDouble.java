@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.client.doubles;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractK8SClientDouble {
@@ -32,7 +33,9 @@ public abstract class AbstractK8SClientDouble {
         this.namespaces = namespaces;
         getNamespace(CONTROLLER_NAMESPACE);
     }
-
+    public Map<String, NamespaceDouble> getKubernetesState(){
+        return namespaces;
+    }
     protected NamespaceDouble getNamespace(HasMetadata customResource) {
         return getNamespace(customResource.getMetadata().getNamespace());
     }

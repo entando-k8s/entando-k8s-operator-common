@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.support.client.doubles;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Endpoints;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -27,6 +28,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -154,6 +156,25 @@ public class NamespaceDouble {
 
     public ConfigMap getConfigMap(String configMapName) {
         return configMaps.get(configMapName);
+    }
+
+    public Map<String, Collection<? extends HasMetadata>> getKubernetesState() {
+        Map<String, Collection<? extends HasMetadata>> result = new ConcurrentHashMap<>();
+        result.put("services", services.values());
+        result.put("ingresses", ingresses.values());
+        result.put("deployments", deployments.values());
+        result.put("pods", pods.values());
+        result.put("persistentVolumeClaims", persistentVolumeClaims.values());
+        result.put("endpointsMap", endpointsMap.values());
+        result.put("secrets", secrets.values());
+        result.put("configMaps", configMaps.values());
+        result.put("serviceAccounts", serviceAccounts.values());
+        result.put("roles", roles.values());
+        result.put("roleBinding", roleBindings.values());
+        this.customResources.forEach(
+                (aClass, stringEntandoCustomResourceMap) -> result.put(aClass.getSimpleName(), stringEntandoCustomResourceMap.values())
+        );
+        return result;
     }
 
     public void putConfigMap(ConfigMap configMap) {

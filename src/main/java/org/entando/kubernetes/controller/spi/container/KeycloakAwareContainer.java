@@ -21,11 +21,10 @@ import java.util.ArrayList;
 import java.util.List;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 
 public interface KeycloakAwareContainer extends DeployableContainer, HasWebContext, KeycloakPreference {
 
-    ConfigMapBasedKeycloakConnectionConfig getKeycloakConnectionConfig();
+    KeycloakConnectionConfig getKeycloakConnectionConfig();
 
     KeycloakClientConfig getKeycloakClientConfig();
 
@@ -38,7 +37,7 @@ public interface KeycloakAwareContainer extends DeployableContainer, HasWebConte
     }
 
     default List<EnvVar> getKeycloakVariables() {
-        ConfigMapBasedKeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
+        KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
         List<EnvVar> vars = new ArrayList<>();
         vars.add(new EnvVar("KEYCLOAK_ENABLED", "true", null));
         vars.add(new EnvVar("KEYCLOAK_REALM", getKeycloakRealmToUse(), null));

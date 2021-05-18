@@ -35,11 +35,9 @@ import java.util.Map;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.deployable.Ingressing;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class IngressCreator extends AbstractK8SResourceCreator {
@@ -90,8 +88,8 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         return false;
     }
 
-    public boolean requiresDelegatingService(Service service, Ingressing<?> ingressingContainer) {
-        return !service.getMetadata().getNamespace().equals(ingressingContainer.getIngressNamespace());
+    public boolean requiresDelegatingService(Service service, IngressingDeployable<?> ingressingDeployable) {
+        return !service.getMetadata().getNamespace().equals(ingressingDeployable.getIngressNamespace());
     }
 
     public void createIngress(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable,
@@ -102,7 +100,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                     ingressingDeployable);
             this.ingress = ingressClient.createIngress(entandoCustomResource, newIngress);
         } else {
-            if (KubeUtils.customResourceOwns(entandoCustomResource, ingress)) {
+            if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
                 this.ingress = ingressClient.editIngress(entandoCustomResource, ingressingDeployable.getIngressName())
                         .editSpec().editFirstRule().withHost(determineIngressHost(ingressClient, ingressingDeployable)).endRule()
                         .withTls(maybeBuildTls(ingressClient, ingressingDeployable)).endSpec().done();

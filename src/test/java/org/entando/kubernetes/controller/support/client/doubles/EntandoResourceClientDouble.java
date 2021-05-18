@@ -40,12 +40,13 @@ import org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResour
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
-import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
@@ -54,9 +55,11 @@ import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.test.common.DatabaseDeploymentResult;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
@@ -73,7 +76,9 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
-        this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
+        if (r != null) {
+            this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
+        }
         return r;
     }
 
@@ -126,21 +131,26 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @Override
     public void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason) {
+        if (entandoCustomResource.getStatus().findCurrentServerStatus().isEmpty()) {
+            entandoCustomResource.getStatus().putServerStatus(new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
+        }
         entandoCustomResource.getStatus().findCurrentServerStatus()
-                .orElseThrow(() -> new IllegalStateException("No server status recorded yet!"))
-                .finishWith(new EntandoControllerFailureBuilder().withException(reason).build());
+                .ifPresent(abstractServerStatus -> abstractServerStatus
+                        .finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
+        entandoCustomResource.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, entandoCustomResource.getMetadata().getGeneration());
+
     }
 
     @Override
-    public Optional<ExternalDatabaseDeployment> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
+    public Optional<DatabaseServiceResult> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
         NamespaceDouble namespace = getNamespace(resource);
         Optional<EntandoDatabaseService> first = namespace.getCustomResources(EntandoDatabaseService.class).values().stream()
                 .filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor).findFirst();
-        return first.map(edb -> new ExternalDatabaseDeployment(namespace.getService(ExternalDatabaseDeployment.serviceName(edb)), edb));
+        return first.map(edb -> new DatabaseDeploymentResult(namespace.getService(NameUtils.standardServiceName(edb)), edb));
     }
 
     @Override
-    public ConfigMapBasedKeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
+    public KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
         Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource, keycloakPreference);
         String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
                 .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
@@ -236,6 +246,8 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
                 return getNamespace(namespace).getIngress(name);
             case SERVICE:
                 return getNamespace(namespace).getService(name);
+            case SECRET:
+                return getNamespace(namespace).getSecret(name);
             case POD:
                 return getNamespace(namespace).getPod(name);
             case PERSISTENT_VOLUME_CLAIM:

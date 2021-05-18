@@ -22,9 +22,9 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;
-import org.entando.kubernetes.controller.support.client.ExternalDatabaseDeployment;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
@@ -42,7 +42,7 @@ public class CreateExternalServiceCommand {
     public CreateExternalServiceCommand(ExternalService externalService, EntandoCustomResource entandoCustomResource) {
         this.externalService = externalService;
         this.entandoCustomResource = entandoCustomResource;
-        status.setQualifier(ExternalDatabaseDeployment.NAME_QUALIFIER);
+        status.setQualifier(NameUtils.MAIN_QUALIFIER);
     }
 
     public InternalServerStatus getStatus() {
@@ -68,7 +68,7 @@ public class CreateExternalServiceCommand {
     private Endpoints newEndpoints() {
         return new EndpointsBuilder()
                 //Needs to match the service name exactly
-                .withMetadata(fromCustomResource(ExternalDatabaseDeployment.DATABASE_SERVICE_SUFFIX))
+                .withMetadata(fromCustomResource())
                 .addNewSubset()
                 .addNewAddress()
                 .withIp(externalService.getHost())
@@ -82,7 +82,7 @@ public class CreateExternalServiceCommand {
 
     private Service newExternalService() {
         return new ServiceBuilder()
-                .withMetadata(fromCustomResource(ExternalDatabaseDeployment.DATABASE_SERVICE_SUFFIX))
+                .withMetadata(fromCustomResource())
                 .withNewSpec()
                 .withExternalName(FluentTernary.useNull(String.class).when(isIpAddress())
                         .orElse(externalService.getHost()))
@@ -124,9 +124,9 @@ public class CreateExternalServiceCommand {
         return false;
     }
 
-    private ObjectMeta fromCustomResource(String suffix) {
+    private ObjectMeta fromCustomResource() {
         ObjectMetaBuilder metaBuilder = new ObjectMetaBuilder()
-                .withName(entandoCustomResource.getMetadata().getName() + suffix)
+                .withName(entandoCustomResource.getMetadata().getName() + "-" + NameUtils.DEFAULT_SERVICE_SUFFIX)
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, entandoCustomResource.getKind())
                 .addToLabels(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName());
