@@ -140,7 +140,7 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
                 .withCapabilityRequirementScope(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
-                .withAdditionalLabelsToMatch(Collections.singletonMap("Environment", "Stage")).build();
+                .withSelector(Collections.singletonMap("Environment", "Stage")).build();
         when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME, CapabilityScope.DEDICATED.getCamelCaseName())
@@ -159,7 +159,7 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
                 .withCapabilityRequirementScope(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
-                .withAdditionalLabelsToMatch(Collections.singletonMap("Environment", "Stage"))
+                .withSelector(Collections.singletonMap("Environment", "Stage"))
                 .build();
         when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
@@ -181,7 +181,7 @@ class CapabilityProviderTest implements InProcessTestData {
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
-                .withAdditionalLabelsToMatch(Collections.singletonMap("Environment", "Stage")).build();
+                .withSelector(Collections.singletonMap("Environment", "Stage")).build();
         when(client.createAndWatchResource(any(), any()))
                 .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "mysql-dbms"));
         when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
@@ -200,6 +200,7 @@ class CapabilityProviderTest implements InProcessTestData {
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), startsWith("mysql-dbms"));
+        assertThat(providedCapability.getMetadata().getLabels().get("Environment"), is("Stage"));
     }
 
     @Test

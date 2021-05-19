@@ -139,7 +139,8 @@ public class CapabilityProvider {
                                 capabilityRequirement.getImplementation().map(i -> i.getHypenatedName() + "-").orElse("")
                                         + capabilityRequirement
                                         .getCapability().getHypenatedName() + "-" + NameUtils
-                                        .randomNumeric(4));
+                                        .randomNumeric(4))
+                        .addToLabels(capabilityRequirement.getSelector());
                 break;
             case NAMESPACE:
                 metaBuilder = metaBuilder.withNamespace(forResource.getMetadata().getNamespace())
@@ -150,7 +151,7 @@ public class CapabilityProvider {
                 metaBuilder = metaBuilder.withNamespace(client.getNamespace())
                         .withName(calculateDefaultName(capabilityRequirement) + "-in-cluster");
         }
-        metaBuilder.withLabels(determineCapabilityLabels(capabilityRequirement));
+        metaBuilder.addToLabels(determineCapabilityLabels(capabilityRequirement));
         return new ProvidedCapability(metaBuilder.build(), capabilityRequirement);
     }
 
