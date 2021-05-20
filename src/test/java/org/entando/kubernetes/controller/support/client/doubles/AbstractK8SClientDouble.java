@@ -33,9 +33,11 @@ public abstract class AbstractK8SClientDouble {
         this.namespaces = namespaces;
         getNamespace(CONTROLLER_NAMESPACE);
     }
-    public Map<String, NamespaceDouble> getKubernetesState(){
+
+    public Map<String, NamespaceDouble> getKubernetesState() {
         return namespaces;
     }
+
     protected NamespaceDouble getNamespace(HasMetadata customResource) {
         return getNamespace(customResource.getMetadata().getNamespace());
     }

@@ -24,7 +24,7 @@ import java.util.List;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.spibase.PublicIngressingDeployableBase;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
@@ -39,9 +39,9 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
     private KeycloakConnectionConfig keycloakConnectionConfig;
 
     public SamplePublicIngressingDbAwareDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource,
-            DatabaseServiceResult databaseServiceResult,
+            DatabaseConnectionInfo databaseConnectionInfo,
             KeycloakConnectionConfig keycloakConnectionConfig) {
-        super(entandoResource, databaseServiceResult);
+        super(entandoResource, databaseConnectionInfo);
         this.keycloakConnectionConfig = keycloakConnectionConfig;
         sampleSecret = generateSecret(this.entandoResource, secretName(this.entandoResource),
                 "entando_keycloak_admin");
@@ -53,7 +53,7 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
     }
 
     protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource) {
-        return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult));
+        return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseConnectionInfo));
     }
 
     @Override

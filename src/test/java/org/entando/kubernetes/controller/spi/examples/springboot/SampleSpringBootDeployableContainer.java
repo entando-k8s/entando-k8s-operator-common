@@ -30,7 +30,7 @@ import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.spibase.KeycloakAwareContainerBase;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
@@ -50,14 +50,14 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     private final List<DatabaseSchemaConnectionInfo> dbSchemaInfo;
 
     public SampleSpringBootDeployableContainer(T customResource, KeycloakConnectionConfig keycloakConnectionConfig,
-            DatabaseServiceResult databaseServiceResult) {
+            DatabaseConnectionInfo databaseConnectionInfo) {
         this.customResource = customResource;
         this.keycloakConnectionConfig = keycloakConnectionConfig;
-        if (databaseServiceResult == null) {
+        if (databaseConnectionInfo == null) {
             this.dbSchemaInfo = Collections.emptyList();
         } else {
             this.dbSchemaInfo = DbAware
-                    .buildDatabaseSchemaConnectionInfo(customResource, databaseServiceResult, Collections.singletonList("serverdb"));
+                    .buildDatabaseSchemaConnectionInfo(customResource, databaseConnectionInfo, Collections.singletonList("serverdb"));
         }
     }
 

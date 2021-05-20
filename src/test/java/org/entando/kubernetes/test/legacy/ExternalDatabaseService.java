@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.common;
+package org.entando.kubernetes.test.legacy;
 
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;
@@ -36,7 +36,8 @@ public class ExternalDatabaseService implements ExternalService {
     @Override
     public int getPort() {
         return databaseService.getSpec().getPort()
-                .orElse(DbmsVendorConfig.valueOf(databaseService.getSpec().getDbms().name()).getDefaultPort());
+                .orElse(DbmsVendorConfig.valueOf(databaseService.getSpec().getDbms().orElseThrow(IllegalStateException::new).name())
+                        .getDefaultPort());
     }
 
     @Override

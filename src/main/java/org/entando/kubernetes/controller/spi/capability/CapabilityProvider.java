@@ -30,6 +30,7 @@ import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.ResourceReference;
 
+//TODO move to support
 public class CapabilityProvider {
 
     private final CapabilityClient client;

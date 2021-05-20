@@ -24,8 +24,6 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 
 public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
-    public static final String SEPERATOR_PATTERN = "[\\s,:]+";
-
     private EntandoOperatorConfig() {
     }
 
@@ -46,26 +44,6 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     public static Optional<String> getOperatorServiceAccount() {
         return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_SERVICEACCOUNT);
-    }
-
-    public static OperatorDeploymentType getOperatorDeploymentType() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE)
-                .map(OperatorDeploymentType::resolve)
-                .orElse(OperatorDeploymentType.HELM);
-    }
-
-    public static boolean isClusterScopedDeployment() {
-        if (getOperatorDeploymentType() == OperatorDeploymentType.OLM) {
-            return getNamespacesToObserve().isEmpty();
-        } else {
-            return getNamespacesToObserve().stream().anyMatch("*"::equals);
-        }
-    }
-
-    public static List<String> getNamespacesToObserve() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE).map(s -> s.split(SEPERATOR_PATTERN))
-                .map(Arrays::asList)
-                .orElse(new ArrayList<>());
     }
 
     public static List<String> getImagePullSecrets() {

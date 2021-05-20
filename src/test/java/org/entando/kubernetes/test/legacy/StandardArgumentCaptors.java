@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.componenttest;
+package org.entando.kubernetes.test.legacy;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.util.Map;

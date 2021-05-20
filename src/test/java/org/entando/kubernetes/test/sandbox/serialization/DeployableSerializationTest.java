@@ -49,8 +49,8 @@ import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTest
 import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.model.app.EntandoApp;
-import org.entando.kubernetes.test.common.DatabaseDeployable;
-import org.entando.kubernetes.test.common.DatabaseDeploymentResult;
+import org.entando.kubernetes.test.legacy.DatabaseDeployable;
+import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;

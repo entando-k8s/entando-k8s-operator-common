@@ -27,7 +27,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
@@ -43,9 +43,9 @@ public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
 
     public SpringBootDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource,
             KeycloakConnectionConfig keycloakConnectionConfig,
-            DatabaseServiceResult databaseServiceResult) {
+            DatabaseConnectionInfo databaseConnectionInfo) {
         this.customResource = customResource;
-        container = new SampleSpringBootDeployableContainer<>(customResource, keycloakConnectionConfig, databaseServiceResult);
+        container = new SampleSpringBootDeployableContainer<>(customResource, keycloakConnectionConfig, databaseConnectionInfo);
     }
 
     /**

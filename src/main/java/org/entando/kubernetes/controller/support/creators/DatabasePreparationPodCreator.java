@@ -37,7 +37,7 @@ import org.entando.kubernetes.controller.spi.container.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
 import org.entando.kubernetes.controller.spi.container.DbAware;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
@@ -141,7 +141,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     }
 
     private List<EnvVar> buildEnvironment(DatabaseSchemaConnectionInfo schemaConnectionInfo) {
-        DatabaseServiceResult databaseDeployment = schemaConnectionInfo.getDatabaseServiceResult();
+        DatabaseConnectionInfo databaseDeployment = schemaConnectionInfo.getDatabaseServiceResult();
         List<EnvVar> result = new ArrayList<>();
         result.add(new EnvVar("DATABASE_SERVER_HOST", databaseDeployment.getInternalServiceHostname(), null));
         result.add(new EnvVar("DATABASE_SERVER_PORT", databaseDeployment.getPort(), null));
@@ -167,7 +167,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
 
     }
 
-    private EnvVarSource buildSecretKeyRef(DatabaseServiceResult databaseDeployment, String configKey) {
+    private EnvVarSource buildSecretKeyRef(DatabaseConnectionInfo databaseDeployment, String configKey) {
         return SecretUtils.secretKeyRef(databaseDeployment.getAdminSecretName(), configKey);
     }
 

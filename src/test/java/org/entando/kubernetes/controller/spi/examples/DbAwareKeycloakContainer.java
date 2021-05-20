@@ -21,17 +21,17 @@ import java.util.Collections;
 import java.util.List;
 import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
 import org.entando.kubernetes.controller.spi.container.DbAware;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 
 public class DbAwareKeycloakContainer extends MinimalKeycloakContainer implements DbAware {
 
     private final List<DatabaseSchemaConnectionInfo> dbSchemaInfo;
 
-    public DbAwareKeycloakContainer(EntandoKeycloakServer entandoResource, DatabaseServiceResult databaseServiceResult) {
+    public DbAwareKeycloakContainer(EntandoKeycloakServer entandoResource, DatabaseConnectionInfo databaseConnectionInfo) {
         super(entandoResource);
         this.dbSchemaInfo = DbAware
-                .buildDatabaseSchemaConnectionInfo(entandoResource, databaseServiceResult, Collections.singletonList("db"));
+                .buildDatabaseSchemaConnectionInfo(entandoResource, databaseConnectionInfo, Collections.singletonList("db"));
 
     }
 

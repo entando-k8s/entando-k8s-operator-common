@@ -14,29 +14,27 @@
  *
  */
 
-package org.entando.kubernetes.test.componenttest;
+package org.entando.kubernetes.test.legacy;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
-
-import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
-import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
-import org.mockito.Mockito;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-//Because Sonar cannot detect that the test methods are declared in the superclass
-//and it cannot detect custom matchers and captors
-@SuppressWarnings({"java:S6068", "java:S6073", "java:S2187"})
-public class ContainerUsingExternalDatabaseMockClientTest extends ContainerUsingExternalDatabaseTestBase {
+//Because Sonar doesn't pick up that the test methods are defined in the parent class
+@SuppressWarnings({"java:S2187"})
+public class PublicIngressingMockClientTest extends PublicIngressingTestBase {
 
-    private final SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
-    private final SimpleKeycloakClient keycloakClient = Mockito.mock(SimpleKeycloakClient.class);
+    SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
+
+    @BeforeEach
+    public void emulatePodWaiting() {
+        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
+    }
 
     @AfterEach
     public void dontEmulatePodWaiting() {
@@ -44,20 +42,9 @@ public class ContainerUsingExternalDatabaseMockClientTest extends ContainerUsing
         getClient().pods().getPodWatcherQueue().clear();
     }
 
-    @BeforeEach
-    public void prepareKeycloakMocks() {
-        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
-        lenient().when(keycloakClient.prepareClientAndReturnSecret(any(KeycloakClientConfig.class))).thenReturn("ASDFASDFASDfa");
-
-    }
-
     @Override
-    public SimpleK8SClientDouble getClient() {
+    public SimpleK8SClient<?> getClient() {
         return simpleK8SClientDouble;
     }
 
-    @Override
-    protected SimpleKeycloakClient getKeycloakClient() {
-        return keycloakClient;
-    }
 }

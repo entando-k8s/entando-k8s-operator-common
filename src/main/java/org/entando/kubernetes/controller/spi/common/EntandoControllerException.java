@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.controller.spi.common;
 
 /*
  * Throw this exception to disrupt the current progression of objects being installed.

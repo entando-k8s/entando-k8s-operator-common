@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.componenttest;
+package org.entando.kubernetes.test.legacy;
 
 import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
@@ -47,7 +47,7 @@ import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.barebones.BareBonesContainer;
 import org.entando.kubernetes.controller.spi.examples.barebones.BareBonesDeployable;
 import org.entando.kubernetes.controller.spi.examples.barebones.BarebonesDeploymentResult;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -108,7 +108,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
                 mock(SimpleKeycloakClient.class)) {
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
-                    DatabaseServiceResult databaseServiceResult,
+                    DatabaseConnectionInfo databaseConnectionInfo,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
                     @Override
@@ -149,7 +149,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
                 mock(SimpleKeycloakClient.class)) {
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
-                    DatabaseServiceResult databaseServiceResult,
+                    DatabaseConnectionInfo databaseConnectionInfo,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer() {
                     @Override
@@ -208,7 +208,7 @@ public abstract class BareBonesDeployableTestBase implements InProcessTestUtil, 
         controller = new SampleController<>(k8sClient, mock(SimpleKeycloakClient.class)) {
             @Override
             protected Deployable<BarebonesDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
-                    DatabaseServiceResult databaseServiceResult,
+                    DatabaseConnectionInfo databaseConnectionInfo,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
                 return new BareBonesDeployable<>(newEntandoPlugin, new BareBonesContainer());
             }

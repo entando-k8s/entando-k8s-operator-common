@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.common;
+package org.entando.kubernetes.test.legacy;
 
 import static java.lang.String.format;
 
@@ -28,11 +28,12 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
@@ -40,8 +41,6 @@ import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SCli
 import org.entando.kubernetes.controller.support.command.DeployCommand;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.controller.AutoExit;
-import org.entando.kubernetes.controller.support.controller.EntandoControllerException;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
@@ -168,8 +167,8 @@ public abstract class AbstractDbAwareController<S extends Serializable, T extend
         }
     }
 
-    protected DatabaseServiceResult prepareDatabaseService(T entandoCustomResource, DbmsVendor dbmsVendor) {
-        Optional<DatabaseServiceResult> externalDatabase = k8sClient.entandoResources()
+    protected DatabaseConnectionInfo prepareDatabaseService(T entandoCustomResource, DbmsVendor dbmsVendor) {
+        Optional<DatabaseConnectionInfo> externalDatabase = k8sClient.entandoResources()
                 .findExternalDatabase(entandoCustomResource, dbmsVendor);
         if (externalDatabase.isPresent()) {
             return externalDatabase.get();

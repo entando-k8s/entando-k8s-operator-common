@@ -78,7 +78,7 @@ public class DeserializationHelper implements InvocationHandler {
     @SuppressWarnings("unchecked")
     @Override
     public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-        if(method.getName().equals("getStatus")){
+        if (method.getName().equals("getStatus")) {
             System.out.println();
         }
         if (method.getName().equals("createResult")) {

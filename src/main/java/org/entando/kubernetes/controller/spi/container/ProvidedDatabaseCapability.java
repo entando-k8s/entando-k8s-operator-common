@@ -27,10 +27,10 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 
-public class ProvidedDatabaseCapability extends AbstractServiceResult implements DatabaseServiceResult {
+public class ProvidedDatabaseCapability extends AbstractServiceResult implements DatabaseConnectionInfo {
 
     public static final String DATABASE_NAME_PARAMETER = "databaseName";
     public static final String JDBC_PARAMETER_PREFIX = "jdbc-";

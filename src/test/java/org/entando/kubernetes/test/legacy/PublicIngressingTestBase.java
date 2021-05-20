@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.componenttest;
+package org.entando.kubernetes.test.legacy;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,7 +44,7 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.SampleDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.SamplePublicIngressingDbAwareDeployable;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
@@ -116,9 +116,9 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
             @Override
             protected Deployable<DefaultExposedDeploymentResult> createDeployable(EntandoPlugin plugin,
-                    DatabaseServiceResult databaseServiceResult,
+                    DatabaseConnectionInfo databaseConnectionInfo,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<>(plugin, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<>(plugin, databaseConnectionInfo,
                         keycloakConnectionConfig) {
                     @Override
                     public String getIngressNamespace() {
@@ -133,7 +133,7 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
                     @Override
                     protected List<DeployableContainer> createContainers(
                             EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
-                        return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult) {
+                        return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, this.databaseConnectionInfo) {
                             @Override
                             public int getPrimaryPort() {
                                 return 8082;
@@ -184,16 +184,16 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
 
             @Override
             protected Deployable<DefaultExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
-                    DatabaseServiceResult databaseServiceResult,
+                    DatabaseConnectionInfo databaseConnectionInfo,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult,
+                return new SamplePublicIngressingDbAwareDeployable<>(newEntandoPlugin, databaseConnectionInfo,
                         keycloakConnectionConfig) {
                     @Override
                     protected List<DeployableContainer> createContainers(
                             EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
-                        return Arrays.asList(new SampleDeployableContainer<>(entandoResource, databaseServiceResult),
+                        return Arrays.asList(new SampleDeployableContainer<>(entandoResource, this.databaseConnectionInfo),
                                 new EntandoPluginSampleDeployableContainer(entandoResource, keycloakConnectionConfig,
-                                        databaseServiceResult));
+                                        this.databaseConnectionInfo));
                     }
                 };
             }
@@ -284,8 +284,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         public EntandoPluginSampleDeployableContainer(
                 EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource,
                 KeycloakConnectionConfig keycloakConnectionConfig,
-                DatabaseServiceResult databaseServiceResult) {
-            super(entandoResource, databaseServiceResult);
+                DatabaseConnectionInfo databaseConnectionInfo) {
+            super(entandoResource, databaseConnectionInfo);
             this.keycloakConnectionConfig = keycloakConnectionConfig;
         }
 

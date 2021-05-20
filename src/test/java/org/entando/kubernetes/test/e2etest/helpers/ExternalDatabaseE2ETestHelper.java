@@ -40,9 +40,9 @@ import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpec;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceSpecBuilder;
-import org.entando.kubernetes.test.common.ExternalDatabaseService;
 import org.entando.kubernetes.test.e2etest.common.SampleWriter;
 import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
+import org.entando.kubernetes.test.legacy.ExternalDatabaseService;
 
 public class ExternalDatabaseE2ETestHelper extends
         E2ETestHelperBase<EntandoDatabaseService> {

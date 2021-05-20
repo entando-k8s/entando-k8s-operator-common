@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.test.common;
 
-import static io.qameta.allure.Allure.step;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 

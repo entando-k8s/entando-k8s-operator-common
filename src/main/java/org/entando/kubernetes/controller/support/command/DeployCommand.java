@@ -24,6 +24,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
@@ -36,7 +37,6 @@ import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.controller.EntandoControllerException;
 import org.entando.kubernetes.controller.support.creators.DatabasePreparationPodCreator;
 import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.support.creators.KeycloakClientCreator;
@@ -127,7 +127,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
     private T prepareConnectivityToExternalService(SimpleK8SClient<?> k8sClient, ExternalService externalService) {
         if (externalService.getCreateDelegateService()) {
             CreateExternalServiceCommand command = new CreateExternalServiceCommand(externalService, entandoCustomResource);
-            return deployable.createResult(null, command.execute(k8sClient), null, null).withStatus(getStatus());
+            return deployable.createResult(null, command.execute(k8sClient), null, null).withStatus(command.getStatus());
         } else {
             return deployable.createResult(null, null, null, null).withStatus(getStatus());
         }

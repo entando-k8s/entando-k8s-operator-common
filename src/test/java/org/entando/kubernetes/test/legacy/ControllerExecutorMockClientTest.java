@@ -14,37 +14,22 @@
  *
  */
 
-package org.entando.kubernetes.test.componenttest;
+package org.entando.kubernetes.test.legacy;
 
-import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-//Because Sonar doesn't pick up that the test methods are defined in the parent class
+//Because Sonar cannot detect that the test methods are declared in the superclass
 @SuppressWarnings({"java:S2187"})
-public class PublicIngressingMockClientTest extends PublicIngressingTestBase {
+public class ControllerExecutorMockClientTest extends ControllerExecutorTestBase {
 
     SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
-
-    @BeforeEach
-    public void emulatePodWaiting() {
-        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
-    }
-
-    @AfterEach
-    public void dontEmulatePodWaiting() {
-        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
-        getClient().pods().getPodWatcherQueue().clear();
-    }
 
     @Override
     public SimpleK8SClient<?> getClient() {
         return simpleK8SClientDouble;
     }
-
 }

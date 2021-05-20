@@ -36,7 +36,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
@@ -129,10 +129,11 @@ public class DefaultEntandoResourceClient extends DefaultKubernetesClientForCont
     }
 
     @Override
-    public Optional<DatabaseServiceResult> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
+    public Optional<DatabaseConnectionInfo> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
         List<EntandoDatabaseService> externalDatabaseList = getOperations(EntandoDatabaseService.class)
                 .inNamespace(resource.getMetadata().getNamespace()).list().getItems();
-        return externalDatabaseList.stream().filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor)
+        return externalDatabaseList.stream()
+                .filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms().orElse(DbmsVendor.POSTGRESQL) == vendor)
                 .findFirst().map(externalDatabase -> {
                     Map<String, String> capabilityParameters = new HashMap<>();
                     externalDatabase.getSpec().getTablespace()

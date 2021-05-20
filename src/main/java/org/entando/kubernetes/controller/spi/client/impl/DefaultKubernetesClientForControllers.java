@@ -196,7 +196,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     public void deploymentFailed(EntandoCustomResource customResource, Exception reason) {
         performStatusUpdate(customResource,
                 t -> {
-                    if(t.getStatus().findCurrentServerStatus().isEmpty()){
+                    if (t.getStatus().findCurrentServerStatus().isEmpty()) {
                         t.getStatus().putServerStatus(new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
                     }
                     t.getStatus().findCurrentServerStatus()

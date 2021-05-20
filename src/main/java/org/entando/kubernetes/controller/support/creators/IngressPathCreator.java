@@ -25,9 +25,9 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
-import org.entando.kubernetes.controller.spi.deployable.Ingressing;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -45,16 +45,20 @@ public class IngressPathCreator {
                 .filter(IngressingContainer.class::isInstance)
                 .map(IngressingContainer.class::cast)
                 .collect(toList()).stream().map(o -> newHttpPath(o, service)).collect(Collectors
-                .toList());
+                        .toList());
     }
 
-    public Ingress addMissingHttpPaths(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable, Ingress ingress, Service service) {
-        List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream().filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)
+    public Ingress addMissingHttpPaths(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable, Ingress ingress,
+            Service service) {
+        List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
+                .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)
                 .filter(path -> this.httpPathIsAbsent(ingress, path))
                 .collect(Collectors.toList());
         for (IngressingPathOnPort ingressingContainer : ingressingContainers) {
+            String qualifier = ((DeployableContainer) ingressingContainer).getNameQualifier();
             ingressClient.addHttpPath(ingress, newHttpPath(ingressingContainer, service), Collections
-                    .singletonMap(entandoCustomResource.getMetadata().getName() + "-path", ingressingContainer.getWebContextPath()));
+                    .singletonMap("entando.org/" + entandoCustomResource.getMetadata().getName() + "/" + qualifier + "-path",
+                            ingressingContainer.getWebContextPath()));
 
         }
         return ingressClient.loadIngress(ingress.getMetadata().getNamespace(), ingress.getMetadata().getName());

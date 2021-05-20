@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.spi.container;
 
 import io.fabric8.kubernetes.api.model.EnvVarSource;
 import io.fabric8.kubernetes.api.model.Secret;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 
 public interface DatabaseSchemaConnectionInfo {
 
@@ -32,7 +32,7 @@ public interface DatabaseSchemaConnectionInfo {
 
     EnvVarSource getUsernameRef();
 
-    DatabaseServiceResult getDatabaseServiceResult();
+    DatabaseConnectionInfo getDatabaseServiceResult();
 
     Secret getSchemaSecret();
 }

@@ -25,6 +25,7 @@ import org.entando.kubernetes.controller.spi.client.KubernetesClientForControlle
 import org.entando.kubernetes.controller.spi.command.CommandStream;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 
 public class SupportProducer {
@@ -54,6 +55,11 @@ public class SupportProducer {
     @Produces
     public CommandStream serializingDeployCommand() {
         return new InProcessCommandStream(getSimpleKubernetesClient(), new DefaultKeycloakClient());
+    }
+
+    @Produces
+    public SimpleKeycloakClient keycloakClient() {
+        return new DefaultKeycloakClient();
     }
 
     private SimpleK8SClient<EntandoResourceClient> getSimpleKubernetesClient() {

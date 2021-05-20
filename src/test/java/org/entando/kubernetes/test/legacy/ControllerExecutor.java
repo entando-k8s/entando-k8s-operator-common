@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.test.legacy;
 
 import static java.util.Optional.ofNullable;
 

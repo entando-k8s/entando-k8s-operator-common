@@ -42,7 +42,7 @@ import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
@@ -59,7 +59,7 @@ import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.test.common.DatabaseDeploymentResult;
+import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
@@ -137,15 +137,17 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         entandoCustomResource.getStatus().findCurrentServerStatus()
                 .ifPresent(abstractServerStatus -> abstractServerStatus
                         .finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
-        entandoCustomResource.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, entandoCustomResource.getMetadata().getGeneration());
+        entandoCustomResource.getStatus()
+                .updateDeploymentPhase(EntandoDeploymentPhase.FAILED, entandoCustomResource.getMetadata().getGeneration());
 
     }
 
     @Override
-    public Optional<DatabaseServiceResult> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
+    public Optional<DatabaseConnectionInfo> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
         NamespaceDouble namespace = getNamespace(resource);
         Optional<EntandoDatabaseService> first = namespace.getCustomResources(EntandoDatabaseService.class).values().stream()
-                .filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms() == vendor).findFirst();
+                .filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms().orElse(DbmsVendor.POSTGRESQL) == vendor)
+                .findFirst();
         return first.map(edb -> new DatabaseDeploymentResult(namespace.getService(NameUtils.standardServiceName(edb)), edb));
     }
 

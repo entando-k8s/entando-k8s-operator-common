@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.test.legacy;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

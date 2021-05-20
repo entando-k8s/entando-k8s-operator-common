@@ -25,7 +25,7 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
@@ -38,12 +38,12 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
 
     protected final EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource;
     protected final List<DeployableContainer> containers;
-    protected final DatabaseServiceResult databaseServiceResult;
+    protected final DatabaseConnectionInfo databaseConnectionInfo;
 
     public SampleIngressingDbAwareDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource,
-            DatabaseServiceResult databaseServiceResult) {
+            DatabaseConnectionInfo databaseConnectionInfo) {
         this.entandoResource = entandoResource;
-        this.databaseServiceResult = databaseServiceResult;
+        this.databaseConnectionInfo = databaseConnectionInfo;
         this.containers = createContainers(entandoResource);
     }
 

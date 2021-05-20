@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.common;
+package org.entando.kubernetes.test.legacy;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher.Action;

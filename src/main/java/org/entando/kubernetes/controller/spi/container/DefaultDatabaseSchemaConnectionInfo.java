@@ -19,17 +19,16 @@ package org.entando.kubernetes.controller.spi.container;
 import io.fabric8.kubernetes.api.model.EnvVarSource;
 import io.fabric8.kubernetes.api.model.Secret;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 
 public class DefaultDatabaseSchemaConnectionInfo implements DatabaseSchemaConnectionInfo {
 
-    private final DatabaseServiceResult databaseServiceResult;
+    private final DatabaseConnectionInfo databaseConnectionInfo;
     private final String schemaName;
     private final Secret schemaSecret;
 
-    public DefaultDatabaseSchemaConnectionInfo(DatabaseServiceResult databaseServiceResult, String schemaName, Secret schemaSecret) {
-        this.databaseServiceResult = databaseServiceResult;
+    public DefaultDatabaseSchemaConnectionInfo(DatabaseConnectionInfo databaseConnectionInfo, String schemaName, Secret schemaSecret) {
+        this.databaseConnectionInfo = databaseConnectionInfo;
         this.schemaName = schemaName;
         this.schemaSecret = schemaSecret;
     }
@@ -41,11 +40,12 @@ public class DefaultDatabaseSchemaConnectionInfo implements DatabaseSchemaConnec
 
     @Override
     public String getJdbcUrl() {
-        return getDatabaseServiceResult().getVendor().getConnectionStringBuilder().toHost(databaseServiceResult.getInternalServiceHostname())
-                .onPort(databaseServiceResult.getPort())
+        return getDatabaseServiceResult().getVendor().getConnectionStringBuilder()
+                .toHost(databaseConnectionInfo.getInternalServiceHostname())
+                .onPort(databaseConnectionInfo.getPort())
                 .usingDatabase(
                         getDatabaseServiceResult().getDatabaseName()).usingSchema(schemaName)
-                .usingParameters(this.databaseServiceResult.getJdbcParameters())
+                .usingParameters(this.databaseConnectionInfo.getJdbcParameters())
                 .buildJdbcConnectionString();
     }
 
@@ -53,12 +53,12 @@ public class DefaultDatabaseSchemaConnectionInfo implements DatabaseSchemaConnec
         if (getDatabaseServiceResult().getVendor().schemaIsDatabase()) {
             return getSchemaName();
         } else {
-            return this.databaseServiceResult.getDatabaseName();
+            return this.databaseConnectionInfo.getDatabaseName();
         }
     }
 
-    public DatabaseServiceResult getDatabaseServiceResult() {
-        return databaseServiceResult;
+    public DatabaseConnectionInfo getDatabaseServiceResult() {
+        return databaseConnectionInfo;
     }
 
     @Override

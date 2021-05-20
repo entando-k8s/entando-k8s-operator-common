@@ -14,23 +14,12 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.common;
+package org.entando.kubernetes.test.legacy;
 
-import java.util.Locale;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public enum OperatorDeploymentType {
-    OLM,
-    HELM;
+public interface ControllerImageResolver {
 
-    public static OperatorDeploymentType resolve(String s) {
-        try {
-            return valueOf(s.toUpperCase(Locale.ROOT).replace("-", "_"));
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
+    String getControllerImageFor(EntandoCustomResource customResource);
 
-    public String getName() {
-        return name().toLowerCase(Locale.ROOT);
-    }
 }

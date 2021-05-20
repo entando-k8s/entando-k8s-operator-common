@@ -28,7 +28,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
@@ -38,7 +38,7 @@ import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
-import org.entando.kubernetes.test.common.ExternalDatabaseService;
+import org.entando.kubernetes.test.legacy.ExternalDatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -145,7 +145,7 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
         final InternalServerStatus status = externalServiceCommand.getStatus();
         getSimpleK8SClient().entandoResources().updateStatus(r, status);
         //When I try to resolve a ExternalDatabaseDeployment for the EntandoApp
-        Optional<DatabaseServiceResult> config = getSimpleK8SClient().entandoResources()
+        Optional<DatabaseConnectionInfo> config = getSimpleK8SClient().entandoResources()
                 .findExternalDatabase(resource, DbmsVendor.POSTGRESQL);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the Keycloak in the SAME namespace as the EntadoApp.

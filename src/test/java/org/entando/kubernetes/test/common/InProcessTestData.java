@@ -24,8 +24,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
@@ -44,6 +43,8 @@ import org.entando.kubernetes.model.keycloakserver.StandardKeycloakImage;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
+import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
+import org.entando.kubernetes.test.legacy.ExternalDatabaseService;
 
 public interface InProcessTestData {
 
@@ -142,7 +143,7 @@ public interface InProcessTestData {
         return new ConfigMapBasedKeycloakConnectionConfig(secret, configMap);
     }
 
-    default DatabaseServiceResult emulateDatabasDeployment(SimpleK8SClient<EntandoResourceClientDouble> client) {
+    default DatabaseConnectionInfo emulateDatabasDeployment(SimpleK8SClient<EntandoResourceClientDouble> client) {
         client.entandoResources().createOrPatchEntandoResource(newTestEntandoApp());
         final EntandoDatabaseService entandoDatabaseService = newEntandoDatabaseService();
         final CreateExternalServiceCommand command = new CreateExternalServiceCommand(new ExternalDatabaseService(entandoDatabaseService),

@@ -39,7 +39,7 @@ public abstract class AbstractServiceResult implements ServiceResult {
 
     @Override
     public String getInternalServiceHostname() {
-        if(service==null){
+        if (service == null) {
             return null;
         }
         return service.getMetadata().getName() + "." + service.getMetadata().getNamespace() + ".svc.cluster.local";
@@ -47,7 +47,7 @@ public abstract class AbstractServiceResult implements ServiceResult {
 
     @Override
     public String getPort() {
-        if(service==null){
+        if (service == null) {
             return null;
         }
         return service.getSpec().getPorts().get(0).getPort().toString();

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.common;
+package org.entando.kubernetes.test.legacy;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;

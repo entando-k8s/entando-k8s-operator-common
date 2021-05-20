@@ -26,6 +26,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class EntandoOperatorConfigBase {
 
+    public static final String SEPERATOR_PATTERN = "[\\s,:]+";
+
     private static AtomicReference<ConfigMap> configMap = new AtomicReference<>();
 
     protected EntandoOperatorConfigBase() {

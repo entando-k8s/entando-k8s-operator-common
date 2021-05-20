@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.is;
 
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorComplianceMode;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -31,35 +32,20 @@ class EntandoOperatorConfigTest {
 
     @AfterEach
     void resetPropertiesTested() {
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty());
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
-    }
-
-    @Test
-    void testDeploymentType() {
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty());
-        assertThat(EntandoOperatorConfig.getOperatorDeploymentType(), is(OperatorDeploymentType.HELM));
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(),
-                OperatorDeploymentType.OLM.getName());
-        assertThat(EntandoOperatorConfig.getOperatorDeploymentType(), is(OperatorDeploymentType.OLM));
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(),
-                OperatorDeploymentType.HELM.getName());
-        assertThat(EntandoOperatorConfig.getOperatorDeploymentType(), is(OperatorDeploymentType.HELM));
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(), "invalid");
-        assertThat(EntandoOperatorConfig.getOperatorDeploymentType(), is(OperatorDeploymentType.HELM));
+        System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
     }
 
     @Test
     void testComplianceMode() {
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
         assertThat(EntandoOperatorSpiConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
                 EntandoOperatorComplianceMode.REDHAT.getName());
         assertThat(EntandoOperatorSpiConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.REDHAT));
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
                 EntandoOperatorComplianceMode.COMMUNITY.getName());
         assertThat(EntandoOperatorSpiConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(), "invalid");
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(), "invalid");
         assertThat(EntandoOperatorSpiConfig.getComplianceMode(), is(EntandoOperatorComplianceMode.COMMUNITY));
     }
 

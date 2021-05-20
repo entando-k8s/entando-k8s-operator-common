@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.componenttest;
+package org.entando.kubernetes.test.legacy;
 
 import org.entando.kubernetes.test.common.InProcessTestData;
 import org.entando.kubernetes.test.common.VolumeMatchAssertions;

@@ -23,7 +23,7 @@ import org.entando.kubernetes.controller.spi.client.KubernetesClientForControlle
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -35,7 +35,7 @@ public interface EntandoResourceClient extends KubernetesClientForControllers {
 
     <T extends EntandoCustomResource> T reload(T customResource);
 
-    Optional<DatabaseServiceResult> findExternalDatabase(EntandoCustomResource peerInNamespace, DbmsVendor vendor);
+    Optional<DatabaseConnectionInfo> findExternalDatabase(EntandoCustomResource peerInNamespace, DbmsVendor vendor);
 
     KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference);
 

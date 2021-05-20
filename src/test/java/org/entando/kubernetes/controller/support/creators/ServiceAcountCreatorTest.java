@@ -108,7 +108,7 @@ class ServiceAcountCreatorTest implements InProcessTestData {
             @Override
             protected List<DeployableContainer> createContainers(
                     EntandoBaseCustomResource<EntandoAppSpec, EntandoCustomResourceStatus> entandoResource) {
-                return Arrays.asList(new SampleDeployableContainer<EntandoAppSpec>(entandoResource, databaseServiceResult) {
+                return Arrays.asList(new SampleDeployableContainer<EntandoAppSpec>(entandoResource, databaseConnectionInfo) {
                     @Override
                     public List<KubernetesPermission> getKubernetesPermissions() {
                         return Arrays.asList(new KubernetesPermission("route.openshift.io", "routes", "delete"));

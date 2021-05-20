@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public interface DbAware extends DeployableContainer {
@@ -37,16 +37,16 @@ public interface DbAware extends DeployableContainer {
 
     static List<DatabaseSchemaConnectionInfo> buildDatabaseSchemaConnectionInfo(
             EntandoCustomResource entandoBaseCustomResource,
-            DatabaseServiceResult databaseServiceResult,
+            DatabaseConnectionInfo databaseConnectionInfo,
             List<String> schemaQualifiers) {
         return schemaQualifiers.stream()
                 .map(schemaQualifier -> {
                     String schemaName = NameUtils.databaseCompliantName(
                             entandoBaseCustomResource,
                             schemaQualifier,
-                            databaseServiceResult.getVendor()
+                            databaseConnectionInfo.getVendor()
                     );
-                    return new DefaultDatabaseSchemaConnectionInfo(databaseServiceResult,
+                    return new DefaultDatabaseSchemaConnectionInfo(databaseConnectionInfo,
                             schemaName,
                             SecretUtils.generateSecret(
                                     entandoBaseCustomResource,

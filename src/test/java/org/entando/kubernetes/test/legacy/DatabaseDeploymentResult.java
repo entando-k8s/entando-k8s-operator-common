@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.common;
+package org.entando.kubernetes.test.legacy;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
@@ -27,13 +27,14 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
 //TODO move to org.entando.kubernetes.controller.support
-public class DatabaseDeploymentResult extends AbstractServiceResult implements DatabaseServiceResult,
+public class DatabaseDeploymentResult extends AbstractServiceResult implements DatabaseConnectionInfo,
         ServiceDeploymentResult<DatabaseDeploymentResult> {
 
     /*migrate to DbmsVendorConfig*/
@@ -54,7 +55,7 @@ public class DatabaseDeploymentResult extends AbstractServiceResult implements D
         super(service, entandoDatabaseService.getSpec().getSecretName()
                 .orElse(entandoDatabaseService.getMetadata().getName() + "-db-admin-secret"));
         this.pod = null;
-        this.vendor = DbmsVendorConfig.valueOf(entandoDatabaseService.getSpec().getDbms().name());
+        this.vendor = DbmsVendorConfig.valueOf(entandoDatabaseService.getSpec().getDbms().orElse(DbmsVendor.POSTGRESQL).name());
         this.databaseName = entandoDatabaseService.getSpec().getDatabaseName()
                 .orElse(NameUtils.databaseCompliantName(entandoDatabaseService, NameUtils.DB_NAME_QUALIFIER, vendor));
     }

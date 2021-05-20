@@ -14,12 +14,25 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.controller;
+package org.entando.kubernetes.controller.spi.result;
 
-import org.entando.kubernetes.model.common.EntandoCustomResource;
+import java.util.Map;
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 
-public interface ControllerImageResolver {
+public interface DatabaseConnectionInfo {
 
-    String getControllerImageFor(EntandoCustomResource customResource);
+    Map<String, String> getJdbcParameters();
 
+    String getDatabaseName();
+
+    DbmsVendorConfig getVendor();
+
+    Optional<String> getTablespace();
+
+    String getInternalServiceHostname();
+
+    String getPort();
+
+    String getAdminSecretName();
 }

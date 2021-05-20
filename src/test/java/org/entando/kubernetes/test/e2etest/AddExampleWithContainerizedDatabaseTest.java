@@ -38,7 +38,7 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.SampleIngressingDbAwareDeployable;
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
@@ -73,15 +73,15 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                 @Override
                 protected Deployable<DefaultExposedDeploymentResult> createDeployable(
                         EntandoPlugin newEntandoPlugin,
-                        DatabaseServiceResult databaseServiceResult, KeycloakConnectionConfig keycloakConnectionConfig) {
-                    return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseServiceResult) {
+                        DatabaseConnectionInfo databaseConnectionInfo, KeycloakConnectionConfig keycloakConnectionConfig) {
+                    return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseConnectionInfo) {
                         @Override
                         protected List<DeployableContainer> createContainers(
                                 EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
                             return Collections.singletonList(new SampleSpringBootDeployableContainer<>(
                                     entandoResource,
                                     keycloakConnectionConfig,
-                                    databaseServiceResult));
+                                    this.databaseConnectionInfo));
                         }
                     };
                 }
@@ -104,7 +104,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         helper.keycloak().deleteDefaultKeycloakAdminSecret();
         System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_TLS_SECRET_NAME.getJvmSystemProperty());
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty());
     }
 
@@ -112,7 +112,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
     @MethodSource("provideVendorAndModeArgs")
     void create(DbmsVendor dbmsVendor, EntandoOperatorComplianceMode complianceMode) {
         //When I create a EntandoPlugin and I specify it to use PostgreSQL
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty(),
                 complianceMode.name());
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty(),
                 "redhat-registry");

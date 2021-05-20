@@ -14,52 +14,52 @@
  *
  */
 
-package org.entando.kubernetes.test.componenttest;
+package org.entando.kubernetes.test.legacy;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertNull;
 
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.Serializable;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
-import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeployable;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
+import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
-import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
+import org.entando.kubernetes.model.common.InternalServerStatus;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
+import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.EntandoPluginSpec;
-import org.entando.kubernetes.test.common.CertificateSecretHelper;
 import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
@@ -69,14 +69,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("java:S5786")
-public abstract class SpringBootContainerTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior, VariableReferenceAssertions,
-        CommonLabels {
+abstract class ContainerUsingExternalDatabaseTestBase implements InProcessTestUtil, FluentTraversals, PodBehavior,
+        VariableReferenceAssertions, CommonLabels {
 
     public static final String SAMPLE_NAMESPACE = "sample-namespace";
     public static final String SAMPLE_NAME = "sample-name";
     public static final String SAMPLE_NAME_DB = NameUtils.snakeCaseOf(SAMPLE_NAME + "_db");
-    EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
+    final EntandoPlugin plugin1 = buildPlugin(SAMPLE_NAMESPACE, SAMPLE_NAME);
     private SampleController<EntandoPluginSpec, EntandoPlugin, DefaultExposedDeploymentResult> controller;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
@@ -90,25 +89,28 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
         scheduler.shutdownNow();
         getClient().pods().getPodWatcherQueue().clear();
-        System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_TLS_SECRET_NAME.getJvmSystemProperty());
     }
 
+    protected abstract SimpleK8SClient<?> getClient();
+
     @Test
-    void testBasicDeployment() {
+    void testSelectingOneOfTwoExternalDatabase() {
         //Given I have a controller that processes EntandoPlugins
         controller = new SampleController<>(getClient(), getKeycloakClient()) {
             @Override
-            protected Deployable<DefaultExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
-                    DatabaseServiceResult databaseServiceResult,
+            protected SpringBootDeployable<EntandoPluginSpec> createDeployable(EntandoPlugin newEntandoPlugin,
+                    DatabaseConnectionInfo databaseConnectionInfo,
                     KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
+                return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseConnectionInfo);
             }
         };
         //And I have prepared the Standard KeycloakAdminSecert
         emulateKeycloakDeployment(getClient());
         //And we can observe the pod lifecycle
         emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
+        //And we have two ExternalDatabases: one MySQL and one PostgreSQL
+        createExternalDatabaseService(DbmsVendor.MYSQL, "10.0.0.123");
+        createExternalDatabaseService(DbmsVendor.POSTGRESQL, "10.0.0.124");
         //When I create a new EntandoPlugin
         onAdd(plugin1);
 
@@ -121,13 +123,9 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         Deployment serverDeployment = getClient().deployments()
                 .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
         assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), Matchers.is(1));
-        verifyThatAllVariablesAreMapped(plugin1, getClient(), serverDeployment);
-        verifyThatAllVolumesAreMapped(plugin1, getClient(), serverDeployment);
         verifySpringDatasource(serverDeployment);
-        verifySpringSecuritySettings(thePrimaryContainerOn(serverDeployment), SAMPLE_NAME + "-server-secret");
-        //Then  a db deployment
-        Deployment dbDeployment = getClient().deployments().loadDeployment(plugin1, SAMPLE_NAME + "-db-deployment");
-        assertThat(dbDeployment.getSpec().getTemplate().getSpec().getContainers().size(), is(1));
+        //Then  no db deployment
+        assertNull(getClient().deployments().loadDeployment(plugin1, SAMPLE_NAME + "-db-deployment"));
 
         //And I an ingress paths
         Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
@@ -136,68 +134,29 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
                 Matchers.is(8084));
     }
 
-    @Test
-    void testDeploymentWithCertificates() {
-        //Given I have a controller that processes EntandoPlugins
-        controller = new SampleController<>(getClient(), getKeycloakClient()) {
-            @Override
-            protected Deployable<DefaultExposedDeploymentResult> createDeployable(EntandoPlugin newEntandoPlugin,
-                    DatabaseServiceResult databaseServiceResult,
-                    KeycloakConnectionConfig keycloakConnectionConfig) {
-                return new SpringBootDeployable<>(newEntandoPlugin, keycloakConnectionConfig, databaseServiceResult);
-            }
-        };
-        //And I have configured an additional trusted CA Certificate and a TLS certificate/key pair
-        final Path tlsPath = Paths.get("src", "test", "resources", "tls", "ampie.dynu.net");
-        CertificateSecretHelper.buildCertificateSecretsFromDirectory(getClient().entandoResources().getNamespace(), tlsPath)
-                .forEach(getClient().secrets()::overwriteControllerSecret);
-        //And I have prepared the Standard KeycloakAdminSecert
-        emulateKeycloakDeployment(getClient());
-        //And we can observe the pod lifecycle
-        emulatePodWaitingBehaviour(plugin1, plugin1.getMetadata().getName());
-        //When I create a new EntandoPlugin
-        onAdd(plugin1);
-
-        await().ignoreExceptions().atMost(2, TimeUnit.MINUTES).until(() ->
-                getClient().entandoResources()
-                        .load(plugin1.getClass(), plugin1.getMetadata().getNamespace(), plugin1.getMetadata().getName())
-                        .getStatus()
-                        .getPhase() == EntandoDeploymentPhase.SUCCESSFUL);
-        //Then I expect a server deployment
-        Deployment serverDeployment = getClient().deployments()
-                .loadDeployment(plugin1, SAMPLE_NAME + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-deployment");
-        assertThat(serverDeployment.getSpec().getTemplate().getSpec().getContainers().size(), Matchers.is(1));
-        verifyThatAllVariablesAreMapped(plugin1, getClient(), serverDeployment);
-        verifyThatAllVolumesAreMapped(plugin1, getClient(), serverDeployment);
-        //With a secret mount to the default truststore secret
-        assertThat(
-                theVolumeNamed(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET + DeploymentCreator.VOLUME_SUFFIX).on(serverDeployment)
-                        .getSecret()
-                        .getSecretName(),
-                is(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET));
-        assertThat(theVolumeMountNamed(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET + DeploymentCreator.VOLUME_SUFFIX)
-                        .on(thePrimaryContainerOn(serverDeployment)).getMountPath(),
-                is(TrustStoreHelper.CERT_SECRET_MOUNT_ROOT + "/" + TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET));
-        assertThat(theVariableReferenceNamed(TrustStoreHelper.JAVA_TOOL_OPTIONS).on(thePrimaryContainerOn(serverDeployment))
-                .getSecretKeyRef().getName(), is(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET));
-        assertThat(theVariableReferenceNamed(TrustStoreHelper.JAVA_TOOL_OPTIONS).on(thePrimaryContainerOn(serverDeployment))
-                .getSecretKeyRef().getKey(), is(TrustStoreHelper.TRUSTSTORE_SETTINGS_KEY));
-        //And I an ingress path
-        Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
-                ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
-        assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
-                Matchers.is(8084));
-        //Exposed over TLS using the previously created TLS secret
-        assertThat(ingress.getSpec().getTls().get(0).getHosts().get(0), Matchers.is(ingress.getSpec().getRules().get(0).getHost()));
-        assertThat(ingress.getSpec().getTls().get(0).getSecretName(), Matchers.is(CertificateSecretHelper.TEST_TLS_SECRET));
-
+    private void createExternalDatabaseService(DbmsVendor mysql, String s) {
+        String secretName = mysql.name().toLowerCase() + "-secret";
+        EntandoDatabaseService databaseService = new EntandoDatabaseServiceBuilder()
+                .withNewMetadata().withName(SAMPLE_NAME + "-" + mysql.name().toLowerCase()).withNamespace(SAMPLE_NAMESPACE)
+                .endMetadata()
+                .withNewSpec().withDbms(mysql).withDatabaseName(SAMPLE_NAME_DB).withHost(s)
+                .withSecretName(secretName).endSpec()
+                .build();
+        getClient().entandoResources().createOrPatchEntandoResource(databaseService);
+        getClient().secrets().createSecretIfAbsent(databaseService,
+                new SecretBuilder().withNewMetadata().withNamespace(SAMPLE_NAMESPACE).withName(secretName).endMetadata()
+                        .addToData(SecretUtils.USERNAME_KEY, "username").addToData(SecretUtils.PASSSWORD_KEY, "asdf123").build());
+        final Service service = new CreateExternalServiceCommand(new ExternalDatabaseService(databaseService), databaseService)
+                .execute(getClient());
+        final InternalServerStatus internalServerStatus = new InternalServerStatus(NameUtils.MAIN_QUALIFIER);
+        internalServerStatus.setServiceName(service.getMetadata().getName());
+        internalServerStatus.setAdminSecretName(secretName);
+        getClient().entandoResources().updateStatus(databaseService, internalServerStatus);
     }
-
-    protected abstract SimpleK8SClient<?> getClient();
 
     protected abstract SimpleKeycloakClient getKeycloakClient();
 
-    public void verifySpringDatasource(Deployment serverDeployment) {
+    void verifySpringDatasource(Deployment serverDeployment) {
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getKey(), is(SecretUtils.USERNAME_KEY));
         assertThat(theVariableReferenceNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_USERNAME.name())
@@ -208,7 +167,8 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
                 .on(thePrimaryContainerOn(serverDeployment)).getSecretKeyRef().getName(), is(SAMPLE_NAME + "-serverdb-secret"));
         assertThat(theVariableNamed(SpringBootDeployableContainer.SpringProperty.SPRING_DATASOURCE_URL.name())
                 .on(thePrimaryContainerOn(serverDeployment)), is(
-                "jdbc:postgresql://" + SAMPLE_NAME + "-db-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/" + SAMPLE_NAME_DB));
+                "jdbc:postgresql://" + SAMPLE_NAME + "-postgresql-service." + SAMPLE_NAMESPACE + ".svc.cluster.local:5432/"
+                        + SAMPLE_NAME_DB));
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(serverDeployment)), is("MY_VAL"));
     }
@@ -228,44 +188,36 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
             String deploymentName) {
         scheduler.schedule(() -> {
             try {
-                PodWatcher dbPodWatcher = getClient().pods().getPodWatcherQueue().take();
-                Deployment dbDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-db-deployment");
-                dbPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(dbDeployment));
-                //Deleting possible existing dbPreprationPods won't require events to be triggered
+                //Deleting previous dbPreparationPods doesn't require events
                 getClient().pods().getPodWatcherQueue().take();
-                PodWatcher dbPreprationPodWatcher = getClient().pods().getPodWatcherQueue().take();
+                PodWatcher dbPodWatcher = getClient().pods().getPodWatcherQueue().take();
+                await().atMost(20, TimeUnit.SECONDS).until(() -> getClient().pods()
+                        .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server")) != null);
                 Pod dbPreparationPod = getClient().pods()
                         .loadPod(resource.getMetadata().getNamespace(), dbPreparationJobLabels(resource, "server"));
-                dbPreprationPodWatcher.eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
+                dbPodWatcher.eventReceived(Action.MODIFIED, podWithSucceededStatus(dbPreparationPod));
                 PodWatcher serverPodWatcher = getClient().pods().getPodWatcherQueue().take();
                 Deployment serverDeployment = getClient().deployments().loadDeployment(resource, deploymentName + "-server-deployment");
                 serverPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(serverDeployment));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+
         }, 100, TimeUnit.MILLISECONDS);
     }
 
     public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onAdd(T resource) {
-        new Thread(() -> {
+        scheduler.schedule(() -> {
             T createResource = getClient().entandoResources().createOrPatchEntandoResource(resource);
             System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
             System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
                     createResource.getMetadata().getNamespace());
             System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
                     createResource.getMetadata().getName());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND.getJvmSystemProperty(),
+                    createResource.getKind());
             controller.onStartup(new StartupEvent());
-        }).start();
+        }, 10, TimeUnit.MILLISECONDS);
     }
 
-    public <S extends Serializable, T extends EntandoBaseCustomResource<S, EntandoCustomResourceStatus>> void onDelete(T resource) {
-        new Thread(() -> {
-            System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.DELETED.name());
-            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
-                    resource.getMetadata().getNamespace());
-            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
-                    resource.getMetadata().getName());
-            controller.onStartup(new StartupEvent());
-        }).start();
-    }
 }

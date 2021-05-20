@@ -27,7 +27,7 @@ import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import org.entando.kubernetes.controller.spi.examples.barebones.BareBonesDeployable;
 import org.entando.kubernetes.controller.spi.examples.springboot.SpringBootDeployable;
-import org.entando.kubernetes.controller.spi.result.DatabaseServiceResult;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
@@ -58,12 +58,12 @@ class DeploymentCreatorTest implements InProcessTestData, FluentTraversals {
         SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble(16);
         EntandoApp testEntandoApp = newTestEntandoApp();
         DeploymentCreator deploymentCreator = new DeploymentCreator(testEntandoApp);
-        DatabaseServiceResult databaseServiceResult = emulateDatabasDeployment(client);
+        DatabaseConnectionInfo databaseConnectionInfo = emulateDatabasDeployment(client);
         //When I create a deployment
         Deployment actual = deploymentCreator.createDeployment(
                 new EntandoImageResolver(null),
                 client.deployments(),
-                new SpringBootDeployable<>(testEntandoApp, emulateKeycloakDeployment(client), databaseServiceResult));
+                new SpringBootDeployable<>(testEntandoApp, emulateKeycloakDeployment(client), databaseConnectionInfo));
         final Container thePrimaryContainer = thePrimaryContainerOn(actual);
         //Then I expect a startupProbe
         final Probe startupProbe = thePrimaryContainer.getStartupProbe();
@@ -103,12 +103,12 @@ class DeploymentCreatorTest implements InProcessTestData, FluentTraversals {
         SimpleK8SClient<EntandoResourceClientDouble> client = new SimpleK8SClientDouble(15);
         EntandoApp testEntandoApp = newTestEntandoApp();
         DeploymentCreator deploymentCreator = new DeploymentCreator(testEntandoApp);
-        DatabaseServiceResult databaseServiceResult = emulateDatabasDeployment(client);
+        DatabaseConnectionInfo databaseConnectionInfo = emulateDatabasDeployment(client);
         //When I create a deployment
         Deployment actual = deploymentCreator.createDeployment(
                 new EntandoImageResolver(null),
                 client.deployments(),
-                new SpringBootDeployable<>(testEntandoApp, emulateKeycloakDeployment(client), databaseServiceResult));
+                new SpringBootDeployable<>(testEntandoApp, emulateKeycloakDeployment(client), databaseConnectionInfo));
         final Container thePrimaryContainer = thePrimaryContainerOn(actual);
         //Then I expect no startupProbe
         assertThat(thePrimaryContainer.getStartupProbe(), is(nullValue()));

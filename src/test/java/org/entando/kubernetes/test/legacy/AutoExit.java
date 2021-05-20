@@ -14,25 +14,24 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.result;
+package org.entando.kubernetes.test.legacy;
 
-import java.util.Map;
-import java.util.Optional;
-import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+public class AutoExit implements Runnable {
 
-public interface DatabaseServiceResult  {
+    private final boolean exit;
+    private int code;
 
-    Map<String, String> getJdbcParameters();
+    public AutoExit(boolean exit) {
+        this.exit = exit;
+    }
 
-    String getDatabaseName();
+    public void run() {
+        if (exit) {
+            System.exit(code);
+        }
+    }
 
-    DbmsVendorConfig getVendor();
-
-    Optional<String> getTablespace();
-
-    String getInternalServiceHostname();
-
-    String getPort();
-
-    String getAdminSecretName();
+    public void withCode(int code) {
+        this.code = code;
+    }
 }
