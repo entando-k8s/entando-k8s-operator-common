@@ -28,6 +28,11 @@ import org.entando.kubernetes.model.common.EntandoResourceRequirements;
 public interface IngressingDeployableBase<T extends ExposedDeploymentResult<T>> extends IngressingDeployable<T> {
 
     @Override
+    default boolean isIngressRequired() {
+        return false;
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     default Optional<String> getFileUploadLimit() {
         return ((CustomResource<EntandoDeploymentSpec, EntandoCustomResourceStatus>) getCustomResource()).getSpec()

@@ -29,7 +29,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
@@ -45,13 +44,13 @@ public interface KubernetesClientForControllers {
 
     <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
 
-    void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status);
-
     <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
-    void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase);
+    <T extends EntandoCustomResource> T updateStatus(T customResource, AbstractServerStatus status);
 
-    void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason);
+    <T extends EntandoCustomResource> T updatePhase(T customResource, EntandoDeploymentPhase phase);
+
+    <T extends EntandoCustomResource> T deploymentFailed(T entandoCustomResource, Exception reason);
 
     default EntandoCustomResource resolveCustomResourceToProcess(Collection<Class<? extends EntandoCustomResource>> supportedTypes) {
         String resourceName = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME);

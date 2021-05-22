@@ -20,35 +20,20 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 
-public class CapabilityProvisioningResult {
+public interface CapabilityProvisioningResult {
 
-    private final ProvidedCapability providedCapability;
-    private final Service service;
-    private final Ingress ingress;
-    private final Secret adminSecret;
+    @SerializeByReference
+    ProvidedCapability getProvidedCapability();
 
-    public CapabilityProvisioningResult(ProvidedCapability providedCapability, Service service, Ingress ingress, Secret adminSecret) {
-        this.providedCapability = providedCapability;
-        this.service = service;
-        this.ingress = ingress;
-        this.adminSecret = adminSecret;
-    }
+    @SerializeByReference
+    Service getService();
 
-    public ProvidedCapability getProvidedCapability() {
-        return providedCapability;
-    }
+    @SerializeByReference
+    Optional<Ingress> getIngress();
 
-    public Service getService() {
-        return service;
-    }
-
-    public Optional<Ingress> getIngress() {
-        return Optional.ofNullable(ingress);
-    }
-
-    public Optional<Secret> getAdminSecret() {
-        return Optional.ofNullable(adminSecret);
-    }
+    @SerializeByReference
+    Optional<Secret> getAdminSecret();
 }

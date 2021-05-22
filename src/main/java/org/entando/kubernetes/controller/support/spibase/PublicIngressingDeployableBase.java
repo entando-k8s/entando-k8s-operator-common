@@ -34,4 +34,8 @@ public interface PublicIngressingDeployableBase<T extends ExposedDeploymentResul
                 EntandoCustomResourceStatus>) getCustomResource()).getSpec().getKeycloakToUse();
     }
 
+    @Override
+    default boolean isIngressRequired() {
+        return false;
+    }
 }

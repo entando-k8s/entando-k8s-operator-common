@@ -105,6 +105,7 @@ class ServiceAcountCreatorTest implements InProcessTestData {
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<EntandoAppSpec>(
                 entandoApp, null,
                 emulateKeycloakDeployment(client)) {
+
             @Override
             protected List<DeployableContainer> createContainers(
                     EntandoBaseCustomResource<EntandoAppSpec, EntandoCustomResourceStatus> entandoResource) {

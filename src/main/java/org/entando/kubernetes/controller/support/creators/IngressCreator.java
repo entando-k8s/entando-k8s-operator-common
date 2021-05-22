@@ -20,7 +20,6 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
-import io.fabric8.kubernetes.api.model.extensions.IngressStatus;
 import io.fabric8.kubernetes.api.model.extensions.IngressTLS;
 import io.fabric8.kubernetes.api.model.extensions.IngressTLSBuilder;
 import java.io.BufferedReader;
@@ -32,9 +31,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.IngressingContainer;
+import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
@@ -105,16 +107,11 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                         .editSpec().editFirstRule().withHost(determineIngressHost(ingressClient, ingressingDeployable)).endRule()
                         .withTls(maybeBuildTls(ingressClient, ingressingDeployable)).endSpec().done();
             }
-            ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingDeployable, ingress, service);
-        }
-    }
+            List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
+                    .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast).collect(Collectors.toList());
 
-    public IngressStatus reloadIngress(IngressClient ingresses) {
-        if (this.ingress == null) {
-            return null;
+            ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingContainers, ingress, service);
         }
-        this.ingress = ingresses.loadIngress(ingress.getMetadata().getNamespace(), ingress.getMetadata().getName());
-        return this.ingress.getStatus();
     }
 
     public Ingress getIngress() {
@@ -132,6 +129,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(entandoCustomResource))
                 .endMetadata()
                 .withNewSpec()
+                .withIngressClassName(EntandoOperatorConfig.getIngressClass().orElse(null))
                 .withTls(maybeBuildTls(ingressClient, deployable))
                 .addNewRule()
                 .withHost(determineIngressHost(ingressClient, deployable))

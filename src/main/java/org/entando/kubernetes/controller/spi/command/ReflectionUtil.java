@@ -20,6 +20,8 @@ import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.List;
+import org.entando.kubernetes.controller.spi.capability.CapabilityForResource;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.container.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
@@ -37,7 +39,6 @@ import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;
-import org.entando.kubernetes.controller.spi.deployable.Ingressing;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
@@ -48,9 +49,11 @@ import org.entando.kubernetes.controller.spi.result.ServiceResult;
 public class ReflectionUtil {
 
     public static final List<Class<?>> KNOWN_INTERFACES = List
-            .of(ConfigurableResourceContainer.class, DatabasePopulator.class, DatabaseSchemaConnectionInfo.class,
+            .of(CapabilityForResource.class, CapabilityProvisioningResult.class, ConfigurableResourceContainer.class,
+                    DatabasePopulator.class,
+                    DatabaseSchemaConnectionInfo.class,
                     DatabaseConnectionInfo.class, DbAware.class, DbAwareDeployable.class, Deployable.class, DeployableContainer.class,
-                    ExternalService.class, HasHealthCommand.class, HasWebContext.class, Ingressing.class, IngressingContainer.class,
+                    ExternalService.class, HasHealthCommand.class, HasWebContext.class, IngressingContainer.class,
                     IngressingDeployable.class, IngressingPathOnPort.class, KeycloakAwareContainer.class, ParameterizableContainer.class,
                     PersistentVolumeAware.class, PublicIngressingDeployable.class, Secretive.class, SerializableDeploymentResult.class,
                     ServiceBackingContainer.class, ServiceDeploymentResult.class, ServiceResult.class, TrustStoreAware.class);

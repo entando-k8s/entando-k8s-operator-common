@@ -83,6 +83,9 @@ public class SerializationHelper {
     private static Pair<String, Object> processGetter(Object nonSerializableObject, Method method) {
         try {
             Object value = method.invoke(nonSerializableObject);
+            if(value instanceof Optional){
+                value=((Optional<?>) value).orElse(null);
+            }
             if (value != null) {
                 if (ReflectionUtil.getAnnotation(nonSerializableObject.getClass(), method.getName(), SerializeByReference.class) != null) {
                     return new ImmutablePair<>(ReflectionUtil.propertyName(method), new ResourceReference((HasMetadata) value));

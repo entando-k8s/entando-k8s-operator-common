@@ -25,15 +25,13 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import io.fabric8.kubernetes.api.model.ServiceStatus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.MayRequireDelegateService;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
-import org.entando.kubernetes.controller.spi.deployable.Ingressing;
-import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -83,15 +81,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
         primaryService = services.createOrReplaceService(entandoCustomResource, newService(deployable));
     }
 
-    public ServiceStatus reloadPrimaryService(ServiceClient services) {
-        if (this.primaryService == null) {
-            return null;
-        }
-        this.primaryService = services.loadService(entandoCustomResource, primaryService.getMetadata().getName());
-        return this.primaryService.getStatus();
-    }
-
-    public Service newDelegatingService(ServiceClient services, IngressingDeployable<?> ingressingDeployable) {
+    public Service newDelegatingService(ServiceClient services, MayRequireDelegateService ingressingDeployable) {
         ObjectMeta metaData = new ObjectMetaBuilder()
                 .withLabels(labelsFromResource(ingressingDeployable.getQualifier().orElse(null)))
                 .withName(ingressingDeployable.getIngressName() + "-to-" + primaryService.getMetadata().getName())

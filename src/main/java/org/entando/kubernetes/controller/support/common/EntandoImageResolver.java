@@ -19,16 +19,25 @@ package org.entando.kubernetes.controller.support.common;
 import static java.lang.String.format;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import java.util.Map.Entry;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.container.DockerImageInfo;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class EntandoImageResolver {
 
+    public static final String IMAGE_ANNOTATION_PREFIX = "images.entando.org/";
     private final ConfigMap imageVersionsConfigMap;
+    private final EntandoCustomResource resourceOfInterest;
 
     public EntandoImageResolver(ConfigMap imageVersionsConfigMap) {
+        this(imageVersionsConfigMap, null);
+    }
+
+    public EntandoImageResolver(ConfigMap imageVersionsConfigMap, EntandoCustomResource resourceOfInterest) {
         this.imageVersionsConfigMap = imageVersionsConfigMap;
+        this.resourceOfInterest = resourceOfInterest;
     }
 
     public String determineImageUri(String imageUri) {
@@ -39,6 +48,15 @@ public class EntandoImageResolver {
         //The environment variable injected by the OLM takes precedence over everything
         Optional<String> injectedImageUri = EntandoOperatorConfigBase.lookupProperty(relateImage(dockerImageInfo.getRepository()))
                 .or(() -> EntandoOperatorConfigBase.lookupProperty(relateImage(dockerImageInfo.getOrganizationAwareRepository())));
+        //Then we look at the annotations in the resource (for testing purposes)
+        if (resourceOfInterest != null && resourceOfInterest.getMetadata().getAnnotations() != null) {
+            injectedImageUri = injectedImageUri.or(() -> resourceOfInterest.getMetadata().getAnnotations().entrySet().stream()
+                    .filter(entry -> entry.getKey().equals(IMAGE_ANNOTATION_PREFIX + dockerImageInfo.getRepository())
+                            || entry.getKey().equals(IMAGE_ANNOTATION_PREFIX + dockerImageInfo.getOrganizationAwareRepository()))
+                    .map(Entry::getValue)
+                    .findFirst());
+
+        }
         return injectedImageUri.orElse(format("%s/%s/%s:%s",
                 determineDockerRegistry(dockerImageInfo),
                 determineOrganization(dockerImageInfo),

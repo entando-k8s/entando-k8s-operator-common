@@ -24,10 +24,6 @@ import static org.hamcrest.Matchers.nullValue;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.PodList;
-import io.fabric8.kubernetes.client.Watcher.Action;
-import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
@@ -70,13 +66,6 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endSpec()
                 .build());
         //When I wait for the pod
-        if (EntandoOperatorTestConfig.emulateKubernetes()) {
-            scheduler.schedule(() -> {
-                final Pod ready = getFabric8Client().pods().inNamespace(startedPod.getMetadata().getNamespace())
-                        .withName(startedPod.getMetadata().getName()).patch(podWithReadyStatus(startedPod));
-                takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED, ready);
-            }, 200, TimeUnit.MILLISECONDS);
-        }
         final Pod pod = getSimpleK8SClient().pods().waitForPod(entandoApp.getMetadata().getNamespace(), "pod-label", "123");
         //Then the current thread only proceeds once the pod is ready
         assertThat(PodResult.of(pod).getState(), is(State.READY));
@@ -101,11 +90,6 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endSpec()
                 .build());
         //When I wait for the pod
-        if (EntandoOperatorTestConfig.emulateKubernetes()) {
-            scheduler.schedule(() -> {
-                takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.DELETED, null);
-            }, 200, TimeUnit.MILLISECONDS);
-        }
         getSimpleK8SClient().pods().removeAndWait(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "123"));
         //Then the current thread only proceeds once the pod is ready
         assertThat(
@@ -116,19 +100,6 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     @Test
     void shouldRemoveSuccessfullyCompletedPods() {
         //Given I have started a new Pod
-        if (EntandoOperatorTestConfig.emulateKubernetes()) {
-            scheduler.schedule(() -> {
-                final NonNamespaceOperation<Pod, PodList, PodResource<Pod>> podResource = getFabric8Client()
-                        .pods().inNamespace(entandoApp.getMetadata().getNamespace());
-                takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED,
-                        podResource.withName("successful-pod")
-                                .patch(podWithSucceededStatus(podResource.withName("successful-pod").fromServer().get())));
-                takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED,
-                        podResource.withName("failed-pod")
-                                .patch(podWithFailedStatus(podResource.withName("failed-pod").fromServer().get())));
-                System.out.println();
-            }, 300, TimeUnit.MILLISECONDS);
-        }
         getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
                 .withNewMetadata()
                 .withName("successful-pod")
@@ -195,13 +166,6 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endSpec()
                 .build();
         //When I wait for the pod
-        if (EntandoOperatorTestConfig.emulateKubernetes()) {
-            scheduler.schedule(() -> {
-                final Pod ready = getFabric8Client().pods().inNamespace(pod.getMetadata().getNamespace())
-                        .withName(pod.getMetadata().getName()).patch(podWithSucceededStatus(pod));
-                takePodWatcherFrom(getSimpleK8SClient().pods()).eventReceived(Action.MODIFIED, ready);
-            }, 200, TimeUnit.MILLISECONDS);
-        }
         final Pod actual = getSimpleK8SClient().pods().runToCompletion(pod);
         //Then the current thread only proceeds once the pod has completed
         assertThat(PodResult.of(actual).getState(), is(State.COMPLETED));

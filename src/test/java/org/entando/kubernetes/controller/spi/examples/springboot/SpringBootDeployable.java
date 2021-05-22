@@ -86,4 +86,8 @@ public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
         return this.customResource.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
     }
 
+    @Override
+    public boolean isIngressRequired() {
+        return true;
+    }
 }

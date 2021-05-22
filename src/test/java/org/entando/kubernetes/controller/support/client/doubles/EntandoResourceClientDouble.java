@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import org.entando.kubernetes.controller.spi.client.EntandoExecListener;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind;
@@ -47,7 +48,6 @@ import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
@@ -63,8 +63,8 @@ import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
-    public EntandoResourceClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
-        super(namespaces);
+    public EntandoResourceClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
+        super(namespaces, cluster);
     }
 
     private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
@@ -77,7 +77,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
         if (r != null) {
-            this.getNamespace(r).getCustomResources((Class<T>) r.getClass()).put(r.getMetadata().getName(), r);
+            this.getCluster().getResourceProcessor().processResource(getNamespace(r).getCustomResources(r.getKind()), r);
         }
         return r;
     }
@@ -106,12 +106,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public void updateStatus(EntandoCustomResource customResource,
-            AbstractServerStatus status) {
-        customResource.getStatus().putServerStatus(status);
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> T reload(T customResource) {
         return (T) getNamespace(customResource.getMetadata().getNamespace()).getCustomResources(customResource.getClass())
@@ -124,22 +118,38 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         return customResources.get(name);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void updatePhase(EntandoCustomResource entandoCustomResource, EntandoDeploymentPhase phase) {
-        entandoCustomResource.getStatus().updateDeploymentPhase(phase, entandoCustomResource.getMetadata().getGeneration());
+    public <T extends EntandoCustomResource> T updateStatus(T customResource, AbstractServerStatus status) {
+        final T found = (T) getNamespace(customResource).getCustomResources(customResource.getKind())
+                .get(customResource.getMetadata().getName());
+        found.getStatus().putServerStatus(status);
+        return getCluster().getResourceProcessor().processResource(getNamespace(found).getCustomResources(found.getKind()), found);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void deploymentFailed(EntandoCustomResource entandoCustomResource, Exception reason) {
-        if (entandoCustomResource.getStatus().findCurrentServerStatus().isEmpty()) {
-            entandoCustomResource.getStatus().putServerStatus(new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
+    public <T extends EntandoCustomResource> T updatePhase(T customResource, EntandoDeploymentPhase phase) {
+        final T found = (T) getNamespace(customResource).getCustomResources(customResource.getKind())
+                .get(customResource.getMetadata().getName());
+        found.getStatus().updateDeploymentPhase(phase, found.getMetadata().getGeneration());
+        return getCluster().getResourceProcessor()
+                .processResource(getNamespace(found).getCustomResources(found.getKind()), found);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason) {
+        final T found = (T) getNamespace(customResource).getCustomResources(customResource.getKind())
+                .get(customResource.getMetadata().getName());
+        if (found.getStatus().findCurrentServerStatus().isEmpty()) {
+            found.getStatus().putServerStatus(new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
         }
-        entandoCustomResource.getStatus().findCurrentServerStatus()
+        found.getStatus().findCurrentServerStatus()
                 .ifPresent(abstractServerStatus -> abstractServerStatus
                         .finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
-        entandoCustomResource.getStatus()
-                .updateDeploymentPhase(EntandoDeploymentPhase.FAILED, entandoCustomResource.getMetadata().getGeneration());
-
+        found.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, found.getMetadata().getGeneration());
+        return getCluster().getResourceProcessor().processResource(getNamespace(customResource).getCustomResources(found.getKind()), found);
     }
 
     @Override

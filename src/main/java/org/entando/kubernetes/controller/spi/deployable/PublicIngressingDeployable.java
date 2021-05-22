@@ -38,4 +38,9 @@ public interface PublicIngressingDeployable<T extends ExposedDeploymentResult<T>
         return KeycloakName.ofThePublicClient(this);
 
     }
+
+    @Override
+    default boolean isIngressRequired() {
+        return false;
+    }
 }

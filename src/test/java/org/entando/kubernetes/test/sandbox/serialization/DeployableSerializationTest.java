@@ -16,26 +16,24 @@
 
 package org.entando.kubernetes.test.sandbox.serialization;
 
-import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceSpec;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
-import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinitionList;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.client.Watcher.Action;
-import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
+import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
+import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DefaultSerializableDeploymentResult;
-import org.entando.kubernetes.controller.spi.command.SerializingDeployCommand;
+import org.entando.kubernetes.controller.spi.command.SerializingDeploymentProcessor;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.HasHealthCommand;
@@ -43,15 +41,12 @@ import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
-import org.entando.kubernetes.controller.support.client.PodWaitingClient;
-import org.entando.kubernetes.controller.support.client.doubles.PodClientDouble;
-import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
+import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.test.common.InProcessTestData;
 import org.entando.kubernetes.test.legacy.DatabaseDeployable;
 import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -61,64 +56,43 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 //And experiment in JSON serialization
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
 @EnableRuleMigrationSupport
-class DeployableSerializationTest extends AbstractSupportK8SIntegrationTest {
+class DeployableSerializationTest implements InProcessTestData {
 
-    {
-        System.setProperty(EntandoOperatorTestConfig.ENTANDO_TEST_EMULATE_KUBERNETES, "true");
-    }
+    SimpleK8SClientDouble simpleK8SClient = new SimpleK8SClientDouble();
 
     @BeforeEach
-    public void enableQueueing() {
-        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
-        NonNamespaceOperation<CustomResourceDefinition, CustomResourceDefinitionList, Resource<CustomResourceDefinition>> crds = server
-                .getClient().apiextensions().v1beta1().customResourceDefinitions();
-        crds.createOrReplace(crds.load(EntandoApp.class.getResource("/crd/entandoapps.entando.org.crd.yaml")).get());
-        prepareCrdNameMap();
+    public void before() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        simpleK8SClient.getCluster().putCustomResourceDefinition(objectMapper
+                .readValue(EntandoApp.class.getResource("/crd/entandoapps.entando.org.crd.yaml"), CustomResourceDefinition.class));
+        final ConfigMap configMap = new ConfigMapBuilder()
+                .withNewMetadata()
+                .withNamespace(SimpleK8SClientDouble.CONTROLLER_NAMESPACE)
+                .withName(DefaultKubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP)
+                .endMetadata()
+                .addToData("EntandoApp.entando.org", "entandoapps.entando.org")
+                .addToData("EntandoPlugin.entando.org", "entandoplugins.entando.org")
+                .addToData("EntandoDatabaseService.entando.org", "entandodatabaseservices.entando.org")
+                .addToData("EntandoKeycloakServer.entando.org", "entandokeycloakservers.entando.org")
+                .build();
+        simpleK8SClient.secrets().overwriteControllerConfigMap(configMap);
     }
 
-    @AfterEach
-    void resetSystemProperty() {
-        System.clearProperty(EntandoOperatorTestConfig.ENTANDO_TEST_EMULATE_KUBERNETES);
-        PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
-        scheduler.shutdownNow();
-        getSimpleK8SClient().pods().getPodWatcherQueue().clear();
-    }
-
-    protected void emulatePodWaitingBehaviour(EntandoApp app) {
-        PodClientDouble.ENQUEUE_POD_WATCH_HOLDERS.set(true);
-        scheduler.schedule(() -> {
-            try {
-                //The second watcher will trigger events
-                PodWatcher controllerPodWatcher = getSimpleK8SClient().pods().getPodWatcherQueue().take();
-                final Resource<Deployment> deploymentResource = getFabric8Client().apps().deployments()
-                        .inNamespace(app.getMetadata().getNamespace())
-                        .withName(app.getMetadata().getName() + "-db-deployment");
-                await().atMost(60, TimeUnit.SECONDS).ignoreExceptions().until(
-                        () -> deploymentResource.fromServer().get() != null);
-                final Pod pod = getFabric8Client().pods().inNamespace(app.getMetadata().getNamespace())
-                        .create(podFrom(deploymentResource.get()));
-                controllerPodWatcher.eventReceived(Action.MODIFIED, podWithReadyStatus(pod));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }, 30, TimeUnit.MILLISECONDS);
+    public SimpleK8SClientDouble getSimpleK8SClient() {
+        return simpleK8SClient;
     }
 
     @Test
-    void testDatabaseDeployableSerialization() {
+    void testDatabaseDeployableSerialization() throws TimeoutException {
         final EntandoApp entandoApp = newTestEntandoApp();
-        prepareCrdNameMap();
         getSimpleK8SClient().entandoResources().prepareConfig();
         getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(entandoApp);
         final DatabaseDeployable originalDeployable = new DatabaseDeployable(DbmsDockerVendorStrategy.CENTOS_MYSQL, entandoApp, null);
-        final SerializingDeployCommand serializingDeployCommand = new SerializingDeployCommand(getSimpleK8SClient().entandoResources(),
+        final SerializingDeploymentProcessor serializingDeployableProcessor = new SerializingDeploymentProcessor(
+                getSimpleK8SClient().entandoResources(),
                 new InProcessCommandStream(getSimpleK8SClient(), null));
-        emulatePodWaitingBehaviour(entandoApp);
-        final DatabaseDeploymentResult databaseDeploymentResult = serializingDeployCommand.processDeployable(originalDeployable);
-        Deployable<DefaultSerializableDeploymentResult> serializedDeployable = serializingDeployCommand.getSerializedDeployable();
+        final DatabaseDeploymentResult databaseDeploymentResult = serializingDeployableProcessor.processDeployable(originalDeployable, 30);
+        Deployable<DefaultSerializableDeploymentResult> serializedDeployable = serializingDeployableProcessor.getSerializedDeployable();
         verifyDeployable(serializedDeployable);
         verifyDeployableContainer(serializedDeployable);
 
@@ -164,19 +138,4 @@ class DeployableSerializationTest extends AbstractSupportK8SIntegrationTest {
         assertThat(secrets.get(0).getStringData().get("username"), is("root"));
     }
 
-    @Override
-    protected String[] getNamespacesToUse() {
-        return new String[]{newTestEntandoApp().getMetadata().getNamespace()};
-    }
-
-    //
-    //    @Test
-    //    void testSamplePublicIngressingDbAwareDeployable() {
-    //        new DeplDa
-    //        DatabaseServiceResult databaseServiceResult = new DatabaseDeploymentResult();
-    //        KeycloakConnectionConfig keycloakConnectionConfig = emulateKeycloakDeployment();
-    //        final SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable =
-    //                new SamplePublicIngressingDbAwareDeployable<>(
-    //                newTestEntandoApp(), databaseServiceResult, keycloakConnectionConfig);
-    //    }
 }

@@ -24,8 +24,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class ServiceClientDouble extends AbstractK8SClientDouble implements ServiceClient {
 
-    public ServiceClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
-        super(namespaces);
+    public ServiceClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
+        super(namespaces, cluster);
     }
 
     @Override

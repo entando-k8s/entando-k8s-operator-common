@@ -14,12 +14,21 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.deployable;
+package org.entando.kubernetes.controller.support.client;
 
-import java.util.List;
-import java.util.Optional;
-import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
+public interface WaitingClient {
 
-public interface Ingressing<T extends IngressingPathOnPort> {
+    interface Interruptable<T> {
 
+        T run() throws InterruptedException;
+    }
+
+    default <T> T interruptionSafe(Interruptable<T> i) {
+        try {
+            return i.run();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
 }

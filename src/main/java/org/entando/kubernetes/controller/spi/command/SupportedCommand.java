@@ -14,12 +14,8 @@
  *
  */
 
-package org.entando.kubernetes.test.legacy;
+package org.entando.kubernetes.controller.spi.command;
 
-import org.entando.kubernetes.model.common.EntandoCustomResource;
-
-public interface ControllerImageResolver {
-
-    String getControllerImageFor(EntandoCustomResource customResource);
-
+public enum SupportedCommand {
+    PROCESS_DEPLOYABLE, PROVIDE_CAPABILITY
 }

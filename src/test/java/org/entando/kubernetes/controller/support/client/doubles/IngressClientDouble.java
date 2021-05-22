@@ -26,8 +26,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class IngressClientDouble extends AbstractK8SClientDouble implements IngressClient {
 
-    public IngressClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
-        super(namespaces);
+    public IngressClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
+        super(namespaces, cluster);
     }
 
     @Override

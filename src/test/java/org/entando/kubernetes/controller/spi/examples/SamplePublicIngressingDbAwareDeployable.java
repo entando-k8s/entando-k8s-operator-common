@@ -70,4 +70,9 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
     public String getServiceAccountToUse() {
         return this.entandoResource.getSpec().getServiceAccountToUse().orElse(getDefaultServiceAccountName());
     }
+
+    @Override
+    public boolean isIngressRequired() {
+        return true;
+    }
 }

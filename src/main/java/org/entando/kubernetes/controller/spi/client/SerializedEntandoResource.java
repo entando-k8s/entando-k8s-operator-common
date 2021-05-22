@@ -27,6 +27,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
@@ -50,6 +53,9 @@ public class SerializedEntandoResource implements EntandoCustomResource {
     private EntandoCustomResourceStatus status;
     private ObjectMeta metadata;
     private String kind;
+    @SuppressWarnings("java:S1948")
+    //because it is serializable but can't control the implementation class
+    private Map<String, Object> spec;
     @JsonIgnore
     private transient CustomResourceDefinitionContext definition;
     private String apiVersion;
@@ -69,6 +75,10 @@ public class SerializedEntandoResource implements EntandoCustomResource {
             this.status = new EntandoCustomResourceStatus();
         }
         return this.status;
+    }
+
+    public Map<String, Object> getSpec() {
+        return Collections.unmodifiableMap(Objects.requireNonNullElse(spec, Collections.emptyMap()));
     }
 
     @Override

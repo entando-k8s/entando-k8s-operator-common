@@ -48,10 +48,9 @@ public class IngressPathCreator {
                         .toList());
     }
 
-    public Ingress addMissingHttpPaths(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable, Ingress ingress,
+    public Ingress addMissingHttpPaths(IngressClient ingressClient, List<IngressingPathOnPort> ingressingDeployable, Ingress ingress,
             Service service) {
-        List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
-                .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)
+        List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.stream()
                 .filter(path -> this.httpPathIsAbsent(ingress, path))
                 .collect(Collectors.toList());
         for (IngressingPathOnPort ingressingContainer : ingressingContainers) {

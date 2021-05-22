@@ -17,15 +17,26 @@
 package org.entando.kubernetes.controller.spi.capability;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
-import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public interface CapabilityProvider {
+public class SerializableCapabilityForResource implements CapabilityForResource {
 
-    CapabilityProvisioningResult provideCapability(EntandoCustomResource forResource, CapabilityRequirement capabilityRequirement,
-            int timeoutSeconds) throws TimeoutException;
+    private final EntandoCustomResource resourceInNeed;
+    private final CapabilityRequirement capabilityRequirement;
 
-    CapabilityProvisioningResult loadProvisioningResult(ProvidedCapability providedCapability);
+    public SerializableCapabilityForResource(EntandoCustomResource resourceInNeed, CapabilityRequirement capabilityRequirement) {
+        this.resourceInNeed = resourceInNeed;
+        this.capabilityRequirement = capabilityRequirement;
+    }
+
+    @Override
+    public EntandoCustomResource getResourceInNeed() {
+        return resourceInNeed;
+    }
+
+    @Override
+    public CapabilityRequirement getCapabilityRequirement() {
+        return capabilityRequirement;
+    }
 }

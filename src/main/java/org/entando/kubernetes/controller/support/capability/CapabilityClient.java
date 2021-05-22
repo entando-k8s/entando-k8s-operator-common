@@ -14,11 +14,12 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.capability;
+package org.entando.kubernetes.controller.support.capability;
 
-import io.fabric8.kubernetes.client.Watch;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 
 public interface CapabilityClient {
@@ -29,9 +30,10 @@ public interface CapabilityClient {
 
     Optional<ProvidedCapability> providedCapabilityByLabels(String namespace, Map<String, String> labels);
 
-    Watch createAndWatchResource(ProvidedCapability capabilityRequirement, CapabilityRequirementWatcher watcher);
+    ProvidedCapability createAndWaitForCapability(ProvidedCapability providedCapability, int timeoutSeconds) throws TimeoutException;
 
     String getNamespace();
 
-    CapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability);
+    SerializedCapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability);
+
 }

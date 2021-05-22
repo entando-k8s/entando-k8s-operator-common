@@ -24,24 +24,28 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
-import io.fabric8.kubernetes.client.Watch;
-import io.fabric8.kubernetes.client.Watcher.Action;
-import io.fabric8.kubernetes.client.WatcherException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
+import org.entando.kubernetes.controller.support.capability.CapabilityClient;
+import org.entando.kubernetes.controller.support.capability.ProvideCapabilityCommand;
+import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
+import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
@@ -61,22 +65,24 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 @ExtendWith(MockitoExtension.class)
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
-class CapabilityProviderTest implements InProcessTestData {
+class ProvideCapabilityCommandTest implements InProcessTestData {
 
-    @Mock
-    CapabilityClient client;
+    public static final int TIMEOUT_SECONDS = 30;
+    SimpleK8SClientDouble clientDouble = new SimpleK8SClientDouble();
+    CapabilityClient capabilityClient = clientDouble.capabilities();
+    SerializingCapabilityProvider capabilityProvider = new SerializingCapabilityProvider(clientDouble.entandoResources(),
+            new InProcessCommandStream(clientDouble, null));
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
     private ProvidedCapability foundCapability;
     private static final String OPERATOR_NAMESPACE = "entando-operator";
 
     @Test
-    void shouldProvideClusterScopeCapability() {
+    void shouldProvideClusterScopeCapability() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
@@ -84,15 +90,15 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withImplementation(
                         StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.CLUSTER)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
-        when(client.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
-        when(client.createAndWatchResource(any(), any()))
-                .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "default-mysql-dbms"));
-        when(client.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
+        when(capabilityClient.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
+        doAnswer(andGenerateSuccessEventFor(withServiceResult(), "default-mysql-dbms")).when(capabilityClient)
+                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        when(capabilityClient.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
+        when(capabilityClient.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
-        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client)
-                .provideCapability(forResource, theCapabilityRequirement);
+        final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient)
+                .execute(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
         final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
@@ -104,7 +110,7 @@ class CapabilityProviderTest implements InProcessTestData {
         assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms-in-cluster"));
     }
 
-    private Function<ProvidedCapability, ServiceResult> withServiceResult() {
+    private Function<ProvidedCapability, ServiceResult> withServiceResult() throws TimeoutException {
         return (capabilityRequirement) -> new DatabaseDeploymentResult(new ServiceBuilder()
                 .withNewMetadata()
                 .withNamespace(capabilityRequirement.getMetadata().getNamespace())
@@ -115,7 +121,7 @@ class CapabilityProviderTest implements InProcessTestData {
     }
 
     @Test
-    void shouldFailWhenTheWatcherFailed() {
+    void shouldFailWhenTheWatcherFailed() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
@@ -123,16 +129,16 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
                 .withCapabilityRequirementScope(CapabilityScope.CLUSTER)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
-        when(client.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
-        when(client.createAndWatchResource(any(), any())).thenAnswer(andGenerateFailEvent());
-        when(client.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
+        when(capabilityClient.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
+        doAnswer(andGenerateFailEvent()).when(capabilityClient).createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        when(capabilityClient.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         //When I attempt to fulfill the capability
-        final CapabilityProvider capabilityProvider = new CapabilityProvider(client);
-        assertThrows(IllegalStateException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement));
+        assertThrows(EntandoControllerException.class,
+                () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS));
     }
 
     @Test
-    void shouldFailWhenThereIsAScopeMismatch() {
+    void shouldFailWhenThereIsAScopeMismatch() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
@@ -141,13 +147,13 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withCapabilityRequirementScope(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage")).build();
-        when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
+        when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME, CapabilityScope.DEDICATED.getCamelCaseName())
                         .build(), new CapabilityRequirement())));
         //When I attempt to fulfill the capability
-        final CapabilityProvider capabilityProvider = new CapabilityProvider(client);
-        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement));
+        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
+                TIMEOUT_SECONDS));
     }
 
     @Test
@@ -161,7 +167,7 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage"))
                 .build();
-        when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
+        when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME,
                                 CapabilityScope.LABELED.getCamelCaseName())
@@ -169,12 +175,12 @@ class CapabilityProviderTest implements InProcessTestData {
                                 StandardCapabilityImplementation.POSTGRESQL.getCamelCaseName())
                         .build(), new CapabilityRequirement())));
         //When I attempt to fulfill the capability
-        final CapabilityProvider capabilityProvider = new CapabilityProvider(client);
-        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement));
+        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
+                TIMEOUT_SECONDS));
     }
 
     @Test
-    void shouldProvideLabeledCapability() {
+    void shouldProvideLabeledCapability() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
@@ -182,15 +188,15 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage")).build();
-        when(client.createAndWatchResource(any(), any()))
-                .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "mysql-dbms"));
-        when(client.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
+        doAnswer(andGenerateSuccessEventFor(withServiceResult(), "mysql-dbms")).when(capabilityClient)
+                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
+        when(capabilityClient.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
-        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
-                theCapabilityRequirement);
+        final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
+                theCapabilityRequirement, TIMEOUT_SECONDS);
         final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
@@ -212,12 +218,12 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
-        final CapabilityProvider capabilityProvider = new CapabilityProvider(client);
-        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement));
+        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
+                TIMEOUT_SECONDS));
     }
 
     @Test
-    void shouldProvideSpecifiedCapability() {
+    void shouldProvideSpecifiedCapability() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
@@ -227,15 +233,15 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withSpecifiedCapability(
                         new ResourceReference("my-db-namespace", "my-db")).build();
         //When I attempt to fulfill the capability
-        when(client.createAndWatchResource(any(), any()))
-                .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "my-db"));
-        when(client.providedCapabilityByName("my-db-namespace", "my-db"))
+        doAnswer(andGenerateSuccessEventFor(withServiceResult(), "my-db")).when(capabilityClient)
+                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        when(capabilityClient.providedCapabilityByName("my-db-namespace", "my-db"))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
+        when(capabilityClient.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
-        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
-                theCapabilityRequirement);
+        final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
+                theCapabilityRequirement, TIMEOUT_SECONDS);
         final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
@@ -248,7 +254,7 @@ class CapabilityProviderTest implements InProcessTestData {
     }
 
     @Test
-    void shouldFailWhenNoReferenceSpecifiedForSpecifiedCapability() {
+    void shouldFailWhenNoReferenceSpecifiedForSpecifiedCapability() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
@@ -257,12 +263,12 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withProvisioningStrategy(
                         CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
-        final CapabilityProvider capabilityProvider = new CapabilityProvider(client);
-        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement));
+        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
+                TIMEOUT_SECONDS));
     }
 
     @Test
-    void shouldProvideNamespaceScopeCapability() {
+    void shouldProvideNamespaceScopeCapability() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
@@ -270,15 +276,15 @@ class CapabilityProviderTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
                 .withProvisioningStrategy(
                         CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
-        when(client.createAndWatchResource(any(), any()))
-                .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(), "default-mysql-dbms"));
-        when(client.providedCapabilityByLabels(eq(forResource.getMetadata().getNamespace()), any()))
+        doAnswer(andGenerateSuccessEventFor(withServiceResult(), "default-mysql-dbms")).when(capabilityClient)
+                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        when(capabilityClient.providedCapabilityByLabels(eq(forResource.getMetadata().getNamespace()), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
+        when(capabilityClient.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
-        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
-                theCapabilityRequirement);
+        final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
+                theCapabilityRequirement, TIMEOUT_SECONDS);
         final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
@@ -292,7 +298,7 @@ class CapabilityProviderTest implements InProcessTestData {
     }
 
     @Test
-    void shouldProvideDedicatedCapability() {
+    void shouldProvideDedicatedCapability() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a MYSQL server
@@ -301,16 +307,16 @@ class CapabilityProviderTest implements InProcessTestData {
                         StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
-        when(client.createAndWatchResource(any(), any()))
-                .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withServiceResult(),
-                        forResource.getMetadata().getName() + "-db-asdf"));
-        when(client.providedCapabilityByName(any(), any()))
+        doAnswer(andGenerateSuccessEventFor(withServiceResult(),
+                forResource.getMetadata().getName() + "-db-asdf")).when(capabilityClient)
+                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        when(capabilityClient.providedCapabilityByName(any(), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
+        when(capabilityClient.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
-        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
-                theCapabilityRequirement);
+        final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
+                theCapabilityRequirement, TIMEOUT_SECONDS);
         final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
@@ -323,7 +329,7 @@ class CapabilityProviderTest implements InProcessTestData {
     }
 
     @Test
-    void shouldProvideDedicatedCapabilityWithIngress() {
+    void shouldProvideDedicatedCapabilityWithIngress() throws TimeoutException {
         //Given I have an EntandoApp
         final EntandoApp forResource = newTestEntandoApp();
         //with a cluster scoped capability requirement for a Keycloak server
@@ -332,16 +338,16 @@ class CapabilityProviderTest implements InProcessTestData {
                         StandardCapabilityImplementation.KEYCLOAK).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
-        when(client.createAndWatchResource(any(), any()))
-                .thenAnswer(andGenerateSuccessEventFor(theCapabilityRequirement, withExposedServiceResult(),
-                        forResource.getMetadata().getName() + "-sso-asdfasdf"));
-        when(client.providedCapabilityByName(any(), any()))
+        doAnswer(andGenerateSuccessEventFor(withExposedServiceResult(),
+                forResource.getMetadata().getName() + "-sso-asdfasdf")).when(capabilityClient)
+                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        when(capabilityClient.providedCapabilityByName(any(), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(client.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new CapabilityProvisioningResult(foundCapability, null, null, null));
+        when(capabilityClient.buildCapabilityProvisioningResult(any()))
+                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
         //When I attempt to fulfill the capability
-        final CapabilityProvisioningResult capabilityResult = new CapabilityProvider(client).provideCapability(forResource,
-                theCapabilityRequirement);
+        final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
+                theCapabilityRequirement, TIMEOUT_SECONDS);
         final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
         //Then I receive one reflecting matching my requirements
         assertThat(providedCapability, is(notNullValue()));
@@ -369,10 +375,8 @@ class CapabilityProviderTest implements InProcessTestData {
                         .build());
     }
 
-    private Answer<?> andGenerateSuccessEventFor(CapabilityRequirement requiredCapability,
-            Function<ProvidedCapability, ServiceResult> serviceResultSupplier, String adminSecretName) {
+    private Answer<?> andGenerateSuccessEventFor(Function<ProvidedCapability, ServiceResult> serviceResultSupplier, String adminSecretNam) {
         return invocationOnMock -> {
-
             scheduler.schedule(() -> {
                 try {
                     foundCapability = (ProvidedCapability) invocationOnMock.getArguments()[0];
@@ -388,27 +392,24 @@ class CapabilityProviderTest implements InProcessTestData {
                     }
                     status.setServiceName(serviceResult.getService().getMetadata().getName());
                     foundCapability.getStatus().putServerStatus(status);
-                    ((CapabilityRequirementWatcher) invocationOnMock.getArguments()[1]).eventReceived(Action.MODIFIED, foundCapability);
+                    clientDouble.entandoResources().createOrPatchEntandoResource(foundCapability);
                 } catch (Exception e) {
                     e.printStackTrace();
                     throw new RuntimeException(e);
                 }
 
             }, 300, TimeUnit.MILLISECONDS);
-            return (Watch) () -> {
-
-            };
+            return invocationOnMock.callRealMethod();
         };
     }
 
     private Answer<?> andGenerateFailEvent() {
         return invocationOnMock -> {
             scheduler.schedule(() -> {
-                ((CapabilityRequirementWatcher) invocationOnMock.getArguments()[1]).onClose(new WatcherException("ASdf"));
-
+                ProvidedCapability capability = invocationOnMock.getArgument(0);
+                clientDouble.entandoResources().deploymentFailed(capability, new IllegalStateException());
             }, 300, TimeUnit.MILLISECONDS);
-            return (Watch) () -> {
-            };
+            return invocationOnMock.callRealMethod();
         };
     }
 }

@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 @JsonSerialize
 @JsonDeserialize
@@ -57,7 +58,7 @@ public class ResourceReference implements HasMetadata {
         this.kind = hasMetadata.getKind();
         this.metadata.setName(hasMetadata.getMetadata().getName());
         this.metadata.setNamespace(hasMetadata.getMetadata().getNamespace());
-        this.isCustomResource = hasMetadata instanceof CustomResource;
+        this.isCustomResource = (hasMetadata instanceof CustomResource || hasMetadata instanceof EntandoCustomResource);
     }
 
     @Override

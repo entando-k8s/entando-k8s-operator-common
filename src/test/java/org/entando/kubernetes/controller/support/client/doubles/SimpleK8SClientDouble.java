@@ -18,8 +18,8 @@ package org.entando.kubernetes.controller.support.client.doubles;
 
 import io.fabric8.kubernetes.client.VersionInfo;
 import java.text.ParseException;
-import org.entando.kubernetes.controller.spi.capability.CapabilityClient;
 import org.entando.kubernetes.controller.spi.capability.doubles.CapabilityClientDouble;
+import org.entando.kubernetes.controller.support.capability.CapabilityClient;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
@@ -32,17 +32,19 @@ import org.mockito.Mockito;
 
 public class SimpleK8SClientDouble extends AbstractK8SClientDouble implements SimpleK8SClient<EntandoResourceClientDouble> {
 
-    private final ServiceClient serviceClient = Mockito.spy(new ServiceClientDouble(getNamespaces()));
+    private final ServiceClient serviceClient = Mockito.spy(new ServiceClientDouble(getNamespaces(), getCluster()));
     private final PersistentVolumeClaimClient persistentVolumeClaimClient = Mockito
             .spy(new PersistentVolumentClaimClientDouble(
-                    getNamespaces()));
-    private final IngressClient ingressClient = Mockito.spy(new IngressClientDouble(getNamespaces()));
+                    getNamespaces(), getCluster()));
+    private final IngressClient ingressClient = Mockito.spy(new IngressClientDouble(getNamespaces(), getCluster()));
     private final DeploymentClient deploymentClient;
-    private final SecretClient secretClient = Mockito.spy(new SecretClientDouble(getNamespaces()));
-    private final EntandoResourceClientDouble entandoResourceClient = Mockito.spy(new EntandoResourceClientDouble(getNamespaces()));
-    private final PodClient podClient = Mockito.spy(new PodClientDouble(getNamespaces()));
-    private final ServiceAccountClientDouble serviceAccountClient = Mockito.spy(new ServiceAccountClientDouble(getNamespaces()));
-    private final CapabilityClientDouble capabilityClient = Mockito.spy(new CapabilityClientDouble(getNamespaces()));
+    private final SecretClient secretClient = Mockito.spy(new SecretClientDouble(getNamespaces(), getCluster()));
+    private final EntandoResourceClientDouble entandoResourceClient = Mockito
+            .spy(new EntandoResourceClientDouble(getNamespaces(), getCluster()));
+    private final PodClient podClient = Mockito.spy(new PodClientDouble(getNamespaces(), getCluster()));
+    private final ServiceAccountClientDouble serviceAccountClient = Mockito
+            .spy(new ServiceAccountClientDouble(getNamespaces(), getCluster()));
+    private final CapabilityClientDouble capabilityClient = Mockito.spy(new CapabilityClientDouble(getNamespaces(), getCluster()));
     private final VersionInfo version;
 
     public SimpleK8SClientDouble() {
@@ -55,7 +57,7 @@ public class SimpleK8SClientDouble extends AbstractK8SClientDouble implements Si
 
     public SimpleK8SClientDouble(VersionInfo version) {
         this.version = version;
-        this.deploymentClient = Mockito.spy(new DeploymentClientDouble(getNamespaces(), version));
+        this.deploymentClient = Mockito.spy(new DeploymentClientDouble(getNamespaces(), getCluster(), version));
     }
 
     private static VersionInfo getVersionInfo(int minorVersion) {

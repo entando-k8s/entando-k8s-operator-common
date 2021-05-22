@@ -39,11 +39,11 @@ public class ProvidedDatabaseCapability extends AbstractServiceResult implements
     private final AbstractServerStatus status;
     private final Map<String, String> capabilityParameters;
 
-    public ProvidedDatabaseCapability(CapabilityProvisioningResult capabilityProvisioningResult) {
-        this(capabilityProvisioningResult.getService(),
-                capabilityProvisioningResult.getProvidedCapability().getStatus().findCurrentServerStatus()
+    public ProvidedDatabaseCapability(CapabilityProvisioningResult serializedCapabilityProvisioningResult) {
+        this(serializedCapabilityProvisioningResult.getService(),
+                serializedCapabilityProvisioningResult.getProvidedCapability().getStatus().findCurrentServerStatus()
                         .orElseThrow(IllegalStateException::new),
-                capabilityProvisioningResult.getProvidedCapability().getSpec().getCapabilityParameters());
+                serializedCapabilityProvisioningResult.getProvidedCapability().getSpec().getCapabilityParameters());
     }
 
     public ProvidedDatabaseCapability(Service service, AbstractServerStatus status, Map<String, String> capabilityParameters) {

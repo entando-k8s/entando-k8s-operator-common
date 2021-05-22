@@ -46,7 +46,7 @@ public class NamespaceDouble {
     private final Map<String, ServiceAccount> serviceAccounts = new ConcurrentHashMap<>();
     private final Map<String, Role> roles = new ConcurrentHashMap<>();
     private final Map<String, RoleBinding> roleBindings = new ConcurrentHashMap<>();
-    private final Map<Class<? extends EntandoCustomResource>, Map<String, EntandoCustomResource>> customResources = new
+    private final Map<String, Map<String, EntandoCustomResource>> customResources = new
             ConcurrentHashMap<>();
     private final String name;
 
@@ -145,13 +145,20 @@ public class NamespaceDouble {
 
     @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> Map<String, T> getCustomResources(Class<T> customResource) {
-        return (Map<String, T>) customResources.computeIfAbsent(customResource, aClass -> new ConcurrentHashMap<>());
+        return (Map<String, T>) customResources.computeIfAbsent(customResource.getSimpleName(), kind -> new ConcurrentHashMap<>());
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> Map<String, T> getCustomResources(String kind) {
-        return (Map<String, T>) customResources.entrySet().stream()
-                .filter(classMapEntry -> classMapEntry.getKey().getSimpleName().equals(kind)).findFirst()
-                .orElseThrow(IllegalArgumentException::new).getValue();
+        return (Map<String, T>) customResources.computeIfAbsent(kind, s -> new ConcurrentHashMap<>());
+    }
+
+    public <T extends EntandoCustomResource> T getCustomResource(String kind, String name) {
+        return (T) getCustomResources(kind).get(name);
+    }
+
+    public void putCustomResource(EntandoCustomResource resource) {
+        getCustomResources(resource.getKind()).put(resource.getMetadata().getName(), resource);
     }
 
     public ConfigMap getConfigMap(String configMapName) {
@@ -172,9 +179,13 @@ public class NamespaceDouble {
         result.put("roles", roles.values());
         result.put("roleBinding", roleBindings.values());
         this.customResources.forEach(
-                (aClass, stringEntandoCustomResourceMap) -> result.put(aClass.getSimpleName(), stringEntandoCustomResourceMap.values())
+                (kind, stringEntandoCustomResourceMap) -> result.put(kind, stringEntandoCustomResourceMap.values())
         );
         return result;
+    }
+
+    public Map<String, ConfigMap> getConfigMaps() {
+        return configMaps;
     }
 
     public void putConfigMap(ConfigMap configMap) {

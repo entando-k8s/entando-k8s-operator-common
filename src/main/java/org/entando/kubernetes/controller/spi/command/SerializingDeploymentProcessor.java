@@ -16,28 +16,40 @@
 
 package org.entando.kubernetes.controller.spi.command;
 
+import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
+import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 
-public class SerializingDeployCommand {
+public class SerializingDeploymentProcessor implements DeploymentProcessor {
 
     private final KubernetesClientForControllers entandoResourceClient;
     private final CommandStream commandStream;
     private Deployable<?> deployable;
 
-    public SerializingDeployCommand(KubernetesClientForControllers entandoResourceClient, CommandStream commandStream) {
+    public SerializingDeploymentProcessor(KubernetesClientForControllers entandoResourceClient, CommandStream commandStream) {
         this.entandoResourceClient = entandoResourceClient;
         this.commandStream = commandStream;
     }
 
-    public <T extends ServiceDeploymentResult<T>> T processDeployable(Deployable<T> deployable) {
+    @Override
+    public <T extends ServiceDeploymentResult<T>> T processDeployable(Deployable<T> deployable, int timeoutSeconds)
+            throws TimeoutException {
         this.deployable = deployable;
-        String result = commandStream.process(SerializationHelper.serialize(deployable));
+        String result = commandStream.process(
+                SupportedCommand.PROCESS_DEPLOYABLE,
+                SerializationHelper.serialize(deployable),
+                timeoutSeconds);
         SerializableDeploymentResult<?> serializedResult = DeserializationHelper.deserialize(entandoResourceClient, result);
+        if (serializedResult.getStatus().hasFailed()) {
+            throw new EntandoControllerException("Creation of Kubernetes resources has failed");
+        }
         return deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),
                 serializedResult.getPod())
-                .withStatus(serializedResult.getStatus());
+                .
+
+                        withStatus(serializedResult.getStatus());
     }
 
     public Deployable<DefaultSerializableDeploymentResult> getSerializedDeployable() {

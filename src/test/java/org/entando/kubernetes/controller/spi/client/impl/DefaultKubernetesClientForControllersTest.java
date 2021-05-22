@@ -31,12 +31,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.client.EntandoExecListener;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
-import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
@@ -179,7 +178,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         //Given I have started a new Pod
         this.fabric8Client.pods().inNamespace(entandoApp.getMetadata().getNamespace()).withName("my-pod").delete();
         this.fabric8Client.pods().inNamespace(entandoApp.getMetadata().getNamespace()).withName("my-pod")
-                .waitUntilCondition(Objects::isNull, 10L, TimeUnit.SECONDS);
+                .waitUntilCondition(Objects::isNull, 20L, TimeUnit.SECONDS);
         final Pod startedPod = this.fabric8Client.pods().inNamespace(entandoApp.getMetadata().getNamespace())
                 .create(new PodBuilder()
                         .withNewMetadata()
@@ -195,12 +194,6 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                         .endContainer()
                         .endSpec()
                         .build());
-        if (EntandoOperatorTestConfig.emulateKubernetes()) {
-            scheduler.schedule(() -> {
-                this.fabric8Client.pods().inNamespace(entandoApp.getMetadata().getNamespace()).withName(startedPod.getMetadata().getName())
-                        .patch(podWithReadyStatus(startedPod));
-            }, 1000L, TimeUnit.MILLISECONDS);
-        }
         //When I wait for the pod
         final Pod pod = this.fabric8Client.pods().inNamespace(entandoApp.getMetadata().getNamespace())
                 .withName(startedPod.getMetadata().getName())

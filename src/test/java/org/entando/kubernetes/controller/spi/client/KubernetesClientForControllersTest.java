@@ -22,9 +22,9 @@ import static org.hamcrest.core.Is.is;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
+import org.entando.kubernetes.controller.support.client.doubles.ClusterDouble;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.PodResourceDouble;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class KubernetesClientForControllersTest {
 
     @Test
     void testExec() throws IOException {
-        KubernetesClientForControllers podClientDouble = new EntandoResourceClientDouble(new ConcurrentHashMap<>());
+        KubernetesClientForControllers podClientDouble = new EntandoResourceClientDouble(new ConcurrentHashMap<>(), new ClusterDouble());
         PodResourceDouble podResource = new PodResourceDouble();
         EntandoExecListener execWatchDouble = podClientDouble
                 .executeAndWait(podResource, "some-container", 10, "echo hello world");

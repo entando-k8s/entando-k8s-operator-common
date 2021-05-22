@@ -30,13 +30,11 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.entando.kubernetes.controller.spi.client.EntandoExecListener;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.support.client.PodClient;
-import org.entando.kubernetes.controller.support.client.PodWaitingClient;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
-import org.entando.kubernetes.controller.support.client.impl.PodWatcher;
 
 public interface PodBehavior {
 
@@ -52,15 +50,6 @@ public interface PodBehavior {
                 .addNewCondition().withType("Ready").withStatus("True").endCondition().build();
         pod.setStatus(status);
         return pod;
-    }
-
-    default PodWatcher takePodWatcherFrom(PodWaitingClient podWaitingClient) {
-        try {
-            return podWaitingClient.getPodWatcherQueue().take();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
     }
 
     default EntandoExecListener takeExecutionListenerFrom(KubernetesClientForControllers podWaitingClient) {

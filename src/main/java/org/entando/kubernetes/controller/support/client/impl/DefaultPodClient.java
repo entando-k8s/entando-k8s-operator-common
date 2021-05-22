@@ -19,14 +19,10 @@ package org.entando.kubernetes.controller.support.client.impl;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
-import io.fabric8.kubernetes.client.dsl.Watchable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.function.Predicate;
+import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.PodClient;
@@ -35,7 +31,6 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 public class DefaultPodClient implements PodClient {
 
     private final KubernetesClient client;
-    private BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
 
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;
@@ -52,24 +47,23 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public void removeAndWait(String namespace, Map<String, String> labels) {
-        FilterWatchListDeletable<Pod, PodList> podResource = client
-                .pods().inNamespace(namespace).withLabels(labels);
-        podResource.delete();
-        watchPod(
-                pod -> podResource.list().getItems().isEmpty(),
-                EntandoOperatorConfig.getPodShutdownTimeoutSeconds(), podResource);
-    }
-
-    @Override
-    public BlockingQueue<PodWatcher> getPodWatcherQueue() {
-        return podWatcherHolder;
+        interruptionSafe(() -> {
+            FilterWatchListDeletable<Pod, PodList> podResource = client.pods().inNamespace(namespace).withLabels(labels);
+            podResource.delete();
+            return podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
+                    EntandoOperatorConfig.getPodShutdownTimeoutSeconds(),
+                    TimeUnit.SECONDS);
+        });
     }
 
     @Override
     public Pod runToCompletion(Pod pod) {
-        Pod running = this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
-        return waitFor(running, got -> PodResult.of(got).getState() == State.COMPLETED,
-                EntandoOperatorConfig.getPodCompletionTimeoutSeconds());
+        return interruptionSafe(() -> {
+            this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
+            return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName())
+                    .waitUntilCondition(got -> PodResult.of(got).getState() == State.COMPLETED,
+                            EntandoOperatorConfig.getPodCompletionTimeoutSeconds(), TimeUnit.SECONDS);
+        });
     }
 
     @Override
@@ -84,26 +78,18 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
-        Watchable<Watcher<Pod>> watchable = client.pods().inNamespace(namespace).withLabel(labelName, labelValue);
-        return watchPod(got -> PodResult.of(got).getState() == State.READY || PodResult.of(got).getState() == State.COMPLETED,
-                EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),
-                watchable);
+        return interruptionSafe(() ->
+                client.pods().inNamespace(namespace).withLabel(labelName, labelValue).waitUntilCondition(
+                        got -> got != null && got.getStatus() != null && (PodResult.of(got).getState() == State.READY
+                                || PodResult.of(got).getState() == State.COMPLETED),
+                        EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),
+                        TimeUnit.SECONDS));
+
     }
 
     @Override
     public Pod loadPod(String namespace, Map<String, String> labels) {
         return client.pods().inNamespace(namespace).withLabels(labels).list().getItems().stream().findFirst().orElse(null);
-    }
-
-    /**
-     * For some reason a local Openshift consistently resulted in timeouts on pod.waitUntilCondition(), so we had to implement our own
-     * logic. waituntilCondition also polls which is nasty.
-     */
-    private Pod waitFor(Pod pod, Predicate<Pod> podPredicate, long timeoutSeconds) {
-        Watchable<Watcher<Pod>> watchable = client.pods().inNamespace(pod.getMetadata().getNamespace())
-                .withName(pod.getMetadata().getName());
-        return watchPod(podPredicate, timeoutSeconds, watchable);
-
     }
 
 }

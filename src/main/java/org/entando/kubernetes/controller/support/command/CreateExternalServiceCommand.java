@@ -50,10 +50,15 @@ public class CreateExternalServiceCommand {
     }
 
     public Service execute(SimpleK8SClient<?> k8sClient) {
-        Service service = k8sClient.services().createOrReplaceService(entandoCustomResource, newExternalService());
-        maybeCreateEndpoints(k8sClient);
-        this.status.setServiceName(service.getMetadata().getName());
-        return service;
+        try {
+            Service service = k8sClient.services().createOrReplaceService(entandoCustomResource, newExternalService());
+            maybeCreateEndpoints(k8sClient);
+            this.status.setServiceName(service.getMetadata().getName());
+            return service;
+        } catch (Exception e) {
+            this.status.finishWith(KubeUtils.failureOf(this.entandoCustomResource, e));
+            return null;
+        }
     }
 
     public Endpoints maybeCreateEndpoints(SimpleK8SClient<?> k8sClient) {

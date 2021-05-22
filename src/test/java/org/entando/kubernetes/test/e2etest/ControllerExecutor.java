@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.legacy;
+package org.entando.kubernetes.test.e2etest;
 
 import static java.util.Optional.ofNullable;
 

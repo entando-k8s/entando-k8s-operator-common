@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.client.impl;
+package org.entando.kubernetes.controller.spi.client;
 
 import io.fabric8.kubernetes.client.dsl.ExecListener;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;

@@ -14,15 +14,12 @@
  *
  */
 
-package org.entando.kubernetes.test.legacy;
+package org.entando.kubernetes.test.e2etest;
 
-import org.entando.kubernetes.test.common.InProcessTestData;
-import org.entando.kubernetes.test.common.VolumeMatchAssertions;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-/**
- * Mostly a source of test fixture factories. TODO: These need to refactored to be in-process friendly
- */
-public interface InProcessTestUtil extends VolumeMatchAssertions, K8SStatusBasedAnswers,
-        StandardArgumentCaptors, InProcessTestData {
+public interface ControllerImageResolver {
+
+    String getControllerImageFor(EntandoCustomResource customResource);
 
 }

@@ -24,8 +24,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 public class PersistentVolumentClaimClientDouble extends AbstractK8SClientDouble implements
         PersistentVolumeClaimClient {
 
-    public PersistentVolumentClaimClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
-        super(namespaces);
+    public PersistentVolumentClaimClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
+        super(namespaces, cluster);
     }
 
     @Override

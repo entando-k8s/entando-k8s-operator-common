@@ -25,7 +25,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Optional;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
-import org.entando.kubernetes.test.legacy.ControllerExecutor;
+import org.entando.kubernetes.test.e2etest.ControllerExecutor;
 
 public class ControllerContainerStartingListener<R extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>> {
 

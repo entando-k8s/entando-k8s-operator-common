@@ -14,24 +14,18 @@
  *
  */
 
-package org.entando.kubernetes.test.legacy;
+package org.entando.kubernetes.controller.spi.capability;
 
-public class AutoExit implements Runnable {
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import org.entando.kubernetes.controller.spi.common.SerializeByReference;
+import org.entando.kubernetes.model.capability.CapabilityRequirement;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-    private final boolean exit;
-    private int code;
+public interface CapabilityForResource {
 
-    public AutoExit(boolean exit) {
-        this.exit = exit;
-    }
+    @SerializeByReference
+    EntandoCustomResource getResourceInNeed();
 
-    public void run() {
-        if (exit) {
-            System.exit(code);
-        }
-    }
+    CapabilityRequirement getCapabilityRequirement();
 
-    public void withCode(int code) {
-        this.code = code;
-    }
 }

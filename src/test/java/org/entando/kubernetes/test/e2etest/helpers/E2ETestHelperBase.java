@@ -40,12 +40,12 @@ import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.common.KeycloakAwareSpec;
 import org.entando.kubernetes.test.common.CommonLabels;
+import org.entando.kubernetes.test.e2etest.ControllerExecutor;
 import org.entando.kubernetes.test.e2etest.common.ControllerContainerStartingListener;
 import org.entando.kubernetes.test.e2etest.common.ControllerStartupEventFiringListener;
 import org.entando.kubernetes.test.e2etest.common.ControllerStartupEventFiringListener.OnStartupMethod;
 import org.entando.kubernetes.test.e2etest.podwaiters.JobPodWaiter;
 import org.entando.kubernetes.test.e2etest.podwaiters.ServicePodWaiter;
-import org.entando.kubernetes.test.legacy.ControllerExecutor;
 
 public class E2ETestHelperBase<R extends EntandoBaseCustomResource<?, EntandoCustomResourceStatus>>
         implements FluentIntegrationTesting, CommonLabels {

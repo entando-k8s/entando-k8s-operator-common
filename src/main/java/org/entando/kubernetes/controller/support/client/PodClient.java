@@ -17,22 +17,13 @@
 package org.entando.kubernetes.controller.support.client;
 
 import io.fabric8.kubernetes.api.model.Pod;
-import java.util.HashMap;
 import java.util.Map;
 
-public interface PodClient extends PodWaitingClient {
+public interface PodClient extends WaitingClient {
 
     Pod start(Pod pod);
 
     Pod waitForPod(String namespace, String labelName, String labelValue);
-
-    default Pod loadPod(String namespace, String... labelNamesAndValues) {
-        Map<String, String> labels = new HashMap<>();
-        for (int i = 0; i < labelNamesAndValues.length; i += 2) {
-            labels.put(labelNamesAndValues[i], labelNamesAndValues[i + 1]);
-        }
-        return loadPod(namespace, labels);
-    }
 
     Pod loadPod(String namespace, Map<String, String> labels);
 

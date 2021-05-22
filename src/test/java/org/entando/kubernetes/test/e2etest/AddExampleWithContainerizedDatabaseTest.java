@@ -40,12 +40,15 @@ import org.entando.kubernetes.controller.spi.examples.SampleIngressingDbAwareDep
 import org.entando.kubernetes.controller.spi.examples.springboot.SampleSpringBootDeployableContainer;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
+import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixtureRequest;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
@@ -67,14 +70,17 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
 
     public static final String TEST_PLUGIN_NAME = EntandoPluginE2ETestHelper.TEST_PLUGIN_NAME + "-name-longer-than-32";
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
-    private final SampleController<EntandoPluginSpec, EntandoPlugin, DefaultExposedDeploymentResult> controller =
+    private final SampleController<DefaultExposedDeploymentResult> controller =
             new SampleController<>(
-                    helper.getClient()) {
+                    new DefaultSimpleK8SClient(helper.getClient()), new DefaultKeycloakClient()) {
                 @Override
                 protected Deployable<DefaultExposedDeploymentResult> createDeployable(
-                        EntandoPlugin newEntandoPlugin,
+                        EntandoCustomResource newEntandoPlugin,
                         DatabaseConnectionInfo databaseConnectionInfo, KeycloakConnectionConfig keycloakConnectionConfig) {
-                    return new SampleIngressingDbAwareDeployable<>(newEntandoPlugin, databaseConnectionInfo) {
+                    return new SampleIngressingDbAwareDeployable<>(
+                            (EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus>) newEntandoPlugin,
+                            databaseConnectionInfo) {
+
                         @Override
                         protected List<DeployableContainer> createContainers(
                                 EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
@@ -126,7 +132,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                 .withDbms(dbmsVendor)
                 .endSpec().build();
         helper.entandoPlugins()
-                .listenAndRespondWithStartupEvent(EntandoPluginE2ETestHelper.TEST_PLUGIN_NAMESPACE, controller::onStartup);
+                .listenAndRun(EntandoPluginE2ETestHelper.TEST_PLUGIN_NAMESPACE, controller);
         helper.entandoPlugins().createAndWaitForPlugin(entandoPlugin, true);
         //Then I expect to see
         verifyDatabaseDeployment(dbmsVendor);

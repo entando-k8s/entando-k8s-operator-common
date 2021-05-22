@@ -16,41 +16,92 @@
 
 package org.entando.kubernetes.controller.spi.capability.doubles;
 
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
 import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.client.Watch;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.WatcherException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.spi.capability.CapabilityClient;
-import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
-import org.entando.kubernetes.controller.spi.capability.CapabilityRequirementWatcher;
+import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
+import org.entando.kubernetes.controller.support.capability.CapabilityClient;
+import org.entando.kubernetes.controller.support.client.WaitingClient;
 import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
+import org.entando.kubernetes.controller.support.client.doubles.ClusterDouble;
 import org.entando.kubernetes.controller.support.client.doubles.NamespaceDouble;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
 
-public class CapabilityClientDouble extends AbstractK8SClientDouble implements CapabilityClient {
+public class CapabilityClientDouble extends AbstractK8SClientDouble implements CapabilityClient, WaitingClient {
 
-    public CapabilityClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
-        super(namespaces);
+    public CapabilityClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
+        super(namespaces, cluster);
     }
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByName(String namespace, String name) {
+        if (namespace == null && name == null) {
+            return Optional.empty();
+        }
         return ofNullable(getNamespace(namespace).getCustomResources(ProvidedCapability.class).get(name));
     }
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByLabels(String namespace, Map<String, String> labels) {
+        if (namespace == null && labels == null) {
+            return Optional.empty();
+        }
         return byLabels(getNamespace(namespace).getCustomResources(ProvidedCapability.class).values(), labels);
+    }
+
+    @Override
+    public ProvidedCapability createAndWaitForCapability(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
+        if (capability != null) {
+            CompletableFuture<ProvidedCapability> future = new CompletableFuture<>();
+            getCluster().getResourceProcessor().watch(new Watcher<ProvidedCapability>() {
+                @Override
+                public void eventReceived(Action action, ProvidedCapability resource) {
+                    if (resource.getStatus() != null && (resource.getStatus().getPhase() == EntandoDeploymentPhase.FAILED
+                            || resource.getStatus().getPhase() == EntandoDeploymentPhase.SUCCESSFUL)) {
+                        future.complete(resource);
+                    }
+                }
+
+                @Override
+                public void onClose(WatcherException cause) {
+
+                }
+            }, capability.getMetadata().getNamespace(), capability.getMetadata().getName());
+            getCluster().getResourceProcessor()
+                    .processResource(getNamespace(capability).getCustomResources(ProvidedCapability.class), capability);
+            try {
+                return future.get(timeoutSeconds, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                throw new TimeoutException(
+                        format("Timed out waiting for ProvidedCapability. Please check the logs of the controller that processes the "
+                                        + "capability '%s.capability.org'",
+                                (capability.getSpec().getImplementation().map(i -> i.name() + ".").orElse("") + capability.getSpec()
+                                        .getCapability().name()).toLowerCase(Locale.ROOT)));
+
+            } catch (InterruptedException | ExecutionException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        return null;
     }
 
     @Override
@@ -69,22 +120,15 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
     }
 
     @Override
-    public Watch createAndWatchResource(ProvidedCapability capabilityRequirement, CapabilityRequirementWatcher watcher) {
-        if (capabilityRequirement != null) {
-            getNamespace(capabilityRequirement).getCustomResources(ProvidedCapability.class)
-                    .put(capabilityRequirement.getMetadata().getName(), capabilityRequirement);
-        }
-        return () -> {
-        };
-    }
-
-    @Override
     public String getNamespace() {
         return CONTROLLER_NAMESPACE;
     }
 
     @Override
-    public CapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability) {
+    public SerializedCapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability) {
+        if (providedCapability == null) {
+            return null;
+        }
         AbstractServerStatus status = providedCapability.getStatus().findCurrentServerStatus()
                 .orElseThrow(IllegalStateException::new);
         NamespaceDouble namespace = getNamespace(providedCapability);
@@ -96,11 +140,17 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
         if (!Strings.isNullOrEmpty(status.getServiceName())) {
             service = namespace.getService(status.getServiceName());
         }
-        return new CapabilityProvisioningResult(
+        return new SerializedCapabilityProvisioningResult(
                 providedCapability,
                 service,
                 ingress,
                 status.getAdminSecretName().map(s -> namespace.getSecret(s)).orElse(null)
         );
+    }
+
+    public void putCapability(ProvidedCapability foundCapability) {
+        getCluster().getResourceProcessor()
+                .processResource(getNamespace(foundCapability).getCustomResources(ProvidedCapability.class), foundCapability);
+
     }
 }

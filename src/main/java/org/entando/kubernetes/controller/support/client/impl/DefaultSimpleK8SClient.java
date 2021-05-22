@@ -18,8 +18,8 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.lang.reflect.Proxy;
-import org.entando.kubernetes.controller.spi.capability.CapabilityClient;
-import org.entando.kubernetes.controller.spi.capability.impl.DefaultCapabilityClient;
+import org.entando.kubernetes.controller.support.capability.CapabilityClient;
+import org.entando.kubernetes.controller.support.capability.DefaultCapabilityClient;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.IngressClient;

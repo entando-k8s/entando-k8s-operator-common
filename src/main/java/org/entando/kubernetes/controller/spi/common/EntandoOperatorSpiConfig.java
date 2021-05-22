@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.common;
 
+import java.nio.file.Paths;
 import java.util.Optional;
 
 public class EntandoOperatorSpiConfig {
@@ -54,5 +55,13 @@ public class EntandoOperatorSpiConfig {
 
     public static Optional<String> getCertificateAuthoritySecretName() {
         return EntandoOperatorConfigBase.lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CA_SECRET_NAME);
+    }
+
+    public static String getSafeTempFileDirectory() {
+        if (Paths.get("/deployments").toFile().exists()) {
+            return "/deployments";
+        } else {
+            return "/tmp";
+        }
     }
 }

@@ -14,11 +14,16 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.command;
+package org.entando.kubernetes.controller.spi.common;
 
-import java.util.concurrent.TimeoutException;
+import java.util.Optional;
 
-public interface CommandStream {
+public interface MayRequireDelegateService {
 
-    String process(SupportedCommand command, String target, int timeoutSeconds) throws TimeoutException;
+    String getIngressName();
+
+    String getIngressNamespace();
+
+    Optional<String> getQualifier();
+
 }

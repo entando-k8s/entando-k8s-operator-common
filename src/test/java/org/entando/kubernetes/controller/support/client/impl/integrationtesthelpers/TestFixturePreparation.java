@@ -36,7 +36,7 @@ import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
-import org.entando.kubernetes.test.legacy.CertificateSecretHelper;
+import org.entando.kubernetes.test.e2etest.CertificateSecretHelper;
 
 public final class TestFixturePreparation {
 

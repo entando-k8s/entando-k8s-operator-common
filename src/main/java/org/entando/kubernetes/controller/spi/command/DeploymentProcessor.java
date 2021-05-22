@@ -17,8 +17,10 @@
 package org.entando.kubernetes.controller.spi.command;
 
 import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 
-public interface CommandStream {
+public interface DeploymentProcessor {
 
-    String process(SupportedCommand command, String target, int timeoutSeconds) throws TimeoutException;
+    <T extends ServiceDeploymentResult<T>> T processDeployable(Deployable<T> deployable, int timeoutSeconds) throws TimeoutException;
 }

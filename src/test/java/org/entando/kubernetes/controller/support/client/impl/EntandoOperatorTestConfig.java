@@ -22,7 +22,6 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 
     public static final String ENTANDO_TEST_KEYCLOAK_BASE_URL = "entando.test.keycloak.base.url";
-    public static final String ENTANDO_TEST_EMULATE_KUBERNETES = "entando.test.emulate.kubernetes";
 
     /**
      * the name property of the property containing a namespace to use during test execution.
@@ -136,10 +135,6 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 
     public static Optional<String> getRedhatRegistryCredentials() {
         return lookupProperty(ENTANDO_TEST_REDHAT_REGISTRY_CREDENTIALS);
-    }
-
-    public static boolean emulateKubernetes() {
-        return lookupProperty(ENTANDO_TEST_EMULATE_KUBERNETES).map(s -> s.equals("true")).orElse(false);
     }
 
     public enum TestTarget {

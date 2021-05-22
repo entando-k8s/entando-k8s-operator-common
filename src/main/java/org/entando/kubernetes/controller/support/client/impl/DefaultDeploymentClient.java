@@ -23,17 +23,15 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
-import org.entando.kubernetes.controller.support.client.PodWaitingClient;
+import org.entando.kubernetes.controller.support.client.WaitingClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClient {
+public class DefaultDeploymentClient implements DeploymentClient, WaitingClient {
 
     private final KubernetesClient client;
-    private BlockingQueue<PodWatcher> podWatcherHolder = new ArrayBlockingQueue<>(15);
 
     public DefaultDeploymentClient(KubernetesClient client) {
         this.client = client;
@@ -71,15 +69,14 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
         if (existingDeployment == null) {
             return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(deployment);
         } else {
-            //Don't wait because watching the pods until they have been removed is safer than to Fabric8's polling
-            getDeploymenResourceFor(peerInNamespace, deployment).scale(0, false);
+            //Don't wait because the polling in Fabric8 is dodge
+            getDeploymenResourceFor(peerInNamespace, deployment).scale(0, true);
             FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
-            if (!podResource.list().getItems().isEmpty()) {
-                watchPod(pod -> podResource.list().getItems().isEmpty(), EntandoOperatorConfig.getPodShutdownTimeoutSeconds(),
-                        podResource);
-            }
+            interruptionSafe(() -> podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
+                    EntandoOperatorConfig.getPodShutdownTimeoutSeconds(),
+                    TimeUnit.SECONDS));
             //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod
             return getDeploymenResourceFor(peerInNamespace, deployment).patch(deployment);
         }
@@ -100,8 +97,4 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
                 .get();
     }
 
-    @Override
-    public BlockingQueue<PodWatcher> getPodWatcherQueue() {
-        return podWatcherHolder;
-    }
 }

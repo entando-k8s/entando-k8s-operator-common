@@ -1,0 +1,170 @@
+/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.client.doubles;
+
+import static java.lang.String.format;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.Watch;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.Watcher.Action;
+import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class KubernetesResourceProcessor {
+
+    private final Map<String, Set<WatcherHolder<?>>> watcherHolders = new ConcurrentHashMap<>();
+
+    public <T extends HasMetadata> T processResource(Map<String, T> existingMap, T newResourceState) {
+        populateGeneratedFields(newResourceState);
+        validateResourceVersion(existingMap, newResourceState);
+        T clone = clone(newResourceState);
+        putClone(existingMap, clone);
+        fireEvents(newResourceState, clone);
+        return clone;
+    }
+
+    private <T extends HasMetadata> void putClone(Map<String, T> existingMap, T clone) {
+        existingMap.put(clone.getMetadata().getName(), clone);
+    }
+
+    private <T extends HasMetadata> void fireEvents(T newResourceState, T clone) {
+        final Set<WatcherHolder<HasMetadata>> watcherHoldersFor = getWatcherHoldersFor(newResourceState.getKind());
+        watcherHoldersFor.stream()
+                .filter(h -> h.matches(newResourceState))
+                .forEach(h -> h.processEvent(Action.MODIFIED, clone));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends HasMetadata> T clone(T newResourceState) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            return (T) objectMapper.readValue(objectMapper.writeValueAsString(newResourceState), newResourceState.getClass());
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private <T extends HasMetadata> void validateResourceVersion(Map<String, T> existingMap, T newResourceState) {
+        HasMetadata existingResource = existingMap.get(newResourceState.getMetadata().getName());
+        if (existingResource != null && existingResource != newResourceState) {
+            if (!existingResource.getMetadata().getResourceVersion().equals(newResourceState.getMetadata().getResourceVersion())) {
+                throw new KubernetesClientException(
+                        format("Resource version mismatch for %s %s/%s: %s != %s",
+                                newResourceState.getKind(),
+                                newResourceState.getMetadata().getNamespace(),
+                                newResourceState.getMetadata().getName(),
+                                newResourceState.getMetadata().getResourceVersion(),
+                                existingResource.getMetadata().getResourceVersion()));
+            }
+        }
+    }
+
+    private <T extends HasMetadata> void populateGeneratedFields(T newResourceState) {
+        if (newResourceState.getMetadata().getUid() == null) {
+            newResourceState.getMetadata().setUid(UUID.randomUUID().toString());
+        }
+        if (newResourceState.getMetadata().getResourceVersion() == null) {
+            newResourceState.getMetadata().setResourceVersion(String.valueOf((long) (Math.random() * 10000000L)));
+        }
+    }
+
+    public <T extends HasMetadata> Watch watch(Watcher<T> watcher, String namespace, String name) {
+        return registerWatcherHolder(new WatcherHolder<T>(watcher, namespace, name));
+    }
+
+    public <T extends HasMetadata> Watch watch(Watcher<T> watcher, String namespace, Map<String, String> selector) {
+        return registerWatcherHolder(new WatcherHolder<T>(watcher, namespace, selector));
+    }
+
+    public <T extends HasMetadata> Watch watch(Watcher<T> watcher) {
+        return registerWatcherHolder(new WatcherHolder<T>(watcher));
+    }
+
+    private <T extends HasMetadata> Watch registerWatcherHolder(WatcherHolder<T> holder) {
+        final Set<WatcherHolder<T>> holders = getWatcherHoldersFor(holder.getKind());
+        holders.add(holder);
+        return () -> holders.remove(holder);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private <T extends HasMetadata> Set<WatcherHolder<T>> getWatcherHoldersFor(String kind) {
+        return (Set<WatcherHolder<T>>) (Set) this.watcherHolders.computeIfAbsent(kind, key -> new HashSet<>());
+    }
+
+    private static class WatcherHolder<T extends HasMetadata> {
+
+        private final Watcher<T> watcher;
+        private final String namespace;
+        private final String name;
+        private final Map<String, String> selector;
+
+        public WatcherHolder(Watcher<T> watcher) {
+            this(watcher, null, null, null);
+        }
+
+        public WatcherHolder(Watcher<T> watcher, String namespace, Map<String, String> selector) {
+            this(watcher, namespace, null, selector);
+        }
+
+        public WatcherHolder(Watcher<T> watcher, String namespace, String name) {
+            this(watcher, namespace, name, null);
+        }
+
+        private WatcherHolder(Watcher<T> watcher, String namespace, String name, Map<String, String> selector) {
+            this.watcher = watcher;
+            this.namespace = namespace;
+            this.name = name;
+            this.selector = selector;
+        }
+
+        public String getKind() {
+            final Class<?> actualTypeArgument = (Class<?>) ((ParameterizedType) watcher.getClass().getGenericInterfaces()[0])
+                    .getActualTypeArguments()[0];
+            return actualTypeArgument.getSimpleName();
+        }
+
+        public void processEvent(Action action, T resource) {
+            watcher.eventReceived(action, (T) resource);
+        }
+
+        public boolean matches(HasMetadata resource) {
+            return matchesNamespace(resource) && matchesName(resource) && matchesLabels(resource);
+        }
+
+        private boolean matchesLabels(HasMetadata resource) {
+            return selector == null || AbstractK8SClientDouble.matchesSelector(selector, resource);
+        }
+
+        private boolean matchesName(HasMetadata resource) {
+            return this.name == null || this.name.equals(resource.getMetadata().getName());
+        }
+
+        private boolean matchesNamespace(HasMetadata resource) {
+            return this.namespace == null || this.namespace.equals(resource.getMetadata().getNamespace());
+        }
+    }
+
+}

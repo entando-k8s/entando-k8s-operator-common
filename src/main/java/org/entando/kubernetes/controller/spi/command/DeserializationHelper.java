@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
+import org.entando.kubernetes.model.capability.ProvidedCapability;
 
 public class DeserializationHelper implements InvocationHandler {
 
@@ -78,9 +79,6 @@ public class DeserializationHelper implements InvocationHandler {
     @SuppressWarnings("unchecked")
     @Override
     public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-        if (method.getName().equals("getStatus")) {
-            System.out.println();
-        }
         if (method.getName().equals("createResult")) {
             return createResult(objects);
         }
@@ -149,9 +147,14 @@ public class DeserializationHelper implements InvocationHandler {
             final ResourceReference resourceReference = objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(result)),
                     ResourceReference.class);
             if (resourceReference.isCustomResource()) {
-                return kubernetesClient.loadCustomResource(resourceReference.getApiVersion(),
-                        resourceReference.getKind(), resourceReference.getMetadata().getNamespace(),
-                        resourceReference.getMetadata().getName());
+                if (resourceReference.getKind().equals(ProvidedCapability.class.getSimpleName())) {
+                    return kubernetesClient.load(ProvidedCapability.class, resourceReference.getMetadata().getNamespace(),
+                            resourceReference.getMetadata().getName());
+                } else {
+                    return kubernetesClient.loadCustomResource(resourceReference.getApiVersion(),
+                            resourceReference.getKind(), resourceReference.getMetadata().getNamespace(),
+                            resourceReference.getMetadata().getName());
+                }
             } else {
                 return kubernetesClient.loadStandardResource(resourceReference.getKind(), resourceReference.getMetadata().getNamespace(),
                         resourceReference.getMetadata().getName());

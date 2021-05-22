@@ -24,8 +24,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class SecretClientDouble extends AbstractK8SClientDouble implements SecretClient {
 
-    public SecretClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces) {
-        super(namespaces);
+    public SecretClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
+        super(namespaces, cluster);
     }
 
     @Override

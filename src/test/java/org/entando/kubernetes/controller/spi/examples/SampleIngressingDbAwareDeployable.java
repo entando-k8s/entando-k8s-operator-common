@@ -90,4 +90,8 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
         return entandoResource.getMetadata().getNamespace();
     }
 
+    @Override
+    public boolean isIngressRequired() {
+        return true;
+    }
 }

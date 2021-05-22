@@ -18,15 +18,17 @@ package org.entando.kubernetes.controller.support.common;
 
 import static java.util.Optional.ofNullable;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public final class KubeUtils {
@@ -69,4 +71,10 @@ public final class KubeUtils {
         return ofNullable(resource.getMetadata().getAnnotations()).map(map -> map.get(name));
     }
 
+    public static EntandoControllerFailure failureOf(EntandoCustomResource r, Exception e) {
+        final StringWriter stringWriter = new StringWriter();
+        e.printStackTrace(new PrintWriter(stringWriter));
+        final String failedObjectName = r.getMetadata().getNamespace() + "/" + r.getMetadata().getName();
+        return new EntandoControllerFailure(r.getKind(), failedObjectName, e.getMessage(), stringWriter.toString());
+    }
 }

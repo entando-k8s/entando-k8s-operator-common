@@ -41,6 +41,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import org.entando.kubernetes.controller.spi.client.EntandoExecListener;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
@@ -48,7 +49,6 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
-import org.entando.kubernetes.controller.support.client.impl.EntandoExecListener;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -61,7 +61,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     public static final String ENTANDO_CRD_NAMES_CONFIG_MAP = "entando-crd-names";
     protected final KubernetesClient client;
     protected ConfigMap crdNameMap;
-    private BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
+    private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
 
     public DefaultKubernetesClientForControllers(KubernetesClient client) {
         this.client = client;
@@ -148,8 +148,9 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         return client.customResources((Class) c);
     }
 
-    public void updateStatus(EntandoCustomResource customResource, AbstractServerStatus status) {
-        performStatusUpdate(customResource,
+    @Override
+    public <T extends EntandoCustomResource> T updateStatus(T customResource, AbstractServerStatus status) {
+        return performStatusUpdate(customResource,
                 t -> t.getStatus().putServerStatus(status),
                 e -> e.withType("Normal")
                         .withReason("StatusUpdate")
@@ -164,9 +165,6 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     }
 
     @SuppressWarnings({"unchecked"})
-    //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
-    //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
-    //TODO find a way to serialize to our generic objects using the HashMaps from the Raw custom resources
     public <T extends EntandoCustomResource> T reload(T customResource) {
         if (customResource instanceof SerializedEntandoResource) {
             return (T) loadCustomResource(
@@ -179,8 +177,9 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         }
     }
 
-    public void updatePhase(EntandoCustomResource customResource, EntandoDeploymentPhase phase) {
-        performStatusUpdate(customResource,
+    @Override
+    public <T extends EntandoCustomResource> T updatePhase(T customResource, EntandoDeploymentPhase phase) {
+        return performStatusUpdate(customResource,
                 t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
                 e -> e.withType("Normal")
                         .withReason("PhaseUpdated")
@@ -193,8 +192,8 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         );
     }
 
-    public void deploymentFailed(EntandoCustomResource customResource, Exception reason) {
-        performStatusUpdate(customResource,
+    public <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason) {
+        return performStatusUpdate(customResource,
                 t -> {
                     if (t.getStatus().findCurrentServerStatus().isEmpty()) {
                         t.getStatus().putServerStatus(new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
@@ -222,12 +221,12 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         );
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes", "java:S1905", "java:S1874"})
+    @SuppressWarnings({"unchecked", "java:S1905", "java:S1874"})
     //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
     //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
     //TODO find a way to serialize to our generic objects using the HashMaps from the Raw custom resources
-    private <T extends EntandoCustomResource> void performStatusUpdate(T customResource,
-            Consumer<T> consumer, UnaryOperator<EventBuilder> eventPopulator) {
+    private <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer,
+            UnaryOperator<EventBuilder> eventPopulator) {
         final EventBuilder doneableEvent = new EventBuilder()
                 .withNewMetadata()
                 .withNamespace(customResource.getMetadata().getNamespace())
@@ -263,7 +262,9 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                 ser.setDefinition(definition);
                 latest = (T) ser;
                 consumer.accept(latest);
-                resource.updateStatus(objectMapper.writeValueAsString(latest));
+                return (T) objectMapper.readValue(
+                        objectMapper.writeValueAsString(resource.updateStatus(objectMapper.writeValueAsString(latest))),
+                        SerializedEntandoResource.class);
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
@@ -275,7 +276,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                     .withName(customResource.getMetadata().getName());
             latest = resource.fromServer().get();
             consumer.accept(latest);
-            resource.updateStatus(latest);
+            return resource.updateStatus(latest);
         }
     }
 

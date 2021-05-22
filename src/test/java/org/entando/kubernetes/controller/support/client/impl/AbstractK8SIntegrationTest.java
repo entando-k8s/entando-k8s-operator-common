@@ -23,27 +23,21 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
-import org.entando.kubernetes.controller.support.client.PodWaitingClient;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.DeletionWaiter;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.InterProcessTestData;
-import org.entando.kubernetes.test.common.PodBehavior;
-import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-public abstract class AbstractK8SIntegrationTest implements FluentTraversals, InterProcessTestData, PodBehavior {
+public abstract class AbstractK8SIntegrationTest implements FluentTraversals, InterProcessTestData {
 
     protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-    @Rule
-    public KubernetesServer server = new KubernetesServer(false, true);
     protected KubernetesClient fabric8Client;
 
     protected <R extends HasMetadata,
@@ -81,15 +75,9 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
 
     @BeforeEach
     public void setup() {
-        if (EntandoOperatorTestConfig.emulateKubernetes()) {
-            PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(true);
-            fabric8Client = server.getClient();
-        } else {
-            PodWaitingClient.ENQUEUE_POD_WATCH_HOLDERS.set(false);
-            fabric8Client = new DefaultKubernetesClient();
-            Arrays.stream(getNamespacesToUse())
-                    .filter(s -> fabric8Client.namespaces().withName(s).get() == null)
-                    .forEach(s -> TestFixturePreparation.createNamespace(fabric8Client, s));
-        }
+        fabric8Client = new DefaultKubernetesClient();
+        Arrays.stream(getNamespacesToUse())
+                .filter(s -> fabric8Client.namespaces().withName(s).get() == null)
+                .forEach(s -> TestFixturePreparation.createNamespace(fabric8Client, s));
     }
 }
