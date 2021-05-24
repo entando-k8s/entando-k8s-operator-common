@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.client.doubles;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -24,6 +25,7 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.Watcher.Action;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.util.HashSet;
@@ -31,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 
 public class KubernetesResourceProcessor {
 
@@ -59,9 +62,16 @@ public class KubernetesResourceProcessor {
     @SuppressWarnings("unchecked")
     private <T extends HasMetadata> T clone(T newResourceState) {
         try {
+            CustomResourceDefinitionContext context = null;
+            if (newResourceState instanceof SerializedEntandoResource) {
+                context = ((SerializedEntandoResource) newResourceState).getDefinition();
+            }
             ObjectMapper objectMapper = new ObjectMapper();
-
-            return (T) objectMapper.readValue(objectMapper.writeValueAsString(newResourceState), newResourceState.getClass());
+            final T result = (T) objectMapper.readValue(objectMapper.writeValueAsString(newResourceState), newResourceState.getClass());
+            if (context != null) {
+                ((SerializedEntandoResource) result).setDefinition(context);
+            }
+            return result;
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -99,8 +109,20 @@ public class KubernetesResourceProcessor {
         return registerWatcherHolder(new WatcherHolder<T>(watcher, namespace, selector));
     }
 
+    public <T extends HasMetadata> Watch watch(Watcher<T> watcher, String namespace) {
+        return registerWatcherHolder(new WatcherHolder<T>(watcher, namespace));
+    }
+
     public <T extends HasMetadata> Watch watch(Watcher<T> watcher) {
         return registerWatcherHolder(new WatcherHolder<T>(watcher));
+    }
+
+    public <T extends HasMetadata> Watch watch(Watcher<T> watcher, CustomResourceDefinitionContext context, String namespace) {
+        return registerWatcherHolder(new WatcherHolder<T>(watcher, context, namespace));
+    }
+
+    public <T extends HasMetadata> Watch watch(Watcher<T> watcher, CustomResourceDefinitionContext context) {
+        return registerWatcherHolder(new WatcherHolder<T>(watcher, context));
     }
 
     private <T extends HasMetadata> Watch registerWatcherHolder(WatcherHolder<T> holder) {
@@ -120,30 +142,47 @@ public class KubernetesResourceProcessor {
         private final String namespace;
         private final String name;
         private final Map<String, String> selector;
+        private final CustomResourceDefinitionContext context;
 
         public WatcherHolder(Watcher<T> watcher) {
-            this(watcher, null, null, null);
+            this(watcher, null, null, null, null);
         }
 
         public WatcherHolder(Watcher<T> watcher, String namespace, Map<String, String> selector) {
-            this(watcher, namespace, null, selector);
+            this(watcher, null, namespace, null, selector);
         }
 
         public WatcherHolder(Watcher<T> watcher, String namespace, String name) {
-            this(watcher, namespace, name, null);
+            this(watcher, null, namespace, name, null);
         }
 
-        private WatcherHolder(Watcher<T> watcher, String namespace, String name, Map<String, String> selector) {
+        private WatcherHolder(Watcher<T> watcher, CustomResourceDefinitionContext context, String namespace, String name,
+                Map<String, String> selector) {
             this.watcher = watcher;
+            this.context = context;
             this.namespace = namespace;
             this.name = name;
             this.selector = selector;
         }
 
+        public WatcherHolder(Watcher<T> watcher, String namespace) {
+            this(watcher, null, namespace, null, null);
+        }
+
+        public WatcherHolder(Watcher<T> watcher, CustomResourceDefinitionContext context, String namespace) {
+            this(watcher, context, namespace, null, null);
+        }
+
+        public WatcherHolder(Watcher<T> watcher, CustomResourceDefinitionContext context) {
+            this(watcher, context, null, null, null);
+        }
+
         public String getKind() {
-            final Class<?> actualTypeArgument = (Class<?>) ((ParameterizedType) watcher.getClass().getGenericInterfaces()[0])
-                    .getActualTypeArguments()[0];
-            return actualTypeArgument.getSimpleName();
+            return ofNullable(this.context).map(CustomResourceDefinitionContext::getKind).orElseGet(() -> {
+                final Class<?> actualTypeArgument = (Class<?>) ((ParameterizedType) watcher.getClass().getGenericInterfaces()[0])
+                        .getActualTypeArguments()[0];
+                return actualTypeArgument.getSimpleName();
+            });
         }
 
         public void processEvent(Action action, T resource) {

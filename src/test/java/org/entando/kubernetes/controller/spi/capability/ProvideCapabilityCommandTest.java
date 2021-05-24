@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.capability;
 
+import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -37,6 +38,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
+import org.entando.kubernetes.controller.TestResource;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
@@ -46,7 +48,6 @@ import org.entando.kubernetes.controller.support.capability.CapabilityClient;
 import org.entando.kubernetes.controller.support.capability.ProvideCapabilityCommand;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
-import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.capability.CapabilityRequirementBuilder;
@@ -61,6 +62,7 @@ import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.test.common.InProcessTestData;
 import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -80,11 +82,18 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
     private ProvidedCapability foundCapability;
     private static final String OPERATOR_NAMESPACE = "entando-operator";
+    @BeforeEach
+    void beforeEach() {
+        step("Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'", () -> {
+            clientDouble.entandoResources().registerCustomResourceDefinition("testrources.test.org.crd.yaml");
+        });
+    }
 
     @Test
     void shouldProvideClusterScopeCapability() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(
@@ -122,8 +131,8 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldFailWhenTheWatcherFailed() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
@@ -139,8 +148,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldFailWhenThereIsAScopeMismatch() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
@@ -158,8 +168,8 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldFailWhenThereIsAnImplementationMismatch() {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
@@ -181,8 +191,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldProvideLabeledCapability() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
@@ -211,8 +222,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldFailWhenNoLabelsProvidedForLabeledCapability() {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
@@ -224,8 +236,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldProvideSpecifiedCapability() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
@@ -255,8 +268,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldFailWhenNoReferenceSpecifiedForSpecifiedCapability() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
@@ -269,8 +283,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldProvideNamespaceScopeCapability() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
@@ -299,8 +314,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldProvideDedicatedCapability() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(
@@ -330,8 +346,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
     @Test
     void shouldProvideDedicatedCapabilityWithIngress() throws TimeoutException {
-        //Given I have an EntandoApp
-        final EntandoApp forResource = newTestEntandoApp();
+        //Given I have an TestResource
+        final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+
         //with a cluster scoped capability requirement for a Keycloak server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.SSO)
                 .withImplementation(

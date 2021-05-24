@@ -58,7 +58,6 @@ import org.entando.kubernetes.model.common.InternalServerStatus;
 public class DefaultKubernetesClientForControllers implements KubernetesClientForControllers {
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
-    public static final String ENTANDO_CRD_NAMES_CONFIG_MAP = "entando-crd-names";
     protected final KubernetesClient client;
     protected ConfigMap crdNameMap;
     private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);

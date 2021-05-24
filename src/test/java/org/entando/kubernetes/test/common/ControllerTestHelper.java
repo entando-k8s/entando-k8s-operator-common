@@ -44,6 +44,7 @@ import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
+import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.command.SerializingDeploymentProcessor;
 import org.entando.kubernetes.controller.spi.command.SupportedCommand;
 import org.entando.kubernetes.controller.spi.common.ConfigProperty;
@@ -86,10 +87,11 @@ public interface ControllerTestHelper {
         return java.util.Optional.empty();
     }
 
-    default void runControllerAgainst(EntandoCustomResource forResource, CapabilityRequirement capabilityRequirement) throws TimeoutException {
-        attacheKubernetesResource("Resource Requesting Capability", forResource);
+    default void runControllerAgainst(EntandoCustomResource forResource, CapabilityRequirement capabilityRequirement)
+            throws TimeoutException {
+        attachKubernetesResource("Resource Requesting Capability", forResource);
         getClient().entandoResources().createOrPatchEntandoResource(forResource);
-        attacheKubernetesResource("Capability Requirement", capabilityRequirement);
+        attachKubernetesResource("Capability Requirement", capabilityRequirement);
         final StandardCapability capability = capabilityRequirement.getCapability();
         doAnswer(invocationOnMock -> {
             getScheduler().schedule(() -> runControllerAndUpdateCapabilityStatus(invocationOnMock.getArgument(0)), 200L,
@@ -102,7 +104,7 @@ public interface ControllerTestHelper {
     }
 
     default void runControllerAgainst(EntandoCustomResource entandoCustomResource) {
-        attacheKubernetesResource("Resource Providing Capability", entandoCustomResource);
+        attachKubernetesResource("Resource Providing Capability", entandoCustomResource);
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
                 entandoCustomResource.getMetadata().getName());
@@ -135,12 +137,16 @@ public interface ControllerTestHelper {
 
     Runnable createController(DeploymentProcessor deploymentProcessor);
 
-    default void attacheKubernetesResource(String name, Object resource) {
+    default void attachKubernetesResource(String name, Object resource) {
         try {
             Allure.attachment(name, new ObjectMapper(new YAMLFactory()).writeValueAsString(resource));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    default void attachSpiResource(String name, Object resource) {
+        Allure.attachment(name, SerializationHelper.serialize(resource));
     }
 
     default void attachEnvironmentVariable(ConfigProperty prop, String value) {
@@ -240,7 +246,7 @@ public interface ControllerTestHelper {
         final Map<String, Map<String, Collection<? extends HasMetadata>>> kubernetesState = getClient().getKubernetesState();
         kubernetesState.forEach((key, value) ->
                 Allure.step(key, () -> value.forEach((s, hasMetadata) -> Allure.step(s,
-                        () -> hasMetadata.forEach(m -> attacheKubernetesResource(m.getMetadata().getName(), m))))));
+                        () -> hasMetadata.forEach(m -> attachKubernetesResource(m.getMetadata().getName(), m))))));
     }
 
     default void theDefaultTlsSecretWasCreatedAndConfiguredAsDefault() {

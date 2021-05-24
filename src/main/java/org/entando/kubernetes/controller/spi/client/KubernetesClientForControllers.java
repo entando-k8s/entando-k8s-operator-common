@@ -35,6 +35,7 @@ import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 
 public interface KubernetesClientForControllers {
 
+    String ENTANDO_CRD_NAMES_CONFIG_MAP = "entando-crd-names";
     String ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME = "entando-operator-config";
     AtomicBoolean ENQUEUE_POD_WATCH_HOLDERS = new AtomicBoolean(false);
 

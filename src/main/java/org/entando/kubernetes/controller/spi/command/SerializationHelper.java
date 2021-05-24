@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -46,7 +47,7 @@ public class SerializationHelper {
     public static String serialize(Object deployable) {
         try {
             Map<String, Object> map = toJsonFriendlyMap(deployable);
-            return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(map);
+            return new ObjectMapper(new YAMLFactory()).writerWithDefaultPrettyPrinter().writeValueAsString(map);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }

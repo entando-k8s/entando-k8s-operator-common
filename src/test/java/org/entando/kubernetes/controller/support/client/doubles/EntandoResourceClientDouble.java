@@ -20,16 +20,22 @@ import static java.lang.String.format;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -63,8 +69,18 @@ import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
+    private ConfigMap crdNameMap;
+
     public EntandoResourceClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
         super(namespaces, cluster);
+        final ConfigMapBuilder builder = new ConfigMapBuilder(
+                Objects.requireNonNullElseGet(getNamespace(CONTROLLER_NAMESPACE).getConfigMap(ENTANDO_CRD_NAMES_CONFIG_MAP), ConfigMap::new)
+        );
+        crdNameMap = getCluster().getResourceProcessor()
+                .processResource(getNamespace(CONTROLLER_NAMESPACE).getConfigMaps(), builder.withNewMetadata()
+                        .withName(ENTANDO_CRD_NAMES_CONFIG_MAP)
+                        .withNamespace(CONTROLLER_NAMESPACE).endMetadata().build());
+
     }
 
     private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
@@ -242,8 +258,13 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     public SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(objectMapper.writeValueAsString(getNamespace(namespace).getCustomResources(kind).get(name)),
-                    SerializedEntandoResource.class);
+            final SerializedEntandoResource resource = objectMapper
+                    .readValue(objectMapper.writeValueAsString(getNamespace(namespace).getCustomResources(kind).get(name)),
+                            SerializedEntandoResource.class);
+            final String group = kind + "." + apiVersion.substring(0, apiVersion.indexOf("/"));
+            resource.setDefinition(CustomResourceDefinitionContext.fromCrd(getCluster()
+                    .getCustomResourceDefinition(crdNameMap.getData().get(group))));
+            return resource;
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
@@ -267,6 +288,19 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
             default:
                 return null;
         }
+
+    }
+
+    public void registerCustomResourceDefinition(String resourceName) throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        final CustomResourceDefinition crd = objectMapper
+                .readValue(Thread.currentThread().getContextClassLoader().getResource(resourceName),
+                        CustomResourceDefinition.class);
+        getCluster().putCustomResourceDefinition(crd);
+        crdNameMap = getCluster().getResourceProcessor().processResource(getNamespace(CONTROLLER_NAMESPACE).getConfigMaps(),
+                new ConfigMapBuilder(getNamespace(CONTROLLER_NAMESPACE).getConfigMap(ENTANDO_CRD_NAMES_CONFIG_MAP))
+                        .addToData(crd.getSpec().getNames().getKind() + "." + crd.getSpec().getGroup(), crd.getMetadata().getName())
+                        .build());
 
     }
 

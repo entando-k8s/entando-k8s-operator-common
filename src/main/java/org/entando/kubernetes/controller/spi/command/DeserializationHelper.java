@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.spi.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.io.IOException;
 import java.io.StringReader;
@@ -52,7 +53,7 @@ public class DeserializationHelper implements InvocationHandler {
     @SuppressWarnings("unchecked")
     public static <S> S deserialize(KubernetesClientForControllers kubernetesClient, String json) {
         try {
-            final ObjectMapper objectMapper = new ObjectMapper();
+            final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
             Map<String, Object> map = objectMapper.readValue(json, Map.class);
             return fromMap(kubernetesClient, map, objectMapper);
         } catch (IOException e) {

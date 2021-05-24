@@ -20,6 +20,7 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import org.entando.kubernetes.controller.TestResource;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
@@ -164,5 +165,8 @@ public interface InProcessTestData {
                 .withDatabaseName("my_db")
                 .endSpec()
                 .build();
+    }
+    default TestResource newTestResource(){
+        return new TestResource().withNames(MY_APP_NAMESPACE, MY_APP);
     }
 }

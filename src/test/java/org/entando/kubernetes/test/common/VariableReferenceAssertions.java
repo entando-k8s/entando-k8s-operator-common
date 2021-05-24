@@ -23,10 +23,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.EnvVarSource;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretKeySelector;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.Collection;
+import java.util.function.Predicate;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.hamcrest.BaseMatcher;
@@ -34,6 +36,9 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
 public interface VariableReferenceAssertions {
+    default Predicate<EnvVarSource> theSecretKey(String secretName, String key) {
+        return  envVarSource -> envVarSource.getSecretKeyRef() !=null && secretName.equals(envVarSource.getSecretKeyRef().getName()) && key.equals(envVarSource.getSecretKeyRef().getKey());
+    }
 
     default void verifyThatAllVariablesAreMapped(EntandoCustomResource resource, SimpleK8SClient client,
             Deployment deployment) {
