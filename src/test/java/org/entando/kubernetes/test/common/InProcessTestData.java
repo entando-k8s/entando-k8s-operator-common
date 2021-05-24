@@ -166,7 +166,8 @@ public interface InProcessTestData {
                 .endSpec()
                 .build();
     }
-    default TestResource newTestResource(){
+
+    default TestResource newTestResource() {
         return new TestResource().withNames(MY_APP_NAMESPACE, MY_APP);
     }
 }

@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.controller.spi.capability;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 

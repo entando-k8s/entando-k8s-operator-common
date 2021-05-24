@@ -67,9 +67,9 @@ public class DefaultCapabilityClient implements CapabilityClient, WaitingClient 
             return interruptionSafe(() -> client.customResources(ProvidedCapability.class)
                     .inNamespace(capability.getMetadata().getNamespace())
                     .withName(capability.getMetadata().getName())
-                    .waitUntilCondition(providedCapability -> providedCapability.getStatus() != null &&
-                                    (providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.FAILED
-                                            || providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.SUCCESSFUL), 10,
+                    .waitUntilCondition(providedCapability -> providedCapability.getStatus() != null
+                                    && (providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.FAILED
+                                    || providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.SUCCESSFUL), 10,
                             TimeUnit.MINUTES));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("matching condition not found")) {

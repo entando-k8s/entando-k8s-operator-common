@@ -48,9 +48,7 @@ public class SerializingDeploymentProcessor implements DeploymentProcessor {
         }
         return deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),
                 serializedResult.getPod())
-                .
-
-                        withStatus(serializedResult.getStatus());
+                .withStatus(serializedResult.getStatus());
     }
 
     public Deployable<DefaultSerializableDeploymentResult> getSerializedDeployable() {

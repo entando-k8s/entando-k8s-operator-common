@@ -123,7 +123,7 @@ public class ProvideCapabilityCommand {
             CapabilityScope requirementScope, int timeoutSeconds) throws TimeoutException {
         final ProvidedCapability capabilityRequirement = buildCapabilityRequirementFor(forResource, requiredCapability);
         final ProvidedCapability providedCapability = client.createAndWaitForCapability(capabilityRequirement, timeoutSeconds);
-        if(providedCapability.getStatus().getPhase()== EntandoDeploymentPhase.FAILED){
+        if (providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.FAILED) {
             throw new EntandoControllerException("Could not provide capability");
         }
         return findCapability(forResource, requiredCapability, requirementScope).orElseThrow(IllegalStateException::new);

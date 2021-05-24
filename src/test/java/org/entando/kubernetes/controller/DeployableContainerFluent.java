@@ -133,17 +133,18 @@ public class DeployableContainerFluent<N extends DeployableContainerFluent<N>> i
     public List<SecretToMount> getSecretsToMount() {
         return this.secretsToMount;
     }
-    public N withSecretToMount(String secretName, String mountPath){
+
+    public N withSecretToMount(String secretName, String mountPath) {
         this.secretsToMount.add(new SecretToMount(secretName, mountPath));
         return thisAsN();
     }
 
-
     public List<KubernetesPermission> getKubernetesPermissions() {
         return this.kubernetesPermissions;
     }
-    public N withKubernetesPermission(String apiGroup, String resource, String ... verbs){
-        this. kubernetesPermissions.add(new KubernetesPermission(apiGroup, resource,verbs));
+
+    public N withKubernetesPermission(String apiGroup, String resource, String... verbs) {
+        this.kubernetesPermissions.add(new KubernetesPermission(apiGroup, resource, verbs));
         return thisAsN();
     }
 }

@@ -36,8 +36,10 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
 public interface VariableReferenceAssertions {
+
     default Predicate<EnvVarSource> theSecretKey(String secretName, String key) {
-        return  envVarSource -> envVarSource.getSecretKeyRef() !=null && secretName.equals(envVarSource.getSecretKeyRef().getName()) && key.equals(envVarSource.getSecretKeyRef().getKey());
+        return envVarSource -> envVarSource.getSecretKeyRef() != null && secretName.equals(envVarSource.getSecretKeyRef().getName()) && key
+                .equals(envVarSource.getSecretKeyRef().getKey());
     }
 
     default void verifyThatAllVariablesAreMapped(EntandoCustomResource resource, SimpleK8SClient client,

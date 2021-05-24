@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.controller.spi.capability;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.capability.ProvidedCapability;

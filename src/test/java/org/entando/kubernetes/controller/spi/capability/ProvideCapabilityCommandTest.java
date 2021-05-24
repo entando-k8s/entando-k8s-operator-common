@@ -82,6 +82,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
     private ProvidedCapability foundCapability;
     private static final String OPERATOR_NAMESPACE = "entando-operator";
+
     @BeforeEach
     void beforeEach() {
         step("Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'", () -> {

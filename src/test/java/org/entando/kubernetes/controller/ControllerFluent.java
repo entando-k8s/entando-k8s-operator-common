@@ -57,6 +57,7 @@ public class ControllerFluent<N extends ControllerFluent<N>> implements Runnable
         this.deployable = deployable;
         return thisAsN();
     }
+
     public N withSupportedClass(Class<? extends EntandoCustomResource> supportedClass) {
         this.supportedClass = supportedClass;
         return thisAsN();

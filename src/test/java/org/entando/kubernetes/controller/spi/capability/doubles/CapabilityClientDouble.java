@@ -69,6 +69,13 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
     }
 
     @Override
+    public Optional<ProvidedCapability> providedCapabilityByLabels(Map<String, String> labels) {
+        return byLabels(getNamespaces().values().stream().flatMap(
+                ns -> ns.getCustomResources(ProvidedCapability.class).values().stream()).collect(Collectors.toList()),
+                labels);
+    }
+
+    @Override
     public ProvidedCapability createAndWaitForCapability(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
         if (capability != null) {
             CompletableFuture<ProvidedCapability> future = new CompletableFuture<>();
@@ -102,13 +109,6 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
             }
         }
         return null;
-    }
-
-    @Override
-    public Optional<ProvidedCapability> providedCapabilityByLabels(Map<String, String> labels) {
-        return byLabels(getNamespaces().values().stream().flatMap(
-                ns -> ns.getCustomResources(ProvidedCapability.class).values().stream()).collect(Collectors.toList()),
-                labels);
     }
 
     private Optional<ProvidedCapability> byLabels(Collection<ProvidedCapability> capabilities, Map<String, String> labels) {

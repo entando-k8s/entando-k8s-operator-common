@@ -30,7 +30,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.entando.kubernetes.BasicDeploymentSpec;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
-import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
 
 @JsonSerialize
 @JsonDeserialize
@@ -53,7 +52,8 @@ public class TestResource extends CustomResource<BasicDeploymentSpec, EntandoCus
     public String getDefinitionName() {
         return "testresources.entando.org";
     }
-    public TestResource withNames(String namespace, String name){
+
+    public TestResource withNames(String namespace, String name) {
         getMetadata().setName(name);
         getMetadata().setNamespace(namespace);
         return this;
