@@ -64,6 +64,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     public static final String VOLUME_SUFFIX = "volume";
     public static final String CONTAINER_SUFFIX = "container";
     public static final String PORT_SUFFIX = "port";
+    public static final int DEFAULT_STARTUP_TIME = 120;
     private Deployment deployment;
 
     public DeploymentCreator(EntandoCustomResource entandoCustomResource) {
@@ -251,7 +252,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private Probe buildReadinessProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
-        int maximumStartupTimeSeconds = deployableContainer.getMaximumStartupTimeSeconds().orElse(120);
+        int maximumStartupTimeSeconds = deployableContainer.getMaximumStartupTimeSeconds().orElse(DEFAULT_STARTUP_TIME);
         ProbeBuilder builder = buildHealthProbe(deployableContainer);
         if (assumeStartupProbe) {
             //No delay, only allow one failure for accuracy, check every 10 seconds

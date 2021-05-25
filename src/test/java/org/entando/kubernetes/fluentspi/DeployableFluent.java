@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller;
+package org.entando.kubernetes.fluentspi;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -32,13 +32,12 @@ import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public class DeployableFluent<N extends DeployableFluent<N>> implements Deployable<DefaultExposedDeploymentResult>, Secretive {
+public abstract class DeployableFluent<N extends DeployableFluent<N>> implements Deployable<DefaultExposedDeploymentResult>{
 
     private List<DeployableContainer> containers = new ArrayList<>();
     private String qualifier;
     private EntandoCustomResource customResource;
     private String serviceAccountToUse = "default";
-    private final List<Secret> secrets = new ArrayList<>();
 
     @Override
     public List<DeployableContainer> getContainers() {
@@ -50,10 +49,6 @@ public class DeployableFluent<N extends DeployableFluent<N>> implements Deployab
         return thisAsN();
     }
 
-    public N withSecret(String name, Map<String, String> data) {
-        this.secrets.add(new SecretBuilder().withNewMetadata().withName(name).endMetadata().withStringData(data).build());
-        return thisAsN();
-    }
 
     @SuppressWarnings("unchecked")
     protected N thisAsN() {
@@ -77,7 +72,6 @@ public class DeployableFluent<N extends DeployableFluent<N>> implements Deployab
 
     public N withCustomResource(EntandoCustomResource customResource) {
         this.customResource = customResource;
-        this.secrets.forEach(secret -> secret.getMetadata().setNamespace(customResource.getMetadata().getNamespace()));
         return thisAsN();
     }
 
@@ -96,8 +90,16 @@ public class DeployableFluent<N extends DeployableFluent<N>> implements Deployab
         return thisAsN();
     }
 
-    @Override
-    public List<Secret> getSecrets() {
-        return this.secrets;
+    public <C extends NestedDeployableContainerFluent<C>> NestedDeployableContainerFluent<C> withNewContainer() {
+        return new NestedDeployableContainerFluent<>();
     }
+
+    public class NestedDeployableContainerFluent<C extends DeployableContainerFluent<C>> extends DeployableContainerFluent<C> {
+
+        public N done() {
+            DeployableFluent.this.withContainer(this);
+            return DeployableFluent.this.thisAsN();
+        }
+    }
+
 }

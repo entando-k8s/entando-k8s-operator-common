@@ -1,4 +1,5 @@
 [![Build Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fstatusbadge-jx.apps.serv.run%2Fentando-k8s%2Fentando-k8s-operator-common)](https://github.com/entando-k8s/devops-results/tree/logs/jenkins-x/logs/entando-k8s/entando-k8s-operator-common/master)
+[Behavioural Scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=entando-k8s_entando-k8s-operator-common&metric=alert_status)](https://sonarcloud.io/dashboard?id=entando-k8s_entando-k8s-operator-common)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=entando-k8s_entando-k8s-operator-common&metric=coverage)](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/master/jacoco/index.html)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=entando-k8s_entando-k8s-operator-common&metric=vulnerabilities)](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/master/dependency-check-report.html)
@@ -10,17 +11,117 @@
 # Entando Kubernetes Operator Common
 
 This project provides a library that can be used to facilitate the development of run-to-completion style
-Kubernetes controllers. Most of the logic in this project is co-ordinated by the 
-`org.entando.kubernetes.controller.support.command.IngressingDeployCommand` class. Consumers of this project basically implement a set 
-of simple interfaces specified in the package `org.entando.kubernetes.controller.spi`. The pivitol
-interface here is the `org.entando.kubernetes.controller.spi.deployable.Deployable`, which can be passed as parameter to
-the constructor of the `DeployCommand`. The `DeployCommand` then uses the implementations of the various
-interfaces to construct Kubernetes Deployments, and if the necessary interfaces are implement, also Services 
-and Ingresses. It also constructs the various Secrets required by the Deployments produced.
-   
-Other features offered to consumers such as Entando's Kubernetes controllers include configuration, TLS, 
-database and/or database schema creation and preparation of these databases.
+Kubernetes controllers. More specifically, this library would be useful if you have a CustomResourceDefinition in
+Kubernetes in response to which you would like control how the typical Kubernetes resources involved in deploying a 
+service. Typical resources involved would be a Deployment, a PersistentVolumeClaim, one or more Secrets, a Service and
+optionally an Ingress. If this is indeed your goal, this library is meant for you, and you can consider using it to
+easily implement your own Kubernetes custom controller.
 
+Once you have implemented some controller code you can build a Container and make your controller the default entrypoint of
+your Container. At this point, you are ready to explore our [entando-k8s-controller-coordinator](https://github.com/entando-k8s/entando-k8s-controller-coordinator/blob/master/README.md)
+for further instructions on how to register your container in our operator so that it can be executed automatically
+when instances of your CustomResourceDefinition are created or modified.
+
+At this point in time it is packaged as a Java Maven library. Unfortunately this means that you can only consume it from
+a Java application. However, our plan is to package it as an entirely separate executable so that you can access it from
+your programming language or platform of choice. We have however been working very hard to simplify communication with this library
+through simple interfaces that exchange JSON/YAML data structures. We are planning to implement these simple
+interfaces in multiple programming languages. These interfaces are:
+
+## [DeploymentProcessor](src/main/java/org/entando/kubernetes/controller/spi/command/DeploymentProcessor.java)
+
+This interface allows you to send your implementation of the [org.entando.kubernetes.controller.spi.deployable.Deployable](src/main/java/org/entando/kubernetes/controller/spi/deployable/Deployable.java)
+interfaces to the library. Depending on the other interfaces you have implemented and the values returned from their getter
+methods, this library will then create the Kubernetes resources to facilitate the deployment of your resource.
+
+## [CapabilityProvider](src/main/java/org/entando/kubernetes/controller/spi/capability/CapabilityProvider.java)
+
+This interface allows you to first deploy the common, reusable capabilities that you require in your environment. It
+takes a very simple data object as input parameter, a [CapabilityRequirement](https://github.com/entando-k8s/entando-k8s-custom-model/blob/ENG-2284_removing_cluster_infrastructure/src/main/java/org/entando/kubernetes/model/capability/CapabilityRequirement.java)
+as input parameter, along with the custom resource you require the capability for. This request will in turn inspect
+the current cluster state to determine if there is already a matching capability, and if not, which controller image
+is best suited to deploy that capability for you.
+
+## [KubernetesClientForControllers](src/main/java/org/entando/kubernetes/controller/spi/client/KubernetesClientForControllers.java)
+
+This interface doesn't interact with the library directly, but with the Kuberenetes API. It provides some common methods
+your custom controller may need to use, specifically in interacting with the standard [status object](https://github.com/entando-k8s/entando-k8s-custom-model/blob/ENG-2284_removing_cluster_infrastructure/src/main/java/org/entando/kubernetes/model/common/EntandoCustomResourceStatus.java)
+we require you to use. 
+
+# Where to start?
+
+In implementing your own Kubernetes controller, you basically need to focus on the implementation of 3 different classes.
+
+## You controller class
+
+This is simply the Java main class that will be executed when your Container spins up. There are no real requirement here, 
+except for the fact that you would have to make an instance of the DeploymentProcessor and KubernetesClientForControllers
+each available to start with. For most of our projects we use Quarkus and the PicoCLI framework to implement our
+controllers. The minimum controller would look something like the [BasicController](src/test/java/org/entando/kubernetes/BasicController.java)
+that we use in our behavioural scenario testing. (like BDD except without feature files). As you can see from this example,
+your controller will basically retrieve the custom resource being observed, prepare an instance of the Deployable interface
+and send it to the DeploymentProcessor.
+
+## Your implementation of the [Deployable](src/main/java/org/entando/kubernetes/controller/spi/deployable/Deployable.java) interface.
+
+The Deployable interface will result in a single Deployment on Kubernetes, and based on how you implement its getter
+methods, any selection of other typical Kubernetes resources you would require, such as PersistentVolumeClaims, 
+Secrets, Services and Ingresses. In fact, more advanced features are available such as creating a Public OIDC Client 
+and a TLS Secret for your Ingress, or making Database schemas available for your datasources, but more about
+this later. Apart from all the values return from the getter methods of this class, you also need to provide one
+or more implementations of the DeployableContainer interface.
+
+## Your implementation of the [DeployableContainer](src/main/java/org/entando/kubernetes/controller/spi/container/DeployableContainer.java) interface.
+
+The DeployableContainer interface will result in one single Container on the Pod template of your Deployment. This is
+where you get to specify which image to use, how much resources to allocate and what health checks to perform. Again, you
+could even specify a non-public OIDC client to create, and provide more specfic details of the database schemas you may
+require and possible schema initialization logic you may want to perform.
+
+It is important to note that, by default, this library supports the idea that you implement interfaces that calculate 
+the values to provide for the DeploymentProcessor. This was by design to encourage a more dynamic, programmatic approach
+to creating the Kubnernetes resources. We have implemented some special logic to serialize these interfaces to YAML and
+back. Any state that is not made available by an interface will not be serialized, so please don't deviate from the 
+public contract of these interfaces and expect anything different to happen.
+
+# How do I start?
+
+We have decided on an approach where we illustrate how to implement the various interfaces and send them to this 
+library in a set of exhaustive [behavioural scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors) that we run on every pull request 
+This guide will take you through each of the scenarios and give a brief overview of what we do in the scenarios.
+We will start off with the most simple possible scenarios and will gradually increase the complexity. You can follow
+this up to the point where you feel your requirements have been met.
+
+
+## Some minimal deployment options
+
+### Absolute minimal deployment 
+
+(Go to our [behavioral scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
+and type 'absoluteMinimalDeployment' in the search box.) 
+
+In this scenario we illustrate how you only require a Port and
+an Image on your DeployableContainer. In fact, even the port will default to 8080. however, the resulting deployment
+is not particularly useful as it doesn't even expose the Port on a Service. You will also notice how the default 
+resource limits are imposed from the DeployableContainer, and how the default probes are created.
+
+### Specifying Environment Variables
+
+(Go to our [behavioral scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
+and type 'minimalDeploymentWithEnvironmentVariables' in the search box.)
+
+In this scenario we illustrate how to specify environment variables. You can specify environment variables directly, or
+you could use a reference to a Secret or a ConfigMap. This example illustrates all three cases. Take note that in this
+particular scenario, the Secret and ConfigMap are both assumed to exist before the custom resource is created.
+
+### Turning off resource limits
+(Go to our [behavioral scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
+and type 'absoluteMinimalDeploymentWithoutResourceLimits' in the search box)/
+
+Under certain conditions, you may want to turn off all resource limits on your container. In sandbox environments
+where resource usage is not an issue, this could significantly improve performance, especially at startup time.
+
+## Some more key interfaces
 Here are some of the key interfaces to implement by consumers 
 
 ### org.entando.kubernetes.controller.spi.deployable.Deployable  
@@ -32,7 +133,7 @@ The DeploymentCreator class is responsible to create Deployable instances.
 ### org.entando.kubernetes.controller.spi.deployable.Secretive
 
 This interface has to be implemented by those Deployable that need Kubernetes secrets for working.
-Currently all you have to do with this interface is to override `buildSecrets()` method returning all needed secrets and they will be bound to the pod that is about to be deployed.
+Currently all you have to do with this interface is to override `getSecrets()` method returning all needed secrets and they will be bound to the pod that is about to be deployed.
 
 ### org.entando.kubernetes.controller.spi.container.TrustStoreAware
 

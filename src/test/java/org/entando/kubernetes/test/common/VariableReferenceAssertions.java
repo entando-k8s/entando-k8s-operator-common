@@ -21,6 +21,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapKeySelector;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarSource;
@@ -42,6 +44,13 @@ public interface VariableReferenceAssertions {
                 .equals(envVarSource.getSecretKeyRef().getKey());
     }
 
+    default Predicate<EnvVarSource> theConfigMapKey(String configMapName, String key) {
+        return envVarSource -> envVarSource.getConfigMapKeyRef() != null && configMapName
+                .equals(envVarSource.getConfigMapKeyRef().getName())
+                && key
+                .equals(envVarSource.getConfigMapKeyRef().getKey());
+    }
+
     default void verifyThatAllVariablesAreMapped(EntandoCustomResource resource, SimpleK8SClient client,
             Deployment deployment) {
         deployment.getSpec().getTemplate().getSpec().getContainers().stream().map(Container::getEnv)
@@ -55,6 +64,13 @@ public interface VariableReferenceAssertions {
                         assertThat("The secret " + secretKeyRef.getName() + " does not exist", secret, is(notNullValue()));
                         assertThat("The key " + secretKeyRef.getKey() + " does not exist on " + secretKeyRef.getName(),
                                 secret.getStringData().get(secretKeyRef.getKey()), is(notNullValue()));
+
+                    } else if (envVar.getValueFrom().getConfigMapKeyRef() != null) {
+                        ConfigMapKeySelector configMapKeyRef = envVar.getValueFrom().getConfigMapKeyRef();
+                        ConfigMap configMap = client.secrets().loadConfigMap(resource, configMapKeyRef.getName());
+                        assertThat("The ConfigMap " + configMapKeyRef.getName() + " does not exist", configMap, is(notNullValue()));
+                        assertThat("The key " + configMapKeyRef.getKey() + " does not exist on " + configMapKeyRef.getName(),
+                                configMap.getData().get(configMapKeyRef.getKey()), is(notNullValue()));
 
                     }
 

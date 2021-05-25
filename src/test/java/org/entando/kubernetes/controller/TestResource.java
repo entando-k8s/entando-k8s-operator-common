@@ -64,7 +64,7 @@ public class TestResource extends CustomResource<BasicDeploymentSpec, EntandoCus
         return new EntandoCustomResourceStatus();
     }
 
-    public EntandoCustomResource withSpec(BasicDeploymentSpec basicDeploymentSpec) {
+    public TestResource withSpec(BasicDeploymentSpec basicDeploymentSpec) {
         super.setSpec(basicDeploymentSpec);
         return this;
     }

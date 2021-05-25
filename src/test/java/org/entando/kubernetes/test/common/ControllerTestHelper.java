@@ -104,7 +104,7 @@ public interface ControllerTestHelper {
     }
 
     default void runControllerAgainst(EntandoCustomResource entandoCustomResource) {
-        attachKubernetesResource("Resource Providing Capability", entandoCustomResource);
+        attachKubernetesResource(entandoCustomResource.getKind(), entandoCustomResource);
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
                 entandoCustomResource.getMetadata().getName());

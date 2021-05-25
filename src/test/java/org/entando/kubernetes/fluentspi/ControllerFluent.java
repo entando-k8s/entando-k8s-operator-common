@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller;
+package org.entando.kubernetes.fluentspi;
 
 import java.util.Collections;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;

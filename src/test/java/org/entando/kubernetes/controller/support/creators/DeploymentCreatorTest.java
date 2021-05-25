@@ -49,7 +49,7 @@ class DeploymentCreatorTest implements InProcessTestData, FluentTraversals {
     @AfterEach
     @BeforeEach
     void cleanUp() {
-        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty());
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS.getJvmSystemProperty());
     }
 
     @Test
@@ -138,7 +138,7 @@ class DeploymentCreatorTest implements InProcessTestData, FluentTraversals {
 
     @Test
     void shouldCreateDeploymentWithTrueImposeResourceLimitsWillSetResourceLimitsOnCreatedDeployment() {
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty(), "true");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS.getJvmSystemProperty(), "true");
 
         ResourceRequirements resources = executeCreateDeploymentTest();
         assertThat(resources.getLimits().get("cpu").getAmount(), is("800"));
@@ -151,7 +151,7 @@ class DeploymentCreatorTest implements InProcessTestData, FluentTraversals {
     @Test
     void shouldCreateDeploymentWithFalseImposeResourceLimitsWillNotSetResourceLimitsOnCreatedDeployment() {
 
-        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty(), "false");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS.getJvmSystemProperty(), "false");
 
         ResourceRequirements resources = executeCreateDeploymentTest();
 

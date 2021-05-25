@@ -47,7 +47,7 @@ class IngressCreatorTest implements InProcessTestData {
     @AfterEach
     @BeforeEach
     void cleanUp() {
-        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_DEFAULT_LIMITS.getJvmSystemProperty());
+        System.getProperties().remove(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS.getJvmSystemProperty());
     }
 
     @Test

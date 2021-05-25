@@ -14,8 +14,9 @@
  *
  */
 
-package org.entando.kubernetes.controller;
+package org.entando.kubernetes.fluentspi;
 
+import io.fabric8.kubernetes.api.model.ConfigMapKeySelector;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
 import io.fabric8.kubernetes.api.model.SecretKeySelector;
@@ -76,9 +77,15 @@ public class DeployableContainerFluent<N extends DeployableContainerFluent<N>> i
         return thisAsN();
     }
 
-    public N withEnvVarFromSecret(String name, String secretName, String key) {
-        environmentVariables.add(new EnvVar(name, null,
+    public N withEnvVarFromSecret(String varName, String secretName, String key) {
+        environmentVariables.add(new EnvVar(varName, null,
                 new EnvVarSourceBuilder().withSecretKeyRef(new SecretKeySelector(key, secretName, Boolean.FALSE)).build()));
+        return thisAsN();
+    }
+
+    public N withEnvVarFromConfigMap(String varName, String configMapName, String key) {
+        environmentVariables.add(new EnvVar(varName, null,
+                new EnvVarSourceBuilder().withConfigMapKeyRef(new ConfigMapKeySelector(key, configMapName, Boolean.FALSE)).build()));
         return thisAsN();
     }
 
@@ -147,4 +154,5 @@ public class DeployableContainerFluent<N extends DeployableContainerFluent<N>> i
         this.kubernetesPermissions.add(new KubernetesPermission(apiGroup, resource, verbs));
         return thisAsN();
     }
+
 }
