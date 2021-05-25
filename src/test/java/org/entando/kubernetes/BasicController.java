@@ -16,9 +16,9 @@
 
 package org.entando.kubernetes;
 
-import org.entando.kubernetes.fluentspi.ControllerFluent;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
+import org.entando.kubernetes.fluentspi.ControllerFluent;
 import picocli.CommandLine;
 
 @CommandLine.Command()

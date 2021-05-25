@@ -28,7 +28,6 @@ import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
-import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import org.entando.kubernetes.BasicController;
@@ -116,37 +115,45 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
             runControllerAgainst(entandoCustomResource);
         });
         step(format("Then a Deployment was created reflecting the name of the TestResource and the suffix '%s'",
-                NameUtils.DEFAULT_DEPLOYMENT_SUFFIX), () -> {
-            final Deployment deployment = getClient().deployments()
-                    .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
-            attachKubernetesResource("Deployment", deployment);
-            assertThat(deployment).isNotNull();
-            step("and it has a single container with a name reflecting the qualifier 'server'", () -> {
-                assertThat(deployment.getSpec().getTemplate().getSpec().getContainers().size()).isEqualTo(1);
-                assertThat(thePrimaryContainerOn(deployment).getName()).isEqualTo("server-container");
-            });
-            step("and this container exports port 8081 with a name that reflects the qualifier 'server'", () ->
-                    assertThat(thePortNamed("server-port").on(thePrimaryContainerOn(deployment)).getContainerPort()).isEqualTo(8081));
-            step("and the image of this container is the previously specified image test/my-image:6.3.2 but with the default registry "
-                            + "'docker.io' specified",
-                    () ->
-                            assertThat(thePrimaryContainerOn(deployment).getImage()).isEqualTo("docker.io/test/my-image:6.3.2"));
-            step("And the default resource limits of 256Mi of Memory and 0.5 CPU were specified", () -> {
-                assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("memory").toString()).isEqualTo("256Mi");
-                assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("cpu").toString()).isEqualTo("500m");
-            });
-            step("And all the startupProbe, readinessProbe and livenessProve all verify that port 8081 is receiving connections", () -> {
-                assertThat(thePrimaryContainerOn(deployment).getStartupProbe().getTcpSocket().getPort().getIntVal()).isEqualTo(8081);
-                assertThat(thePrimaryContainerOn(deployment).getLivenessProbe().getTcpSocket().getPort().getIntVal()).isEqualTo(8081);
-                assertThat(thePrimaryContainerOn(deployment).getReadinessProbe().getTcpSocket().getPort().getIntVal()).isEqualTo(8081);
-            });
-            step("And the startupProbe is guaranteed to allow the maximum boot time required by the container", () -> {
-                final Probe startupProbe = thePrimaryContainerOn(deployment).getStartupProbe();
-                assertThat(startupProbe.getPeriodSeconds() * startupProbe.getFailureThreshold())
-                        .isBetween(DeploymentCreator.DEFAULT_STARTUP_TIME, (int) Math.round(DeploymentCreator.DEFAULT_STARTUP_TIME * 1.1));
+                NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
+                () -> {
+                    final Deployment deployment = getClient().deployments()
+                            .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
+                    attachKubernetesResource("Deployment", deployment);
+                    assertThat(deployment).isNotNull();
+                    step("and it has a single container with a name reflecting the qualifier 'server'", () -> {
+                        assertThat(deployment.getSpec().getTemplate().getSpec().getContainers().size()).isEqualTo(1);
+                        assertThat(thePrimaryContainerOn(deployment).getName()).isEqualTo("server-container");
+                    });
+                    step("and this container exports port 8081 with a name that reflects the qualifier 'server'", () ->
+                            assertThat(thePortNamed("server-port").on(thePrimaryContainerOn(deployment)).getContainerPort())
+                                    .isEqualTo(8081));
+                    step("and the image of this container is the previously specified image test/my-image:6.3.2 but with the default "
+                                    + "registry "
+                                    + "'docker.io' specified",
+                            () -> assertThat(thePrimaryContainerOn(deployment).getImage()).isEqualTo("docker.io/test/my-image:6.3.2"));
+                    step("And the default resource limits of 256Mi of Memory and 0.5 CPU were specified", () -> {
+                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("memory").toString())
+                                .isEqualTo("256Mi");
+                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("cpu").toString()).isEqualTo("500m");
+                    });
+                    step("And all the startupProbe, readinessProbe and livenessProve all verify that port 8081 is receiving connections",
+                            () -> {
+                                assertThat(thePrimaryContainerOn(deployment).getStartupProbe().getTcpSocket().getPort().getIntVal())
+                                        .isEqualTo(8081);
+                                assertThat(thePrimaryContainerOn(deployment).getLivenessProbe().getTcpSocket().getPort().getIntVal())
+                                        .isEqualTo(8081);
+                                assertThat(thePrimaryContainerOn(deployment).getReadinessProbe().getTcpSocket().getPort().getIntVal())
+                                        .isEqualTo(8081);
+                            });
+                    step("And the startupProbe is guaranteed to allow the maximum boot time required by the container", () -> {
+                        final Probe startupProbe = thePrimaryContainerOn(deployment).getStartupProbe();
+                        assertThat(startupProbe.getPeriodSeconds() * startupProbe.getFailureThreshold())
+                                .isBetween(DeploymentCreator.DEFAULT_STARTUP_TIME,
+                                        (int) Math.round(DeploymentCreator.DEFAULT_STARTUP_TIME * 1.1));
 
-            });
-        });
+                    });
+                });
         attachKubernetesState(client);
     }
 
@@ -172,10 +179,11 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
         final Deployment deployment = getClient().deployments()
                 .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
         step(format("Then a Deployment was created reflecting the name of the TestResource and the suffix '%s'",
-                NameUtils.DEFAULT_DEPLOYMENT_SUFFIX), () -> {
-            attachKubernetesResource("Deployment", deployment);
-            assertThat(deployment).isNotNull();
-        });
+                NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
+                () -> {
+                    attachKubernetesResource("Deployment", deployment);
+                    assertThat(deployment).isNotNull();
+                });
         step("But the default resource limits were left empty", () -> {
             assertThat(thePrimaryContainerOn(deployment).getResources().getLimits()).doesNotContainKey("memory");
             assertThat(thePrimaryContainerOn(deployment).getResources().getLimits()).doesNotContainKey("cpu");

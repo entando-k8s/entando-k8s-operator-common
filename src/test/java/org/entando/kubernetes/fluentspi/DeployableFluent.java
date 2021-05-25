@@ -17,22 +17,18 @@
 package org.entando.kubernetes.fluentspi;
 
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
-import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public abstract class DeployableFluent<N extends DeployableFluent<N>> implements Deployable<DefaultExposedDeploymentResult>{
+public abstract class DeployableFluent<N extends DeployableFluent<N>> implements Deployable<DefaultExposedDeploymentResult> {
 
     private List<DeployableContainer> containers = new ArrayList<>();
     private String qualifier;
@@ -48,7 +44,6 @@ public abstract class DeployableFluent<N extends DeployableFluent<N>> implements
         this.containers.add(container);
         return thisAsN();
     }
-
 
     @SuppressWarnings("unchecked")
     protected N thisAsN() {
