@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller;
+package org.entando.kubernetes.fluentspi;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
@@ -27,7 +27,6 @@ import io.fabric8.kubernetes.client.CustomResource;
 import io.fabric8.kubernetes.model.annotation.Group;
 import io.fabric8.kubernetes.model.annotation.Version;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import org.entando.kubernetes.BasicDeploymentSpec;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 

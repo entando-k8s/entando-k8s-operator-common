@@ -44,15 +44,15 @@ import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
-import org.entando.kubernetes.controller.spi.container.DbAware;
+import org.entando.kubernetes.controller.spi.container.DbAwareContainer;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.container.HasWebContext;
-import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
-import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
+import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
 import org.entando.kubernetes.controller.spi.container.SecretToMount;
-import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
+import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
+import org.entando.kubernetes.controller.spi.container.TrustStoreAwareContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
@@ -129,19 +129,20 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
-        if (deployable.getContainers().stream().anyMatch(TrustStoreAware.class::isInstance) && EntandoOperatorSpiConfig
+        if (deployable.getContainers().stream().anyMatch(TrustStoreAwareContainer.class::isInstance) && EntandoOperatorSpiConfig
                 .getCertificateAuthoritySecretName().isPresent()) {
-            volumeList.add(newSecretVolume(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT));
+            volumeList.add(newSecretVolume(TrustStoreAwareContainer.DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT));
         }
         return volumeList;
     }
 
     private List<Volume> buildVolumesForContainer(DeployableContainer container) {
         List<Volume> volumes = new ArrayList<>();
-        if (container instanceof PersistentVolumeAware) {
+        if (container instanceof PersistentVolumeAwareContainer) {
             volumes.add(new VolumeBuilder()
                     .withName(volumeName(container))
-                    .withNewPersistentVolumeClaim(resolveName(container.getNameQualifier(), "pvc"), false)
+                    .withNewPersistentVolumeClaim(
+                            NameUtils.standardPersistentVolumeClaim(entandoCustomResource, container.getNameQualifier()), false)
                     .build());
         }
         volumes.addAll(container.getSecretsToMount().stream()
@@ -229,12 +230,13 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 deployableContainer.getSecretsToMount().stream()
                         .map(this::newSecretVolumeMount)
                         .collect(Collectors.toList()));
-        if (deployableContainer instanceof TrustStoreAware && EntandoOperatorSpiConfig.getCertificateAuthoritySecretName().isPresent()) {
+        if (deployableContainer instanceof TrustStoreAwareContainer && EntandoOperatorSpiConfig.getCertificateAuthoritySecretName()
+                .isPresent()) {
 
-            volumeMounts.add(newSecretVolumeMount(TrustStoreAware.DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT));
+            volumeMounts.add(newSecretVolumeMount(TrustStoreAwareContainer.DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT));
         }
-        if (deployableContainer instanceof PersistentVolumeAware) {
-            String volumeMountPath = ((PersistentVolumeAware) deployableContainer).getVolumeMountPath();
+        if (deployableContainer instanceof PersistentVolumeAwareContainer) {
+            String volumeMountPath = ((PersistentVolumeAwareContainer) deployableContainer).getVolumeMountPath();
             volumeMounts.add(
                     new VolumeMountBuilder()
                             .withMountPath(volumeMountPath)
@@ -314,18 +316,18 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private List<EnvVar> determineEnvironmentVariables(DeployableContainer container) {
         ArrayList<EnvVar> vars = new ArrayList<>();
-        if (container instanceof KeycloakAwareContainer) {
-            KeycloakAwareContainer keycloakAware = (KeycloakAwareContainer) container;
-            vars.addAll(keycloakAware.getKeycloakVariables());
+        if (container instanceof SsoAwareContainer) {
+            SsoAwareContainer keycloakAware = (SsoAwareContainer) container;
+            vars.addAll(keycloakAware.getSsoVariables());
         }
-        if (container instanceof DbAware) {
-            vars.addAll(((DbAware) container).getDatabaseConnectionVariables());
+        if (container instanceof DbAwareContainer) {
+            vars.addAll(((DbAwareContainer) container).getDatabaseConnectionVariables());
         }
         if (container instanceof HasWebContext) {
             vars.add(new EnvVar("SERVER_SERVLET_CONTEXT_PATH", ((HasWebContext) container).getWebContextPath(), null));
         }
-        if (container instanceof TrustStoreAware && EntandoOperatorSpiConfig.getCertificateAuthoritySecretName().isPresent()) {
-            vars.addAll(((TrustStoreAware) container).getTrustStoreVariables());
+        if (container instanceof TrustStoreAwareContainer && EntandoOperatorSpiConfig.getCertificateAuthoritySecretName().isPresent()) {
+            vars.addAll(((TrustStoreAwareContainer) container).getTrustStoreVariables());
         }
         vars.add(new EnvVar("CONNECTION_CONFIG_ROOT", DeployableContainer.ENTANDO_SECRET_MOUNTS_ROOT, null));
         vars.addAll(container.getEnvironmentVariables());

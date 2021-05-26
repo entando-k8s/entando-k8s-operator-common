@@ -42,6 +42,6 @@ public class SecretiveDeployableFluent<N extends SecretiveDeployableFluent<N>>
 
     public N withCustomResource(EntandoCustomResource customResource) {
         this.secrets.forEach(secret -> secret.getMetadata().setNamespace(customResource.getMetadata().getNamespace()));
-        return withCustomResource(customResource);
+        return super.withCustomResource(customResource);
     }
 }

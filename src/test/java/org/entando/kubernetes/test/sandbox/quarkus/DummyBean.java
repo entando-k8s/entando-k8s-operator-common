@@ -36,8 +36,8 @@ import javax.inject.Inject;
 import javax.ws.rs.ClientErrorException;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
-import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.impl.DefaultIngressClient;
 import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
@@ -137,12 +137,12 @@ public class DummyBean {
         //And  I have ensured that a specific real is available
         kc.ensureRealm(MY_REALM);
         //And I have created a client
-        kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, EXISTING_CLIENT, EXISTING_CLIENT)
+        kc.prepareClientAndReturnSecret(new SsoClientConfig(MY_REALM, EXISTING_CLIENT, EXISTING_CLIENT)
                 .withRedirectUri("http://existingclient.domain.com/*")
                 .withRole(EXISTING_ROLE)
         );
         //When I create the public client in this realm
-        kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
+        kc.prepareClientAndReturnSecret(new SsoClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
                 .withRedirectUri("http://test.domain.com/*")
                 .withWebOrigin("http://test.domain.com")
                 .withPermission(EXISTING_CLIENT, EXISTING_ROLE)

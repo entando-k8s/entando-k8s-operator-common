@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes;
+package org.entando.kubernetes.fluentspi;
 
 import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
 

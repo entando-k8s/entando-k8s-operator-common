@@ -14,17 +14,14 @@
  *
  */
 
-package org.entando.kubernetes;
+package org.entando.kubernetes.fluentspi;
 
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
-import org.entando.kubernetes.fluentspi.ControllerFluent;
-import picocli.CommandLine;
 
-@CommandLine.Command()
-public class BasicController extends ControllerFluent<BasicController> {
+public class ExposingControllerFluent<N extends ExposingControllerFluent<N>> extends ControllerFluent<N> {
 
-    public BasicController(KubernetesClientForControllers k8sClient,
+    public ExposingControllerFluent(KubernetesClientForControllers k8sClient,
             DeploymentProcessor deploymentProcessor) {
         super(k8sClient, deploymentProcessor);
     }

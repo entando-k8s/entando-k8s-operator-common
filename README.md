@@ -11,27 +11,29 @@
 # Entando Kubernetes Operator Common
 
 This project provides a library that can be used to facilitate the development of run-to-completion style
-Kubernetes controllers. More specifically, this library would be useful if you have a CustomResourceDefinition in
-Kubernetes in response to which you would like control how the typical Kubernetes resources involved in deploying a 
-service. Typical resources involved would be a Deployment, a PersistentVolumeClaim, one or more Secrets, a Service and
-optionally an Ingress. If this is indeed your goal, this library is meant for you, and you can consider using it to
-easily implement your own Kubernetes custom controller.
+Kubernetes controllers. More specifically, this library would be useful if you have a Kubernetes 
+CustomResourceDefinition in response to which you would like create a Kubernetes Deployment and all the resources
+required to support it. Typical supporting resources  would be a PersistentVolumeClaims, one or more Secrets, a Service and
+optionally an Ingress. If this is indeed your goal, you will find this library useful
+and you can consider using it to easily implement your own Kubernetes custom controller.
 
 Once you have implemented some controller code you can build a Container and make your controller the default entrypoint of
 your Container. At this point, you are ready to explore our [entando-k8s-controller-coordinator](https://github.com/entando-k8s/entando-k8s-controller-coordinator/blob/master/README.md)
-for further instructions on how to register your container in our operator so that it can be executed automatically
+for further instructions on how to register your container with our operator so that it can be executed automatically
 when instances of your CustomResourceDefinition are created or modified.
 
-At this point in time it is packaged as a Java Maven library. Unfortunately this means that you can only consume it from
-a Java application. However, our plan is to package it as an entirely separate executable so that you can access it from
-your programming language or platform of choice. We have however been working very hard to simplify communication with this library
-through simple interfaces that exchange JSON/YAML data structures. We are planning to implement these simple
-interfaces in multiple programming languages. These interfaces are:
+This library as it currently stands is still packaged as a Java Maven library. Unfortunately this means that
+you can only consume it from a Java application. However, our plan is to package it as an entirely separate 
+executable so that you can access it from your programming language or platform of choice. In the meantime, 
+we have simplified communication with this library down tow literally two simple interfaces
+that exchange JSON/YAML data structures with the library. We are planning to implement these simple
+interfaces in multiple programming languages and their implementations will simply delegate to the
+commandline application. These interfaces are:
 
 ## [DeploymentProcessor](src/main/java/org/entando/kubernetes/controller/spi/command/DeploymentProcessor.java)
 
 This interface allows you to send your implementation of the [org.entando.kubernetes.controller.spi.deployable.Deployable](src/main/java/org/entando/kubernetes/controller/spi/deployable/Deployable.java)
-interfaces to the library. Depending on the other interfaces you have implemented and the values returned from their getter
+interfaces to the library. Depending on the other interfaces you have implemented, and the values returned from their getter
 methods, this library will then create the Kubernetes resources to facilitate the deployment of your resource.
 
 ## [CapabilityProvider](src/main/java/org/entando/kubernetes/controller/spi/capability/CapabilityProvider.java)
@@ -48,11 +50,11 @@ This interface doesn't interact with the library directly, but with the Kuberene
 your custom controller may need to use, specifically in interacting with the standard [status object](https://github.com/entando-k8s/entando-k8s-custom-model/blob/ENG-2284_removing_cluster_infrastructure/src/main/java/org/entando/kubernetes/model/common/EntandoCustomResourceStatus.java)
 we require you to use. 
 
-# Where to start?
+# What do I need to implement?
 
 In implementing your own Kubernetes controller, you basically need to focus on the implementation of 3 different classes.
 
-## You controller class
+## Your controller class
 
 This is simply the Java main class that will be executed when your Container spins up. There are no real requirement here, 
 except for the fact that you would have to make an instance of the DeploymentProcessor and KubernetesClientForControllers
@@ -74,13 +76,13 @@ or more implementations of the DeployableContainer interface.
 ## Your implementation of the [DeployableContainer](src/main/java/org/entando/kubernetes/controller/spi/container/DeployableContainer.java) interface.
 
 The DeployableContainer interface will result in one single Container on the Pod template of your Deployment. This is
-where you get to specify which image to use, how much resources to allocate and what health checks to perform. Again, you
-could even specify a non-public OIDC client to create, and provide more specfic details of the database schemas you may
+where you get to specify which image to use, how much of each resource to allocate and what health checks to perform. Again, you
+could even specify a non-public OIDC client to create, and provide more specific details of the database schemas you may
 require and possible schema initialization logic you may want to perform.
 
 It is important to note that, by default, this library supports the idea that you implement interfaces that calculate 
 the values to provide for the DeploymentProcessor. This was by design to encourage a more dynamic, programmatic approach
-to creating the Kubnernetes resources. We have implemented some special logic to serialize these interfaces to YAML and
+to creating the Kubernetes resources. We have implemented some special logic to serialize these interfaces to YAML and
 back. Any state that is not made available by an interface will not be serialized, so please don't deviate from the 
 public contract of these interfaces and expect anything different to happen.
 
@@ -92,13 +94,17 @@ This guide will take you through each of the scenarios and give a brief overview
 We will start off with the most simple possible scenarios and will gradually increase the complexity. You can follow
 this up to the point where you feel your requirements have been met.
 
+For each of the scenarios, please navigate to our [behavioral scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
+and type the identifier of the scenario in the search box.  
 
-## Some minimal deployment options
+
+
+## Step 1: The minimal deployment
 
 ### Absolute minimal deployment 
 
-(Go to our [behavioral scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
-and type 'absoluteMinimalDeployment' in the search box.) 
+Scenario identifier: absoluteMinimalDeployment
+
 
 In this scenario we illustrate how you only require a Port and
 an Image on your DeployableContainer. In fact, even the port will default to 8080. however, the resulting deployment
@@ -107,19 +113,70 @@ resource limits are imposed from the DeployableContainer, and how the default pr
 
 ### Specifying Environment Variables
 
-(Go to our [behavioral scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
-and type 'minimalDeploymentWithEnvironmentVariables' in the search box.)
+Scenario identifier: minimalDeploymentWithEnvironmentVariables
 
 In this scenario we illustrate how to specify environment variables. You can specify environment variables directly, or
 you could use a reference to a Secret or a ConfigMap. This example illustrates all three cases. Take note that in this
 particular scenario, the Secret and ConfigMap are both assumed to exist before the custom resource is created.
 
 ### Turning off resource limits
-(Go to our [behavioral scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
-and type 'absoluteMinimalDeploymentWithoutResourceLimits' in the search box)/
+
+Scenario identifier: absoluteMinimalDeploymentWithoutResourceLimits
 
 Under certain conditions, you may want to turn off all resource limits on your container. In sandbox environments
 where resource usage is not an issue, this could significantly improve performance, especially at startup time.
+
+## Step 2: Using Persistent Volumes
+
+### Specifying PersistentVolumeClaims to create and mount
+
+Scenario identifier: createPersistentVolumeClaim
+
+You can control the state of PersistentVolumeClaims to be created directly from your DeployableContainer. You can specify
+the storageClass and accessmode required. In the Deployment, you can specify the operating system  user/group ID
+to be used as owner for the VolumeMount from the Deployable, and you can specify the mount path from the DeployableContainer
+
+### Using the Entando Operator Config to provide default values for PersistentVolumeClaims
+
+Scenario identifier: createPersistentVolumeClaimUsingDefaults (TBD)
+
+You can also allow the Entando Operator Config to provide defaults for clustered and non-clustered storage classes, and
+also for accessmodes
+
+## Step 3: Using Databases
+
+### Requesting a Database Capability on-demand
+
+Scenario identifier: requestDatabaseCapabilityOnDemandAndConnectToIt
+
+If you need to connect to a database, the Entando Operator can find a matching Database provider, or deploy one
+on-demand for you. Just submit a CapabilityRequirement to the CapabilityProvider. It will forward your request
+to the correct Controller and prepare the necessary connection info for you. Once a database is available, you
+can then specify the Database Schema you require and its associated credentials. You can also optionally provide
+an image that will populate the initial state of the Schema. (TODO split this into 2 different test cases)
+
+## Step 4: Exposing your container over HTTP
+
+### Requesting a OIDC Capability on-demand
+
+Scenario identifier: requestOidcCapabilityOnDemandAndConnectToIt
+
+
+## Step 5: Using an OIDC provider (e.g. Keycloak)
+
+### Requesting a OIDC Capability on-demand
+
+Scenario identifier: requestOidcCapabilityOnDemandAndConnectToIt
+
+Today, most web applications utilize OIDC for single signon. You can request an OIDC capability and once again
+the Entando Operator will find the correct Controller to forward you request to. Once the OIDC service has been
+made available to your Deployment, you can also create a Client ID and Client Secret on-demand. In Keycloak, 
+the Client Secret gets generated for you by Keycloak, but you can use the resulting Kubernetes Secret to configure
+your single sign on. Along with your required ClientId, you can also specify roles as well as permissions for
+your Keycloak Client service account on other pre-existing Keycloak Clients. In addition to this, you can also
+specify an alternative Realm if you would like. This is useful in scenarios 
+where you have to share a single Keycloak instance in a multi-tenant setup.
+
 
 ## Some more key interfaces
 Here are some of the key interfaces to implement by consumers 
@@ -135,7 +192,7 @@ The DeploymentCreator class is responsible to create Deployable instances.
 This interface has to be implemented by those Deployable that need Kubernetes secrets for working.
 Currently all you have to do with this interface is to override `getSecrets()` method returning all needed secrets and they will be bound to the pod that is about to be deployed.
 
-### org.entando.kubernetes.controller.spi.container.TrustStoreAware
+### org.entando.kubernetes.controller.spi.container.TrustStoreAwareContainer
 
 This interface offers a predefined way to add some TLS environment variable to the implementing DeployableContainer.
 
@@ -166,7 +223,7 @@ Read more about Kubernetes [Ingress](https://kubernetes.io/docs/concepts/service
 
 TBD
 
-### org.entando.kubernetes.controller.spi.container.DbAware
+### org.entando.kubernetes.controller.spi.container.DbAwareContainer
 
 This interface has to be implemented by those `DeployableContainer` that needs a DB to serve their functionalities.
 It takes care of:
@@ -178,13 +235,13 @@ It takes care of:
 Entando supports these DBMS: `H2`, `Postgresql`, `MySQL`, `Oracle`. You can choose which one to use for each `DeployableContainer` implementing `DbAware` interface by specifying a `spec.dbms` property in the Kubernetes deployment file.
 You can find more info in the [Getting started](http://docs.entando.com/local-install.html#dbms)
 
-### org.entando.kubernetes.controller.spi.container.PersistentVolumeAware
+### org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer
 
 This interface has to be implemented by those DeployableContainer that needs a [PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) in order to persist some data.
 This interface has only one method to be overridden: `getVolumeMountPath()`. It returns the path of the volume to claim inside the container that is about to be created.
 Once overridden that method, claim operation is automatically made, the PVC is bound to the claimer [CR](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and once the owner CR is deleted the PVC is deleted too.
 
-### org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer
+### org.entando.kubernetes.controller.spi.container.SsoAwareContainer
 
 This interface has to be implemented by those DeployableContainer that needs to reach Keycloak to guarantee their functionalities.
 It comes with a predefined set of environment variables pointing to the Entando default Keycloak installation.

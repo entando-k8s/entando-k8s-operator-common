@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.legacy;
+package org.entando.kubernetes.test.common;
 
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;

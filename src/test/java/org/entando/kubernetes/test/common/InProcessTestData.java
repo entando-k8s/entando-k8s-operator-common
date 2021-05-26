@@ -20,17 +20,20 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import org.entando.kubernetes.controller.TestResource;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedSsoConnectionInfo;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
-import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
+import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
 import org.entando.kubernetes.model.common.DbmsVendor;
@@ -44,8 +47,6 @@ import org.entando.kubernetes.model.keycloakserver.StandardKeycloakImage;
 import org.entando.kubernetes.model.plugin.EntandoPlugin;
 import org.entando.kubernetes.model.plugin.EntandoPluginBuilder;
 import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
-import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
-import org.entando.kubernetes.test.legacy.ExternalDatabaseService;
 
 public interface InProcessTestData {
 
@@ -128,7 +129,7 @@ public interface InProcessTestData {
                 .build();
     }
 
-    default <T extends KeycloakAwareSpec> KeycloakConnectionConfig emulateKeycloakDeployment(SimpleK8SClient<?> client) {
+    default <T extends KeycloakAwareSpec> SsoConnectionInfo emulateKeycloakDeployment(SimpleK8SClient<?> client) {
         Secret secret = new SecretBuilder().withNewMetadata().withName(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET)
                 .endMetadata()
                 .addToStringData(SecretUtils.USERNAME_KEY, MY_KEYCLOAK_ADMIN_USERNAME)
@@ -141,15 +142,11 @@ public interface InProcessTestData {
                 .addToData(NameUtils.INTERNAL_URL_KEY, MY_KEYCLOAK_BASE_URL)
                 .build();
         client.secrets().overwriteControllerConfigMap(configMap);
-        return new ConfigMapBasedKeycloakConnectionConfig(secret, configMap);
+        return new ConfigMapBasedSsoConnectionInfo(secret, configMap);
     }
 
     default DatabaseConnectionInfo emulateDatabasDeployment(SimpleK8SClient<EntandoResourceClientDouble> client) {
-        client.entandoResources().createOrPatchEntandoResource(newTestEntandoApp());
-        final EntandoDatabaseService entandoDatabaseService = newEntandoDatabaseService();
-        final CreateExternalServiceCommand command = new CreateExternalServiceCommand(new ExternalDatabaseService(entandoDatabaseService),
-                entandoDatabaseService);
-        return new DatabaseDeploymentResult(command.execute(client), entandoDatabaseService);
+        return new BasicDatabaseConnectionInfo();
     }
 
     default EntandoDatabaseService newEntandoDatabaseService() {
@@ -169,5 +166,43 @@ public interface InProcessTestData {
 
     default TestResource newTestResource() {
         return new TestResource().withNames(MY_APP_NAMESPACE, MY_APP);
+    }
+
+    class BasicDatabaseConnectionInfo implements DatabaseConnectionInfo {
+
+        @Override
+        public Map<String, String> getJdbcParameters() {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public String getDatabaseName() {
+            return "my_db";
+        }
+
+        @Override
+        public DbmsVendorConfig getVendor() {
+            return DbmsVendorConfig.MYSQL;
+        }
+
+        @Override
+        public Optional<String> getTablespace() {
+            return Optional.empty();
+        }
+
+        @Override
+        public String getInternalServiceHostname() {
+            return "my-ds-service." + MY_APP_NAMESPACE + ".svc.cluster.loce";
+        }
+
+        @Override
+        public String getPort() {
+            return "3306";
+        }
+
+        @Override
+        public String getAdminSecretName() {
+            return null;
+        }
     }
 }

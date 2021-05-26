@@ -22,7 +22,7 @@ import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Collections;
 import java.util.List;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
@@ -36,13 +36,13 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
         Secretive {
 
     private final Secret sampleSecret;
-    private KeycloakConnectionConfig keycloakConnectionConfig;
+    private SsoConnectionInfo ssoConnectionInfo;
 
     public SamplePublicIngressingDbAwareDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource,
             DatabaseConnectionInfo databaseConnectionInfo,
-            KeycloakConnectionConfig keycloakConnectionConfig) {
+            SsoConnectionInfo ssoConnectionInfo) {
         super(entandoResource, databaseConnectionInfo);
-        this.keycloakConnectionConfig = keycloakConnectionConfig;
+        this.ssoConnectionInfo = ssoConnectionInfo;
         sampleSecret = generateSecret(this.entandoResource, secretName(this.entandoResource),
                 "entando_keycloak_admin");
 
@@ -62,8 +62,8 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
     }
 
     @Override
-    public KeycloakConnectionConfig getKeycloakConnectionConfig() {
-        return keycloakConnectionConfig;
+    public SsoConnectionInfo getSsoConnectionInfo() {
+        return ssoConnectionInfo;
     }
 
     @Override

@@ -116,7 +116,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
             if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
                 prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable<?>) deployable);
             }
-            if (persistentVolumeClaimCreator.needsPersistentVolumeClaaims(deployable)) {
+            if (persistentVolumeClaimCreator.needsPersistentVolumeClaims(deployable)) {
                 createPersistentVolumeClaims(k8sClient);
             }
             secretCreator.createSecrets(k8sClient.secrets(), deployable);

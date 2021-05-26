@@ -27,9 +27,9 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.client.ClientBuilder;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.support.client.impl.DefaultEntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoJackson2Provider;
@@ -125,7 +125,7 @@ public class KeycloakE2ETestHelper extends
 
     public void ensureKeycloakClient(KeycloakAwareSpec keycloakAwareSpec, String clientId,
             List<String> roles) {
-        KeycloakClientConfig config = new KeycloakClientConfig(determineRealm(keycloakAwareSpec), clientId, clientId);
+        SsoClientConfig config = new SsoClientConfig(determineRealm(keycloakAwareSpec), clientId, clientId);
         for (String role : roles) {
             config = config.withRole(role);
         }
@@ -142,7 +142,7 @@ public class KeycloakE2ETestHelper extends
     }
 
     public Keycloak getKeycloakFor(EntandoBaseCustomResource<? extends KeycloakAwareSpec, EntandoCustomResourceStatus> requiresKeycloak) {
-        KeycloakConnectionConfig keycloak = entandoResourceClient
+        SsoConnectionInfo keycloak = entandoResourceClient
                 .findKeycloak(requiresKeycloak, requiresKeycloak.getSpec()::getKeycloakToUse);
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         clientBuilder.register(EntandoJackson2Provider.class);

@@ -17,5 +17,22 @@
 package org.entando.kubernetes.controller.spi.command;
 
 public enum SupportedCommand {
-    PROCESS_DEPLOYABLE, PROVIDE_CAPABILITY
+    PROCESS_DEPLOYABLE("Input Deployable", "Ouput DeploymentResult"), PROVIDE_CAPABILITY("Required Capability", "Provided Capability");
+
+    private final String inputName;
+    private final String outputName;
+
+    SupportedCommand(String inputName, String outputName) {
+
+        this.inputName = inputName;
+        this.outputName = outputName;
+    }
+
+    public String getInputName() {
+        return inputName;
+    }
+
+    public String getOutputName() {
+        return outputName;
+    }
 }

@@ -22,10 +22,10 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
-import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
+import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.support.client.SecretClient;
@@ -42,7 +42,7 @@ public class KeycloakClientCreator {
 
     public boolean requiresKeycloakClients(Deployable<?> deployable) {
         return deployable instanceof PublicIngressingDeployable
-                || deployable.getContainers().stream().anyMatch(KeycloakAwareContainer.class::isInstance);
+                || deployable.getContainers().stream().anyMatch(SsoAwareContainer.class::isInstance);
     }
 
     public void createKeycloakClients(SecretClient secrets, SimpleKeycloakClient keycloak, Deployable<?> deployable,
@@ -57,50 +57,49 @@ public class KeycloakClientCreator {
 
         }
         deployable.getContainers().stream()
-                .filter(KeycloakAwareContainer.class::isInstance)
-                .map(KeycloakAwareContainer.class::cast)
+                .filter(SsoAwareContainer.class::isInstance)
+                .map(SsoAwareContainer.class::cast)
                 .forEach(keycloakAware -> createClient(secrets, keycloak, keycloakAware, ingress));
     }
 
     private void login(SimpleKeycloakClient client, Deployable<?> deployable) {
-        KeycloakConnectionConfig keycloakConnectionConfig;
+        SsoConnectionInfo ssoConnectionInfo;
         if (deployable instanceof PublicIngressingDeployable) {
-            keycloakConnectionConfig = ((PublicIngressingDeployable<?>) deployable).getKeycloakConnectionConfig();
+            ssoConnectionInfo = ((PublicIngressingDeployable<?>) deployable).getSsoConnectionInfo();
         } else {
-            keycloakConnectionConfig = deployable.getContainers().stream()
-                    .filter(KeycloakAwareContainer.class::isInstance)
-                    .map(KeycloakAwareContainer.class::cast)
-                    .map(KeycloakAwareContainer::getKeycloakConnectionConfig)
+            ssoConnectionInfo = deployable.getContainers().stream()
+                    .filter(SsoAwareContainer.class::isInstance)
+                    .map(SsoAwareContainer.class::cast)
+                    .map(SsoAwareContainer::getSsoConnectionConfig)
                     .findAny()
                     .orElseThrow(IllegalArgumentException::new);
         }
-        client.login(keycloakConnectionConfig.determineBaseUrl(), keycloakConnectionConfig.getUsername(),
-                keycloakConnectionConfig.getPassword());
+        client.login(ssoConnectionInfo.determineBaseUrl(), ssoConnectionInfo.getUsername(),
+                ssoConnectionInfo.getPassword());
     }
 
-    private void createClient(SecretClient secrets, SimpleKeycloakClient client, KeycloakAwareContainer container,
+    private void createClient(SecretClient secrets, SimpleKeycloakClient client, SsoAwareContainer container,
             Optional<Ingress> ingress) {
-        KeycloakClientConfig keycloakConfig = container.getKeycloakClientConfig();
-        KeycloakClientConfig keycloakClientConfig = container.getKeycloakClientConfig();
+        SsoClientConfig ssoClientConfig = container.getSsoClientConfig();
         if (ingress.isPresent()) {
-            keycloakClientConfig = keycloakClientConfig
+            ssoClientConfig = ssoClientConfig
                     .withRedirectUri(getIngressServerUrl(ingress.get()) + container.getWebContextPath() + "/*");
             if (ingress.get().getSpec().getTls().size() == 1) {
                 //Also support redirecting to http for http services that don't have knowledge that they are exposed as https
-                keycloakClientConfig = keycloakClientConfig.withRedirectUri(
+                ssoClientConfig = ssoClientConfig.withRedirectUri(
                         "http://" + ingress.get().getSpec().getRules().get(0).getHost() + container.getWebContextPath() + "/*");
             }
-            keycloakClientConfig = keycloakClientConfig
+            ssoClientConfig = ssoClientConfig
                     .withWebOrigin(getIngressServerUrl(ingress.get()));
         }
-        String keycloakClientSecret = client.prepareClientAndReturnSecret(keycloakClientConfig);
-        String secretName = KeycloakName.forTheClientSecret(keycloakConfig);
+        String keycloakClientSecret = client.prepareClientAndReturnSecret(ssoClientConfig);
+        String secretName = KeycloakName.forTheClientSecret(ssoClientConfig);
         secrets.createSecretIfAbsent(entandoCustomResource, new SecretBuilder()
                 .withNewMetadata()
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(entandoCustomResource))
                 .withName(secretName)
                 .endMetadata()
-                .addToStringData(KeycloakName.CLIENT_ID_KEY, keycloakConfig.getClientId())
+                .addToStringData(KeycloakName.CLIENT_ID_KEY, ssoClientConfig.getClientId())
                 .addToStringData(KeycloakName.CLIENT_SECRET_KEY, keycloakClientSecret)
                 .build());
     }

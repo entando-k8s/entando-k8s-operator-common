@@ -26,8 +26,8 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
 import org.entando.kubernetes.model.app.EntandoApp;
@@ -38,14 +38,14 @@ import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServerBuilder;
-import org.entando.kubernetes.test.legacy.ExternalDatabaseService;
+import org.entando.kubernetes.test.common.ExternalDatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
-@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
+@Tags({@Tag("adapter"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
 class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest {
 
@@ -92,7 +92,7 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
                 .endMetadata()
                 .build();
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        SsoConnectionInfo config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the Keycloak in the SAME namespace as the EntadoApp.
@@ -184,7 +184,7 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
                 .addToData(NameUtils.INTERNAL_URL_KEY, "https://custom.com/auth")
                 .build());
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        SsoConnectionInfo config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the marked as the DEFAULT keycloak server
@@ -219,7 +219,7 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
                 .build();
         getSimpleK8SClient().entandoResources().createOrPatchEntandoResource(resource);
         //When I try to resolve a Keycloak config for the EntandoApp
-        KeycloakConnectionConfig config = getSimpleK8SClient().entandoResources()
+        SsoConnectionInfo config = getSimpleK8SClient().entandoResources()
                 .findKeycloak(resource, resource.getSpec()::getKeycloakToUse);
         //Then the EntandoResourceClient has resolved the Connection Configmap and Admin Secret
         //associated with the marked as the DEFAULT keycloak server

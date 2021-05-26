@@ -33,7 +33,7 @@ import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorComplianceMode;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.examples.SampleController;
 import org.entando.kubernetes.controller.spi.examples.SampleIngressingDbAwareDeployable;
@@ -65,7 +65,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@Tags({@Tag("inter-process"), @Tag("pre-deployment"), @Tag("component")})
+@Tags({@Tag("inter-process")})
 class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTesting {
 
     public static final String TEST_PLUGIN_NAME = EntandoPluginE2ETestHelper.TEST_PLUGIN_NAME + "-name-longer-than-32";
@@ -76,7 +76,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                 @Override
                 protected Deployable<DefaultExposedDeploymentResult> createDeployable(
                         EntandoCustomResource newEntandoPlugin,
-                        DatabaseConnectionInfo databaseConnectionInfo, KeycloakConnectionConfig keycloakConnectionConfig) {
+                        DatabaseConnectionInfo databaseConnectionInfo, SsoConnectionInfo ssoConnectionInfo) {
                     return new SampleIngressingDbAwareDeployable<>(
                             (EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus>) newEntandoPlugin,
                             databaseConnectionInfo) {
@@ -86,7 +86,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
                                 EntandoBaseCustomResource<EntandoPluginSpec, EntandoCustomResourceStatus> entandoResource) {
                             return Collections.singletonList(new SampleSpringBootDeployableContainer<>(
                                     entandoResource,
-                                    keycloakConnectionConfig,
+                                    ssoConnectionInfo,
                                     this.databaseConnectionInfo));
                         }
                     };

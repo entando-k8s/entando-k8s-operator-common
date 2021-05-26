@@ -28,6 +28,7 @@ import org.entando.kubernetes.controller.spi.container.DockerImageInfo;
 import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
 import org.entando.kubernetes.controller.spi.container.PortSpec;
 import org.entando.kubernetes.controller.spi.container.SecretToMount;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DeployableContainerFluent<N extends DeployableContainerFluent<N>> implements DeployableContainer {
 
@@ -41,6 +42,7 @@ public class DeployableContainerFluent<N extends DeployableContainerFluent<N>> i
     private final List<SecretToMount> secretsToMount = new ArrayList<>();
     private final List<KubernetesPermission> kubernetesPermissions = new ArrayList<>();
     private int memoryLimitMebibytes = DeployableContainer.super.getMemoryLimitMebibytes();
+    protected EntandoCustomResource customResource;
 
     @Override
     public String getNameQualifier() {
@@ -123,7 +125,7 @@ public class DeployableContainerFluent<N extends DeployableContainerFluent<N>> i
         return this.memoryLimitMebibytes;
     }
 
-    public N withMemorLimitMebibytes(int memoryLimitMebibytes) {
+    public N withMemoryLimitMebibytes(int memoryLimitMebibytes) {
         this.memoryLimitMebibytes = memoryLimitMebibytes;
         return thisAsN();
     }
@@ -155,4 +157,8 @@ public class DeployableContainerFluent<N extends DeployableContainerFluent<N>> i
         return thisAsN();
     }
 
+    public N withCustomResource(EntandoCustomResource entandoCustomResource) {
+        this.customResource = entandoCustomResource;
+        return thisAsN();
+    }
 }

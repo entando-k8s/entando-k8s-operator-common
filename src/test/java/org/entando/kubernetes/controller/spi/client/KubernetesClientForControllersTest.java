@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
 //NB!! This class only tests the interface default methods
-@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
+@Tags({@Tag("adapter"), @Tag("pre-deployment"), @Tag("unit")})
 class KubernetesClientForControllersTest {
 
     @Test

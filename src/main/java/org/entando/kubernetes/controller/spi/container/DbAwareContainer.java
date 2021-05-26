@@ -25,7 +25,7 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public interface DbAware extends DeployableContainer {
+public interface DbAwareContainer extends DeployableContainer {
 
     default Optional<DatabasePopulator> getDatabasePopulator() {
         return Optional.empty();

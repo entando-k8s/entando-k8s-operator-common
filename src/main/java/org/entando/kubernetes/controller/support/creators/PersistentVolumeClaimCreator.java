@@ -25,8 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
-import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
+import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
@@ -40,15 +41,15 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
         super(entandoCustomResource);
     }
 
-    public boolean needsPersistentVolumeClaaims(Deployable<?> deployable) {
+    public boolean needsPersistentVolumeClaims(Deployable<?> deployable) {
         return deployable.getContainers().stream()
-                .anyMatch(PersistentVolumeAware.class::isInstance);
+                .anyMatch(PersistentVolumeAwareContainer.class::isInstance);
     }
 
     public void createPersistentVolumeClaimsFor(PersistentVolumeClaimClient k8sClient, Deployable<?> deployable) {
         this.persistentVolumeClaims = deployable.getContainers().stream()
-                .filter(PersistentVolumeAware.class::isInstance)
-                .map(PersistentVolumeAware.class::cast)
+                .filter(PersistentVolumeAwareContainer.class::isInstance)
+                .map(PersistentVolumeAwareContainer.class::cast)
                 .map(deployableContainer -> k8sClient
                         .createPersistentVolumeClaimIfAbsent(entandoCustomResource,
                                 newPersistentVolumeClaim(deployable, deployableContainer)))
@@ -63,11 +64,11 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
                 .collect(Collectors.toList());
     }
 
-    private PersistentVolumeClaim newPersistentVolumeClaim(Deployable<?> deployable, PersistentVolumeAware container) {
+    private PersistentVolumeClaim newPersistentVolumeClaim(Deployable<?> deployable, PersistentVolumeAwareContainer container) {
         StorageCalculator resourceCalculator = buildStorageCalculator(container);
         return new PersistentVolumeClaimBuilder()
                 .withMetadata(fromCustomResource(!EntandoOperatorConfig.disablePvcGarbageCollection(),
-                        resolveName(container.getNameQualifier(), "pvc"),
+                        NameUtils.standardPersistentVolumeClaim(entandoCustomResource, container.getNameQualifier()),
                         deployable.getQualifier().orElse(null)))
                 .withNewSpec().withAccessModes(container.getAccessMode().orElse("ReadWriteOnce"))
                 .withStorageClassName(container.getStorageClass().orElse(null))
@@ -78,7 +79,7 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
                 .build();
     }
 
-    private StorageCalculator buildStorageCalculator(PersistentVolumeAware deployableContainer) {
+    private StorageCalculator buildStorageCalculator(PersistentVolumeAwareContainer deployableContainer) {
         return deployableContainer instanceof ConfigurableResourceContainer
                 ? new ConfigurableStorageCalculator((ConfigurableResourceContainer) deployableContainer)
                 : new StorageCalculator(deployableContainer);

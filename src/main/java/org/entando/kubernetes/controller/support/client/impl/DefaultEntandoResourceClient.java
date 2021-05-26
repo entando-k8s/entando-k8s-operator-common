@@ -33,12 +33,12 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedSsoConnectionInfo;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
@@ -57,7 +57,7 @@ public class DefaultEntandoResourceClient extends DefaultKubernetesClientForCont
     }
 
     @Override
-    public KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
+    public SsoConnectionInfo findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
         Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource, keycloakPreference);
         String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
                 .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
@@ -78,7 +78,7 @@ public class DefaultEntandoResourceClient extends DefaultKubernetesClientForCont
             throw new IllegalStateException(
                     format("Could not find the Keycloak ConfigMap %s in namespace %s", configMapName, configMapNamespace));
         }
-        return new ConfigMapBasedKeycloakConnectionConfig(secret, configMap);
+        return new ConfigMapBasedSsoConnectionInfo(secret, configMap);
 
     }
 

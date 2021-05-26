@@ -47,11 +47,11 @@ import org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResour
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedKeycloakConnectionConfig;
+import org.entando.kubernetes.controller.support.client.ConfigMapBasedSsoConnectionInfo;
 import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
@@ -65,7 +65,7 @@ import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
+import org.entando.kubernetes.test.common.DatabaseDeploymentResult;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
@@ -178,7 +178,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public KeycloakConnectionConfig findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
+    public SsoConnectionInfo findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
         Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource, keycloakPreference);
         String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
                 .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
@@ -198,7 +198,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
             throw new IllegalStateException(
                     format("Could not find the Keycloak configMap %s in namespace %s", configMapName, configMapNamespace));
         }
-        return new ConfigMapBasedKeycloakConnectionConfig(secret, configMap);
+        return new ConfigMapBasedSsoConnectionInfo(secret, configMap);
     }
 
     @Override

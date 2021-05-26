@@ -24,14 +24,14 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
-import org.entando.kubernetes.controller.spi.container.DbAware;
-import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.DbAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
-import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
+import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
+import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
-import org.entando.kubernetes.controller.support.spibase.KeycloakAwareContainerBase;
+import org.entando.kubernetes.controller.support.spibase.SsoAwareContainerBase;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
@@ -40,23 +40,23 @@ import org.entando.kubernetes.model.common.KeycloakAwareSpec;
 
 public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec,
         EntandoCustomResourceStatus>> implements
-        SpringBootDeployableContainer, KeycloakAwareContainerBase,
-        ParameterizableContainer, PersistentVolumeAware, ConfigurableResourceContainer {
+        SpringBootDeployableContainer, SsoAwareContainerBase,
+        ParameterizableContainer, PersistentVolumeAwareContainer, ConfigurableResourceContainer {
 
     public static final String MY_IMAGE = "entando/entando-k8s-service";
     public static final String MY_WEB_CONTEXT = "/k8s";
     private final T customResource;
-    private final KeycloakConnectionConfig keycloakConnectionConfig;
+    private final SsoConnectionInfo ssoConnectionInfo;
     private final List<DatabaseSchemaConnectionInfo> dbSchemaInfo;
 
-    public SampleSpringBootDeployableContainer(T customResource, KeycloakConnectionConfig keycloakConnectionConfig,
+    public SampleSpringBootDeployableContainer(T customResource, SsoConnectionInfo ssoConnectionInfo,
             DatabaseConnectionInfo databaseConnectionInfo) {
         this.customResource = customResource;
-        this.keycloakConnectionConfig = keycloakConnectionConfig;
+        this.ssoConnectionInfo = ssoConnectionInfo;
         if (databaseConnectionInfo == null) {
             this.dbSchemaInfo = Collections.emptyList();
         } else {
-            this.dbSchemaInfo = DbAware
+            this.dbSchemaInfo = DbAwareContainer
                     .buildDatabaseSchemaConnectionInfo(customResource, databaseConnectionInfo, Collections.singletonList("serverdb"));
         }
     }
@@ -97,13 +97,13 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     }
 
     @Override
-    public KeycloakConnectionConfig getKeycloakConnectionConfig() {
-        return this.keycloakConnectionConfig;
+    public SsoConnectionInfo getSsoConnectionConfig() {
+        return this.ssoConnectionInfo;
     }
 
     @Override
-    public KeycloakClientConfig getKeycloakClientConfig() {
-        return new KeycloakClientConfig(getKeycloakRealmToUse(),
+    public SsoClientConfig getSsoClientConfig() {
+        return new SsoClientConfig(getRealmToUse(),
                 customResource.getMetadata().getName() + "-" + getNameQualifier(),
                 customResource.getMetadata().getName() + "-" + getNameQualifier());
     }

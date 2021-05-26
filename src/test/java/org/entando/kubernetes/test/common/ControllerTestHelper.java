@@ -16,18 +16,24 @@
 
 package org.entando.kubernetes.test.common;
 
+import static io.qameta.allure.Allure.step;
+import static java.lang.String.format;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -41,20 +47,26 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.command.SerializingDeploymentProcessor;
 import org.entando.kubernetes.controller.spi.command.SupportedCommand;
 import org.entando.kubernetes.controller.spi.common.ConfigProperty;
+import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
+import org.entando.kubernetes.controller.spi.container.ProvidedSsoCapability;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
-import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
@@ -73,7 +85,7 @@ import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.mockito.ArgumentMatcher;
 import org.mockito.stubbing.Answer;
 
-public interface ControllerTestHelper {
+public interface ControllerTestHelper extends FluentTraversals {
 
     String DEFAULT_TLS_SECRET = "default-tls-secret";
     String MY_APP = "my-app";
@@ -87,23 +99,21 @@ public interface ControllerTestHelper {
         return java.util.Optional.empty();
     }
 
-    default void runControllerAgainst(EntandoCustomResource forResource, CapabilityRequirement capabilityRequirement)
+    default void runControllerAgainstCapabilityRequirement(EntandoCustomResource forResource, CapabilityRequirement capabilityRequirement)
             throws TimeoutException {
         attachKubernetesResource("Resource Requesting Capability", forResource);
         getClient().entandoResources().createOrPatchEntandoResource(forResource);
         attachKubernetesResource("Capability Requirement", capabilityRequirement);
         final StandardCapability capability = capabilityRequirement.getCapability();
         doAnswer(invocationOnMock -> {
-            getScheduler().schedule(() -> runControllerAndUpdateCapabilityStatus(invocationOnMock.getArgument(0)), 200L,
+            getScheduler().schedule(() -> runControllerAgainstCapabilityAndUpdateStatus(invocationOnMock.getArgument(0)), 200L,
                     TimeUnit.MILLISECONDS);
             return invocationOnMock.callRealMethod();
         }).when(getClient().capabilities()).createAndWaitForCapability(argThat(matchesCapability(capability)), anyInt());
-        new SerializingCapabilityProvider(getClient().entandoResources(), new AllureAttachingCommandStream(getClient(),
-                getKeycloakClient().orElse(null)))
-                .provideCapability(forResource, capabilityRequirement, 60);
+        getCapabilityProvider().provideCapability(forResource, capabilityRequirement, 60);
     }
 
-    default void runControllerAgainst(EntandoCustomResource entandoCustomResource) {
+    default void runControllerAgainstCustomResource(EntandoCustomResource entandoCustomResource) {
         attachKubernetesResource(entandoCustomResource.getKind(), entandoCustomResource);
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
@@ -114,15 +124,21 @@ public interface ControllerTestHelper {
         getClient().entandoResources().createOrPatchEntandoResource(entandoCustomResource);
         final SimpleKeycloakClient keycloakClient = this.getKeycloakClient().orElse(null);
         final AllureAttachingCommandStream commandStream = new AllureAttachingCommandStream(getClient(), keycloakClient);
-        Runnable controller = createController(new SerializingDeploymentProcessor(getClient().entandoResources(), commandStream));
+        Runnable controller = createController(getClient().entandoResources(),
+                new SerializingDeploymentProcessor(getClient().entandoResources(), commandStream), getCapabilityProvider());
         controller.run();
+    }
+
+    default SerializingCapabilityProvider getCapabilityProvider() {
+        return new SerializingCapabilityProvider(getClient().entandoResources(), new AllureAttachingCommandStream(getClient(),
+                getKeycloakClient().orElse(null)));
     }
 
     default ArgumentMatcher<ProvidedCapability> matchesCapability(StandardCapability capability) {
         return t -> t != null && t.getSpec().getCapability() == capability;
     }
 
-    private void runControllerAndUpdateCapabilityStatus(ProvidedCapability providedCapability) {
+    private void runControllerAgainstCapabilityAndUpdateStatus(ProvidedCapability providedCapability) {
         System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
                 providedCapability.getMetadata().getName());
@@ -131,11 +147,14 @@ public interface ControllerTestHelper {
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND.getJvmSystemProperty(), providedCapability.getKind());
         final SimpleKeycloakClient keycloakClient = this.getKeycloakClient().orElse(null);
         final AllureAttachingCommandStream commandStream = new AllureAttachingCommandStream(getClient(), keycloakClient);
-        Runnable controller = createController(new SerializingDeploymentProcessor(getClient().entandoResources(), commandStream));
+        Runnable controller = createController(getClient().entandoResources(),
+                new SerializingDeploymentProcessor(getClient().entandoResources(), commandStream), getCapabilityProvider());
         controller.run();
     }
 
-    Runnable createController(DeploymentProcessor deploymentProcessor);
+    Runnable createController(KubernetesClientForControllers kubernetesClientForControllers,
+            DeploymentProcessor deploymentProcessor,
+            CapabilityProvider capabilityProvider);
 
     default void attachKubernetesResource(String name, Object resource) {
         try {
@@ -159,11 +178,11 @@ public interface ControllerTestHelper {
         return putStatus(providedCapability, port, derivedDeploymentParameters, new InternalServerStatus("main"));
     }
 
-    default Answer<Object> withADatabaseCapabilityStatus(DbmsVendor vendor, String databaseNAme) {
+    default Answer<Object> withADatabaseCapabilityStatus(DbmsVendor vendor, String databaseName) {
         return invocationOnMock -> {
             getScheduler().schedule(() -> {
                 Map<String, String> derivedParameters = new HashMap<>();
-                derivedParameters.put(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, databaseNAme);
+                derivedParameters.put(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, databaseName);
                 derivedParameters.put(ProvidedDatabaseCapability.DBMS_VENDOR_PARAMETER, vendor.name().toLowerCase(Locale.ROOT));
                 DbmsVendorConfig dbmsVendorConfig = DbmsVendorConfig.valueOf(vendor.name());
                 return putInternalServerStatus(invocationOnMock.getArgument(0), dbmsVendorConfig.getDefaultPort(), derivedParameters);
@@ -172,35 +191,57 @@ public interface ControllerTestHelper {
         };
     }
 
-    default ProvidedCapability putExternalServerStatus(ProvidedCapability providedCapability, int port,
+    default Answer<Object> withAnSsoCapabilityStatus(String host, String realmName) {
+        return invocationOnMock -> {
+            getScheduler().schedule(() -> {
+                Map<String, String> derivedParameters = new HashMap<>();
+                derivedParameters.put(ProvidedSsoCapability.DEFAULT_REALM_PARAMETER, realmName);
+                return putExternalServerStatus(invocationOnMock.getArgument(0), host, 8080, "/auth", derivedParameters);
+
+            }, 200L, TimeUnit.MILLISECONDS);
+            return invocationOnMock.callRealMethod();
+        };
+    }
+
+    default ProvidedCapability putExternalServerStatus(ProvidedCapability providedCapability, String host, int port, String path,
             Map<String, String> derivedParameters) {
         final ExposedServerStatus status = new ExposedServerStatus(NameUtils.MAIN_QUALIFIER);
-        status.setIngressName(getClient().ingresses().createIngress(providedCapability, new IngressBuilder()
+        status.setExternalBaseUrl(format("https://%s%s", host, path));
+        final Ingress ingress = getClient().ingresses().createIngress(providedCapability, new IngressBuilder()
                 .withNewMetadata()
                 .withNamespace(providedCapability.getMetadata().getNamespace())
-                .withName(providedCapability.getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX)
+                .withName(NameUtils.standardIngressName(providedCapability))
                 .endMetadata()
                 .withNewSpec()
                 .addNewRule()
+                .withHost(host)
                 .withNewHttp()
                 .addNewPath()
                 .withNewBackend()
-                .withServiceName(providedCapability.getMetadata().getName() + "-" + NameUtils.DEFAULT_SERVICE_SUFFIX)
+                .withServiceName(NameUtils.standardServiceName(providedCapability))
                 .withServicePort(new IntOrString(port))
                 .endBackend()
-                .withPath("/non-existing")
+                .withPath(path)
                 .endPath()
                 .endHttp()
                 .endRule()
+                .addNewTl()
+                .addNewHost(host)
+
+                .endTl()
                 .endSpec()
-                .build()).getMetadata().getName());
-        return putStatus(providedCapability, port, derivedParameters, status);
+                .build());
+        status.setIngressName(ingress.getMetadata().getName());
+        final ProvidedCapability updatedCapability = putStatus(providedCapability, port, derivedParameters, status);
+        step(format("and the Ingress '%s'", ingress.getMetadata().getName()), () ->
+                attachKubernetesResource(providedCapability.getSpec().getCapability().name() + " Ingress", ingress));
+        return updatedCapability;
     }
 
     private ProvidedCapability putStatus(ProvidedCapability providedCapability, int port,
             Map<String, String> derivedDeploymentParameters, AbstractServerStatus status) {
         providedCapability.getStatus().putServerStatus(status);
-        status.setServiceName(getClient().services().createOrReplaceService(providedCapability, new ServiceBuilder()
+        final Service service = getClient().services().createOrReplaceService(providedCapability, new ServiceBuilder()
                 .withNewMetadata()
                 .withNamespace(providedCapability.getMetadata().getNamespace())
                 .withName(NameUtils.standardServiceName(providedCapability))
@@ -210,7 +251,10 @@ public interface ControllerTestHelper {
                 .withPort(port)
                 .endPort()
                 .endSpec()
-                .build()).getMetadata().getName());
+                .build());
+        status.setServiceName(service.getMetadata().getName());
+        step(format("with the %s service '%s'", providedCapability.getSpec().getCapability().name(), service.getMetadata().getName()), () ->
+                attachKubernetesResource(providedCapability.getSpec().getCapability().name() + " Service", service));
         final Secret secret = new SecretBuilder()
                 .withNewMetadata()
                 .withNamespace(providedCapability.getMetadata().getNamespace())
@@ -220,6 +264,10 @@ public interface ControllerTestHelper {
                 .addToStringData("password", "password123")
                 .build();
         getClient().secrets().createSecretIfAbsent(providedCapability, secret);
+        step(format("and the admin secret '%s'", secret.getMetadata().getName()), () ->
+                attachKubernetesResource("Admin Secret",
+                        getClient().secrets().loadSecret(providedCapability, secret.getMetadata().getName())));
+
         status.setAdminSecretName(secret.getMetadata().getName());
         derivedDeploymentParameters.forEach(status::putDerivedDeploymentParameter);
         getClient().entandoResources().updateStatus(providedCapability, status);
@@ -242,15 +290,17 @@ public interface ControllerTestHelper {
         return entandoResource;
     }
 
-    default void attachKubernetesState(AbstractK8SClientDouble client) {
-        final Map<String, Map<String, Collection<? extends HasMetadata>>> kubernetesState = getClient().getKubernetesState();
-        kubernetesState.forEach((key, value) ->
-                Allure.step(key, () -> value.forEach((s, hasMetadata) -> Allure.step(s,
-                        () -> hasMetadata.forEach(m -> attachKubernetesResource(m.getMetadata().getName(), m))))));
+    default void attachKubernetesState() {
+        step("Resulting state changes in the Kubernetes cluster", () -> {
+            final Map<String, Map<String, Collection<? extends HasMetadata>>> kubernetesState = getClient().getKubernetesState();
+            kubernetesState.forEach((key, value) ->
+                    step(key, () -> value.forEach((s, hasMetadata) -> step(s,
+                            () -> hasMetadata.forEach(m -> attachKubernetesResource(m.getMetadata().getName(), m))))));
+        });
     }
 
     default void theDefaultTlsSecretWasCreatedAndConfiguredAsDefault() {
-        Allure.step("And a TLS Secret was created and configured as default", () -> {
+        step("And a TLS Secret was created and configured as default", () -> {
             attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_TLS_SECRET_NAME, DEFAULT_TLS_SECRET);
             getClient().secrets().overwriteControllerSecret(new SecretBuilder()
                     .withNewMetadata()
@@ -272,11 +322,55 @@ public interface ControllerTestHelper {
 
         @Override
         public String process(SupportedCommand supportedCommand, String data, int timeoutSeconds) throws TimeoutException {
-            Allure.attachment("Input Deployable", data);
-            final String result = super.process(supportedCommand, data, timeoutSeconds);
-            Allure.attachment("Output Result", result);
-            return result;
+            //a bit of a hack:
+            AtomicReference<String> resultHolder = new AtomicReference<>();
+            step(format("Executing command %s", supportedCommand.name()), () -> {
+                Allure.attachment(supportedCommand.getInputName(), data);
+                final String result = super.process(supportedCommand, data, timeoutSeconds);
+                Allure.attachment(supportedCommand.getOutputName(), result);
+                resultHolder.set(result);
+            });
+            return resultHolder.get();
         }
+    }
+
+    default void verifyDbJobConnectionVariables(Container resultingContainer,
+            DbmsVendor vendor, String hostName) {
+        final String port = String
+                .valueOf(DbmsDockerVendorStrategy.forVendor(vendor, EntandoOperatorSpiConfig.getComplianceMode()).getPort());
+        step(format("with the standard %s DB Job environment variables pointing to %s:%s ", vendor.toValue(), hostName, port), () -> {
+            assertThat(theVariableNamed(DATABASE_VENDOR).on(resultingContainer)).isEqualTo(vendor.toValue());
+            assertThat(theVariableNamed(DATABASE_SCHEMA_COMMAND).on(resultingContainer)).isEqualTo("CREATE_SCHEMA");
+            assertThat(theVariableNamed(DATABASE_SERVER_PORT).on(resultingContainer)).isEqualTo(
+                    port);
+            assertThat(theVariableNamed(DATABASE_SERVER_HOST).on(resultingContainer)).isEqualTo(hostName);
+        });
+    }
+
+    default void verifyDbJobSchemaCredentials(String schemaSecret, Container resultingContainer) {
+        step(format("with the DB Schema credentials from the secret %s", schemaSecret), () -> {
+            assertThat(theVariableReferenceNamed(DATABASE_USER).on(resultingContainer).getSecretKeyRef().getName()).isEqualTo(schemaSecret);
+            assertThat(theVariableReferenceNamed(DATABASE_PASSWORD).on(resultingContainer).getSecretKeyRef().getName())
+                    .isEqualTo(schemaSecret);
+            assertThat(theVariableReferenceNamed(DATABASE_USER).on(resultingContainer).getSecretKeyRef().getKey())
+                    .isEqualTo(SecretUtils.USERNAME_KEY);
+            assertThat(theVariableReferenceNamed(DATABASE_PASSWORD).on(resultingContainer).getSecretKeyRef().getKey())
+                    .isEqualTo(SecretUtils.PASSSWORD_KEY);
+        });
+    }
+
+    default void verifyDbJobAdminCredentials(String adminSecret, Container resultingContainer) {
+        step(format("with the DB Admin credentials from the secret %s", adminSecret), () -> {
+            assertThat(theVariableReferenceNamed(DATABASE_ADMIN_USER).on(resultingContainer).getSecretKeyRef().getKey())
+                    .isEqualTo(SecretUtils.USERNAME_KEY);
+            assertThat(theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(resultingContainer).getSecretKeyRef().getKey())
+                    .isEqualTo(SecretUtils.PASSSWORD_KEY);
+            assertThat(theVariableReferenceNamed(DATABASE_ADMIN_USER).on(resultingContainer).getSecretKeyRef().getName())
+                    .isEqualTo(adminSecret);
+            assertThat(
+                    theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(resultingContainer).getSecretKeyRef().getName()).isEqualTo(
+                    adminSecret);
+        });
     }
 
 }

@@ -25,11 +25,11 @@ import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
-import org.entando.kubernetes.controller.spi.container.DbAware;
+import org.entando.kubernetes.controller.spi.container.DbAwareContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
-import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
-import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
+import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
+import org.entando.kubernetes.controller.spi.container.TrustStoreAwareContainer;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
@@ -38,8 +38,9 @@ import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.common.EntandoIngressingDeploymentSpec;
 
-public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implements IngressingContainer, DbAware, TrustStoreAware,
-        PersistentVolumeAware, ParameterizableContainer {
+public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implements IngressingContainer, DbAwareContainer,
+        TrustStoreAwareContainer,
+        PersistentVolumeAwareContainer, ParameterizableContainer {
 
     public static final String DEFAULT_IMAGE_NAME = "entando/entando-keycloak:6.0.0-SNAPSHOT";
     public static final String VAR_LIB_MYDATA = "/var/lib/mydata";
@@ -53,7 +54,7 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
         if (databaseConnectionInfo == null) {
             this.databaseSchemaInfo = Collections.emptyList();
         } else {
-            this.databaseSchemaInfo = DbAware
+            this.databaseSchemaInfo = DbAwareContainer
                     .buildDatabaseSchemaConnectionInfo(entandoResource, databaseConnectionInfo, Collections.singletonList("db"));
         }
     }

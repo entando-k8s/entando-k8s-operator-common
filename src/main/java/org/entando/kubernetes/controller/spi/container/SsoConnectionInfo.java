@@ -24,7 +24,7 @@ import java.util.Base64;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 
-public interface KeycloakConnectionConfig {
+public interface SsoConnectionInfo {
 
     String determineBaseUrl();
 
@@ -48,6 +48,8 @@ public interface KeycloakConnectionConfig {
     Secret getAdminSecret();
 
     String getExternalBaseUrl();
+
+    String getDefaultRealm();
 
     Optional<String> getInternalBaseUrl();
 }

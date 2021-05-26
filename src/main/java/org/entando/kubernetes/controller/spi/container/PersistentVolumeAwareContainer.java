@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.spi.container;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 
-public interface PersistentVolumeAware extends DeployableContainer {
+public interface PersistentVolumeAwareContainer extends DeployableContainer {
 
     String getVolumeMountPath();
 

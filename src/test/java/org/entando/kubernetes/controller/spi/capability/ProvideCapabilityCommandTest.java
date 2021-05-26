@@ -38,7 +38,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
-import org.entando.kubernetes.controller.TestResource;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
@@ -48,6 +47,7 @@ import org.entando.kubernetes.controller.support.capability.CapabilityClient;
 import org.entando.kubernetes.controller.support.capability.ProvideCapabilityCommand;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
+import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.capability.CapabilityRequirementBuilder;
@@ -60,8 +60,8 @@ import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
 import org.entando.kubernetes.model.common.InternalServerStatus;
 import org.entando.kubernetes.model.common.ResourceReference;
+import org.entando.kubernetes.test.common.DatabaseDeploymentResult;
 import org.entando.kubernetes.test.common.InProcessTestData;
-import org.entando.kubernetes.test.legacy.DatabaseDeploymentResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -71,7 +71,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 @ExtendWith(MockitoExtension.class)
-@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("component")})
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("inner-hexagon")})
 class ProvideCapabilityCommandTest implements InProcessTestData {
 
     public static final int TIMEOUT_SECONDS = 30;
@@ -101,7 +101,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                         StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.CLUSTER)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         when(capabilityClient.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
-        doAnswer(andGenerateSuccessEventFor(withServiceResult(), "default-mysql-dbms")).when(capabilityClient)
+        doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
                 .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
         when(capabilityClient.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         when(capabilityClient.buildCapabilityProvisioningResult(any()))
@@ -120,7 +120,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms-in-cluster"));
     }
 
-    private Function<ProvidedCapability, ServiceResult> withServiceResult() throws TimeoutException {
+    private Function<ProvidedCapability, ServiceResult> withServiceResult() {
         return (capabilityRequirement) -> new DatabaseDeploymentResult(new ServiceBuilder()
                 .withNewMetadata()
                 .withNamespace(capabilityRequirement.getMetadata().getNamespace())
@@ -200,7 +200,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage")).build();
-        doAnswer(andGenerateSuccessEventFor(withServiceResult(), "mysql-dbms")).when(capabilityClient)
+        doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
                 .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
         when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
@@ -247,7 +247,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withSpecifiedCapability(
                         new ResourceReference("my-db-namespace", "my-db")).build();
         //When I attempt to fulfill the capability
-        doAnswer(andGenerateSuccessEventFor(withServiceResult(), "my-db")).when(capabilityClient)
+        doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
                 .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
         when(capabilityClient.providedCapabilityByName("my-db-namespace", "my-db"))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
@@ -292,7 +292,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
                 .withProvisioningStrategy(
                         CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
-        doAnswer(andGenerateSuccessEventFor(withServiceResult(), "default-mysql-dbms")).when(capabilityClient)
+        doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
                 .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
         when(capabilityClient.providedCapabilityByLabels(eq(forResource.getMetadata().getNamespace()), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
@@ -324,8 +324,8 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                         StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
-        doAnswer(andGenerateSuccessEventFor(withServiceResult(),
-                forResource.getMetadata().getName() + "-db-asdf")).when(capabilityClient)
+        doAnswer(andGenerateSuccessEventFor(withServiceResult()
+        )).when(capabilityClient)
                 .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
         when(capabilityClient.providedCapabilityByName(any(), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
@@ -356,8 +356,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                         StandardCapabilityImplementation.KEYCLOAK).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
-        doAnswer(andGenerateSuccessEventFor(withExposedServiceResult(),
-                forResource.getMetadata().getName() + "-sso-asdfasdf")).when(capabilityClient)
+        doAnswer(andGenerateSuccessEventFor(withExposedServiceResult())).when(capabilityClient)
                 .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
         when(capabilityClient.providedCapabilityByName(any(), any()))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
@@ -393,7 +392,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                         .build());
     }
 
-    private Answer<?> andGenerateSuccessEventFor(Function<ProvidedCapability, ServiceResult> serviceResultSupplier, String adminSecretNam) {
+    private Answer<?> andGenerateSuccessEventFor(Function<ProvidedCapability, ServiceResult> serviceResultSupplier) {
         return invocationOnMock -> {
             scheduler.schedule(() -> {
                 try {

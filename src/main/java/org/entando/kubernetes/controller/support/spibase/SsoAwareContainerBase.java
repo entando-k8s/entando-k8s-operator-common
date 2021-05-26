@@ -19,11 +19,11 @@ package org.entando.kubernetes.controller.support.spibase;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.ForInternalUseOnly;
-import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
+import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
 import org.entando.kubernetes.model.common.KeycloakAwareSpec;
 import org.entando.kubernetes.model.common.KeycloakToUse;
 
-public interface KeycloakAwareContainerBase extends KeycloakAwareContainer {
+public interface SsoAwareContainerBase extends SsoAwareContainer {
 
     default Optional<KeycloakToUse> getPreferredKeycloakToUse() {
         return getKeycloakAwareSpec().getKeycloakToUse();

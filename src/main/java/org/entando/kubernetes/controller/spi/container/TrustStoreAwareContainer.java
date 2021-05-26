@@ -23,7 +23,7 @@ import java.util.List;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 
-public interface TrustStoreAware {
+public interface TrustStoreAwareContainer extends DeployableContainer {
 
     SecretToMount DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT = new SecretToMount(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET,
             TrustStoreHelper.CERT_SECRET_MOUNT_ROOT + File.separatorChar + TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET);

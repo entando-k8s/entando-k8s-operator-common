@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
-@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("integration")})
+@Tags({@Tag("adapter"), @Tag("pre-deployment"), @Tag("integration")})
 @EnableRuleMigrationSupport
 class DefaultServiceAccountClientTest extends AbstractSupportK8SIntegrationTest {
 

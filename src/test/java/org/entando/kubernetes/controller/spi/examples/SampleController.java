@@ -16,7 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.examples;
 
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
@@ -40,6 +40,6 @@ public abstract class SampleController<R extends ServiceDeploymentResult<R>> imp
 
     protected abstract Deployable<R> createDeployable(EntandoCustomResource newEntandoKeycloakServer,
             DatabaseConnectionInfo databaseConnectionInfo,
-            KeycloakConnectionConfig keycloakConnectionConfig);
+            SsoConnectionInfo ssoConnectionInfo);
 
 }

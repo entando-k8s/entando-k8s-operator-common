@@ -37,10 +37,6 @@ public abstract class EntandoOperatorConfigBase {
         EntandoOperatorConfigBase.configMap.set(configMap);
     }
 
-    protected static String getProperty(ConfigProperty name, String defaultValue) {
-        return lookupProperty(name).orElse(defaultValue);
-    }
-
     public static Optional<String> lookupProperty(ConfigProperty property) {
         return Optional.ofNullable(lookupProperty(property.getJvmSystemProperty()).orElse(lookupProperty(property.name()).orElse(null)));
     }

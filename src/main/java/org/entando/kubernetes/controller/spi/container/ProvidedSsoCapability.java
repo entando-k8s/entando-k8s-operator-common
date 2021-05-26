@@ -26,14 +26,14 @@ import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
 
-public class ProvidedKeycloakCapability implements KeycloakConnectionConfig {
+public class ProvidedSsoCapability implements SsoConnectionInfo {
 
     public static final String DEFAULT_REALM_PARAMETER = "defaultRealm";
 
     private final CapabilityProvisioningResult capabilityResult;
     private final ExposedService exposedService;
 
-    public ProvidedKeycloakCapability(CapabilityProvisioningResult capabilityResult) {
+    public ProvidedSsoCapability(CapabilityProvisioningResult capabilityResult) {
         super();
         this.capabilityResult = capabilityResult;
         this.exposedService = new ExposedService(capabilityResult.getService(), capabilityResult.getIngress().orElse(null));
@@ -63,6 +63,13 @@ public class ProvidedKeycloakCapability implements KeycloakConnectionConfig {
     public String getExternalBaseUrl() {
         return ((ExposedServerStatus) capabilityResult.getProvidedCapability().getStatus().findCurrentServerStatus()
                 .orElseThrow(IllegalStateException::new)).getExternalBaseUrl();
+    }
+
+    @Override
+    public String getDefaultRealm() {
+        return ofNullable(
+                capabilityResult.getProvidedCapability().getStatus().findCurrentServerStatus().orElseThrow(IllegalStateException::new)
+                        .getDerivedDeploymentParameters().get(DEFAULT_REALM_PARAMETER)).orElse(KeycloakName.ENTANDO_DEFAULT_KEYCLOAK_REALM);
     }
 
     @Override

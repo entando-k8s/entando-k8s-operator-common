@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.fluentspi;
 
+import static java.util.Optional.ofNullable;
+
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -30,19 +32,22 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public abstract class DeployableFluent<N extends DeployableFluent<N>> implements Deployable<DefaultExposedDeploymentResult> {
 
-    private List<DeployableContainer> containers = new ArrayList<>();
-    private String qualifier;
-    private EntandoCustomResource customResource;
+    protected List<DeployableContainerFluent<?>> containers = new ArrayList<>();
+    protected String qualifier;
+    protected EntandoCustomResource customResource;
     private String serviceAccountToUse = "default";
+    private Long fileSystemUserAndGroupId;
 
     @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public List<DeployableContainer> getContainers() {
-        return this.containers;
+        return (List) this.containers;
     }
 
-    public N withContainer(DeployableContainer container) {
+    public <C extends DeployableContainerFluent<C>> C withContainer(C container) {
         this.containers.add(container);
-        return thisAsN();
+        ofNullable(customResource).ifPresent(container::withCustomResource);
+        return container;
     }
 
     @SuppressWarnings("unchecked")
@@ -52,7 +57,7 @@ public abstract class DeployableFluent<N extends DeployableFluent<N>> implements
 
     @Override
     public Optional<String> getQualifier() {
-        return Optional.ofNullable(this.qualifier);
+        return ofNullable(this.qualifier);
     }
 
     public N withQualifier(String qualifier) {
@@ -67,6 +72,7 @@ public abstract class DeployableFluent<N extends DeployableFluent<N>> implements
 
     public N withCustomResource(EntandoCustomResource customResource) {
         this.customResource = customResource;
+        this.containers.forEach(c -> c.withCustomResource(customResource));
         return thisAsN();
     }
 
@@ -85,16 +91,13 @@ public abstract class DeployableFluent<N extends DeployableFluent<N>> implements
         return thisAsN();
     }
 
-    public <C extends NestedDeployableContainerFluent<C>> NestedDeployableContainerFluent<C> withNewContainer() {
-        return new NestedDeployableContainerFluent<>();
+    @Override
+    public Optional<Long> getFileSystemUserAndGroupId() {
+        return ofNullable(fileSystemUserAndGroupId);
     }
 
-    public class NestedDeployableContainerFluent<C extends DeployableContainerFluent<C>> extends DeployableContainerFluent<C> {
-
-        public N done() {
-            DeployableFluent.this.withContainer(this);
-            return DeployableFluent.this.thisAsN();
-        }
+    public N withFileSystemUserAndGroupId(Long fileSystemUserAndGroupId) {
+        this.fileSystemUserAndGroupId = fileSystemUserAndGroupId;
+        return thisAsN();
     }
-
 }

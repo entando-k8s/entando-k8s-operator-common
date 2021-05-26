@@ -28,72 +28,68 @@ import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import org.entando.kubernetes.BasicController;
-import org.entando.kubernetes.BasicDeploymentSpec;
-import org.entando.kubernetes.controller.ProcessBasicDeployableTest.BasicDeployable.BasicNestedDeployableContainerFluent;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
+import org.entando.kubernetes.fluentspi.BasicDeploymentSpec;
+import org.entando.kubernetes.fluentspi.ControllerFluent;
+import org.entando.kubernetes.fluentspi.DeployableContainerFluent;
 import org.entando.kubernetes.fluentspi.DeployableFluent;
+import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.test.common.ControllerTestHelper;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import picocli.CommandLine;
 
 @ExtendWith(MockitoExtension.class)
-@Tags({@Tag("component"), @Tag("in-process"), @Tag("allure")})
+@Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure"), @Tag("pre-deployment")})
 @Feature(
-        "As a controller developer, I would like to specify how my image gets deployed providing only the configuration that is "
-                + "absolutely required so that "
+        "As a controller developer, I would like to specify how my image gets deployed providing only the essential configuration so that "
                 + " I can focus on my development tasks")
 @Issue("ENG-2284")
-@SourceLink("ProcessBasicDeployableTest.java")
-class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversals, VariableReferenceAssertions {
+@SourceLink("MinimalDeploymentTest.java")
+class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversals, VariableReferenceAssertions {
 
     private TestResource entandoCustomResource;
 
-    public static class BasicDeployable extends DeployableFluent<BasicDeployable> {
+    /*
+    Classes to be implemented by the controller provider
+     */
+    @CommandLine.Command()
+    public static class BasicController extends ControllerFluent<BasicController> {
 
-        public class BasicNestedDeployableContainerFluent extends NestedDeployableContainerFluent<BasicNestedDeployableContainerFluent> {
-
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public BasicNestedDeployableContainerFluent withNewContainer() {
-            return new BasicNestedDeployableContainerFluent();
+        public BasicController(KubernetesClientForControllers k8sClient,
+                DeploymentProcessor deploymentProcessor) {
+            super(k8sClient, deploymentProcessor);
         }
     }
 
-    protected final SimpleK8SClientDouble client = new SimpleK8SClientDouble();
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
+    public static class BasicDeployable extends DeployableFluent<BasicDeployable> {
+
+    }
+
+    public static class BasicDeployableContainer extends DeployableContainerFluent<BasicDeployableContainer> {
+
+    }
+
     private BasicDeployable deployable;
 
     @Override
-    public SimpleK8SClientDouble getClient() {
-        return client;
-    }
-
-    @Override
-    public ScheduledExecutorService getScheduler() {
-        return scheduledExecutorService;
-    }
-
-    @Override
-    public Runnable createController(DeploymentProcessor deploymentProcessor) {
-        return new BasicController(getClient().entandoResources(), deploymentProcessor).withDeployable(deployable)
+    public Runnable createController(
+            KubernetesClientForControllers kubernetesClientForControllers,
+            DeploymentProcessor deploymentProcessor, CapabilityProvider capabilityProvider) {
+        return new BasicController(kubernetesClientForControllers, deploymentProcessor)
+                .withDeployable(deployable)
                 .withSupportedClass(TestResource.class);
     }
 
@@ -104,15 +100,16 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
         step("Given I have a basic Deployable", () -> this.deployable = new BasicDeployable());
         step("and a basic DeployableContainer qualified as 'server' that uses the image test/my-image:6.3.2 and exports port 8081",
                 () -> {
-                    deployable.withNewContainer().withDockerImageInfo("test/my-image:6.3.2").withNameQualifier("server")
-                            .withPrimaryPort(8081).done();
+                    deployable.withContainer(
+                            new BasicDeployableContainer().withDockerImageInfo("test/my-image:6.3.2").withNameQualifier("server")
+                                    .withPrimaryPort(8081));
                     attachSpiResource("DeployableContainer", SerializationHelper.serialize(deployable.getContainers().get(0)));
                 });
         final EntandoCustomResource entandoCustomResource = new TestResource()
                 .withNames(MY_NAMESPACE, MY_APP)
                 .withSpec(new BasicDeploymentSpec());
         step("When the controller processes a new TestResource", () -> {
-            runControllerAgainst(entandoCustomResource);
+            runControllerAgainstCustomResource(entandoCustomResource);
         });
         step(format("Then a Deployment was created reflecting the name of the TestResource and the suffix '%s'",
                 NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
@@ -154,18 +151,18 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
 
                     });
                 });
-        attachKubernetesState(client);
+        attachKubernetesState();
     }
 
     @Test
-    @AllureId("test11")
-    @Description("Should deploy successfully even if only the image and port are specified")
-    void absoluteMinimalDeploymentWithoutResourceLimits() {
+    @Description("Should deploy successfully with resource limits disabled")
+    void minimalDeploymentWithoutResourceLimits() {
         step("Given I have a basic Deployable", () -> this.deployable = new BasicDeployable());
         step("and a basic DeployableContainer qualified as 'server' that uses the image test/my-image:6.3.2 and exports port 8081",
                 () -> {
-                    deployable.withNewContainer().withDockerImageInfo("test/my-image:6.3.2").withNameQualifier("server")
-                            .withPrimaryPort(8081).done();
+                    deployable.withContainer(
+                            new BasicDeployableContainer().withDockerImageInfo("test/my-image:6.3.2").withNameQualifier("server")
+                                    .withPrimaryPort(8081));
                     attachSpiResource("DeployableContainer", SerializationHelper.serialize(deployable.getContainers().get(0)));
                 });
         step("But I have switched off the limits for environments where resource use is not a concern", () -> System.setProperty(
@@ -174,7 +171,7 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
                 .withNames(MY_NAMESPACE, MY_APP)
                 .withSpec(new BasicDeploymentSpec());
         step("When the controller processes a new TestResource", () -> {
-            runControllerAgainst(entandoCustomResource);
+            runControllerAgainstCustomResource(entandoCustomResource);
         });
         final Deployment deployment = getClient().deployments()
                 .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
@@ -188,16 +185,7 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
             assertThat(thePrimaryContainerOn(deployment).getResources().getLimits()).doesNotContainKey("memory");
             assertThat(thePrimaryContainerOn(deployment).getResources().getLimits()).doesNotContainKey("cpu");
         });
-        attachKubernetesState(client);
-    }
-
-    @BeforeEach
-    void beforeEach() {
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS.getJvmSystemProperty());
-        step("Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'", () -> {
-            getClient().entandoResources().registerCustomResourceDefinition("testrources.test.org.crd.yaml");
-
-        });
+        attachKubernetesState();
     }
 
     @Test
@@ -230,9 +218,10 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
                             .endMetadata().addToData("my.config.key", "my.value").build());
                     attachKubernetesResource("Secret", getClient().secrets().loadSecret(entandoCustomResource, "my-secret"));
                 });
-        final BasicNestedDeployableContainerFluent container = deployable.withNewContainer().withDockerImageInfo("test/my-image:6.3.2")
-                .withPrimaryPort(8081)
-                .withNameQualifier("server");
+        final BasicDeployableContainer container = deployable
+                .withContainer(new BasicDeployableContainer().withDockerImageInfo("test/my-image:6.3.2")
+                        .withPrimaryPort(8081)
+                        .withNameQualifier("server"));
         step("and a basic DeployableContainer with the some custom environment variables set:", () -> {
             step("the environment variable MY_VAR=my-val",
                     () -> container.withEnvVar("MY_VAR", "my-val")
@@ -243,14 +232,13 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
             step("and environment variable reference MY_CONFIG_VAR from the Secret named 'my-config' using the key 'my.config.key'",
                     () -> container.withEnvVarFromConfigMap("MY_CONFIG_VAR", "my-config", "my.config.key")
             );
-            container.done();
             attachSpiResource("Container", container);
         });
         step("When the controller processes a new TestResource", () -> {
             attachKubernetesResource("TestResource", entandoCustomResource);
-            runControllerAgainst(entandoCustomResource);
+            runControllerAgainstCustomResource(entandoCustomResource);
         });
-        step("Then the container on the Deployment that was created reflects both the environment variable and the environment variable "
+        step("Then a Deployment was created with a Container that reflects both the environment variable and the environment variable "
                         + "reference",
                 () -> {
                     final Deployment deployment = getClient().deployments()
@@ -267,7 +255,7 @@ class ProcessBasicDeployableTest implements ControllerTestHelper, FluentTraversa
                                     .matches(theConfigMapKey("my-config", "my.config.key")));
                 });
         step("And all the environment variables referring to Secrets are resolved",
-                () -> verifyThatAllVariablesAreMapped(entandoCustomResource, client, getClient().deployments()
+                () -> verifyThatAllVariablesAreMapped(entandoCustomResource, getClient(), getClient().deployments()
                         .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource))));
 
     }

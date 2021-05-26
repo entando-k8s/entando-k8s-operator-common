@@ -21,14 +21,15 @@ import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakConnectionConfig;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 
-public class ConfigMapBasedKeycloakConnectionConfig implements KeycloakConnectionConfig {
+public class ConfigMapBasedSsoConnectionInfo implements SsoConnectionInfo {
 
     private final Secret adminSecret;
     private final ConfigMap configMap;
 
-    public ConfigMapBasedKeycloakConnectionConfig(Secret adminSecret, ConfigMap configMap) {
+    public ConfigMapBasedSsoConnectionInfo(Secret adminSecret, ConfigMap configMap) {
         this.adminSecret = adminSecret;
         this.configMap = configMap;
     }
@@ -51,6 +52,11 @@ public class ConfigMapBasedKeycloakConnectionConfig implements KeycloakConnectio
     @Override
     public String getExternalBaseUrl() {
         return configMap.getData().get(NameUtils.URL_KEY);
+    }
+
+    @Override
+    public String getDefaultRealm() {
+        return KeycloakName.ENTANDO_DEFAULT_KEYCLOAK_REALM;
     }
 
     //TODO derive thi from the ProvidedCapability service

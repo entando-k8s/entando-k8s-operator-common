@@ -25,17 +25,18 @@ import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningRe
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
 import org.entando.kubernetes.controller.spi.container.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
-import org.entando.kubernetes.controller.spi.container.DbAware;
+import org.entando.kubernetes.controller.spi.container.DbAwareContainer;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.HasHealthCommand;
 import org.entando.kubernetes.controller.spi.container.HasWebContext;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
-import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
-import org.entando.kubernetes.controller.spi.container.PersistentVolumeAware;
+import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
-import org.entando.kubernetes.controller.spi.container.TrustStoreAware;
+import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
+import org.entando.kubernetes.controller.spi.container.TrustStoreAwareContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;
@@ -52,11 +53,15 @@ public class ReflectionUtil {
             .of(CapabilityForResource.class, CapabilityProvisioningResult.class, ConfigurableResourceContainer.class,
                     DatabasePopulator.class,
                     DatabaseSchemaConnectionInfo.class,
-                    DatabaseConnectionInfo.class, DbAware.class, DbAwareDeployable.class, Deployable.class, DeployableContainer.class,
+                    DatabaseConnectionInfo.class, DbAwareContainer.class, DbAwareDeployable.class, Deployable.class,
+                    DeployableContainer.class,
                     ExternalService.class, HasHealthCommand.class, HasWebContext.class, IngressingContainer.class,
-                    IngressingDeployable.class, IngressingPathOnPort.class, KeycloakAwareContainer.class, ParameterizableContainer.class,
-                    PersistentVolumeAware.class, PublicIngressingDeployable.class, Secretive.class, SerializableDeploymentResult.class,
-                    ServiceBackingContainer.class, ServiceDeploymentResult.class, ServiceResult.class, TrustStoreAware.class);
+                    IngressingDeployable.class, IngressingPathOnPort.class, ParameterizableContainer.class,
+                    PersistentVolumeAwareContainer.class, PublicIngressingDeployable.class, Secretive.class,
+                    SerializableDeploymentResult.class,
+                    ServiceBackingContainer.class, ServiceDeploymentResult.class, ServiceResult.class,
+                    SsoAwareContainer.class, SsoConnectionInfo.class,
+                    TrustStoreAwareContainer.class);
 
     private ReflectionUtil() {
 

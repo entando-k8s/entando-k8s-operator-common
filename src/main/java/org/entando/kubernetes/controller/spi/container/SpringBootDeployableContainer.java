@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.spi.container;
 
+import static java.util.Optional.ofNullable;
+
 import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,8 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.model.common.DbmsVendor;
 
-public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareContainer, IngressingContainer, TrustStoreAware {
+public interface SpringBootDeployableContainer extends DbAwareContainer, SsoAwareContainer, IngressingContainer,
+        TrustStoreAwareContainer {
 
     Optional<DatabaseSchemaConnectionInfo> getDatabaseSchema();
 
@@ -59,8 +62,8 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareCon
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_USERNAME.name(), defaultEmbeddedVendor.getDefaultAdminUsername(), null));
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_PASSWORD.name(), defaultEmbeddedVendor.getDefaultAdminPassword(), null));
             String rootFolder = "/entando-data";
-            if (this instanceof PersistentVolumeAware) {
-                rootFolder = ((PersistentVolumeAware) this).getVolumeMountPath();
+            if (this instanceof PersistentVolumeAwareContainer) {
+                rootFolder = ((PersistentVolumeAwareContainer) this).getVolumeMountPath();
             }
             vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_URL.name(), defaultEmbeddedVendor.getConnectionStringBuilder()
                     .inFolder(rootFolder + "/databases")
@@ -73,13 +76,14 @@ public interface SpringBootDeployableContainer extends DbAware, KeycloakAwareCon
     Optional<DbmsVendor> getDbms();
 
     @Override
-    default List<EnvVar> getKeycloakVariables() {
-        List<EnvVar> vars = KeycloakAwareContainer.super.getKeycloakVariables();
-        KeycloakConnectionConfig keycloakDeployment = getKeycloakConnectionConfig();
-        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
-                keycloakDeployment.getExternalBaseUrl() + "/realms/" + getKeycloakRealmToUse(),
-                null));
-        String keycloakSecretName = KeycloakName.forTheClientSecret(getKeycloakClientConfig());
+    default List<EnvVar> getSsoVariables() {
+        List<EnvVar> vars = SsoAwareContainer.super.getSsoVariables();
+        ofNullable(getSsoConnectionConfig()).ifPresent(ssoConnectionInfo ->
+                vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
+                        ssoConnectionInfo.getExternalBaseUrl() + "/realms/" + getRealmToUse(),
+                        null)));
+
+        String keycloakSecretName = KeycloakName.forTheClientSecret(getSsoClientConfig());
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name(), null,
                 SecretUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_SECRET_KEY)));
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name(), null,

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.test.e2etest;
+package org.entando.kubernetes.test.common;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;

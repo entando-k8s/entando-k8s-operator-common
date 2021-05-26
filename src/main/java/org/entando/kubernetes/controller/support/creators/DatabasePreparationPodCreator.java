@@ -35,7 +35,7 @@ import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.DatabasePopulator;
 import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionInfo;
-import org.entando.kubernetes.controller.spi.container.DbAware;
+import org.entando.kubernetes.controller.spi.container.DbAwareContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.client.SecretClient;
@@ -94,18 +94,20 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
             DbAwareDeployable<?> deployable) {
         List<Container> result = new ArrayList<>();
 
-        deployable.getContainers().stream().filter(DbAware.class::isInstance).map(DbAware.class::cast).forEach(dbAware -> {
-            Optional<DatabasePopulator> databasePopulator = dbAware.getDatabasePopulator();
-            prepareContainersToCreateSchemas(secretClient, entandoImageResolver, dbAware, result);
-            databasePopulator
-                    .ifPresent(dbp -> result.add(prepareContainerToPopulateSchemas(entandoImageResolver, dbp, dbAware.getNameQualifier())));
-        });
+        deployable.getContainers().stream().filter(DbAwareContainer.class::isInstance).map(DbAwareContainer.class::cast)
+                .forEach(dbAware -> {
+                    Optional<DatabasePopulator> databasePopulator = dbAware.getDatabasePopulator();
+                    prepareContainersToCreateSchemas(secretClient, entandoImageResolver, dbAware, result);
+                    databasePopulator
+                            .ifPresent(dbp -> result
+                                    .add(prepareContainerToPopulateSchemas(entandoImageResolver, dbp, dbAware.getNameQualifier())));
+                });
         return result;
     }
 
     private void prepareContainersToCreateSchemas(SecretClient secretClient,
             EntandoImageResolver entandoImageResolver,
-            DbAware dbAware, List<Container> containerList) {
+            DbAwareContainer dbAware, List<Container> containerList) {
         for (DatabaseSchemaConnectionInfo dbSchemaInfo : dbAware.getSchemaConnectionInfo()) {
             containerList.add(buildContainerToCreateSchema(entandoImageResolver, dbSchemaInfo));
             createSchemaSecret(secretClient, dbSchemaInfo.getSchemaSecret());

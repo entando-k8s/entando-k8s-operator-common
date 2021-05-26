@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.container.KeycloakClientConfig;
+import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.KeycloakTestHelper;
 import org.entando.kubernetes.model.plugin.Permission;
@@ -97,14 +97,14 @@ class DefaultKeycloakClientTest implements FluentIntegrationTesting, KeycloakTes
         //And  I have ensured that a specific real is available
         kc.ensureRealm(MY_REALM);
         //And I have created a client
-        kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, EXISTING_CLIENT, EXISTING_CLIENT)
+        kc.prepareClientAndReturnSecret(new SsoClientConfig(MY_REALM, EXISTING_CLIENT, EXISTING_CLIENT)
                 .withRedirectUri("http://existingclient.domain.com/*")
                 .withRole(EXISTING_ROLE)
                 .withRole(EXISTING_ROLE)//To confirm there is no failure on duplicates
                 .withRole(EXISTING_ROLE)
         );
         //When I create the public client in this realm
-        kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
+        kc.prepareClientAndReturnSecret(new SsoClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
                 .withRedirectUri("http://test.domain.com/*")
                 .withWebOrigin("http://test.domain.com")
                 .withPermission(EXISTING_CLIENT, EXISTING_ROLE)
@@ -130,14 +130,14 @@ class DefaultKeycloakClientTest implements FluentIntegrationTesting, KeycloakTes
         //And  I have ensured that a specific real is available
         kc.ensureRealm(MY_REALM);
         //And I have created a client
-        kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, EXISTING_CLIENT, EXISTING_CLIENT)
+        kc.prepareClientAndReturnSecret(new SsoClientConfig(MY_REALM, EXISTING_CLIENT, EXISTING_CLIENT)
                 .withRedirectUri("http://existingclient.domain.com/*")
                 .withRole(EXISTING_ROLE)
                 .withRole(EXISTING_ROLE)//To confirm there is no failure on duplicates
                 .withRole(EXISTING_ROLE)
         );
         //And I create another client in this realm
-        kc.prepareClientAndReturnSecret(new KeycloakClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
+        kc.prepareClientAndReturnSecret(new SsoClientConfig(MY_REALM, MY_CLIENT, MY_CLIENT)
                 .withRedirectUri("http://test.domain.com/*")
                 .withWebOrigin("http://test.domain.com")
         );

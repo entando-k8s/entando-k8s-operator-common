@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
@@ -123,7 +122,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         return new IngressBuilder()
                 .withNewMetadata()
                 .withAnnotations(forNginxIngress(deployable))
-                .withName(entandoCustomResource.getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX)
+                .withName(deployable.getIngressName())
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .addToLabels(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName())
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(entandoCustomResource))

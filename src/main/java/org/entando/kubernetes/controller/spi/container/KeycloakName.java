@@ -37,7 +37,7 @@ public class KeycloakName {
         //because this is a utility class
     }
 
-    public static String forTheClientSecret(KeycloakClientConfig keycloakConfig) {
+    public static String forTheClientSecret(SsoClientConfig keycloakConfig) {
         return keycloakConfig.getClientId() + "-secret";
     }
 

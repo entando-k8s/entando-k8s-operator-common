@@ -17,23 +17,42 @@
 package org.entando.kubernetes.fluentspi;
 
 import java.util.Collections;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
+import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
+import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import picocli.CommandLine;
 
-public class ControllerFluent<N extends ControllerFluent<N>> implements Runnable {
+/*
+Classes to be implemented by the controller provider
+ */
+@CommandLine.Command()
+public class DatabaseConsumingControllerFluent<N extends DatabaseConsumingControllerFluent<N>> extends ControllerFluent<N> {
 
-    protected final KubernetesClientForControllers k8sClient;
-    protected final DeploymentProcessor deploymentProcessor;
-    protected DeployableFluent<?> deployable;
-    protected Class<? extends EntandoCustomResource> supportedClass;
+    private final CapabilityProvider capabilityProvider;
+    private DbAwareDeployableFluent<?> deployable;
+    private CapabilityRequirement capabilityRequirement;
 
-    public ControllerFluent(KubernetesClientForControllers k8sClient, DeploymentProcessor deploymentProcessor) {
-        this.k8sClient = k8sClient;
-        this.deploymentProcessor = deploymentProcessor;
+    public DatabaseConsumingControllerFluent(KubernetesClientForControllers k8sClient,
+            DeploymentProcessor deploymentProcessor,
+            CapabilityProvider capabilityProvider) {
+        super(k8sClient, deploymentProcessor);
+        this.capabilityProvider = capabilityProvider;
+    }
+
+    public N withDeployable(DeployableFluent<?> deployable) {
+        this.deployable = (DbAwareDeployableFluent<?>) deployable;
+        return thisAsN();
+    }
+
+    public N withDatabaseRequirement(CapabilityRequirement capabilityRequirement) {
+        this.capabilityRequirement = capabilityRequirement;
+        return thisAsN();
+
     }
 
     @Override
@@ -41,8 +60,11 @@ public class ControllerFluent<N extends ControllerFluent<N>> implements Runnable
         final EntandoCustomResource resourceToProcess = k8sClient.resolveCustomResourceToProcess(Collections.singleton(supportedClass));
         try {
             k8sClient.updatePhase(resourceToProcess, EntandoDeploymentPhase.STARTED);
+            final ProvidedDatabaseCapability databaseCapability = new ProvidedDatabaseCapability(
+                    this.capabilityProvider.provideCapability(resourceToProcess, capabilityRequirement, 30)
+            );
             final DefaultExposedDeploymentResult result = deploymentProcessor
-                    .processDeployable(deployable.withCustomResource(resourceToProcess), 60);
+                    .processDeployable(deployable.withProvidedDatabase(databaseCapability).withCustomResource(resourceToProcess), 60);
             k8sClient.updateStatus(resourceToProcess, result.getStatus());
             k8sClient.updatePhase(resourceToProcess, EntandoDeploymentPhase.SUCCESSFUL);
         } catch (Exception e) {
@@ -51,20 +73,5 @@ public class ControllerFluent<N extends ControllerFluent<N>> implements Runnable
             throw new CommandLine.ExecutionException(new CommandLine(this), e.getMessage());
         }
 
-    }
-
-    public N withDeployable(DeployableFluent<?> deployable) {
-        this.deployable = deployable;
-        return thisAsN();
-    }
-
-    public N withSupportedClass(Class<? extends EntandoCustomResource> supportedClass) {
-        this.supportedClass = supportedClass;
-        return thisAsN();
-    }
-
-    @SuppressWarnings("unchecked")
-    protected N thisAsN() {
-        return (N) this;
     }
 }
