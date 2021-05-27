@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
-import org.entando.kubernetes.controller.support.capability.CapabilityClient;
+import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.client.WaitingClient;
 import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.ClusterDouble;

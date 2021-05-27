@@ -20,7 +20,6 @@ import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -64,20 +63,13 @@ public class AbstractK8SResourceCreator {
     }
 
     protected Map<String, String> labelsFromResource(String nameQualifier) {
-        Map<String, String> labels = new ConcurrentHashMap<>();
+        Map<String, String> labels = labelsFromResource();
         labels.put(KubeUtils.DEPLOYMENT_LABEL_NAME, resolveName(nameQualifier, null));
-        resourceKindLabels(labels);
         return labels;
     }
 
     protected Map<String, String> labelsFromResource() {
-        Map<String, String> labels = new ConcurrentHashMap<>();
-        resourceKindLabels(labels);
-        return labels;
+        return ResourceUtils.labelsFromResource(this.entandoCustomResource);
     }
 
-    private void resourceKindLabels(Map<String, String> labels) {
-        labels.put(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName());
-        labels.put(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, entandoCustomResource.getKind());
-    }
 }

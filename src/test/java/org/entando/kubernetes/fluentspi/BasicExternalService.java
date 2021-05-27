@@ -14,26 +14,32 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.client;
+package org.entando.kubernetes.fluentspi;
 
-public interface SimpleK8SClient<T extends EntandoResourceClient> {
+import org.entando.kubernetes.controller.spi.deployable.ExternalService;
 
-    ServiceClient services();
+public class BasicExternalService implements ExternalService {
 
-    CapabilityClient capabilities();
+    private final String host;
+    private final int port;
 
-    IngressClient ingresses();
+    public BasicExternalService(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
 
-    DeploymentClient deployments();
+    @Override
+    public String getHost() {
+        return host;
+    }
 
-    PodClient pods();
+    @Override
+    public int getPort() {
+        return port;
+    }
 
-    PersistentVolumeClaimClient persistentVolumeClaims();
-
-    SecretClient secrets();
-
-    T entandoResources();
-
-    ServiceAccountClient serviceAccounts();
-
+    @Override
+    public boolean getCreateDelegateService() {
+        return true;
+    }
 }

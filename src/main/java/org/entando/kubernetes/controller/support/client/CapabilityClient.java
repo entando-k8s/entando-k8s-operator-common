@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.capability;
+package org.entando.kubernetes.controller.support.client;
 
 import java.util.Map;
 import java.util.Optional;

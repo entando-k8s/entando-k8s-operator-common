@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
+import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -33,14 +34,15 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.controller.spi.client.EntandoExecListener;
+import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind;
@@ -83,14 +85,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     }
 
-    private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
-
-    @Override
-    public BlockingQueue<EntandoExecListener> getExecListenerHolder() {
-        return execListenerHolder;
-    }
-
-    @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
         if (r != null) {
             this.getCluster().getResourceProcessor().processResource(getNamespace(r).getCustomResources(r.getKind()), r);
@@ -99,7 +93,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
+    public ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) throws TimeoutException {
         if (pod != null) {
             PodResource<Pod> podResource = new PodResourceDouble();
             return executeAndWait(podResource, containerName, timeoutSeconds, commands);
@@ -289,6 +283,11 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
                 return null;
         }
 
+    }
+
+    @Override
+    public List<Event> listEventsFor(EntandoCustomResource resource) {
+        return Collections.emptyList();
     }
 
     public void registerCustomResourceDefinition(String resourceName) throws IOException {

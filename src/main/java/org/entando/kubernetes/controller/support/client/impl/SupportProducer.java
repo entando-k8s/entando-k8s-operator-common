@@ -22,7 +22,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import javax.enterprise.inject.Produces;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.CommandStream;
-import org.entando.kubernetes.controller.support.capability.CapabilityClient;
+import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;

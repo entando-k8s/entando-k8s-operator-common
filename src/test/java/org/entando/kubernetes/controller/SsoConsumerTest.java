@@ -66,7 +66,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
 @ExtendWith(MockitoExtension.class)
-@Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure1"), @Tag("pre-deployment")})
+@Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure"), @Tag("pre-deployment")})
 @Feature("As a controller developer, I would like to request the OIDC capability so that I can use it to provide single sign on to my "
         + "users")
 @Issue("ENG-2284")

@@ -60,7 +60,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
 @ExtendWith(MockitoExtension.class)
-@Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure1"), @Tag("pre-deployment")})
+@Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure"), @Tag("pre-deployment")})
 @Feature("As a controller developer, I would like to request the Database capability so that I can deploy containers that use the database")
 @Issue("ENG-2284")
 @SourceLink("DatabaseConsumerTest.java")

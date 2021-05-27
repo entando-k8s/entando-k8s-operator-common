@@ -65,7 +65,7 @@ public class ProvidedDatabaseCapability extends AbstractServiceResult implements
 
     @Override
     public String getDatabaseName() {
-        return findStatus().getDerivedDeploymentParameters().get(DATABASE_NAME_PARAMETER);
+        return ofNullable(findStatus().getDerivedDeploymentParameters()).map(m -> m.get(DATABASE_NAME_PARAMETER)).orElse(null);
     }
 
     @Override

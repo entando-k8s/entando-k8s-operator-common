@@ -48,7 +48,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-@Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure1"), @Tag("pre-deployment")})
+@Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure"), @Tag("pre-deployment")})
 @Feature("As a controller developer, I would like to expose my service over HTTP so that others can access it")
 @Issue("ENG-2284")
 @SourceLink("ExposedServiceTest.java")

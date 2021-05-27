@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
+import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -24,13 +25,17 @@ import static org.hamcrest.Matchers.nullValue;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.assertj.core.api.Assertions;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -170,6 +175,54 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         //Then the current thread only proceeds once the pod has completed
         assertThat(PodResult.of(actual).getState(), is(State.COMPLETED));
         assertThat(PodResult.of(actual).hasFailed(), is(false));
+    }
+
+    @Test
+    @Disabled("Currently used for optimization only")
+    void testProbes() throws TimeoutException, IOException {
+        step("Given I have started a new Pod");
+        final Pod startedPod = this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())
+                .createOrReplace(new PodBuilder()
+                        .withNewMetadata()
+                        .withName("my-pod")
+                        .withNamespace(newTestResource().getMetadata().getNamespace())
+                        .addToLabels("pod-label", "123")
+                        .endMetadata()
+                        .withNewSpec()
+                        .addNewContainer()
+                        .withImage("centos/nginx-116-centos7")
+                        .withName("nginx")
+                        .withCommand("/usr/libexec/s2i/run")
+                        //                .withNewStartupProbe()
+                        //                .withNewExec()
+                        //                .withCommand("cat", "/tmp/started")
+                        //                .endExec()
+                        //                .withPeriodSeconds(5)
+                        //                .withFailureThreshold(10)
+                        //                .endStartupProbe()
+                        .withNewLivenessProbe()
+                        .withNewExec()
+                        .withCommand("cat", "/tmp/live")
+                        .endExec()
+                        .withInitialDelaySeconds(120)
+                        .withPeriodSeconds(5)
+                        .withFailureThreshold(1)
+                        .withSuccessThreshold(1)
+                        .endLivenessProbe()
+                        .withNewReadinessProbe()
+                        .withNewExec()
+                        .withCommand("cat", "/tmp/ready")
+                        .endExec()
+                        .withPeriodSeconds(5)
+                        .endReadinessProbe()
+                        .endContainer()
+                        .endSpec()
+                        .build());
+        //        getKubernetesClientForControllers().executeOnPod(startedPod, "nginx", 5, "touch /tmp/started");
+        getSimpleK8SClient().entandoResources().executeOnPod(startedPod, "nginx", 5, "touch /tmp/ready");
+        getSimpleK8SClient().entandoResources().executeOnPod(startedPod, "nginx", 5, "touch /tmp/live");
+        getSimpleK8SClient().entandoResources().executeOnPod(startedPod, "nginx", 5, "rm /tmp/live");
+        Assertions.assertThat(startedPod).isNotNull();
     }
 
     @Override

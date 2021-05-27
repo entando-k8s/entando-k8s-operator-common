@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.support.client.doubles;
 import io.fabric8.kubernetes.client.VersionInfo;
 import java.text.ParseException;
 import org.entando.kubernetes.controller.spi.capability.doubles.CapabilityClientDouble;
-import org.entando.kubernetes.controller.support.capability.CapabilityClient;
+import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.controller.support.client.PersistentVolumeClaimClient;

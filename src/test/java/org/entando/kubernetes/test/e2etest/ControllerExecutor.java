@@ -34,7 +34,6 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class ControllerExecutor {
@@ -69,8 +68,8 @@ public class ControllerExecutor {
 
     private void removeObsoleteControllerPods(EntandoCustomResource resource) {
         this.client.pods().removeAndWait(controllerNamespace, Map.of(
-                KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind(),
-                KubeUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace(),
+                ResourceUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind(),
+                ResourceUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace(),
                 resource.getKind(), resource.getMetadata().getName()));
     }
 
@@ -79,8 +78,8 @@ public class ControllerExecutor {
                 .withName(resource.getMetadata().getName() + "-deployer-" + NameUtils.randomNumeric(4).toLowerCase())
                 .withNamespace(this.controllerNamespace)
                 .addToOwnerReferences(ResourceUtils.buildOwnerReference(resource))
-                .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind())
-                .addToLabels(KubeUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace())
+                .addToLabels(ResourceUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind())
+                .addToLabels(ResourceUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace())
                 .addToLabels(resource.getKind(), resource.getMetadata().getName())
                 .endMetadata()
                 .withNewSpec()

@@ -18,15 +18,17 @@ package org.entando.kubernetes.controller.spi.client;
 
 import static java.lang.String.format;
 
+import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.dsl.ExecWatch;
-import io.fabric8.kubernetes.client.dsl.Execable;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
@@ -37,7 +39,6 @@ public interface KubernetesClientForControllers {
 
     String ENTANDO_CRD_NAMES_CONFIG_MAP = "entando-crd-names";
     String ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME = "entando-operator-config";
-    AtomicBoolean ENQUEUE_POD_WATCH_HOLDERS = new AtomicBoolean(false);
 
     void prepareConfig();
 
@@ -75,48 +76,35 @@ public interface KubernetesClientForControllers {
     HasMetadata loadStandardResource(String kind, String namespace, String name);
 
     @SuppressWarnings({"java:S106"})
-    default EntandoExecListener executeAndWait(PodResource<Pod> podResource, String containerName, int timeoutSeconds,
-            String... script) {
+    default ExecutionResult executeAndWait(PodResource<Pod> podResource, String containerName, int timeoutSeconds,
+            String... script) throws TimeoutException {
         StringBuilder sb = new StringBuilder();
         for (String s : script) {
             sb.append(s);
-            sb.append('\n');
+            sb.append(" || exit $?\n");
         }
-        sb.append("exit 0\n");
+        sb.append("exit $?\n");
         ByteArrayInputStream in = new ByteArrayInputStream(sb.toString().getBytes());
         try {
-            Object mutex = new Object();
-            synchronized (mutex) {
-                EntandoExecListener listener = new EntandoExecListener(mutex, timeoutSeconds);
-                if (ENQUEUE_POD_WATCH_HOLDERS.get()) {
-                    getExecListenerHolder().add(listener);//because it should never be full during tests. fail early.
-                }
-                final Execable<String, ExecWatch> execable = podResource.inContainer(containerName)
-                        .readingInput(in)
-                        .writingOutput(listener.getOutWriter())
-                        .redirectingError()
-                        .withTTY()
-                        .usingListener(listener);
-                listener.setExecable(execable);
-                execable.exec();
-                while (listener.shouldStillWait()) {
-                    mutex.wait(1000);
-                }
-                if (listener.hasFailed()) {
-                    throw new IllegalStateException(format("Command did not meet the wait condition within 20 seconds: %s", sb.toString()));
-                }
-                return listener;
-            }
+            final CompletableFuture<ExecutionResult> future = new CompletableFuture<>();
+            ExecutionResult listener = new ExecutionResult(future);
+            podResource.inContainer(containerName)
+                    .readingInput(in)
+                    .writingOutput(listener.getOutput())
+                    .writingError(listener.getOutput())
+                    .writingErrorChannel(listener.getErrorChannel())
+                    .withTTY()
+                    .usingListener(listener).exec();
+            return future.get(timeoutSeconds, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        } catch (ExecutionException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands);
+    List<Event> listEventsFor(EntandoCustomResource resource);
 
-    /**
-     * A getter for the an AtomicReference to the most recently constructed ExecListener for testing purposes.
-     */
-    BlockingQueue<EntandoExecListener> getExecListenerHolder();
+    ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) throws TimeoutException;
 }

@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.capability;
+package org.entando.kubernetes.controller.support.client.impl;
 
 import static java.lang.String.format;
 
@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
+import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.client.WaitingClient;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
@@ -69,8 +70,8 @@ public class DefaultCapabilityClient implements CapabilityClient, WaitingClient 
                     .withName(capability.getMetadata().getName())
                     .waitUntilCondition(providedCapability -> providedCapability.getStatus() != null
                                     && (providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.FAILED
-                                    || providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.SUCCESSFUL), 10,
-                            TimeUnit.MINUTES));
+                                    || providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.SUCCESSFUL), timeoutSeconds,
+                            TimeUnit.SECONDS));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("matching condition not found")) {
                 //NB!! keep an eye on this. It is an annoying implementation detail that we need to sync with

@@ -77,7 +77,7 @@ public class DeletionWaiter<
         if (name == null) {
             if (labels.isEmpty()) {
                 await().atMost(duration, timeUnit).ignoreExceptions().until(() -> {
-                    deleteIndividually(duration, timeUnit, this.operation.inNamespace(namespace).list());
+                    this.operation.inNamespace(namespace).delete();
                     return this.operation.inNamespace(namespace).list().getItems().isEmpty();
 
                 });

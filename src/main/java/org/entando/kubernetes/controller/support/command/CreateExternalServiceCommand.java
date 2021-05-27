@@ -133,7 +133,7 @@ public class CreateExternalServiceCommand {
         ObjectMetaBuilder metaBuilder = new ObjectMetaBuilder()
                 .withName(entandoCustomResource.getMetadata().getName() + "-" + NameUtils.DEFAULT_SERVICE_SUFFIX)
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
-                .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, entandoCustomResource.getKind())
+                .addToLabels(ResourceUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, entandoCustomResource.getKind())
                 .addToLabels(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName());
         metaBuilder = metaBuilder.withOwnerReferences(ResourceUtils.buildOwnerReference(this.entandoCustomResource));
         return metaBuilder.build();

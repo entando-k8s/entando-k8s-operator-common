@@ -14,26 +14,17 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.client;
+package org.entando.kubernetes.test.common;
 
-public interface SimpleK8SClient<T extends EntandoResourceClient> {
+public class ValueHolder<T> {
 
-    ServiceClient services();
+    private T value;
 
-    CapabilityClient capabilities();
+    public T get() {
+        return value;
+    }
 
-    IngressClient ingresses();
-
-    DeploymentClient deployments();
-
-    PodClient pods();
-
-    PersistentVolumeClaimClient persistentVolumeClaims();
-
-    SecretClient secrets();
-
-    T entandoResources();
-
-    ServiceAccountClient serviceAccounts();
-
+    public void set(T value) {
+        this.value = value;
+    }
 }

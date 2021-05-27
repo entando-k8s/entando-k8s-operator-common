@@ -21,6 +21,7 @@ import static java.util.Optional.ofNullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
@@ -34,14 +35,14 @@ import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
-import org.entando.kubernetes.controller.spi.client.EntandoExecListener;
+import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
@@ -60,7 +61,6 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
     protected final KubernetesClient client;
     protected ConfigMap crdNameMap;
-    private final BlockingQueue<EntandoExecListener> execListenerHolder = new ArrayBlockingQueue<>(15);
 
     public DefaultKubernetesClientForControllers(KubernetesClient client) {
         this.client = client;
@@ -86,12 +86,8 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                 .withName(KubernetesClientForControllers.ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME).fromServer().get();
     }
 
-    public BlockingQueue<EntandoExecListener> getExecListenerHolder() {
-        return execListenerHolder;
-    }
-
     @Override
-    public EntandoExecListener executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) {
+    public ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) throws TimeoutException {
         PodResource<Pod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName());
         return executeAndWait(podResource, containerName, timeoutSeconds, commands);
@@ -131,6 +127,11 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                         .get())
                 .orElseThrow(() -> new IllegalStateException(
                         "Resource kind '" + kind + "' not supported."));
+    }
+
+    @Override
+    public List<Event> listEventsFor(EntandoCustomResource resource) {
+        return client.v1().events().inAnyNamespace().withLabels(ResourceUtils.labelsFromResource(resource)).list().getItems();
     }
 
     protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
@@ -230,6 +231,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                 .withNewMetadata()
                 .withNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName() + "-" + NameUtils.randomNumeric(8))
+                .withLabels(ResourceUtils.labelsFromResource(customResource))
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
                 .endMetadata()
                 .withCount(1)

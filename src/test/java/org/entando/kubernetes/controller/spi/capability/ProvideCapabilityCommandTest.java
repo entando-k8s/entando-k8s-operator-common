@@ -43,10 +43,10 @@ import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
-import org.entando.kubernetes.controller.support.capability.CapabilityClient;
-import org.entando.kubernetes.controller.support.capability.ProvideCapabilityCommand;
+import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
+import org.entando.kubernetes.controller.support.command.ProvideCapabilityCommand;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
@@ -131,7 +131,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
     }
 
     @Test
-    void shouldFailWhenTheWatcherFailed() throws TimeoutException {
+    void shouldFailWhenTheCapabilityStatusPhaseIsFailed() throws TimeoutException {
         //Given I have an TestResource
         final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
         //with a cluster scoped capability requirement for a MYSQL server

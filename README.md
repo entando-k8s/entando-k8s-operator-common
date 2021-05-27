@@ -168,7 +168,7 @@ Scenario identifier: requestOidcCapabilityOnDemandAndConnectToIt
 
 Scenario identifier: requestOidcCapabilityOnDemandAndConnectToIt
 
-Today, most web applications utilize OIDC for single signon. You can request an OIDC capability and once again
+Today, most web applications utilize OIDC for single sign on. You can request an OIDC capability and once again
 the Entando Operator will find the correct Controller to forward you request to. Once the OIDC service has been
 made available to your Deployment, you can also create a Client ID and Client Secret on-demand. In Keycloak, 
 the Client Secret gets generated for you by Keycloak, but you can use the resulting Kubernetes Secret to configure
@@ -177,6 +177,44 @@ your Keycloak Client service account on other pre-existing Keycloak Clients. In 
 specify an alternative Realm if you would like. This is useful in scenarios 
 where you have to share a single Keycloak instance in a multi-tenant setup.
 
+## Step 6: Using more advanced Capability resolution options
+
+### Requesting a OIDC Capability on-demand
+
+Scenario identifier: requestOidcCapabilityOnDemandAndConnectToIt
+
+## Step 7: More advanced Capability resolution techniques.
+
+## Requesting a Capability to be shared at the Cluster level
+
+Scenario identifier: shouldProvideClusterScopeCapability
+
+## Requesting a Capability to be shared at the Namespace level
+
+Scenario identifier: shouldProvideNamespaceScopedCapability
+
+## Requesting a Capability to be shared at the Cluster level but using Labels for identification
+
+Scenario identifier: shouldProvideLabeledCapability
+
+## Requesting a Capability to be dedicated to the requesting resource
+
+Scenario identifier: shouldProvideDedicatedCapability
+
+## Requesting a Capability with a specific name and namespace
+
+Scenario identifier: shouldProvideSpecifiedCapability
+
+## Step 8: Implementing your own Capability Controller
+
+## Typical Directly Deployed Capability
+
+Scenario identifier: ???
+
+## A Capability that points to an externally provided service
+
+Scenario identifier: ???
+__
 
 ## Some more key interfaces
 Here are some of the key interfaces to implement by consumers 

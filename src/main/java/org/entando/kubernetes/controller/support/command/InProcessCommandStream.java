@@ -27,7 +27,6 @@ import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
-import org.entando.kubernetes.controller.support.capability.ProvideCapabilityCommand;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 

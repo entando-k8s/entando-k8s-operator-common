@@ -22,6 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Service;
+import java.io.IOException;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
@@ -66,7 +67,7 @@ class DefaultEntandoResourceClientTest extends AbstractSupportK8SIntegrationTest
     }
 
     @BeforeEach
-    void clearNamespaces() {
+    void clearNamespaces() throws IOException {
         deleteAll(getFabric8Client().configMaps());
         deleteAll(getFabric8Client().customResources(EntandoApp.class));
         deleteAll(getFabric8Client().customResources(EntandoKeycloakServer.class));

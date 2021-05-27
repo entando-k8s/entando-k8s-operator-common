@@ -38,7 +38,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 
-@Tags({@Tag("inter-process"), @Tag("pre-deployment"), @Tag("integration")})
+@Tags({@Tag("adapter"), @Tag("pre-deployment"), @Tag("integration")})
 class DefaultKeycloakClientTest implements FluentIntegrationTesting, KeycloakTestHelper {
 
     public static final String MY_REALM = EntandoOperatorTestConfig.calculateName("my-realm");

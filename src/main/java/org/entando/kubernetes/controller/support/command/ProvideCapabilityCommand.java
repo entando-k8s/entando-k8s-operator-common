@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.capability;
+package org.entando.kubernetes.controller.support.command;
 
 import static java.lang.String.format;
 
@@ -27,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
@@ -44,11 +45,16 @@ public class ProvideCapabilityCommand {
 
     public SerializedCapabilityProvisioningResult execute(HasMetadata forResource, CapabilityRequirement capabilityRequirement,
             int timeoutSeconds) throws TimeoutException {
-        final CapabilityScope requirementScope = capabilityRequirement.getScope().orElse(CapabilityScope.NAMESPACE);
-        Optional<ProvidedCapability> match = findCapability(forResource, capabilityRequirement, requirementScope);
-        match.ifPresent(c -> validateCapabilityCriteria(capabilityRequirement, requirementScope, c));
-        return loadProvisioningResult(
-                match.orElse(makeNewCapabilityAvailable(forResource, capabilityRequirement, requirementScope, timeoutSeconds)));
+        try {
+            final CapabilityScope requirementScope = capabilityRequirement.getScope().orElse(CapabilityScope.NAMESPACE);
+            Optional<ProvidedCapability> match = findCapability(forResource, capabilityRequirement, requirementScope);
+            match.ifPresent(c -> validateCapabilityCriteria(capabilityRequirement, requirementScope, c));
+            return loadProvisioningResult(
+                    match.orElseGet(
+                            () -> makeNewCapabilityAvailable(forResource, capabilityRequirement, requirementScope, timeoutSeconds)));
+        } catch (TimeoutHolderException e) {
+            throw e.getCause();
+        }
     }
 
     private SerializedCapabilityProvisioningResult loadProvisioningResult(ProvidedCapability providedCapability) {
@@ -120,13 +126,17 @@ public class ProvideCapabilityCommand {
     }
 
     private ProvidedCapability makeNewCapabilityAvailable(HasMetadata forResource, CapabilityRequirement requiredCapability,
-            CapabilityScope requirementScope, int timeoutSeconds) throws TimeoutException {
-        final ProvidedCapability capabilityRequirement = buildCapabilityRequirementFor(forResource, requiredCapability);
-        final ProvidedCapability providedCapability = client.createAndWaitForCapability(capabilityRequirement, timeoutSeconds);
-        if (providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.FAILED) {
-            throw new EntandoControllerException("Could not provide capability");
+            CapabilityScope requirementScope, int timeoutSeconds) throws TimeoutHolderException {
+        try {
+            final ProvidedCapability capabilityRequirement = buildCapabilityRequirementFor(forResource, requiredCapability);
+            final ProvidedCapability providedCapability = client.createAndWaitForCapability(capabilityRequirement, timeoutSeconds);
+            if (providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.FAILED) {
+                throw new EntandoControllerException("Could not provide capability");
+            }
+            return findCapability(forResource, requiredCapability, requirementScope).orElseThrow(IllegalStateException::new);
+        } catch (TimeoutException e) {
+            throw new TimeoutHolderException(e);
         }
-        return findCapability(forResource, requiredCapability, requirementScope).orElseThrow(IllegalStateException::new);
     }
 
     private ProvidedCapability buildCapabilityRequirementFor(HasMetadata forResource, CapabilityRequirement capabilityRequirement) {
@@ -170,4 +180,15 @@ public class ProvideCapabilityCommand {
                 .getHypenatedName();
     }
 
+    private static class TimeoutHolderException extends RuntimeException {
+
+        public TimeoutHolderException(TimeoutException timeoutException) {
+            super(timeoutException);
+        }
+
+        @Override
+        public synchronized TimeoutException getCause() {
+            return (TimeoutException) super.getCause();
+        }
+    }
 }

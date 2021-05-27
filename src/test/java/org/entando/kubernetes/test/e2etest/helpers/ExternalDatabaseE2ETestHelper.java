@@ -30,11 +30,11 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.util.Collections;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
@@ -67,7 +67,7 @@ public class ExternalDatabaseE2ETestHelper extends
         deleteCommonPreviousState(namespace);
         client.pods().inNamespace(namespace).create(
                 new PodBuilder().withNewMetadata().withName("pg-test").addToLabels(resourceKind, null)
-                        .addToLabels(KubeUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resourceKind).endMetadata()
+                        .addToLabels(ResourceUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resourceKind).endMetadata()
                         .withNewSpec().addNewContainer()
                         .withName("pg-container")
                         .withImage("centos/postgresql-96-centos7:latest")
