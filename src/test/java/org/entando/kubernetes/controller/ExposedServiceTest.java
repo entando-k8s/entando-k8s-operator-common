@@ -41,6 +41,8 @@ import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.test.common.CertificateSecretHelper;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -72,6 +74,12 @@ public class ExposedServiceTest extends ControllerTestBase implements VariableRe
 
     public static class BasicIngressingContainer extends IngressingContainerFluent<BasicIngressingContainer> {
 
+    }
+
+    @AfterEach
+    @BeforeEach
+    void resetSystemPropertiesUsed() {
+        System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
     }
 
     @Override

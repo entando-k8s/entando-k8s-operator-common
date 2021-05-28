@@ -16,10 +16,16 @@
 
 package org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers;
 
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotFoundException;
+import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
+import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.admin.client.resource.RealmResource;
@@ -59,6 +65,27 @@ public interface KeycloakTestHelper {
             }
             throw e;
         }
+    }
+
+    default DefaultKeycloakClient connectToExistingKeycloak() {
+        DefaultKeycloakClient keycloakClient = new DefaultKeycloakClient();
+        if (EntandoOperatorTestConfig.lookupProperty(EntandoOperatorTestConfig.ENTANDO_TEST_KEYCLOAK_BASE_URL).isEmpty()) {
+            try (DefaultKubernetesClient defaultKubernetesClient = new DefaultKubernetesClient()) {
+                final Secret secret = defaultKubernetesClient.secrets().inNamespace("jx").withName("entando-jx-common-secret").get();
+                keycloakClient.login(decodeData(secret, "keycloak.base.url"),
+                        decodeData(secret, "keycloak.admin.user"),
+                        decodeData(secret, "keycloak.admin.password"));
+            }
+        } else {
+            keycloakClient.login(EntandoOperatorTestConfig.getKeycloakBaseUrl(),
+                    EntandoOperatorTestConfig.getKeycloakUser(),
+                    EntandoOperatorTestConfig.getKeycloakPassword());
+        }
+        return keycloakClient;
+    }
+
+    private String decodeData(Secret secret, String o) {
+        return new String(Base64.getDecoder().decode(secret.getData().get(o)), StandardCharsets.UTF_8);
     }
 
     Keycloak getKeycloak();

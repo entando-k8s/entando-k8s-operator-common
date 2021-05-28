@@ -38,7 +38,6 @@ import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningRe
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.container.ProvidedSsoCapability;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer.SpringProperty;
@@ -200,24 +199,6 @@ public class SsoConsumerTest extends ControllerTestBase implements VariableRefer
                         .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource))));
         attachKubernetesState();
 
-    }
-
-    private void verifySpringJdbcVars(String schemaSecret, Container populator) {
-        step(format("the DB schema credentials from the Secret '%s'", schemaSecret), () -> {
-            assertThat(theVariableReferenceNamed(SpringProperty.SPRING_DATASOURCE_USERNAME.name()).on(populator))
-                    .matches(theSecretKey(schemaSecret,
-                            SecretUtils.USERNAME_KEY));
-            assertThat(theVariableReferenceNamed(SpringProperty.SPRING_DATASOURCE_PASSWORD.name()).on(populator))
-                    .matches(theSecretKey(schemaSecret,
-                            SecretUtils.PASSSWORD_KEY));
-        });
-
-        final String jdbcUrl = "jdbc:postgresql://" + NameUtils
-                .standardServiceName(this.capabilityProvisioningResult.getProvidedCapability())
-                + ".my-namespace.svc.cluster.local:5432/my_db";
-        step(format("and the JDBC connection string '%s'", jdbcUrl),
-                () -> assertThat(theVariableNamed(SpringProperty.SPRING_DATASOURCE_URL.name()).on(populator)).isEqualTo(
-                        jdbcUrl));
     }
 
 }

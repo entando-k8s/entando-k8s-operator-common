@@ -40,6 +40,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -76,6 +78,12 @@ class PersistentDeploymentTest extends ControllerTestBase implements FluentTrave
     }
 
     private BasicDeployable deployable;
+
+    @BeforeEach
+    @AfterEach
+    void resetSystemPropertiesUsed() {
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty());
+    }
 
     @Override
     public Runnable createController(

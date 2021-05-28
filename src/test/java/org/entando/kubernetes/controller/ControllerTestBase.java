@@ -20,9 +20,7 @@ import static io.qameta.allure.Allure.step;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.test.common.ControllerTestHelper;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -33,10 +31,6 @@ public abstract class ControllerTestBase implements ControllerTestHelper {
 
     @BeforeEach
     final void beforeEach() {
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS.getJvmSystemProperty());
-        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE.getJvmSystemProperty());
-        System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
-
         step("Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'", () -> {
             getClient().entandoResources().registerCustomResourceDefinition("testrources.test.org.crd.yaml");
 

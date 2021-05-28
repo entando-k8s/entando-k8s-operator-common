@@ -20,10 +20,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.Is.is;
 
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
@@ -152,25 +148,9 @@ class DefaultKeycloakClientTest implements FluentIntegrationTesting, KeycloakTes
 
     private DefaultKeycloakClient prepareKeycloak() {
         if (keycloakClient == null) {
-            keycloakClient = new DefaultKeycloakClient();
-            if (EntandoOperatorTestConfig.lookupProperty(EntandoOperatorTestConfig.ENTANDO_TEST_KEYCLOAK_BASE_URL).isEmpty()) {
-                try (DefaultKubernetesClient defaultKubernetesClient = new DefaultKubernetesClient()) {
-                    final Secret secret = defaultKubernetesClient.secrets().inNamespace("jx").withName("entando-jx-common-secret").get();
-                    keycloakClient.login(decodeData(secret, "keycloak.base.url"),
-                            decodeData(secret, "keycloak.admin.user"),
-                            decodeData(secret, "keycloak.admin.password"));
-                }
-            } else {
-                keycloakClient.login(EntandoOperatorTestConfig.getKeycloakBaseUrl(),
-                        EntandoOperatorTestConfig.getKeycloakUser(),
-                        EntandoOperatorTestConfig.getKeycloakPassword());
-            }
+            this.keycloakClient = connectToExistingKeycloak();
         }
         return keycloakClient;
-    }
-
-    private String decodeData(Secret secret, String o) {
-        return new String(Base64.getDecoder().decode(secret.getData().get(o)), StandardCharsets.UTF_8);
     }
 
     @Override

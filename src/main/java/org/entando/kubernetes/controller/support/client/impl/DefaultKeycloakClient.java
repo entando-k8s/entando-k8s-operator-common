@@ -265,7 +265,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
         findClient(config).ifPresent(client -> updateClientWithId(config, client.getId()));
     }
 
-    Keycloak getKeycloak() {
+    public Keycloak getKeycloak() {
         return keycloak;
     }
 

@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.test.e2etest.helpers;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.impl.DefaultIngressClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
@@ -152,18 +150,5 @@ public class E2ETestHelperBase<R extends EntandoBaseCustomResource<?, EntandoCus
         return KeycloakName.ofTheRealm(spec::getKeycloakToUse);
     }
 
-    public DoneableConfigMap loadDefaultCapabilitiesConfigMap() {
-        Resource<ConfigMap> resource = client.configMaps().inNamespace(client.getNamespace())
-                .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME);
-        DoneableConfigMap configMap;
-        if (resource.get() == null) {
-            configMap = new DoneableConfigMap(resource::create).withNewMetadata()
-                    .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME)
-                    .withNamespace(client.getNamespace()).endMetadata();
-        } else {
-            configMap = new DoneableConfigMap(resource.get(), resource::patch);
-        }
-        return configMap;
-    }
 }
 

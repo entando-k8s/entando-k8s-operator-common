@@ -38,7 +38,6 @@ public final class KubeUtils {
     public static final String JOB_KIND_LABEL_NAME = "jobKind";
     public static final String DEPLOYMENT_QUALIFIER_LABEL_NAME = "deploymentQualifier";
     public static final String ENTANDO_RESOURCE_ACTION = "entando.resource.action";
-    public static final String ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME = "entando-operator-default-capabilities-config-map";
     public static final String JOB_KIND_DB_PREPARATION = "db-preparation-job";
     public static final String DEPLOYMENT_LABEL_NAME = "deployment";
 

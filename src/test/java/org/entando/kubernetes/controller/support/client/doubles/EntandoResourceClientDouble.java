@@ -16,8 +16,6 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
-import static java.lang.String.format;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -26,20 +24,16 @@ import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
@@ -47,27 +41,16 @@ import org.entando.kubernetes.controller.spi.client.KubernetesClientForControlle
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
-import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
-import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
-import org.entando.kubernetes.controller.support.client.ConfigMapBasedSsoConnectionInfo;
-import org.entando.kubernetes.controller.support.client.DoneableConfigMap;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
-import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.InternalServerStatus;
-import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
-import org.entando.kubernetes.test.common.DatabaseDeploymentResult;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
@@ -163,49 +146,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
-    public Optional<DatabaseConnectionInfo> findExternalDatabase(EntandoCustomResource resource, DbmsVendor vendor) {
-        NamespaceDouble namespace = getNamespace(resource);
-        Optional<EntandoDatabaseService> first = namespace.getCustomResources(EntandoDatabaseService.class).values().stream()
-                .filter(entandoDatabaseService -> entandoDatabaseService.getSpec().getDbms().orElse(DbmsVendor.POSTGRESQL) == vendor)
-                .findFirst();
-        return first.map(edb -> new DatabaseDeploymentResult(namespace.getService(NameUtils.standardServiceName(edb)), edb));
-    }
-
-    @Override
-    public SsoConnectionInfo findKeycloak(EntandoCustomResource resource, KeycloakPreference keycloakPreference) {
-        Optional<ResourceReference> keycloakToUse = determineKeycloakToUse(resource, keycloakPreference);
-        String secretName = keycloakToUse.map(KeycloakName::forTheAdminSecret)
-                .orElse(KeycloakName.DEFAULT_KEYCLOAK_ADMIN_SECRET);
-        String configMapName = keycloakToUse.map(KeycloakName::forTheConnectionConfigMap)
-                .orElse(KeycloakName.DEFAULT_KEYCLOAK_CONNECTION_CONFIG);
-        String configMapNamespace = keycloakToUse
-                .map(resourceReference -> resourceReference.getNamespace().orElseThrow(IllegalStateException::new))
-                .orElse(CONTROLLER_NAMESPACE);
-
-        Secret secret = getNamespace(CONTROLLER_NAMESPACE).getSecret(secretName);
-        ConfigMap configMap = getNamespace(configMapNamespace).getConfigMap(configMapName);
-        if (secret == null) {
-            throw new IllegalStateException(
-                    format("Could not find the Keycloak secret %s in namespace %s", secretName, CONTROLLER_NAMESPACE));
-        }
-        if (configMap == null) {
-            throw new IllegalStateException(
-                    format("Could not find the Keycloak configMap %s in namespace %s", configMapName, configMapNamespace));
-        }
-        return new ConfigMapBasedSsoConnectionInfo(secret, configMap);
-    }
-
-    @Override
-    public Optional<EntandoKeycloakServer> findKeycloakInNamespace(EntandoCustomResource peerInNamespace) {
-        Collection<EntandoKeycloakServer> keycloakServers = getNamespace(peerInNamespace).getCustomResources(EntandoKeycloakServer.class)
-                .values();
-        if (keycloakServers.size() == 1) {
-            return keycloakServers.stream().findAny();
-        }
-        return Optional.empty();
-    }
-
-    @Override
     public ExposedService loadExposedService(EntandoCustomResource resource) {
         NamespaceDouble namespace = getNamespace(resource);
         Service service = namespace.getService(
@@ -213,27 +153,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         Ingress ingress = namespace.getIngress(
                 resource.getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
         return new ExposedService(service, ingress);
-    }
-
-    @Override
-    public DoneableConfigMap loadDefaultCapabilitiesConfigMap() {
-        ConfigMap configMap = getNamespace(CONTROLLER_NAMESPACE)
-                .getConfigMap(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME);
-        if (configMap == null) {
-            return new DoneableConfigMap(item -> {
-                getNamespace(CONTROLLER_NAMESPACE).putConfigMap(item);
-                return item;
-            })
-                    .withNewMetadata()
-                    .withName(KubeUtils.ENTANDO_OPERATOR_DEFAULT_CAPABILITIES_CONFIGMAP_NAME)
-                    .withNamespace(CONTROLLER_NAMESPACE)
-                    .endMetadata()
-                    .addToData(new HashMap<>());
-        }
-        return new DoneableConfigMap(configMap, item -> {
-            getNamespace(CONTROLLER_NAMESPACE).putConfigMap(item);
-            return item;
-        });
     }
 
     @Override

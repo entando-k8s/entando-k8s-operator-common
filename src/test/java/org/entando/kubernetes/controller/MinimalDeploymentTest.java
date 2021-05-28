@@ -44,6 +44,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -83,6 +85,12 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
     }
 
     private BasicDeployable deployable;
+
+    @AfterEach
+    @BeforeEach
+    void resetSystemPropertiesUsed() {
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS.getJvmSystemProperty());
+    }
 
     @Override
     public Runnable createController(
