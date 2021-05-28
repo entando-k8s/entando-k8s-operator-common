@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -167,9 +168,10 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
                     .createOrPatchEntandoResource(newCapability("my-capability")));
         });
         step("Expect it to be resolved by name and namespace", () -> {
-            final ProvidedCapability capability = getClient().capabilities().providedCapabilityByName(MY_APP_NAMESPACE, "my-capability")
-                    .get();
-            attachResource("Resolved ProvidedCapability", capability);
+            final Optional<ProvidedCapability> actualCapability = getClient().capabilities()
+                    .providedCapabilityByName(MY_APP_NAMESPACE, "my-capability");
+            assertThat(actualCapability).isPresent();
+            attachResource("Resolved ProvidedCapability", actualCapability.get());
         });
     }
 

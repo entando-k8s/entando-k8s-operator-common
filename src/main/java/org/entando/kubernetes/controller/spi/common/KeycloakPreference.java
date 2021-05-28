@@ -19,7 +19,6 @@ package org.entando.kubernetes.controller.spi.common;
 import java.util.Optional;
 import org.entando.kubernetes.model.common.KeycloakToUse;
 
-@Deprecated(forRemoval = true)
 public interface KeycloakPreference {
 
     Optional<KeycloakToUse> getPreferredKeycloakToUse();

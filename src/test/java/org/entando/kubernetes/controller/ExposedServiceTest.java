@@ -54,8 +54,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @Feature("As a controller developer, I would like to expose my service over HTTP so that others can access it")
 @Issue("ENG-2284")
 @SourceLink("ExposedServiceTest.java")
-
-public class ExposedServiceTest extends ControllerTestBase implements VariableReferenceAssertions {
+class ExposedServiceTest extends ControllerTestBase implements VariableReferenceAssertions {
 
     private BasicIngressingDeployable deployable;
     private TestResource entandoCustomResource;

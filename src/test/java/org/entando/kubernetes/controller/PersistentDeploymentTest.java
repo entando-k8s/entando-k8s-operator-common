@@ -42,6 +42,7 @@ import org.entando.kubernetes.test.common.SourceLink;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -171,6 +172,7 @@ class PersistentDeploymentTest extends ControllerTestBase implements FluentTrave
     }
 
     @Test
+    @Disabled("TODO")
     @Description("Should create and mount PersistentVolumeClaims using defaults derived from the Entando Operator config properties")
     void createPersistentVolumeClaimUsingDefaults() {
 

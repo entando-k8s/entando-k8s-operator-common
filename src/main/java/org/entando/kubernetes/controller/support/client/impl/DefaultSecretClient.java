@@ -88,25 +88,11 @@ public class DefaultSecretClient implements SecretClient {
         }
     }
 
-    /**
-     * Loads configmap from controller namespace.
-     *
-     * @deprecated will be removed once all the downstream projects use the correct equivalents in EntandoResourceClient
-     */
-    @Override
-    @Deprecated(since = "6.3.2")
     public ConfigMap loadControllerConfigMap(String configMapName) {
         return client.configMaps().inNamespace(client.getNamespace())
                 .withName(configMapName).get();
     }
 
-    /**
-     * Overwrites configmap in controller namespace.
-     *
-     * @deprecated will be removed once all the downstream projects use the correct equivalents in EntandoResourceClient
-     */
-    @Deprecated(since = "6.3.2")
-    @Override
     public void overwriteControllerConfigMap(ConfigMap configMap) {
         try {
             configMap.getMetadata().setNamespace(client.getNamespace());

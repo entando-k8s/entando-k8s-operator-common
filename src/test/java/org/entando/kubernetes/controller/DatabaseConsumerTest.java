@@ -64,7 +64,7 @@ import picocli.CommandLine;
 @Feature("As a controller developer, I would like to request the Database capability so that I can deploy containers that use the database")
 @Issue("ENG-2284")
 @SourceLink("DatabaseConsumerTest.java")
-public class DatabaseConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
+class DatabaseConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
 
     public static final String MY_APP_SERVER_SECRET = "my-app-server-secret";
 

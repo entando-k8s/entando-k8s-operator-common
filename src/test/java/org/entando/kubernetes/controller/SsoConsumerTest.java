@@ -70,7 +70,7 @@ import picocli.CommandLine;
         + "users")
 @Issue("ENG-2284")
 @SourceLink("SsoConsumerTest.java")
-public class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
+class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
 
     public static final String GENERATED_SSO_CLIENT_SECRET = "SOME-ASDF-KEYCLOAK-SECRET";
 

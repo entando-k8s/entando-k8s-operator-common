@@ -172,7 +172,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                 getKubernetesClientForControllers().updateStatus(serializedEntandoResource, new ExposedServerStatus("my-webapp")));
         step("Then the updated status reflects on the SerializedEntandoResource", () -> {
             final SerializedEntandoResource actual = getKubernetesClientForControllers().reload(serializedEntandoResource);
-            assertTrue(actual.getStatus().forServerQualifiedBy("my-webapp").isPresent());
+            assertThat(actual.getStatus().forServerQualifiedBy("my-webapp")).isPresent();
             attachResource("TestResource", actual);
         });
         step("And a STATUS_CHANGE event has been issued to Kubernetes", () -> {
@@ -203,7 +203,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             attachResource("Opaque resource", serializedEntandoResource.get());
         });
         step("Then it reflects the same state as the original resource", () ->
-                assertThat(serializedEntandoResource.get().getSpec().get("replicas")).isEqualTo(numberOfReplicas));
+                assertThat(serializedEntandoResource.get().getSpec()).containsEntry("replicas", numberOfReplicas));
     }
 
     @Test
@@ -286,12 +286,12 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         });
         step("Then the the return code of the valid command is 0", () -> {
             assertThat(success.get().getOutputLines()).contains("hello world");
-            assertThat(success.get().getCode()).isEqualTo(0);
+            assertThat(success.get().getCode()).isZero();
         });
         step("Then the the return code of the invalid command is non-zero", () -> {
             assertThat(failure.get().getOutputLines()).contains("sh: asdfasdfasf: command not found");
             assertThat(failure.get().getOutputLines()).doesNotContain("hello world");
-            assertThat(failure.get().getCode()).isEqualTo(127);
+            assertThat(failure.get().getCode()).isNotZero();
         });
     }
 

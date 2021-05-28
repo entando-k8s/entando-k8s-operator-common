@@ -68,6 +68,9 @@
         <entando-k8s-custom-model.version>0.0.0-SNAPSHOT-PR-42-5</entando-k8s-custom-model.version>
         <preDeploymentTestGroups>pre-deployment</preDeploymentTestGroups>
         <postDeploymentTestGroups>none</postDeploymentTestGroups>
+        <aspectj.version>1.9.6</aspectj.version>
+        <allure.version>2.14.0</allure.version>
+        <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
     </properties>
     <issueManagement>
         <system>Github</system>
@@ -210,8 +213,80 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M1</version>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <skip>${skipPreDeploymentTests}</skip>
+                        <forkCount>1</forkCount>
+                        <testFailureIgnore>${ignoreAllFailures}</testFailureIgnore>
+                        <groups>${preDeploymentTestGroups}</groups>
+                        <classpathDependencyExcludes>
+                            <classpathDependencyExclude>org.jboss.slf4j:slf4j-jboss-logmanager
+                            </classpathDependencyExclude>
+                        </classpathDependencyExcludes>
+                        <argLine>${argLine} -Dfile.encoding=UTF-8 -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"</argLine>
+                        <systemPropertyVariables>
+                            <allure.results.directory>${project.build.directory}/allure-results
+                            </allure.results.directory>
+
+                            <junit.jupiter.extensions.autodetection.enabled>true
+                            </junit.jupiter.extensions.autodetection.enabled>
+                            <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                            <junit.jupiter.execution.parallel.config.strategy>dynamic
+                            </junit.jupiter.execution.parallel.config.strategy>
+                        </systemPropertyVariables>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.aspectj</groupId>
+                            <artifactId>aspectjweaver</artifactId>
+                            <version>${aspectj.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>prepare-agent</id>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <!--Bring it into core Maven build lifecycle for Sonar without needing the site phase-->
+                            <id>report</id>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>io.qameta.allure</groupId>
+                    <artifactId>allure-maven</artifactId>
+                    <version>2.14.0</version>
+                    <configuration>
+                        <reportVersion>${allure.version}</reportVersion>
+                        <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                            <phase>site</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 </project>

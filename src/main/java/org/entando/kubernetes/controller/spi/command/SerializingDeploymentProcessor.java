@@ -43,7 +43,6 @@ public class SerializingDeploymentProcessor implements DeploymentProcessor {
                 timeoutSeconds);
         SerializableDeploymentResult<?> serializedResult = DeserializationHelper.deserialize(entandoResourceClient, result);
         if (serializedResult.getStatus().hasFailed()) {
-            System.out.println(serializedResult.getStatus().getEntandoControllerFailure().getDetailMessage());
             throw new EntandoControllerException("Creation of Kubernetes resources has failed");
         }
         return deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),

@@ -138,9 +138,8 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
                                     + "'docker.io' specified",
                             () -> assertThat(thePrimaryContainerOn(deployment).getImage()).isEqualTo("docker.io/test/my-image:6.3.2"));
                     step("And the default resource limits of 256Mi of Memory and 0.5 CPU were specified", () -> {
-                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("memory").toString())
-                                .isEqualTo("256Mi");
-                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("cpu").toString()).isEqualTo("500m");
+                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("memory")).hasToString("256Mi");
+                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("cpu")).hasToString("500m");
                     });
                     step("And all the startupProbe, readinessProbe and livenessProve all verify that port 8081 is receiving connections",
                             () -> {

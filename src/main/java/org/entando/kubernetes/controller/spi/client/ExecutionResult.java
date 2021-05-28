@@ -56,7 +56,7 @@ public class ExecutionResult implements ExecListener {
     @SuppressWarnings("unchecked")
     public int getCode() {
         final List<String> strings = toLines(errorChannel);
-        if (strings.size() > 0) {
+        if (!strings.isEmpty()) {
             try {
                 final Map<String, Object> map = new ObjectMapper().readValue(strings.get(0), Map.class);
 

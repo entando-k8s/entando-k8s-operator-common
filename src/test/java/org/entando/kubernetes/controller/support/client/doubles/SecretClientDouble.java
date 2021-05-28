@@ -49,9 +49,6 @@ public class SecretClientDouble extends AbstractK8SClientDouble implements Secre
     }
 
     @Override
-    //Will remove once we have propagate latest version to all downstream projects
-    @SuppressWarnings("deprecated")
-    @Deprecated
     public ConfigMap loadControllerConfigMap(String configMapName) {
         return getNamespace(CONTROLLER_NAMESPACE).getConfigMap(configMapName);
     }
