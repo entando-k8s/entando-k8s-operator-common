@@ -66,7 +66,7 @@
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <entando-k8s-custom-model.version>0.0.0-SNAPSHOT-PR-42-5</entando-k8s-custom-model.version>
-        <preDeploymentTestGroups>in-process</preDeploymentTestGroups>
+        <preDeploymentTestGroups>pre-deployment</preDeploymentTestGroups>
         <postDeploymentTestGroups>none</postDeploymentTestGroups>
         <aspectj.version>1.9.6</aspectj.version>
         <allure.version>2.14.0</allure.version>
