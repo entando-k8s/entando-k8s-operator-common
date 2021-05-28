@@ -51,7 +51,6 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
-import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
@@ -65,7 +64,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
 
     String DEFAULT_TLS_SECRET = "default-tls-secret";
     String MY_APP = "my-app";
-    String MY_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-namespace");
+    String MY_NAMESPACE = "my-namespace";
 
     default Optional<SimpleKeycloakClient> getKeycloakClient() {
         return java.util.Optional.empty();
