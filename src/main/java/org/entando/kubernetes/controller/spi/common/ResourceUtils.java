@@ -28,9 +28,6 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class ResourceUtils {
 
-    public static final String ENTANDO_RESOURCE_KIND_LABEL_NAME = "EntandoResourceKind";
-    public static final String ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME = "EntandoResourceNamespace";
-
     private ResourceUtils() {
 
     }
@@ -54,8 +51,8 @@ public class ResourceUtils {
     public static Map<String, String> labelsFromResource(EntandoCustomResource entandoCustomResource) {
         Map<String, String> labels = new ConcurrentHashMap<>();
         labels.put(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName());
-        labels.put(ENTANDO_RESOURCE_KIND_LABEL_NAME, entandoCustomResource.getKind());
-        labels.put(ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, entandoCustomResource.getMetadata().getNamespace());
+        labels.put(LabelNames.RESOURCE_KIND.getName(), entandoCustomResource.getKind());
+        labels.put(LabelNames.RESOURCE_NAMESPACE.getName(), entandoCustomResource.getMetadata().getNamespace());
         labels.putAll(ofNullable(entandoCustomResource.getMetadata().getLabels()).orElse(Collections.emptyMap()));
         return labels;
     }

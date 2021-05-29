@@ -32,7 +32,6 @@ import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.support.client.ConfigMapBasedSsoConnectionInfo;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.entando.kubernetes.model.app.EntandoAppBuilder;
@@ -50,24 +49,12 @@ import org.entando.kubernetes.model.plugin.PluginSecurityLevel;
 
 public interface InProcessTestData {
 
-    String DEPLOYMENT_LABEL_NAME = KubeUtils.DEPLOYMENT_LABEL_NAME;
-    String ENTANDO_PLUGIN_LABEL_NAME = "EntandoPlugin";
-    String ENTANDO_APP_LABEL_NAME = "EntandoApp";
-    String ENTANDO_CLUSTER_INFRASTRUCTURE_LABEL_NAME = "EntandoClusterInfrastructure";
-    String KEYCLOAK_SERVER_LABEL_NAME = "EntandoKeycloakServer";
-    String ENTANDO_APP_PLUGIN_LINK_LABEL_NAME = "EntandoAppPluginLink";
-    String KEYCLOAK_SECRET = "ASDFASDFAS";
-    String TCP = "TCP";
     String MY_KEYCLOAK = "my-keycloak";
     String MY_KEYCLOAK_ADMIN_USERNAME = "entando_keycloak_admin";
     String MY_KEYCLOAK_ADMIN_PASSWORD = MY_KEYCLOAK_ADMIN_USERNAME + "123";
     String TLS_SECRET = "tls-secret";
-    String MY_KEYCLOAK_TLS_SECRET = MY_KEYCLOAK + "-" + TLS_SECRET;
     String NAMESPACE = "namespace";
     String MY_KEYCLOAK_NAMESPACE = MY_KEYCLOAK + "-" + NAMESPACE;
-    String MY_CLUSTER_INFRASTRUCTURE = "my-eci";
-    String MY_CLUSTER_INFRASTRUCTURE_TLS_SECRET = MY_CLUSTER_INFRASTRUCTURE + "-" + TLS_SECRET;
-    String MY_CLUSTER_INFRASTRUCTURE_NAMESPACE = MY_CLUSTER_INFRASTRUCTURE + "-" + NAMESPACE;
     String MY_APP = "my-app";
     String MY_APP_TLS_SECRET = MY_APP + "-" + TLS_SECRET;
     String MY_APP_NAMESPACE = MY_APP + "-" + NAMESPACE;

@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,13 +32,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public final class KubeUtils {
 
-    public static final String UPDATED_ANNOTATION_NAME = "entando.org/updated";//To avoid  http 400s
-    public static final String PROCESSING_INSTRUCTION_ANNOTATION_NAME = "entando.org/processing-instruction";
-    public static final String JOB_KIND_LABEL_NAME = "jobKind";
-    public static final String DEPLOYMENT_QUALIFIER_LABEL_NAME = "deploymentQualifier";
     public static final String ENTANDO_RESOURCE_ACTION = "entando.resource.action";
     public static final String JOB_KIND_DB_PREPARATION = "db-preparation-job";
-    public static final String DEPLOYMENT_LABEL_NAME = "deployment";
 
     private static final Logger LOGGER = Logger.getLogger(KubeUtils.class.getName());
 
@@ -56,12 +50,6 @@ public final class KubeUtils {
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Could not create 'ready' file for {0}", name);
         }
-    }
-
-    public static OperatorProcessingInstruction resolveProcessingInstruction(EntandoCustomResource resource) {
-        return resolveAnnotation(resource, PROCESSING_INSTRUCTION_ANNOTATION_NAME)
-                .map(value -> OperatorProcessingInstruction.valueOf(value.toUpperCase(Locale.ROOT).replace("-", "_")))
-                .orElse(OperatorProcessingInstruction.NONE);
     }
 
     public static Optional<String> resolveAnnotation(EntandoCustomResource resource, String name) {

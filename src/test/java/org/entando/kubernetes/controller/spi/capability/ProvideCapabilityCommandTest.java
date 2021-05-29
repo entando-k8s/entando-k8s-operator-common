@@ -40,6 +40,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
@@ -160,7 +161,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withSelector(Collections.singletonMap("Environment", "Stage")).build();
         when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
-                        .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME, CapabilityScope.DEDICATED.getCamelCaseName())
+                        .addToLabels(LabelNames.CAPABILITY_PROVISION_SCOPE.getName(), CapabilityScope.DEDICATED.getCamelCaseName())
                         .build(), new CapabilityRequirement())));
         //When I attempt to fulfill the capability
         assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
@@ -180,9 +181,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .build();
         when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
-                        .addToLabels(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME,
+                        .addToLabels(LabelNames.CAPABILITY_PROVISION_SCOPE.getName(),
                                 CapabilityScope.LABELED.getCamelCaseName())
-                        .addToLabels(ProvidedCapability.IMPLEMENTATION_LABEL_NAME,
+                        .addToLabels(LabelNames.CAPABILITY_IMPLEMENTATION.getName(),
                                 StandardCapabilityImplementation.POSTGRESQL.getCamelCaseName())
                         .build(), new CapabilityRequirement())));
         //When I attempt to fulfill the capability

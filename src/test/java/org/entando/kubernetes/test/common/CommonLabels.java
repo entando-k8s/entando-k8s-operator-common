@@ -18,7 +18,7 @@ package org.entando.kubernetes.test.common;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.entando.kubernetes.controller.spi.common.ResourceUtils;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -26,15 +26,15 @@ public interface CommonLabels {
 
     default Map<String, String> dbPreparationJobLabels(EntandoCustomResource resource, String deploymentQualifier) {
         Map<String, String> labelsFromResource = labelsFromResource(resource);
-        labelsFromResource.put(KubeUtils.JOB_KIND_LABEL_NAME, KubeUtils.JOB_KIND_DB_PREPARATION);
-        labelsFromResource.put(KubeUtils.DEPLOYMENT_QUALIFIER_LABEL_NAME, deploymentQualifier);
+        labelsFromResource.put(LabelNames.JOB_KIND.getName(), KubeUtils.JOB_KIND_DB_PREPARATION);
+        labelsFromResource.put(LabelNames.DEPLOYMENT_QUALIFIER.getName(), deploymentQualifier);
         return labelsFromResource;
     }
 
     default Map<String, String> labelsFromResource(EntandoCustomResource resource) {
         Map<String, String> labels = new HashMap<>();
         labels.put(resource.getKind(), resource.getMetadata().getName());
-        labels.put(ResourceUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind());
+        labels.put(LabelNames.RESOURCE_KIND.getName(), resource.getKind());
         return labels;
     }
 }

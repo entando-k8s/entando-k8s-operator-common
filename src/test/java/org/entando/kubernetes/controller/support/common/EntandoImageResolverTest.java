@@ -120,7 +120,7 @@ class EntandoImageResolverTest {
         //But I have an annotation that overrides the image by an org-aware repository identifier
         final SerializedEntandoResource resourceOfInterest = new SerializedEntandoResource();
         resourceOfInterest.setMetadata(new ObjectMetaBuilder()
-                .addToAnnotations(EntandoImageResolver.IMAGE_ANNOTATION_PREFIX + "test-entando-test-image",
+                .addToAnnotations(EntandoImageResolver.IMAGE_OVERRIDE_ANNOTATION_PREFIX + "test-entando-test-image",
                         "test.io/test-entando/test-image:6.1.0-SNAPSHOT")
                 .build());
         //when I resolve the image

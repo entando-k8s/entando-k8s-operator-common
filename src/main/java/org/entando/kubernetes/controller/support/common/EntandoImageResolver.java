@@ -27,7 +27,7 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class EntandoImageResolver {
 
-    public static final String IMAGE_ANNOTATION_PREFIX = "images.entando.org/";
+    public static final String IMAGE_OVERRIDE_ANNOTATION_PREFIX = "entando.org/image-override/";
     private final ConfigMap imageVersionsConfigMap;
     private final EntandoCustomResource resourceOfInterest;
 
@@ -51,8 +51,8 @@ public class EntandoImageResolver {
         //Then we look at the annotations in the resource (for testing purposes)
         if (resourceOfInterest != null && resourceOfInterest.getMetadata().getAnnotations() != null) {
             injectedImageUri = injectedImageUri.or(() -> resourceOfInterest.getMetadata().getAnnotations().entrySet().stream()
-                    .filter(entry -> entry.getKey().equals(IMAGE_ANNOTATION_PREFIX + dockerImageInfo.getRepository())
-                            || entry.getKey().equals(IMAGE_ANNOTATION_PREFIX + dockerImageInfo.getOrganizationAwareRepository()))
+                    .filter(entry -> entry.getKey().equals(IMAGE_OVERRIDE_ANNOTATION_PREFIX + dockerImageInfo.getRepository())
+                            || entry.getKey().equals(IMAGE_OVERRIDE_ANNOTATION_PREFIX + dockerImageInfo.getOrganizationAwareRepository()))
                     .map(Entry::getValue)
                     .findFirst());
 

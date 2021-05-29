@@ -16,29 +16,10 @@
 
 package org.entando.kubernetes.controller.support.common;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.util.HashMap;
-import java.util.Locale;
-import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
-import org.junit.jupiter.api.Test;
 
 @Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
 class KubeUtilsTest {
 
-    @Test
-    void testResolveInstruction() {
-        EntandoApp app = new EntandoApp();
-        assertThat(KubeUtils.resolveProcessingInstruction(app), is(OperatorProcessingInstruction.NONE));
-        app.getMetadata().setAnnotations(new HashMap<>());
-        assertThat(KubeUtils.resolveProcessingInstruction(app), is(OperatorProcessingInstruction.NONE));
-        app.getMetadata().getAnnotations().put(KubeUtils.PROCESSING_INSTRUCTION_ANNOTATION_NAME,
-                OperatorProcessingInstruction.IGNORE.name().toLowerCase(Locale.ROOT));
-        assertThat(KubeUtils.resolveProcessingInstruction(app), is(OperatorProcessingInstruction.IGNORE));
-        app.getMetadata().getAnnotations().remove(KubeUtils.PROCESSING_INSTRUCTION_ANNOTATION_NAME);
-        assertThat(KubeUtils.resolveProcessingInstruction(app), is(OperatorProcessingInstruction.NONE));
-    }
 }

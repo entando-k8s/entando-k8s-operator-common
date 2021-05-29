@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
@@ -161,7 +162,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
 
     private void waitForPod(SimpleK8SClient<?> k8sClient) {
         pod = k8sClient.pods()
-                .waitForPod(entandoCustomResource.getMetadata().getNamespace(), KubeUtils.DEPLOYMENT_LABEL_NAME, resolveName(deployable));
+                .waitForPod(entandoCustomResource.getMetadata().getNamespace(), LabelNames.DEPLOYMENT.getName(), resolveName(deployable));
         status.putPodPhase(pod.getMetadata().getName(), pod.getStatus().getPhase());
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }

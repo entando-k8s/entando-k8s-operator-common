@@ -22,6 +22,7 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;
@@ -133,7 +134,7 @@ public class CreateExternalServiceCommand {
         ObjectMetaBuilder metaBuilder = new ObjectMetaBuilder()
                 .withName(entandoCustomResource.getMetadata().getName() + "-" + NameUtils.DEFAULT_SERVICE_SUFFIX)
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
-                .addToLabels(ResourceUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, entandoCustomResource.getKind())
+                .addToLabels(LabelNames.RESOURCE_KIND.getName(), entandoCustomResource.getKind())
                 .addToLabels(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName());
         metaBuilder = metaBuilder.withOwnerReferences(ResourceUtils.buildOwnerReference(this.entandoCustomResource));
         return metaBuilder.build();

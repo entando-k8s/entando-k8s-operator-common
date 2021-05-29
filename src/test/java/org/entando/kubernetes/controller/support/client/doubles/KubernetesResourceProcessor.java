@@ -28,11 +28,13 @@ import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 
 public class KubernetesResourceProcessor {
@@ -40,7 +42,7 @@ public class KubernetesResourceProcessor {
     private final Map<String, Set<WatcherHolder<?>>> watcherHolders = new ConcurrentHashMap<>();
 
     public <T extends HasMetadata> T processResource(Map<String, T> existingMap, T newResourceState) {
-        populateGeneratedFields(newResourceState);
+        populateUid(newResourceState);
         validateResourceVersion(existingMap, newResourceState);
         T clone = clone(newResourceState);
         putClone(existingMap, clone);
@@ -90,14 +92,18 @@ public class KubernetesResourceProcessor {
                                 existingResource.getMetadata().getResourceVersion()));
             }
         }
+        newResourceState.getMetadata().setResourceVersion(String.valueOf((long) (Math.random() * 10000000L)));
+
     }
 
-    private <T extends HasMetadata> void populateGeneratedFields(T newResourceState) {
+    public Collection<Watcher<?>> getAllWatchers() {
+        return this.watcherHolders.values().stream().flatMap(Collection::stream).map(WatcherHolder::getWatcher)
+                .collect(Collectors.toList());
+    }
+
+    private <T extends HasMetadata> void populateUid(T newResourceState) {
         if (newResourceState.getMetadata().getUid() == null) {
             newResourceState.getMetadata().setUid(UUID.randomUUID().toString());
-        }
-        if (newResourceState.getMetadata().getResourceVersion() == null) {
-            newResourceState.getMetadata().setResourceVersion(String.valueOf((long) (Math.random() * 10000000L)));
         }
     }
 
@@ -203,6 +209,10 @@ public class KubernetesResourceProcessor {
 
         private boolean matchesNamespace(HasMetadata resource) {
             return this.namespace == null || this.namespace.equals(resource.getMetadata().getNamespace());
+        }
+
+        public Watcher<T> getWatcher() {
+            return watcher;
         }
     }
 

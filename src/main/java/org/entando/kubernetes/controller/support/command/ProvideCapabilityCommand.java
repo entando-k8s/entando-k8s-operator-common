@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
@@ -64,20 +65,20 @@ public class ProvideCapabilityCommand {
     private void validateCapabilityCriteria(CapabilityRequirement capabilityRequirement, CapabilityScope requirementScope,
             ProvidedCapability c) {
         if (!requirementScope.getCamelCaseName()
-                .equals(c.getMetadata().getLabels().get(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME))) {
+                .equals(c.getMetadata().getLabels().get(LabelNames.CAPABILITY_PROVISION_SCOPE.getName()))) {
             throw new IllegalArgumentException(
                     format("The capability %s was found, but its provision scope is %s instead of the requested %s scope",
                             capabilityRequirement.getCapability().getCamelCaseName(),
-                            c.getMetadata().getLabels().get(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME),
+                            c.getMetadata().getLabels().get(LabelNames.CAPABILITY_PROVISION_SCOPE.getName()),
                             requirementScope.getCamelCaseName()
                     ));
         }
         if (!capabilityRequirement.getImplementation().map(i -> i.getCamelCaseName()
-                .equals(c.getMetadata().getLabels().get(ProvidedCapability.IMPLEMENTATION_LABEL_NAME))).orElse(true)) {
+                .equals(c.getMetadata().getLabels().get(LabelNames.CAPABILITY_IMPLEMENTATION.getName()))).orElse(true)) {
             throw new IllegalArgumentException(
                     format("The capability %s was found, but its implementation is %s instead of the requested %s scope",
                             capabilityRequirement.getCapability().getCamelCaseName(),
-                            c.getMetadata().getLabels().get(ProvidedCapability.IMPLEMENTATION_LABEL_NAME),
+                            c.getMetadata().getLabels().get(LabelNames.CAPABILITY_IMPLEMENTATION.getName()),
                             requirementScope.getCamelCaseName()
                     ));
         }
@@ -115,12 +116,12 @@ public class ProvideCapabilityCommand {
 
     private Map<String, String> determineCapabilityLabels(CapabilityRequirement capabilityRequirement) {
         Map<String, String> result = new HashMap<>();
-        result.put(ProvidedCapability.CAPABILITY_LABEL_NAME, capabilityRequirement.getCapability().getCamelCaseName());
+        result.put(LabelNames.CAPABILITY.getName(), capabilityRequirement.getCapability().getCamelCaseName());
         //In the absence of implementation and scope, it is the Controller's responsibility to make the decions and populate the
         // ProvidedCapability's labels
-        capabilityRequirement.getImplementation().ifPresent(impl -> result.put(ProvidedCapability.IMPLEMENTATION_LABEL_NAME,
+        capabilityRequirement.getImplementation().ifPresent(impl -> result.put(LabelNames.CAPABILITY_IMPLEMENTATION.getName(),
                 impl.getCamelCaseName()));
-        capabilityRequirement.getScope().ifPresent(scope -> result.put(ProvidedCapability.CAPABILITY_PROVISION_SCOPE_LABEL_NAME,
+        capabilityRequirement.getScope().ifPresent(scope -> result.put(LabelNames.CAPABILITY_PROVISION_SCOPE.getName(),
                 scope.getCamelCaseName()));
         return result;
     }

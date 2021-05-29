@@ -25,13 +25,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.support.client.impl.DefaultIngressClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixtureRequest;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
@@ -111,9 +111,9 @@ public class E2ETestHelperBase<R extends EntandoBaseCustomResource<?, EntandoCus
 
     public ServicePodWaiter waitForServicePod(ServicePodWaiter mutex, String namespace, String deploymentName) {
         await().atMost(45, TimeUnit.SECONDS).ignoreExceptions().until(
-                () -> client.pods().inNamespace(namespace).withLabel(KubeUtils.DEPLOYMENT_LABEL_NAME, deploymentName).list()
+                () -> client.pods().inNamespace(namespace).withLabel(LabelNames.DEPLOYMENT.getName(), deploymentName).list()
                         .getItems().size() > 0);
-        Pod pod = client.pods().inNamespace(namespace).withLabel(KubeUtils.DEPLOYMENT_LABEL_NAME, deploymentName).list()
+        Pod pod = client.pods().inNamespace(namespace).withLabel(LabelNames.DEPLOYMENT.getName(), deploymentName).list()
                 .getItems().get(0);
         mutex.throwException(IllegalStateException.class)
                 .waitOn(client.pods().inNamespace(namespace).withName(pod.getMetadata().getName()));

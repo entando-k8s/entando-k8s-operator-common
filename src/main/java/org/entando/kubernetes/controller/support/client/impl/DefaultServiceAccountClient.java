@@ -28,7 +28,6 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import java.sql.Timestamp;
 import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 /**
@@ -47,6 +46,7 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
  */
 public class DefaultServiceAccountClient implements ServiceAccountClient {
 
+    private static final String UPDATED_ANNOTATION_NAME = "entando.org/updated";//To avoid  http 400s
     private final KubernetesClient client;
 
     public DefaultServiceAccountClient(KubernetesClient client) {
@@ -65,7 +65,7 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
             } else {
                 return new DoneableServiceAccount(as.get(), as::patch).editMetadata()
                         //to ensure there is a state change so that the patch request does not get rejected
-                        .addToAnnotations(KubeUtils.UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+                        .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
                         .endMetadata();
             }
         } catch (KubernetesClientException e) {

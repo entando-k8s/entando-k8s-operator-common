@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
@@ -68,8 +69,8 @@ public class ControllerExecutor {
 
     private void removeObsoleteControllerPods(EntandoCustomResource resource) {
         this.client.pods().removeAndWait(controllerNamespace, Map.of(
-                ResourceUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind(),
-                ResourceUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace(),
+                LabelNames.RESOURCE_KIND.getName(), resource.getKind(),
+                LabelNames.RESOURCE_NAMESPACE.getName(), resource.getMetadata().getNamespace(),
                 resource.getKind(), resource.getMetadata().getName()));
     }
 
@@ -78,8 +79,8 @@ public class ControllerExecutor {
                 .withName(resource.getMetadata().getName() + "-deployer-" + NameUtils.randomNumeric(4).toLowerCase())
                 .withNamespace(this.controllerNamespace)
                 .addToOwnerReferences(ResourceUtils.buildOwnerReference(resource))
-                .addToLabels(ResourceUtils.ENTANDO_RESOURCE_KIND_LABEL_NAME, resource.getKind())
-                .addToLabels(ResourceUtils.ENTANDO_RESOURCE_NAMESPACE_LABEL_NAME, resource.getMetadata().getNamespace())
+                .addToLabels(LabelNames.RESOURCE_KIND.getName(), resource.getKind())
+                .addToLabels(LabelNames.RESOURCE_NAMESPACE.getName(), resource.getMetadata().getNamespace())
                 .addToLabels(resource.getKind(), resource.getMetadata().getName())
                 .endMetadata()
                 .withNewSpec()

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
@@ -85,8 +86,8 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
 
     private Map<String, String> buildUniqueLabels(String qualifier) {
         Map<String, String> labelsFromResource = labelsFromResource();
-        labelsFromResource.put(KubeUtils.JOB_KIND_LABEL_NAME, KubeUtils.JOB_KIND_DB_PREPARATION);
-        labelsFromResource.put(KubeUtils.DEPLOYMENT_QUALIFIER_LABEL_NAME, qualifier);
+        labelsFromResource.put(LabelNames.JOB_KIND.getName(), KubeUtils.JOB_KIND_DB_PREPARATION);
+        labelsFromResource.put(LabelNames.DEPLOYMENT_QUALIFIER.getName(), qualifier);
         return labelsFromResource;
     }
 
