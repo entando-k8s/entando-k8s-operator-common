@@ -81,7 +81,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
     @BeforeEach
     final void beforeEach() {
         step("Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'", () -> {
-            getClient().entandoResources().registerCustomResourceDefinition("testrources.test.org.crd.yaml");
+            getClient().entandoResources().registerCustomResourceDefinition("testresources.test.org.crd.yaml");
 
         });
     }

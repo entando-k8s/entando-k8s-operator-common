@@ -84,7 +84,8 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
 
     protected void prepareCrdNameMap() throws IOException {
         this.fabric8Client.apiextensions().v1beta1().customResourceDefinitions().createOrReplace(objectMapper.readValue(
-                Thread.currentThread().getContextClassLoader().getResource("testrources.test.org.crd.yaml"), CustomResourceDefinition.class)
+                Thread.currentThread().getContextClassLoader().getResource("testresources.test.org.crd.yaml"),
+                CustomResourceDefinition.class)
         );
         this.fabric8Client.configMaps().inNamespace(fabric8Client.getNamespace()).createOrReplace(new ConfigMapBuilder()
                 .withNewMetadata()

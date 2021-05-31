@@ -87,7 +87,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
     @BeforeEach
     void beforeEach() {
         step("Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'", () -> {
-            clientDouble.entandoResources().registerCustomResourceDefinition("testrources.test.org.crd.yaml");
+            clientDouble.entandoResources().registerCustomResourceDefinition("testresources.test.org.crd.yaml");
         });
     }
 

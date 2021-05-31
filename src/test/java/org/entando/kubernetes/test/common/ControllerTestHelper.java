@@ -23,16 +23,24 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.qameta.allure.Allure;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -219,6 +227,17 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
                     theVariableReferenceNamed(DATABASE_ADMIN_PASSWORD).on(resultingContainer).getSecretKeyRef().getName()).isEqualTo(
                     adminSecret);
         });
+    }
+
+    default void registerCrd(String s) throws IOException {
+        final URL resource = Thread.currentThread().getContextClassLoader().getResource(s);
+        final CustomResourceDefinition crd = getClient().getCluster().putCustomResourceDefinition(new ObjectMapper(new YAMLFactory())
+                .readValue(resource,
+                        CustomResourceDefinition.class));
+        final ConfigMap crdNameMap = getClient().secrets()
+                .loadControllerConfigMap(KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP);
+        crdNameMap.setData(Objects.requireNonNullElseGet(crdNameMap.getData(), ConcurrentHashMap::new));
+        crdNameMap.getData().put(crd.getSpec().getNames().getKind() + "." + crd.getSpec().getGroup(), crd.getMetadata().getName());
     }
 
 }
