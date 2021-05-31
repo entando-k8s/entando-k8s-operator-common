@@ -20,9 +20,11 @@ import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import javax.enterprise.inject.Produces;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
+import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
-import org.entando.kubernetes.controller.spi.command.CommandStream;
-import org.entando.kubernetes.controller.support.client.CapabilityClient;
+import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
+import org.entando.kubernetes.controller.spi.command.SerializingDeploymentProcessor;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -48,13 +50,14 @@ public class SupportProducer {
     }
 
     @Produces
-    public CapabilityClient capabilityClient() {
-        return getSimpleKubernetesClient().capabilities();
+    public DeploymentProcessor deploymentProcessor() {
+        return new SerializingDeploymentProcessor(entandoResourceClient(), new InProcessCommandStream(simpleK8SClient, keycloakClient()));
     }
 
     @Produces
-    public CommandStream serializingDeployCommand() {
-        return new InProcessCommandStream(getSimpleKubernetesClient(), new DefaultKeycloakClient());
+    public CapabilityProvider capabilityProvider() {
+        return new SerializingCapabilityProvider(entandoResourceClient(),
+                new InProcessCommandStream(getSimpleKubernetesClient(), new DefaultKeycloakClient()));
     }
 
     @Produces
