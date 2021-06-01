@@ -16,11 +16,10 @@
 
 package org.entando.kubernetes.controller.spi.container;
 
-import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
-import org.entando.kubernetes.model.common.ResourceReference;
-import org.entando.kubernetes.model.keycloakserver.EntandoKeycloakServer;
+import org.entando.kubernetes.model.common.KeycloakToUse;
 
 public class KeycloakName {
 
@@ -41,41 +40,10 @@ public class KeycloakName {
         return keycloakConfig.getClientId() + "-secret";
     }
 
-    public static String forTheConnectionConfigMap(EntandoKeycloakServer keycloakServer) {
-        return forTheConnectionConfigMap(keycloakServer.getMetadata().getNamespace(), keycloakServer.getMetadata().getName());
-    }
-
-    public static String forTheConnectionConfigMap(ResourceReference resourceReference) {
-        return forTheConnectionConfigMap(resourceReference.getNamespace().orElseThrow(IllegalArgumentException::new),
-                resourceReference.getName());
-    }
-
-    private static String forTheConnectionConfigMap(String namespace, String name) {
-        if (name == null) {
-            return DEFAULT_KEYCLOAK_CONNECTION_CONFIG; //for the ability to define this upfront without an Entando controller Keycloak
-        }
-        return format("keycloak-%s-%s-connection-config", namespace, name);
-    }
-
-    public static String forTheAdminSecret(ResourceReference resourceReference) {
-        return forTheAdminSecret(resourceReference.getNamespace().orElseThrow(IllegalArgumentException::new),
-                resourceReference.getName());
-    }
-
-    public static String forTheAdminSecret(EntandoKeycloakServer entandoKeycloakServer) {
-        return forTheAdminSecret(entandoKeycloakServer.getMetadata().getNamespace(), entandoKeycloakServer.getMetadata().getName());
-    }
-
-    private static String forTheAdminSecret(String namespace, String name) {
-        if (name == null) {
-            return DEFAULT_KEYCLOAK_ADMIN_SECRET; //for the ability to define this upfront without an Entando controller Keycloak
-        }
-        return format("keycloak-%s-%s-admin-secret", namespace, name);
-    }
-
-    public static String ofTheRealm(KeycloakPreference keycloakAwareSpec) {
-        return keycloakAwareSpec.getPreferredKeycloakToUse()
-                .map(keycloakToUse -> keycloakToUse.getRealm().orElse(ENTANDO_DEFAULT_KEYCLOAK_REALM))
+    public static String ofTheRealm(KeycloakPreference keycloakPreference) {
+        return keycloakPreference.getPreferredKeycloakToUse()
+                .flatMap(KeycloakToUse::getRealm)
+                .or(() -> ofNullable(keycloakPreference.getSsoConnectionInfo()).flatMap(SsoConnectionInfo::getDefaultRealm))
                 .orElse(ENTANDO_DEFAULT_KEYCLOAK_REALM);
     }
 

@@ -66,11 +66,10 @@ public class ProvidedSsoCapability implements SsoConnectionInfo {
     }
 
     @Override
-    public String getDefaultRealm() {
+    public Optional<String> getDefaultRealm() {
         return ofNullable(
                 capabilityResult.getProvidedCapability().getStatus().findCurrentServerStatus().orElseThrow(IllegalStateException::new)
-                        .getDerivedDeploymentParameters()).flatMap(map -> ofNullable(map.get(DEFAULT_REALM_PARAMETER)))
-                .orElse(KeycloakName.ENTANDO_DEFAULT_KEYCLOAK_REALM);
+                        .getDerivedDeploymentParameters()).flatMap(map -> ofNullable(map.get(DEFAULT_REALM_PARAMETER)));
     }
 
     @Override

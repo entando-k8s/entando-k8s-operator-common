@@ -16,31 +16,9 @@
 
 package org.entando.kubernetes.controller.spi.deployable;
 
-import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
-import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
-import org.entando.kubernetes.model.common.KeycloakToUse;
 
 public interface PublicIngressingDeployable<T extends ExposedDeploymentResult<T>> extends IngressingDeployable<T>, KeycloakPreference {
 
-    SsoConnectionInfo getSsoConnectionInfo();
-
-    Optional<KeycloakToUse> getPreferredKeycloakToUse();
-
-    default String getKeycloakRealmToUse() {
-        return KeycloakName.ofTheRealm(this);
-
-    }
-
-    default String getPublicClientIdToUse() {
-        return KeycloakName.ofThePublicClient(this);
-
-    }
-
-    @Override
-    default boolean isIngressRequired() {
-        return true;
-    }
 }

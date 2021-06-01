@@ -61,7 +61,6 @@ import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceC
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
@@ -73,6 +72,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
     String DEFAULT_TLS_SECRET = "default-tls-secret";
     String MY_APP = "my-app";
     String MY_NAMESPACE = "my-namespace";
+    String ENTANDO_RESOURCE_ACTION = "entando.resource.action";
 
     default Optional<SimpleKeycloakClient> getKeycloakClient() {
         return java.util.Optional.empty();
@@ -94,7 +94,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
 
     default void runControllerAgainstCustomResource(EntandoCustomResource entandoCustomResource) {
         attachKubernetesResource(entandoCustomResource.getKind(), entandoCustomResource);
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
+        System.setProperty(ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
                 entandoCustomResource.getMetadata().getName());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
@@ -114,7 +114,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
     }
 
     private void runControllerAgainstCapabilityAndUpdateStatus(ProvidedCapability providedCapability) {
-        System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
+        System.setProperty(ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
                 providedCapability.getMetadata().getName());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),

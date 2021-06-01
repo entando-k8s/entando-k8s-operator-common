@@ -108,7 +108,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
                     .withImplementation(
-                            StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                            StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.CLUSTER)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         });
         step("And there is a controller to process requests for the DBMS capability requested",
@@ -123,7 +123,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability).isNotNull();
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
-            assertThat(providedCapability.getSpec().getScope()).contains(CapabilityScope.CLUSTER);
+            assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.CLUSTER);
             assertThat(providedCapability.getServiceReference().getNamespace()).contains(AbstractK8SClientDouble.CONTROLLER_NAMESPACE);
         });
         step("And its name 'default-mysql-dbms-in-cluster' reflects the fact that it is the default MySQL DBMS capability in the cluster",
@@ -141,7 +141,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                         + " ProvidedCapability",
                 () -> {
                     final CapabilityRequirement requirement = new CapabilityRequirementBuilder()
-                            .withCapability(StandardCapability.DBMS).withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                            .withCapability(StandardCapability.DBMS).withResolutionScopePreference(CapabilityScope.CLUSTER)
                             .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
                     this.capabilityResult = capabilityProvider.provideCapability(forResource, requirement, 10);
                     assertThat(capabilityResult.getProvidedCapability().getMetadata().getUid())
@@ -161,7 +161,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
                     .withImplementation(StandardCapabilityImplementation.MYSQL)
-                    .withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                    .withResolutionScopePreference(CapabilityScope.CLUSTER)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             attachKubernetesResource("CapabilityRequirement", theCapabilityRequirement);
         });
@@ -183,7 +183,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
                     .withImplementation(StandardCapabilityImplementation.MYSQL)
-                    .withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                    .withResolutionScopePreference(CapabilityScope.CLUSTER)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
                     .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt());
@@ -197,7 +197,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
                     .withImplementation(StandardCapabilityImplementation.MYSQL)
-                    .withCapabilityRequirementScope(CapabilityScope.LABELED)
+                    .withResolutionScopePreference(CapabilityScope.LABELED)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                     .withSelector(Collections.singletonMap("Environment", "Stage")).build();
             attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
@@ -220,7 +220,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                             .withCapability(StandardCapability.DBMS)
                             .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
-                            .withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                            .withResolutionScopePreference(CapabilityScope.CLUSTER)
                             .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
                     doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
                             .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt());
@@ -234,7 +234,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
                     .withImplementation(StandardCapabilityImplementation.MYSQL)
-                    .withCapabilityRequirementScope(CapabilityScope.LABELED)
+                    .withResolutionScopePreference(CapabilityScope.LABELED)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                     .withSelector(Collections.singletonMap("Environment", "Stage")).build();
             attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
@@ -256,7 +256,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         step("With capability requirement that should be match using a Label Selector", () -> {
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
-                    .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
+                    .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.LABELED)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                     .withSelector(Collections.singletonMap("Environment", "Stage")).build();
             attachSpiResource("CapabilityRequirement", theCapabilityRequirement);
@@ -274,7 +274,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability).isNotNull();
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
-            assertThat(providedCapability.getSpec().getScope()).contains(CapabilityScope.LABELED);
+            assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.LABELED);
             assertThat(providedCapability.getMetadata().getLabels()).containsEntry("Environment", "Stage");
         });
         final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
@@ -285,7 +285,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         step("And a subsequent request for any DBMS Capability with the same Labels returns the same capability", () -> {
             this.capabilityResult = capabilityProvider.provideCapability(forResource, new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
-                    .withCapabilityRequirementScope(CapabilityScope.LABELED)
+                    .withResolutionScopePreference(CapabilityScope.LABELED)
                     .withSelector(Collections.singletonMap("Environment", "Stage")).build(), 10);
             assertThat(
                     this.capabilityResult.getProvidedCapability().getMetadata().getUid().equals(providedCapability.getMetadata().getUid()));
@@ -304,7 +304,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         step("With a labeled scoped capability requirement for a MYSQL server, but without a Selector specified", () -> {
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
-                    .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
+                    .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.LABELED)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         });
         step("Expect a request to fulfil this CapabilityRequirement to result in an IllegalArgumentException", () ->
@@ -326,7 +326,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                             .withCapability(StandardCapability.DBMS)
                             .withImplementation(StandardCapabilityImplementation.MYSQL)
-                            .withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
+                            .withResolutionScopePreference(CapabilityScope.SPECIFIED)
                             .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                             .withSpecifiedCapability(
                                     new ResourceReference("my-db-namespace", "my-db")).build();
@@ -344,7 +344,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     assertThat(providedCapability).isNotNull();
                     assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
                     assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
-                    assertThat(providedCapability.getSpec().getScope()).contains(CapabilityScope.SPECIFIED);
+                    assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.SPECIFIED);
                     assertThat(providedCapability.getMetadata().getNamespace()).isEqualTo("my-db-namespace");
                     assertThat(providedCapability.getServiceReference().getName()).isEqualTo("my-db-service");
                 });
@@ -353,7 +353,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                 () -> {
                     this.capabilityResult = capabilityProvider.provideCapability(forResource, new CapabilityRequirementBuilder()
                             .withCapability(StandardCapability.DBMS)
-                            .withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
+                            .withResolutionScopePreference(CapabilityScope.SPECIFIED)
                             .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                             .withSpecifiedCapability(new ResourceReference("my-db-namespace", "my-db"))
                             .build(), 10);
@@ -372,7 +372,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         step("And a 'SPECIFIED' CapabilityRequirement but with no specifiedCapability set", () -> {
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
-                    .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
+                    .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.SPECIFIED)
                     .withProvisioningStrategy(
                             CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             attachSpiResource("CapabilityRequirement", this.theCapabilityRequirement);
@@ -385,6 +385,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
     @Test
     @Description("Should provide a Capability in the same namespace when it is share with others in the namespace")
     void shouldProvideNamespaceScopedCapability() throws TimeoutException {
+
         step("Given I have an TestResource", () -> {
             this.forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
             attachKubernetesResource("TestResource", this.forResource);
@@ -393,7 +394,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             //with a cluster scoped capability requirement for a MYSQL server
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
-                    .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
+                    .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.NAMESPACE)
                     .withProvisioningStrategy(
                             CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
@@ -410,7 +411,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability).isNotNull();
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
-            assertThat(providedCapability.getSpec().getScope()).contains(CapabilityScope.NAMESPACE);
+            assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.NAMESPACE);
             assertTrue(providedCapability.getIngressReference().isEmpty());
             assertThat(providedCapability.getServiceReference().getNamespace()).contains(forResource.getMetadata().getNamespace());
         });
@@ -420,7 +421,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                         + " ProvidedCapability",
                 () -> {
                     final CapabilityRequirement requirement = new CapabilityRequirementBuilder()
-                            .withCapability(StandardCapability.DBMS).withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
+                            .withCapability(StandardCapability.DBMS).withResolutionScopePreference(CapabilityScope.NAMESPACE)
                             .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
                     this.capabilityResult = capabilityProvider.provideCapability(forResource, requirement, 10);
                     assertThat(capabilityResult.getProvidedCapability().getMetadata().getUid())
@@ -428,6 +429,50 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     attachKubernetesResource("Capability Requirement", requirement);
                 });
 
+    }
+
+    @Test
+    @Description("Should provide a previously created Capability in the same namespace")
+    void shouldResolvePreviouslyCreatedNamespaceScopedCapability() {
+
+        step("Given I have an TestResource", () -> {
+            this.forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+            attachKubernetesResource("TestResource", this.forResource);
+        });
+        step("And there is a controller to process requests for the DBMS capability requested",
+                () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
+                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+        step("And I have created a Capability to be usable by others in the same namespace", () -> {
+            //with a cluster scoped capability requirement for a MYSQL server
+            this.theCapabilityRequirement = new CapabilityRequirementBuilder()
+                    .withCapability(StandardCapability.DBMS)
+                    .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.NAMESPACE)
+                    .withProvisioningStrategy(
+                            CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
+            attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
+            this.capabilityResult = this.capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+            attachSpiResource("CapabilityProvisioningResult", this.capabilityResult);
+        });
+        step("When I request for my CapabilityRequirement to be fulfilled at either Cluster or Namespace level", () -> {
+            this.theCapabilityRequirement = new CapabilityRequirementBuilder()
+                    .withCapability(StandardCapability.DBMS)
+                    .withImplementation(StandardCapabilityImplementation.MYSQL)
+                    .withResolutionScopePreference(CapabilityScope.CLUSTER, CapabilityScope.NAMESPACE)
+                    .withProvisioningStrategy(
+                            CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
+            attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
+            this.capabilityResult = this.capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+            attachSpiResource("CapabilityProvisioningResult", this.capabilityResult);
+        });
+        final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
+        step("Then I receive a capability that meets my requirements", () -> {
+            assertThat(providedCapability).isNotNull();
+            assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
+            assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
+            assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.NAMESPACE);
+            assertTrue(providedCapability.getIngressReference().isEmpty());
+            assertThat(providedCapability.getServiceReference().getNamespace()).contains(forResource.getMetadata().getNamespace());
+        });
     }
 
     @Test
@@ -441,7 +486,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                 .withCapability(StandardCapability.DBMS)
                 .withImplementation(
-                        StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
+                        StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.DEDICATED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
@@ -456,7 +501,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability).isNotNull();
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
-            assertThat(providedCapability.getSpec().getScope()).contains(CapabilityScope.DEDICATED);
+            assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.DEDICATED);
             assertTrue(providedCapability.getIngressReference().isEmpty());
             assertThat(providedCapability.getServiceReference().getNamespace()).contains(forResource.getMetadata().getNamespace());
         });
@@ -468,7 +513,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                         + " ProvidedCapability",
                 () -> {
                     final CapabilityRequirement requirement = new CapabilityRequirementBuilder()
-                            .withCapability(StandardCapability.DBMS).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
+                            .withCapability(StandardCapability.DBMS).withResolutionScopePreference(CapabilityScope.DEDICATED)
                             .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
                     this.capabilityResult = capabilityProvider.provideCapability(forResource, requirement, 10);
                     assertThat(capabilityResult.getProvidedCapability().getMetadata().getUid())
@@ -487,7 +532,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         step("And I have a requirement for the Keycloak SSO capability", () -> {
             this.theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.SSO)
                     .withImplementation(
-                            StandardCapabilityImplementation.KEYCLOAK).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
+                            StandardCapabilityImplementation.KEYCLOAK).withResolutionScopePreference(CapabilityScope.DEDICATED)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
         });
@@ -504,7 +549,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability).isNotNull();
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.SSO);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.KEYCLOAK);
-            assertThat(providedCapability.getSpec().getScope()).contains(CapabilityScope.DEDICATED);
+            assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.DEDICATED);
             assertThat(providedCapability.getServiceReference().getNamespace()).contains(forResource.getMetadata().getNamespace());
             assertThat(providedCapability.getServiceReference().getName()).startsWith(forResource.getMetadata().getName() + "-sso-service");
             assertThat(providedCapability.getIngressReference().get().getNamespace()).contains(forResource.getMetadata().getNamespace());

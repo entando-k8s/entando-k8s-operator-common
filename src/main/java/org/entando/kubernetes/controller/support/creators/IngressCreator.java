@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.creators;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
+
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
@@ -23,7 +25,6 @@ import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
 import io.fabric8.kubernetes.api.model.extensions.IngressTLS;
 import io.fabric8.kubernetes.api.model.extensions.IngressTLSBuilder;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
     }
 
     private static boolean isTopLevelDomain(String host) {
-        try {
+        return ioSafe(() -> {
             //loaded from https://data.iana.org/TLD/tlds-alpha-by-domain.txt
             try (InputStream stream = Thread.currentThread().getContextClassLoader()
                     .getResourceAsStream("top-level-domains.txt");
@@ -83,10 +84,8 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                     line = r.readLine();
                 }
             }
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-        return false;
+            return false;
+        });
     }
 
     public boolean requiresDelegatingService(Service service, IngressingDeployable<?> ingressingDeployable) {

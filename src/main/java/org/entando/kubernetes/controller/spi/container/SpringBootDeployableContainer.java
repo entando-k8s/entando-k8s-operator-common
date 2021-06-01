@@ -78,7 +78,7 @@ public interface SpringBootDeployableContainer extends DbAwareContainer, SsoAwar
     @Override
     default List<EnvVar> getSsoVariables() {
         List<EnvVar> vars = SsoAwareContainer.super.getSsoVariables();
-        ofNullable(getSsoConnectionConfig()).ifPresent(ssoConnectionInfo ->
+        ofNullable(getSsoConnectionInfo()).ifPresent(ssoConnectionInfo ->
                 vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
                         ssoConnectionInfo.getExternalBaseUrl() + "/realms/" + getRealmToUse(),
                         null)));

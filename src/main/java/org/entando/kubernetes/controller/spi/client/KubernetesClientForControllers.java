@@ -21,6 +21,7 @@ import static java.lang.String.format;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
@@ -43,6 +44,8 @@ public interface KubernetesClientForControllers {
     void prepareConfig();
 
     String getNamespace();
+
+    Service loadControllerService(String name);
 
     <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r);
 

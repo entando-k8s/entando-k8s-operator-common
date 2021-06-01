@@ -67,7 +67,7 @@ class ExampleCapabilityTest extends ControllerTestBase {
                         .withCapability(StandardCapability.DBMS)
                         .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
                         .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
-                        .withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
+                        .withResolutionScopePreference(CapabilityScope.NAMESPACE)
                         .build()));
         ProvidedCapability providedCapability = getClient().entandoResources()
                 .load(ProvidedCapability.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);

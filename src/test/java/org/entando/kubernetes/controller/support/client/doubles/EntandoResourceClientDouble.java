@@ -94,6 +94,11 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
+    public Service loadControllerService(String name) {
+        return getNamespace(CONTROLLER_NAMESPACE).getService(name);
+    }
+
+    @Override
     public void prepareConfig() {
         EntandoOperatorConfigBase.setConfigMap(loadOperatorConfig());
     }

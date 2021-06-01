@@ -43,7 +43,8 @@ public class DeploymentClientDouble extends AbstractK8SClientDouble implements D
         if (peerInNamespace == null) {
             return null;
         }
-        getNamespace(peerInNamespace).putDeployment(deployment.getMetadata().getName(), deployment);
+        deployment.getMetadata().getName();
+        getNamespace(peerInNamespace).putDeployment(deployment);
         Pod pod = createPodFrom(deployment);
         getNamespace(peerInNamespace).putPod(pod);
         return deployment;

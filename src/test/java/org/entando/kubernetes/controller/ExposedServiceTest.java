@@ -20,6 +20,7 @@ import static io.qameta.allure.Allure.step;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
@@ -40,6 +41,7 @@ import org.entando.kubernetes.fluentspi.IngressingDeployableFluent;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.test.common.CertificateSecretHelper;
 import org.entando.kubernetes.test.common.SourceLink;
+import org.entando.kubernetes.test.common.ValueHolder;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -162,7 +164,7 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
                             .on(thePrimaryContainerOn(deployment)))
                             .matches(theSecretKey(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET,
                                     TrustStoreHelper.TRUSTSTORE_SETTINGS_KEY)));
-            step("and its startupProbe, readinessProbe and livenessProbe all point to the path /my-app/my-app/health", () -> {
+            step("and its startupProbe, readinessProbe and livenessProbe all point to the path /my-app/health", () -> {
                 assertThat(thePrimaryContainerOn(deployment).getStartupProbe().getHttpGet().getPath()).isEqualTo("/my-app/health");
                 assertThat(thePrimaryContainerOn(deployment).getReadinessProbe().getHttpGet().getPath()).isEqualTo("/my-app/health");
                 assertThat(thePrimaryContainerOn(deployment).getLivenessProbe().getHttpGet().getPath()).isEqualTo("/my-app/health");
@@ -181,7 +183,7 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
             final Ingress ingress = getClient().ingresses()
                     .loadIngress(entandoCustomResource.getMetadata().getNamespace(),
                             NameUtils.standardIngressName(entandoCustomResource));
-            attachKubernetesResource("Service", ingress);
+            attachKubernetesResource("Ingress", ingress);
             assertThat(ingress).isNotNull();
             step(" that points to port 8081 on the target Service", () -> {
                 assertThat(theHttpPath("/my-app").on(ingress).getBackend().getServicePort().getIntVal()).isEqualTo(8081);
@@ -199,6 +201,138 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
         step("And all the environment variables referring to Secrets are resolved",
                 () -> verifyThatAllVariablesAreMapped(entandoCustomResource, getClient(), getClient().deployments()
                         .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource))));
+
+    }
+
+    @Test
+    @Description("Should expose the path to a second service over HTTPS using the host name specified ")
+    void exposeSecondPathOnHttpsServiceOverSpecifiedHostName() {
+        ValueHolder<TestResource> firstResource = new ValueHolder<>();
+        ValueHolder<TestResource> secondResource = new ValueHolder<>();
+        step("Given I have two custom resource of kind TestResource", () -> {
+            step(format("the first in the namespace '%s' with name '%s'", MY_NAMESPACE, MY_APP), () -> {
+                firstResource.set(new TestResource()
+                        .withNames(MY_NAMESPACE, MY_APP)
+                        .withSpec(new BasicDeploymentSpec()));
+                attachKubernetesResource("TestResource 1", entandoCustomResource);
+            });
+            step(format("the second in the namespace '%s' with name '%s'", MY_NAMESPACE + "2", MY_APP + "2"), () -> {
+                secondResource.set(new TestResource()
+                        .withNames(MY_NAMESPACE + "2", MY_APP + "2")
+                        .withSpec(new BasicDeploymentSpec()));
+                attachKubernetesResource("TestResource 2", entandoCustomResource);
+            });
+        });
+        step("And I have created the necessary Kubernetes Secrets to support TLS", () -> {
+            CertificateSecretHelper.buildCertificateSecretsFromDirectory(
+                    firstResource.get().getMetadata().getNamespace(),
+                    Paths.get("src", "test", "resources", "tls", "ampie.dynu.net"))
+                    .forEach(secret -> getClient().secrets().createSecretIfAbsent(firstResource.get(), secret));
+        });
+        step(format(
+                "And I have an IngressingDeployable that specifies the TLS Secret %s and the hostname 'myhost.com', targeting an Ingress "
+                        + "in the same namespace as the custom resource ",
+                CertificateSecretHelper.TEST_TLS_SECRET),
+                () -> {
+                    this.deployable = new BasicIngressingDeployable()
+                            .withIngressHostName("myhost.com")
+                            .withTlsSecretName(CertificateSecretHelper.TEST_TLS_SECRET)
+                            .withIngressRequired(true)
+                            .withIngressNamespace(firstResource.get().getMetadata().getNamespace())
+                            .withIngressName(NameUtils.standardIngressName(firstResource.get()));
+                    attachSpiResource("Deployable", deployable);
+                });
+        final BasicIngressingContainer container = deployable
+                .withContainer(new BasicIngressingContainer().withDockerImageInfo("test/my-image:6.3.2")
+                        .withPrimaryPort(8081)
+                        .withNameQualifier("server"));
+        step(format(
+                "and I have deployed the first TestResource '%s' in namespace '%s' with the context path '/my-app' and the health check "
+                        + "path "
+                        + "'/my-app/health'",
+                MY_APP, MY_NAMESPACE),
+                () -> {
+                    container.withWebContextPath("/my-app").withHealthCheckPath("/my-app/health");
+                    attachSpiResource("Container", container);
+                    runControllerAgainstCustomResource(firstResource.get());
+                });
+        step(format(
+                "When I deploy the second TestResource '%s' in namespace '%s' with the context path '/my-app2' and the health check path "
+                        + "'/my-app2/health'",
+                MY_APP + "2", MY_NAMESPACE + "2"),
+                () -> {
+                    container.withWebContextPath("/my-app2").withHealthCheckPath("/my-app2/health");
+                    attachSpiResource("Container", container);
+                    attachKubernetesResource("TestResource", secondResource.get());
+                    runControllerAgainstCustomResource(secondResource.get());
+                });
+
+        step("Then a second Deployment was created with a single Container", () -> {
+            final Deployment deployment = getClient().deployments()
+                    .loadDeployment(secondResource.get(), NameUtils.standardDeployment(secondResource.get()));
+            assertThat(deployment).isNotNull();
+            attachKubernetesResource("Deployment", deployment);
+            step(format("that has the standard Java truststore variable %s set to point to the "
+                            + "Secret key %s.%s", TrustStoreHelper.JAVA_TOOL_OPTIONS, TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET,
+                    TrustStoreHelper.TRUSTSTORE_SETTINGS_KEY),
+                    () -> assertThat(theVariableReferenceNamed(TrustStoreHelper.JAVA_TOOL_OPTIONS)
+                            .on(thePrimaryContainerOn(deployment)))
+                            .matches(theSecretKey(TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET,
+                                    TrustStoreHelper.TRUSTSTORE_SETTINGS_KEY)));
+            step("and its startupProbe, readinessProbe and livenessProbe all point to the path /my-app/health", () -> {
+                assertThat(thePrimaryContainerOn(deployment).getStartupProbe().getHttpGet().getPath()).isEqualTo("/my-app2/health");
+                assertThat(thePrimaryContainerOn(deployment).getReadinessProbe().getHttpGet().getPath()).isEqualTo("/my-app2/health");
+                assertThat(thePrimaryContainerOn(deployment).getLivenessProbe().getHttpGet().getPath()).isEqualTo("/my-app2/health");
+            });
+        });
+
+        final Service secondService = getClient().services()
+                .loadService(secondResource.get(), NameUtils.standardServiceName(secondResource.get()));
+        step("And a Service was created that points to port 8081 on the target Container", () -> {
+            attachKubernetesResource("Service", secondService);
+            assertThat(secondService).isNotNull();
+            assertThat(thePortNamed("server-port").on(secondService).getPort()).isEqualTo(8081);
+            assertThat(thePortNamed("server-port").on(secondService).getTargetPort().getIntVal()).isEqualTo(8081);
+            attachKubernetesResource("Service", secondService);
+        });
+        final String delegateName = NameUtils.standardIngressName(firstResource.get()) + "-to-" + NameUtils
+                .standardServiceName(secondResource.get());
+        step(format("And a delegate Service '%s' was created in namespace '%s' that points to the service in namespace '%s' ",
+                delegateName,
+                MY_NAMESPACE,
+                MY_NAMESPACE + "2"),
+                () -> {
+                    final Service delegateService = getClient().services().loadService(firstResource.get(), delegateName);
+                    attachKubernetesResource("Service", delegateService);
+                    assertThat(delegateService).isNotNull();
+                    assertThat(thePortNamed("server-port").on(delegateService).getPort()).isEqualTo(8081);
+                    assertThat(thePortNamed("server-port").on(delegateService).getTargetPort().getIntVal()).isEqualTo(8081);
+                    attachKubernetesResource("Service", delegateService);
+                });
+        step(format("And the delegate Service is backed by a Endpoints resource that points to the second service in namespace '%s'",
+                MY_NAMESPACE + "2"),
+                () -> {
+                    final Endpoints delegateService = getClient().services().loadEndpoints(firstResource.get(), delegateName);
+                    attachKubernetesResource("Service", delegateService);
+                    assertThat(delegateService).isNotNull();
+                    assertThat(delegateService.getSubsets().get(0).getAddresses().get(0).getIp())
+                            .isEqualTo(secondService.getSpec().getClusterIP());
+                    assertThat(thePortNamed("server-port").on(delegateService).getPort()).isEqualTo(8081);
+                    attachKubernetesResource("Service", delegateService);
+                });
+
+        step("And a new path was created on the original Ingress for '/my-app2'", () -> {
+            final Ingress ingress = getClient().ingresses()
+                    .loadIngress(firstResource.get().getMetadata().getNamespace(),
+                            NameUtils.standardIngressName(firstResource.get()));
+            attachKubernetesResource("Ingress", ingress);
+            assertThat(ingress).isNotNull();
+            step(" that points to port 8081 on the target Service", () -> {
+                assertThat(theHttpPath("/my-app2").on(ingress).getBackend().getServicePort().getIntVal()).isEqualTo(8081);
+                assertThat(theHttpPath("/my-app2").on(ingress).getBackend().getServiceName())
+                        .isEqualTo(delegateName);
+            });
+        });
 
     }
 

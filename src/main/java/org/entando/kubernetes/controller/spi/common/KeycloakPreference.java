@@ -17,9 +17,24 @@
 package org.entando.kubernetes.controller.spi.common;
 
 import java.util.Optional;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.model.common.KeycloakToUse;
 
 public interface KeycloakPreference {
 
+    SsoConnectionInfo getSsoConnectionInfo();
+
     Optional<KeycloakToUse> getPreferredKeycloakToUse();
+
+    default String getPublicClientIdToUse() {
+        return KeycloakName.ofThePublicClient(this);
+
+    }
+
+    default String getKeycloakRealmToUse() {
+        return KeycloakName.ofTheRealm(this);
+
+    }
+
 }

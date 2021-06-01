@@ -22,13 +22,13 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.InternalServerStatus;
 
@@ -57,7 +57,7 @@ public class CreateExternalServiceCommand {
             this.status.setServiceName(service.getMetadata().getName());
             return service;
         } catch (Exception e) {
-            this.status.finishWith(KubeUtils.failureOf(this.entandoCustomResource, e));
+            this.status.finishWith(ExceptionUtils.failureOf(this.entandoCustomResource, e));
             return null;
         }
     }

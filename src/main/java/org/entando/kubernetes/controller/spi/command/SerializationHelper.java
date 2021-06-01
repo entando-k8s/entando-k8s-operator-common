@@ -16,8 +16,9 @@
 
 package org.entando.kubernetes.controller.spi.command;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -45,12 +46,10 @@ public class SerializationHelper {
     }
 
     public static String serialize(Object deployable) {
-        try {
+        return ioSafe(() -> {
             Map<String, Object> map = toJsonFriendlyMap(deployable);
             return new ObjectMapper(new YAMLFactory()).writerWithDefaultPrettyPrinter().writeValueAsString(map);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     private static Map<String, Object> toJsonFriendlyMap(Object nonSerializableObject) {

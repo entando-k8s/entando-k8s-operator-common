@@ -35,14 +35,16 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
         if (peerInNamespace == null) {
             return null;
         }
-        getNamespace(peerInNamespace).putIngress(ingress.getMetadata().getName(), ingress);
+        ingress.getMetadata().getName();
+        getNamespace(peerInNamespace).putIngress(ingress);
         return ingress;
     }
 
     @Override
     public DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
         return new DoneableIngress(getNamespace(peerInNamespace).getIngress(name), item -> {
-            getNamespace(peerInNamespace).putIngress(item.getMetadata().getName(), item);
+            item.getMetadata().getName();
+            getNamespace(peerInNamespace).putIngress(item);
             return item;
         });
     }

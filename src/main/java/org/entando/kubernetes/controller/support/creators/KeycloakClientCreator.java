@@ -70,7 +70,7 @@ public class KeycloakClientCreator {
             ssoConnectionInfo = deployable.getContainers().stream()
                     .filter(SsoAwareContainer.class::isInstance)
                     .map(SsoAwareContainer.class::cast)
-                    .map(SsoAwareContainer::getSsoConnectionConfig)
+                    .map(SsoAwareContainer::getSsoConnectionInfo)
                     .findAny()
                     .orElseThrow(IllegalArgumentException::new);
         }

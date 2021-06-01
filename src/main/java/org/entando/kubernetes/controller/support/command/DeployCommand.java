@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
@@ -42,7 +43,6 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.creators.DatabasePreparationPodCreator;
 import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
 import org.entando.kubernetes.controller.support.creators.KeycloakClientCreator;
@@ -136,7 +136,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
             createDeployment(k8sClient, entandoImageResolver);
             waitForPod(k8sClient);
         } catch (Exception e) {
-            getStatus().finishWith(KubeUtils.failureOf(entandoCustomResource, e));
+            getStatus().finishWith(ExceptionUtils.failureOf(entandoCustomResource, e));
         }
         return deployable.createResult(getDeployment(), getService(), ingress, getPod()).withStatus(getStatus());
     }

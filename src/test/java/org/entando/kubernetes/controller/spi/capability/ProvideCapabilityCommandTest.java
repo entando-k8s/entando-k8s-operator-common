@@ -99,7 +99,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(
-                        StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                        StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.CLUSTER)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         when(capabilityClient.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
         doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
@@ -115,7 +115,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
         assertThat(providedCapability.getSpec().getImplementation().get(), is(StandardCapabilityImplementation.MYSQL));
-        assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.CLUSTER));
+        assertThat(providedCapability.getSpec().getResolutionScopePreference().get(0), is(CapabilityScope.CLUSTER));
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(OPERATOR_NAMESPACE));
         assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms-in-cluster"));
@@ -138,7 +138,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
-                .withCapabilityRequirementScope(CapabilityScope.CLUSTER)
+                .withResolutionScopePreference(CapabilityScope.CLUSTER)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         when(capabilityClient.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
         doAnswer(andGenerateFailEvent()).when(capabilityClient).createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
@@ -156,7 +156,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
-                .withCapabilityRequirementScope(CapabilityScope.LABELED)
+                .withResolutionScopePreference(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage")).build();
         when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
@@ -175,7 +175,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
-                .withCapabilityRequirementScope(CapabilityScope.LABELED)
+                .withResolutionScopePreference(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage"))
                 .build();
@@ -198,7 +198,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
-                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage")).build();
         doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
@@ -215,7 +215,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
         assertThat(providedCapability.getSpec().getImplementation().get(), is(StandardCapabilityImplementation.MYSQL));
-        assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.LABELED));
+        assertThat(providedCapability.getSpec().getResolutionScopePreference().get(0), is(CapabilityScope.LABELED));
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), startsWith("mysql-dbms"));
@@ -229,7 +229,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
-                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.LABELED)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
         assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
@@ -243,7 +243,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
-                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.SPECIFIED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSpecifiedCapability(
                         new ResourceReference("my-db-namespace", "my-db")).build();
@@ -262,7 +262,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
         assertThat(providedCapability.getSpec().getImplementation().get(), is(StandardCapabilityImplementation.MYSQL));
-        assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.SPECIFIED));
+        assertThat(providedCapability.getSpec().getResolutionScopePreference().get(0), is(CapabilityScope.SPECIFIED));
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is("my-db-namespace"));
         assertThat(providedCapability.getServiceReference().getName(), startsWith("my-db"));
@@ -275,7 +275,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
-                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.SPECIFIED)
                 .withProvisioningStrategy(
                         CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
@@ -290,7 +290,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
 
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
-                .withImplementation(StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
+                .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.NAMESPACE)
                 .withProvisioningStrategy(
                         CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
@@ -307,7 +307,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
         assertThat(providedCapability.getSpec().getImplementation().get(), is(StandardCapabilityImplementation.MYSQL));
-        assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.NAMESPACE));
+        assertThat(providedCapability.getSpec().getResolutionScopePreference().get(0), is(CapabilityScope.NAMESPACE));
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), is("default-mysql-dbms-in-namespace"));
@@ -322,7 +322,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         //with a cluster scoped capability requirement for a MYSQL server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.DBMS)
                 .withImplementation(
-                        StandardCapabilityImplementation.MYSQL).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
+                        StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.DEDICATED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
         doAnswer(andGenerateSuccessEventFor(withServiceResult()
@@ -340,7 +340,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.DBMS));
         assertThat(providedCapability.getSpec().getImplementation().get(), is(StandardCapabilityImplementation.MYSQL));
-        assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.DEDICATED));
+        assertThat(providedCapability.getSpec().getResolutionScopePreference().get(0), is(CapabilityScope.DEDICATED));
         assertTrue(providedCapability.getIngressReference().isEmpty());
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), startsWith(forResource.getMetadata().getName() + "-db"));
@@ -354,7 +354,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         //with a cluster scoped capability requirement for a Keycloak server
         final CapabilityRequirement theCapabilityRequirement = new CapabilityRequirementBuilder().withCapability(StandardCapability.SSO)
                 .withImplementation(
-                        StandardCapabilityImplementation.KEYCLOAK).withCapabilityRequirementScope(CapabilityScope.DEDICATED)
+                        StandardCapabilityImplementation.KEYCLOAK).withResolutionScopePreference(CapabilityScope.DEDICATED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
         doAnswer(andGenerateSuccessEventFor(withExposedServiceResult())).when(capabilityClient)
@@ -371,7 +371,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         assertThat(providedCapability, is(notNullValue()));
         assertThat(providedCapability.getSpec().getCapability(), is(StandardCapability.SSO));
         assertThat(providedCapability.getSpec().getImplementation().get(), is(StandardCapabilityImplementation.KEYCLOAK));
-        assertThat(providedCapability.getSpec().getScope().get(), is(CapabilityScope.DEDICATED));
+        assertThat(providedCapability.getSpec().getResolutionScopePreference().get(0), is(CapabilityScope.DEDICATED));
         assertThat(providedCapability.getServiceReference().getNamespace().get(), is(forResource.getMetadata().getNamespace()));
         assertThat(providedCapability.getServiceReference().getName(), startsWith(forResource.getMetadata().getName() + "-sso"));
         assertThat(providedCapability.getIngressReference().get().getNamespace().get(), is(forResource.getMetadata().getNamespace()));

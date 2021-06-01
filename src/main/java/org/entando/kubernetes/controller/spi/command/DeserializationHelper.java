@@ -16,11 +16,12 @@
 
 package org.entando.kubernetes.controller.spi.command;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
@@ -52,13 +53,11 @@ public class DeserializationHelper implements InvocationHandler {
 
     @SuppressWarnings("unchecked")
     public static <S> S deserialize(KubernetesClientForControllers kubernetesClient, String json) {
-        try {
+        return ioSafe(() -> {
             final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
             Map<String, Object> map = objectMapper.readValue(json, Map.class);
             return fromMap(kubernetesClient, map, objectMapper);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -111,11 +110,7 @@ public class DeserializationHelper implements InvocationHandler {
                 != null) {
             return resolveByReference(rawObjectOrMap);
         } else if (type.getAnnotation(JsonDeserialize.class) != null) {
-            try {
-                return objectMapper.readValue(objectMapper.writeValueAsString(rawObjectOrMap), type);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
+            return ioSafe(() -> objectMapper.readValue(objectMapper.writeValueAsString(rawObjectOrMap), type));
         } else if (ReflectionUtil.KNOWN_INTERFACES.contains(type)) {
             return fromMap(kubernetesClient, (Map<String, Object>) rawObjectOrMap, objectMapper);
         } else if (type.isEnum()) {
@@ -144,7 +139,7 @@ public class DeserializationHelper implements InvocationHandler {
     }
 
     private HasMetadata resolveByReference(Object result) {
-        try {
+        return ioSafe(() -> {
             final ResourceReference resourceReference = objectMapper.readValue(new StringReader(objectMapper.writeValueAsString(result)),
                     ResourceReference.class);
             if (resourceReference.isCustomResource()) {
@@ -160,9 +155,7 @@ public class DeserializationHelper implements InvocationHandler {
                 return kubernetesClient.loadStandardResource(resourceReference.getKind(), resourceReference.getMetadata().getNamespace(),
                         resourceReference.getMetadata().getName());
             }
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
 }

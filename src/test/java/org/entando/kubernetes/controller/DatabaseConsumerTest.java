@@ -124,8 +124,8 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                     this.databaseRequirement = new CapabilityRequirementBuilder()
                             .withCapability(StandardCapability.DBMS)
                             .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
-                            .withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
-                            .withCapabilityParameters(Map.of(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, "my_db"))
+                            .withResolutionScopePreference(CapabilityScope.NAMESPACE)
+                            .addAllToCapabilityParameters(Map.of(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, "my_db"))
                             .build();
                 });
         final BasicDbAwareContainer container = deployable

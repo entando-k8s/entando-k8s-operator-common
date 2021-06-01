@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.spi.client;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.client.dsl.ExecListener;
 import java.io.ByteArrayInputStream;
@@ -89,11 +91,7 @@ public class ExecutionResult implements ExecListener {
     }
 
     private List<String> toLines(ByteArrayOutputStream error) {
-        try {
-            return IOUtils.readLines(new ByteArrayInputStream(error.toByteArray()), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new IllegalStateException("Will never happen");
-        }
+        return ioSafe(() -> IOUtils.readLines(new ByteArrayInputStream(error.toByteArray()), StandardCharsets.UTF_8));
     }
 
     public List<String> getOutputLines() {

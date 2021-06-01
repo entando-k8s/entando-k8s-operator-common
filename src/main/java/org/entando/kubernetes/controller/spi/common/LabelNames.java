@@ -25,7 +25,8 @@ public enum LabelNames {
     CAPABILITY("entando.org/capability"),
     CAPABILITY_IMPLEMENTATION("entando.org/capability-implementation"),
     CAPABILITY_PROVISION_SCOPE("capabilityProvisionScope"),
-    CRD_OF_INTEREST("entando.org/crd-of-interest");
+    CRD_OF_INTEREST("entando.org/crd-of-interest"),
+    JOB_KIND_DB_PREPARATION("db-preparation-job");
 
     private final String labelName;
 

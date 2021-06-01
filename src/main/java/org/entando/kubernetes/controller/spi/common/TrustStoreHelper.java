@@ -73,7 +73,7 @@ public final class TrustStoreHelper {
     }
 
     public static void trustCertificateAuthoritiesIn(Secret secret) {
-        try {
+        safely(() -> {
             char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();
             KeyStore keyStore = buildKeystoreFrom(secret.getData());
             Path tempFile = Files.createTempFile(Path.of(EntandoOperatorSpiConfig.getSafeTempFileDirectory()), "trust-store", ".jks");
@@ -82,21 +82,31 @@ public final class TrustStoreHelper {
             }
             System.setProperty("javax.net.ssl.trustStore", tempFile.normalize().toAbsolutePath().toString());
             System.setProperty("javax.net.ssl.trustStorePassword", new String(trustStorePassword));
+            return null;
+        });
+    }
+
+    public static <T> T safely(ExceptionSafe<T> t) {
+        try {
+            return t.invoke();
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
             throw new IllegalStateException(e);
         }
     }
 
+    interface ExceptionSafe<T> {
+
+        T invoke() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException;
+    }
+
     private static String buildBase64TrustStoreFrom(Secret caSecret, char[] trustStorePassword) {
-        try {
+        return safely(() -> {
             KeyStore keyStore = buildKeystoreFrom(caSecret.getData());
             try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                 keyStore.store(outputStream, trustStorePassword);
                 return new String(Base64.getEncoder().encode(outputStream.toByteArray()), StandardCharsets.UTF_8);
             }
-        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     private static KeyStore buildKeystoreFrom(Map<String, String> certs)
@@ -115,13 +125,14 @@ public final class TrustStoreHelper {
     }
 
     private static void importCert(KeyStore keyStore, Entry<String, String> certPath) {
-        try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(certPath.getValue()))) {
-            for (Certificate cert : CertificateFactory.getInstance("x.509").generateCertificates(stream)) {
-                keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectX500Principal().getName(), cert);
+        safely(() -> {
+            try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(certPath.getValue()))) {
+                for (Certificate cert : CertificateFactory.getInstance("x.509").generateCertificates(stream)) {
+                    keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectX500Principal().getName(), cert);
+                }
             }
-        } catch (IOException | KeyStoreException | CertificateException e) {
-            throw new IllegalStateException(e);
-        }
+            return null;
+        });
     }
 
 }

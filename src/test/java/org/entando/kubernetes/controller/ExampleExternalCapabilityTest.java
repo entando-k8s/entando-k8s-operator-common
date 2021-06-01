@@ -83,14 +83,14 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
                         .withCapability(StandardCapability.DBMS)
                         .withImplementation(StandardCapabilityImplementation.MYSQL)
                         .withProvisioningStrategy(CapabilityProvisioningStrategy.USE_EXTERNAL)
-                        .withCapabilityRequirementScope(CapabilityScope.SPECIFIED)
+                        .withResolutionScopePreference(CapabilityScope.SPECIFIED)
                         .withNewExternallyProvidedService()
                         .withHost("pg.apps.serv.run")
                         .withPort(3307)
                         .withAdminSecretName("my-existing-dbms-admin-secret")
                         .endExternallyProvidedService()
                         .withSpecifiedCapability(new ResourceReference(MY_NAMESPACE, SPECIFIED_DBMS))
-                        .withCapabilityParameters(
+                        .addAllToCapabilityParameters(
                                 Map.of(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX + "disconnectOnExpiredPasswords", "true"))
                         .build()));
         final ProvidedCapability providedCapability = getClient().entandoResources()

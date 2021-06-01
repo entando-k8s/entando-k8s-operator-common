@@ -97,7 +97,7 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     }
 
     @Override
-    public SsoConnectionInfo getSsoConnectionConfig() {
+    public SsoConnectionInfo getSsoConnectionInfo() {
         return this.ssoConnectionInfo;
     }
 

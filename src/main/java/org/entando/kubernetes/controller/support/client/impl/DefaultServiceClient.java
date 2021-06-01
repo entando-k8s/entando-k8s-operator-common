@@ -16,8 +16,6 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
-import static java.util.Optional.ofNullable;
-
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
@@ -39,8 +37,22 @@ public class DefaultServiceClient implements ServiceClient {
 
     @Override
     public Endpoints createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
-        //TODO remove the namespace overriding once we create delegate services from the correct context (the App)
         return createOrReplace(peerInNamespace, endpoints, client.endpoints());
+    }
+
+    @Override
+    public Endpoints createOrReplaceDelegateEndpoints(Endpoints endpoints) {
+        return createOrReplace(endpoints, client.endpoints());
+    }
+
+    @Override
+    public Endpoints loadEndpoints(EntandoCustomResource peerInNamespace, String endpointsName) {
+        return client.endpoints().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(endpointsName).fromServer().get();
+    }
+
+    @Override
+    public Service createOrReplaceDelegateService(Service service) {
+        return createOrReplace(service, client.services());
     }
 
     @Override
@@ -54,22 +66,26 @@ public class DefaultServiceClient implements ServiceClient {
     }
 
     @Override
-    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service endpoints) {
-        return createOrReplace(peerInNamespace, endpoints, client.services());
+    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
+        return createOrReplace(peerInNamespace, service, client.services());
     }
 
     private <T extends HasMetadata, L extends KubernetesResourceList<T>, R extends Resource<T>> T createOrReplace(
-            EntandoCustomResource peerInNamespace, T endpoints,
+            EntandoCustomResource peerInNamespace, T resource,
             MixedOperation<T, L, R> oper) {
-        String namespace = ofNullable(endpoints.getMetadata().getNamespace())
-                .orElse(peerInNamespace.getMetadata().getNamespace());
-        if (oper.inNamespace(namespace).withName(endpoints.getMetadata().getName()).get() != null) {
-            oper.inNamespace(namespace).withName(endpoints.getMetadata().getName()).delete();
+        resource.getMetadata().setNamespace(peerInNamespace.getMetadata().getNamespace());
+        return createOrReplace(resource, oper);
+    }
+
+    private <T extends HasMetadata, L extends KubernetesResourceList<T>, R extends Resource<T>> T createOrReplace(T resource,
+            MixedOperation<T, L, R> oper) {
+        if (oper.inNamespace(resource.getMetadata().getNamespace()).withName(resource.getMetadata().getName()).get() != null) {
+            oper.inNamespace(resource.getMetadata().getNamespace()).withName(resource.getMetadata().getName()).delete();
         }
-        endpoints.getMetadata().setResourceVersion(null);
+        resource.getMetadata().setResourceVersion(null);
         for (int i = 0; i < 10; i++) {
             try {
-                return oper.inNamespace(namespace).create(endpoints);
+                return oper.inNamespace(resource.getMetadata().getNamespace()).create(resource);
             } catch (KubernetesClientException e) {
                 //Waiting for K8S to delete it.
             }

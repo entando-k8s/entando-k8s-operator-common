@@ -87,7 +87,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
                 .withName(ingressingDeployable.getIngressName() + "-to-" + primaryService.getMetadata().getName())
                 .withNamespace(ingressingDeployable.getIngressNamespace())
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(this.entandoCustomResource)).build();
-        Service delegatingService = services.createOrReplaceService(entandoCustomResource, new ServiceBuilder()
+        Service delegatingService = services.createOrReplaceDelegateService(new ServiceBuilder()
                 .withMetadata(metaData)
                 .withNewSpec()
                 .withPorts(new ArrayList<>(primaryService.getSpec().getPorts()))
@@ -95,7 +95,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
                 .build());
         //This is just a workaround for Openshift where the DNS is not shared across namespaces. Joining the networks is an alternative
         // solution
-        services.createOrReplaceEndpoints(entandoCustomResource, new EndpointsBuilder()
+        services.createOrReplaceDelegateEndpoints(new EndpointsBuilder()
                 .withMetadata(metaData)
                 .addNewSubset()
                 .addNewAddress().withIp(primaryService.getSpec().getClusterIP()).endAddress()

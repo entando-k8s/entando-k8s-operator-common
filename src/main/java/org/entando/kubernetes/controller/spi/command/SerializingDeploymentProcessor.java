@@ -50,13 +50,4 @@ public class SerializingDeploymentProcessor implements DeploymentProcessor {
                 .withStatus(serializedResult.getStatus());
     }
 
-    public Deployable<DefaultSerializableDeploymentResult> getSerializedDeployable() {
-        return serializeThenDeserialize(deployable);
-    }
-
-    private <S> S serializeThenDeserialize(Object deployable) {
-        final String json = SerializationHelper.serialize(deployable);
-        return DeserializationHelper.deserialize(entandoResourceClient, json);
-    }
-
 }

@@ -14,12 +14,23 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.common;
+package org.entando.kubernetes.controller.spi.common;
 
-public enum OperatorProcessingInstruction {
-    NONE,
-    IGNORE,
-    FORCE,
-    DEFER;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
+import java.io.IOException;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
+import org.junit.jupiter.api.Test;
+
+@Tags({@Tag("in-process"), @Tag("pre-deployment"), @Tag("unit")})
+class ExceptionUtilsTest {
+
+    @Test
+    void testIoSafe() {
+        assertThatThrownBy(() -> ioSafe(() -> {
+            throw new IOException();
+        })).isInstanceOf(IllegalStateException.class);
+    }
 }

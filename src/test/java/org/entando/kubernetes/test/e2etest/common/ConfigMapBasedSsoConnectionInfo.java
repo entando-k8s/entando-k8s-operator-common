@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.client;
+package org.entando.kubernetes.test.e2etest.common;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -24,6 +24,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 
+//TODO get rid of this class
 public class ConfigMapBasedSsoConnectionInfo implements SsoConnectionInfo {
 
     private final Secret adminSecret;
@@ -48,18 +49,16 @@ public class ConfigMapBasedSsoConnectionInfo implements SsoConnectionInfo {
         return adminSecret;
     }
 
-    //TODO put these in this in the ProvidedCapability ConfigMap
     @Override
     public String getExternalBaseUrl() {
         return configMap.getData().get(NameUtils.URL_KEY);
     }
 
     @Override
-    public String getDefaultRealm() {
-        return KeycloakName.ENTANDO_DEFAULT_KEYCLOAK_REALM;
+    public Optional<String> getDefaultRealm() {
+        return Optional.of(KeycloakName.ENTANDO_DEFAULT_KEYCLOAK_REALM);
     }
 
-    //TODO derive thi from the ProvidedCapability service
     @Override
     public Optional<String> getInternalBaseUrl() {
         return Optional.ofNullable(configMap.getData().get(NameUtils.INTERNAL_URL_KEY));

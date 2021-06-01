@@ -16,8 +16,10 @@
 
 package org.entando.kubernetes.test.e2etest.helpers;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -25,8 +27,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.support.client.impl.DefaultIngressClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
@@ -37,8 +41,10 @@ import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentSpec;
 import org.entando.kubernetes.model.common.KeycloakAwareSpec;
+import org.entando.kubernetes.model.common.KeycloakToUse;
 import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.e2etest.ControllerExecutor;
+import org.entando.kubernetes.test.e2etest.common.ConfigMapBasedSsoConnectionInfo;
 import org.entando.kubernetes.test.e2etest.common.ControllerContainerStartingListener;
 import org.entando.kubernetes.test.e2etest.common.ControllerStartupEventFiringListener;
 import org.entando.kubernetes.test.e2etest.common.ControllerStartupEventFiringListener.OnStartupMethod;
@@ -147,7 +153,17 @@ public class E2ETestHelperBase<R extends EntandoBaseCustomResource<?, EntandoCus
     }
 
     public String determineRealm(KeycloakAwareSpec spec) {
-        return KeycloakName.ofTheRealm(spec::getKeycloakToUse);
+        return KeycloakName.ofTheRealm(new KeycloakPreference() {
+            @Override
+            public SsoConnectionInfo getSsoConnectionInfo() {
+                return new ConfigMapBasedSsoConnectionInfo(new Secret(), new ConfigMap());
+            }
+
+            @Override
+            public Optional<KeycloakToUse> getPreferredKeycloakToUse() {
+                return spec.getKeycloakToUse();
+            }
+        });
     }
 
 }

@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.spi.client.impl;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -26,13 +27,13 @@ import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -72,6 +73,11 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     }
 
     @Override
+    public Service loadControllerService(String name) {
+        return client.services().inNamespace(client.getNamespace()).withName(name).get();
+    }
+
+    @Override
     public void prepareConfig() {
         crdNameMap = client.configMaps().inNamespace(client.getNamespace()).withName(ENTANDO_CRD_NAMES_CONFIG_MAP).get();
         EntandoOperatorConfigBase.setConfigMap(loadOperatorConfig());
@@ -105,7 +111,8 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     }
 
     public SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
-        try {
+        return ioSafe(() -> {
+
             final CustomResourceDefinitionContext context = resolveDefinitionContext(kind, apiVersion);
             final Map<String, Object> crMap = client.customResource(context).get(namespace, name);
             final ObjectMapper objectMapper = new ObjectMapper();
@@ -113,9 +120,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                     .readValue(objectMapper.writeValueAsString(crMap), SerializedEntandoResource.class);
             serializedEntandoResource.setDefinition(context);
             return serializedEntandoResource;
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     public HasMetadata loadStandardResource(String kind, String namespace, String name) {
@@ -248,9 +253,8 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                 .withFieldPath("status")
                 .endInvolvedObject();
         client.v1().events().inNamespace(customResource.getMetadata().getNamespace()).create(eventPopulator.apply(doneableEvent).build());
-        T latest;
         if (customResource instanceof SerializedEntandoResource) {
-            try {
+            return ioSafe(() -> {
                 SerializedEntandoResource ser = (SerializedEntandoResource) customResource;
                 CustomResourceDefinitionContext definition = Optional.ofNullable(ser.getDefinition()).orElse(
                         resolveDefinitionContext(ser.getKind(), ser.getApiVersion()));
@@ -261,21 +265,19 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                 final ObjectMapper objectMapper = new ObjectMapper();
                 ser = objectMapper.readValue(objectMapper.writeValueAsString(resource.get()), SerializedEntandoResource.class);
                 ser.setDefinition(definition);
-                latest = (T) ser;
+                T latest = (T) ser;
                 consumer.accept(latest);
                 return (T) objectMapper.readValue(
                         objectMapper.writeValueAsString(resource.updateStatus(objectMapper.writeValueAsString(latest))),
                         SerializedEntandoResource.class);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
+            });
         } else {
             MixedOperation<T, KubernetesResourceList<T>, Resource<T>> operations = getOperations(
                     (Class<T>) customResource.getClass());
             Resource<T> resource = operations
                     .inNamespace(customResource.getMetadata().getNamespace())
                     .withName(customResource.getMetadata().getName());
-            latest = resource.fromServer().get();
+            T latest = resource.fromServer().get();
             consumer.accept(latest);
             return resource.updateStatus(latest);
         }

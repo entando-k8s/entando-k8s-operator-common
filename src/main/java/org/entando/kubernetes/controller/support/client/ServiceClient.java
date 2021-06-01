@@ -24,10 +24,15 @@ public interface ServiceClient {
 
     Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service);
 
+    Service createOrReplaceDelegateService(Service service);
+
     Service loadService(EntandoCustomResource peerInNamespace, String name);
 
     Service loadControllerService(String name);
 
     Endpoints createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints);
 
+    Endpoints createOrReplaceDelegateEndpoints(Endpoints endpoints);
+
+    Endpoints loadEndpoints(EntandoCustomResource peerInNamespace, String endpointsName);
 }

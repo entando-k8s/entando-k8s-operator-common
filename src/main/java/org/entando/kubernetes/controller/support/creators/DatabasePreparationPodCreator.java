@@ -44,7 +44,6 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
@@ -86,7 +85,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
 
     private Map<String, String> buildUniqueLabels(String qualifier) {
         Map<String, String> labelsFromResource = labelsFromResource();
-        labelsFromResource.put(LabelNames.JOB_KIND.getName(), KubeUtils.JOB_KIND_DB_PREPARATION);
+        labelsFromResource.put(LabelNames.JOB_KIND.getName(), LabelNames.JOB_KIND_DB_PREPARATION.getName());
         labelsFromResource.put(LabelNames.DEPLOYMENT_QUALIFIER.getName(), qualifier);
         return labelsFromResource;
     }

@@ -25,8 +25,8 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.runtime.StartupEvent;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.test.common.ControllerTestHelper;
 
 public class ControllerStartupEventFiringListener<R extends EntandoCustomResource> {
 
@@ -53,7 +53,7 @@ public class ControllerStartupEventFiringListener<R extends EntandoCustomResourc
                 if (shouldListen && action == Action.ADDED) {
                     try {
                         System.out.println("!!!!!!!On " + resource.getKind() + " add!!!!!!!!!");
-                        System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name());
+                        System.setProperty(ControllerTestHelper.ENTANDO_RESOURCE_ACTION, action.name());
                         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
                                 resource.getMetadata().getNamespace());
                         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
@@ -79,7 +79,7 @@ public class ControllerStartupEventFiringListener<R extends EntandoCustomResourc
                 if (shouldListen && action == Action.ADDED) {
                     try {
                         System.out.println("!!!!!!!On " + resource.getKind() + " add!!!!!!!!!");
-                        System.setProperty(KubeUtils.ENTANDO_RESOURCE_ACTION, action.name());
+                        System.setProperty(ControllerTestHelper.ENTANDO_RESOURCE_ACTION, action.name());
                         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
                                 resource.getMetadata().getNamespace());
                         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),

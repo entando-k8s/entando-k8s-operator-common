@@ -49,7 +49,7 @@ public interface SsoConnectionInfo {
 
     String getExternalBaseUrl();
 
-    String getDefaultRealm();
+    Optional<String> getDefaultRealm();
 
     Optional<String> getInternalBaseUrl();
 }

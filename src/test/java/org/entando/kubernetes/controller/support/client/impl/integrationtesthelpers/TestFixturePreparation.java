@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
-import org.entando.kubernetes.controller.support.common.KubeUtils;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
@@ -110,15 +109,15 @@ public final class TestFixturePreparation {
                     //Pods are considered 'deleted' even if they are still gracefully shutting down and the second or two
                     // it takes to shut down can interfere with subsequent pod watchers.
                     DeletionWaiter.delete(client.apps().deployments()).fromNamespace(entry.getKey())
-                            .withLabel(KubeUtils.getKindOf(type))
+                            .withLabel(type.getSimpleName())
                             .waitingAtMost(60, TimeUnit.SECONDS);
                     DeletionWaiter.delete(client.pods()).fromNamespace(entry.getKey())
-                            .withLabel(KubeUtils.getKindOf(type))
+                            .withLabel(type.getSimpleName())
                             .waitingAtMost(60, TimeUnit.SECONDS);
-                    new CustomResourceDeletionWaiter(client, KubeUtils.getKindOf(type)).fromNamespace(entry.getKey())
+                    new CustomResourceDeletionWaiter(client, type.getSimpleName()).fromNamespace(entry.getKey())
                             .waitingAtMost(120, TimeUnit.SECONDS);
                     DeletionWaiter.delete(client.persistentVolumeClaims()).fromNamespace(entry.getKey())
-                            .withLabel(KubeUtils.getKindOf(type))
+                            .withLabel(type.getSimpleName())
                             .waitingAtMost(60, TimeUnit.SECONDS);
                 }
             } else {

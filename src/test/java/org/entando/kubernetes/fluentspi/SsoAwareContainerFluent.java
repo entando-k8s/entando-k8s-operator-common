@@ -41,7 +41,7 @@ public class SsoAwareContainerFluent<N extends SsoAwareContainerFluent<N>> exten
     }
 
     @Override
-    public SsoConnectionInfo getSsoConnectionConfig() {
+    public SsoConnectionInfo getSsoConnectionInfo() {
         return this.ssoConnectionInfo;
     }
 
@@ -63,9 +63,8 @@ public class SsoAwareContainerFluent<N extends SsoAwareContainerFluent<N>> exten
     @Override
     public List<EnvVar> getSsoVariables() {
         List<EnvVar> vars = SsoAwareContainer.super.getSsoVariables();
-        ofNullable(getSsoConnectionConfig()).ifPresent(ssoConnectionInfo -> {
-            final String realmToUse = getPreferredKeycloakToUse().flatMap(KeycloakToUse::getRealm)
-                    .orElse(ssoConnectionInfo.getDefaultRealm());
+        ofNullable(getSsoConnectionInfo()).ifPresent(ssoConnectionInfo -> {
+            final String realmToUse = KeycloakName.ofTheRealm(this);
             vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
                     ssoConnectionInfo.getExternalBaseUrl() + "/realms/" + realmToUse,
                     null));

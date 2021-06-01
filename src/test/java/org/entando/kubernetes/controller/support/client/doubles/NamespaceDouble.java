@@ -58,12 +58,14 @@ public class NamespaceDouble {
         return name;
     }
 
-    public void putService(String name, Service service) {
-        services.put(name, service);
+    public Service putService(Service service) {
+        services.put(service.getMetadata().getName(), service);
+        return service;
     }
 
-    public void putIngress(String name, Ingress ingress) {
-        ingresses.put(name, ingress);
+    public Ingress putIngress(Ingress ingress) {
+        ingresses.put(ingress.getMetadata().getName(), ingress);
+        return ingress;
     }
 
     public Ingress getIngress(String name) {
@@ -74,8 +76,9 @@ public class NamespaceDouble {
         return services.get(name);
     }
 
-    public void putDeployment(String name, Deployment deployment) {
-        this.deployments.put(name, deployment);
+    public Deployment putDeployment(Deployment deployment) {
+        this.deployments.put(deployment.getMetadata().getName(), deployment);
+        return deployment;
     }
 
     public Deployment getDeployment(String name) {

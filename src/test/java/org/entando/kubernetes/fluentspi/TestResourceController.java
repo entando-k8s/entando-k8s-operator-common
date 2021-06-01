@@ -87,7 +87,7 @@ public class TestResourceController implements Runnable {
                         .withCapability(StandardCapability.DBMS)
                         .withImplementation(StandardCapabilityImplementation.valueOf(testResource.getSpec().getDbms().name()))
                         .withProvisioningStrategy(testResource.getSpec().getProvisioningStrategy())
-                        .withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
+                        .withResolutionScopePreference(CapabilityScope.NAMESPACE)
                         .endSpec().build();
                 providedCapability = k8sClient.createOrPatchEntandoResource(providedCapability);
             }

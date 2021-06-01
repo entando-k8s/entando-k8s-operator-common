@@ -140,8 +140,8 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
                     this.ssoRequirement = new CapabilityRequirementBuilder()
                             .withCapability(StandardCapability.SSO)
                             .withImplementation(StandardCapabilityImplementation.KEYCLOAK)
-                            .withCapabilityRequirementScope(CapabilityScope.NAMESPACE)
-                            .withCapabilityParameters(Map.of(ProvidedSsoCapability.DEFAULT_REALM_PARAMETER, "my-realm"))
+                            .withResolutionScopePreference(CapabilityScope.NAMESPACE)
+                            .addAllToCapabilityParameters(Map.of(ProvidedSsoCapability.DEFAULT_REALM_PARAMETER, "my-realm"))
                             .build();
                 });
         final BasicSsoAwareContainer container = deployable
