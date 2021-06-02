@@ -80,7 +80,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         EntandoApp app = newTestEntandoApp();
         Ingress myIngress = getTestIngress();
         myIngress.getSpec().getRules().get(0).getHttp().getPaths().clear();
-        final int total = 50;
+        final int total = 2jx 0;
         ExecutorService executor = Executors.newFixedThreadPool(total);
         //When I create multiple ingresses at the same time with different paths
         for (int i = 0; i < total; i++) {
