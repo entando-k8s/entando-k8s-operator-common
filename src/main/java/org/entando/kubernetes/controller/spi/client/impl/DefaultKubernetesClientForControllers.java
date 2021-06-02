@@ -22,6 +22,7 @@ import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -42,11 +43,13 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
@@ -79,6 +82,24 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     @Override
     public void prepareConfig() {
         crdNameMap = client.configMaps().inNamespace(client.getNamespace()).withName(ENTANDO_CRD_NAMES_CONFIG_MAP).get();
+        if (crdNameMap == null) {
+            crdNameMap = client.configMaps().inNamespace(client.getNamespace())
+                    .create(new ConfigMapBuilder()
+                            .withNewMetadata()
+                            .withNamespace(client.getNamespace())
+                            .withName(ENTANDO_CRD_NAMES_CONFIG_MAP)
+                            .endMetadata()
+                            .addToData(client.apiextensions().v1beta1().customResourceDefinitions()
+                                    .withLabel(LabelNames.CRD_OF_INTEREST.getName())
+                                    .list()
+                                    .getItems()
+                                    .stream()
+                                    .collect(Collectors
+                                            .toMap(crd -> crd.getSpec().getNames().getKind() + "." + crd.getSpec().getGroup(),
+                                                    crd -> crd.getMetadata().getName())))
+                            .build());
+
+        }
         EntandoOperatorConfigBase.setConfigMap(loadOperatorConfig());
         EntandoOperatorSpiConfig.getCertificateAuthoritySecretName()
                 .ifPresent(s -> TrustStoreHelper
