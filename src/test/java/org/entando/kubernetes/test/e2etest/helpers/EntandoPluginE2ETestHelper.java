@@ -70,7 +70,7 @@ public class EntandoPluginE2ETestHelper extends E2ETestHelperBase<EntandoPlugin>
         //Wait for widget registration too - sometimes we get 503's for about 3 attempts
         await().atMost(240, SECONDS).until(() -> {
             EntandoCustomResourceStatus status = pluginResource.fromServer().get().getStatus();
-            return status.forServerQualifiedBy("server").isPresent()
+            return status.getServerStatus("server").isPresent()
                     && status.getPhase() == EntandoDeploymentPhase.SUCCESSFUL;
         });
     }

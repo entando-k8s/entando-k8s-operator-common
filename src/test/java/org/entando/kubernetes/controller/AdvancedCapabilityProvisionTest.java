@@ -562,7 +562,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         return invocationOnMock -> {
             scheduler.schedule(() -> {
                 ProvidedCapability capability = invocationOnMock.getArgument(0);
-                clientDouble.entandoResources().deploymentFailed(capability, new IllegalStateException());
+                clientDouble.entandoResources().deploymentFailed(capability, new IllegalStateException(), null);
             }, 300, TimeUnit.MILLISECONDS);
             return invocationOnMock.callRealMethod();
         };

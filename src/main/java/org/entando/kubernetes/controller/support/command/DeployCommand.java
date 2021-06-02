@@ -32,6 +32,7 @@ import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
@@ -86,7 +87,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
         } else {
             status = new InternalServerStatus();
         }
-        status.setQualifier(deployable.getQualifier().orElse("main"));
+        status.setQualifier(deployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER));
     }
 
     public T execute(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient potentiallyNullKeycloakClient, int timeoutSeconds)

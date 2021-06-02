@@ -48,7 +48,7 @@ public class IngressPathCreator {
                         .toList());
     }
 
-    public Ingress addMissingHttpPaths(IngressClient ingressClient, List<IngressingPathOnPort> ingressingDeployable, Ingress ingress,
+    public Ingress addMissingHttpPaths(IngressClient ingressClient, List<IngressingPathOnPort> ingressingDeployable, final Ingress ingress,
             Service service) {
         List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.stream()
                 .filter(path -> this.httpPathIsAbsent(ingress, path))

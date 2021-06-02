@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
 import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.ExternallyProvidedService;
@@ -99,8 +100,8 @@ public class TestResourceController implements Runnable {
             k8sClient.updatePhase(testResource, EntandoDeploymentPhase.SUCCESSFUL);
         } catch (Exception e) {
             e.printStackTrace();
-            k8sClient.deploymentFailed(providedCapability, e);
-            k8sClient.deploymentFailed(testResource, e);
+            k8sClient.deploymentFailed(providedCapability, e, NameUtils.MAIN_QUALIFIER);
+            k8sClient.deploymentFailed(testResource, e, NameUtils.MAIN_QUALIFIER);
             throw new CommandLine.ExecutionException(new CommandLine(this), e.getMessage());
         }
 

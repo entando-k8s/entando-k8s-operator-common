@@ -20,6 +20,7 @@ import java.util.Collections;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.ProvidedSsoCapability;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
@@ -65,7 +66,7 @@ public class SsoAwareControllerFluent<N extends SsoAwareControllerFluent<N>> ext
             k8sClient.updatePhase(resourceToProcess, EntandoDeploymentPhase.SUCCESSFUL);
         } catch (Exception e) {
             e.printStackTrace();
-            k8sClient.deploymentFailed(resourceToProcess, e);
+            k8sClient.deploymentFailed(resourceToProcess, e, NameUtils.MAIN_QUALIFIER);
             throw new CommandLine.ExecutionException(new CommandLine(this), e.getMessage());
         }
 

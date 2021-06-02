@@ -31,7 +31,7 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
     }
 
     @Override
-    public Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
+    public synchronized Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
         if (peerInNamespace == null) {
             return null;
         }
@@ -58,17 +58,18 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
     }
 
     @Override
-    public Ingress addHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath, Map<String, String> annotations) {
+    public synchronized Ingress addHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath, Map<String, String> annotations) {
         if (ingress == null) {
             return null;
         }
-        ingress.getSpec().getRules().get(0).getHttp().getPaths().add(httpIngressPath);
-        if (ingress.getMetadata().getAnnotations() == null) {
-            ingress.getMetadata().setAnnotations(annotations);
+        final Ingress ingressToUpdate = getNamespace(ingress).getIngress(ingress.getMetadata().getName());
+        ingressToUpdate.getSpec().getRules().get(0).getHttp().getPaths().add(httpIngressPath);
+        if (ingressToUpdate.getMetadata().getAnnotations() == null) {
+            ingressToUpdate.getMetadata().setAnnotations(annotations);
         } else {
-            ingress.getMetadata().getAnnotations().putAll(annotations);
+            ingressToUpdate.getMetadata().getAnnotations().putAll(annotations);
         }
-        return ingress;
+        return ingressToUpdate;
     }
 
     @Override

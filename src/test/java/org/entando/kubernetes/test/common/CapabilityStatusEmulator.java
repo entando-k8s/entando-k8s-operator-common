@@ -73,7 +73,7 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
 
     default ProvidedCapability putInternalServerStatus(ProvidedCapability providedCapability, int port,
             Map<String, String> derivedDeploymentParameters) {
-        return putStatus(providedCapability, port, derivedDeploymentParameters, new InternalServerStatus("main"));
+        return putStatus(providedCapability, port, derivedDeploymentParameters, new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
     }
 
     default ProvidedCapability putExternalServerStatus(ProvidedCapability providedCapability, String host, int port, String path,

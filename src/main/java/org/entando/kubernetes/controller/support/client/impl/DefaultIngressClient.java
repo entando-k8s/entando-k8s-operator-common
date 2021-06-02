@@ -22,6 +22,8 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.support.client.DoneableIngress;
@@ -85,7 +87,22 @@ public class DefaultIngressClient implements IngressClient {
 
     @Override
     public Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
-        return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(ingress);
+        try {
+            return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(ingress);
+        } catch (KubernetesClientException e) {
+            if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+                return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace())
+                        .withName(ingress.getMetadata().getName())
+                        .edit(existing -> {
+                            existing.getSpec().getRules().get(0).getHttp().getPaths()
+                                    .addAll(ingress.getSpec().getRules().get(0).getHttp().getPaths());
+                            return existing;
+                        });
+            } else {
+                e.printStackTrace();
+                throw e;
+            }
+        }
     }
 
     @Override

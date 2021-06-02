@@ -105,7 +105,7 @@ public class KeycloakE2ETestHelper extends
                             .inNamespace(keycloakServer.getMetadata().getNamespace())
                             .withName(KEYCLOAK_NAME)
                             .fromServer().get().getStatus();
-                    return status.forServerQualifiedBy("server").isPresent()
+                    return status.getServerStatus("server").isPresent()
                             && status.getPhase() == EntandoDeploymentPhase.SUCCESSFUL;
                 });
     }

@@ -197,13 +197,14 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         );
     }
 
-    public <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason) {
+    public <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason, String serverQualifier) {
         return performStatusUpdate(customResource,
                 t -> {
-                    if (t.getStatus().findCurrentServerStatus().isEmpty()) {
-                        t.getStatus().putServerStatus(new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
+                    String qualifierToUse = ofNullable(serverQualifier).orElse(NameUtils.MAIN_QUALIFIER);
+                    if (t.getStatus().getServerStatus(qualifierToUse).isEmpty()) {
+                        t.getStatus().putServerStatus(new InternalServerStatus(qualifierToUse));
                     }
-                    t.getStatus().findCurrentServerStatus()
+                    t.getStatus().getServerStatus(qualifierToUse)
                             .ifPresent(
                                     newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder()
                                             .withException(reason)

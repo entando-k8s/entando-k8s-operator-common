@@ -16,15 +16,20 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
+import static io.smallrye.common.constraint.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPathBuilder;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.model.app.EntandoApp;
 import org.junit.jupiter.api.Assertions;
@@ -50,7 +55,6 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Test
     void shouldRemovePathFromIngress() {
-
         EntandoApp app = newTestEntandoApp();
         Ingress myIngress = getTestIngress();
         myIngress.getMetadata().setNamespace(app.getMetadata().getNamespace());
@@ -69,6 +73,37 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
 
         Assertions.assertTrue(() -> cleanedIngress.getSpec().getRules().get(0).getHttp()
                 .getPaths().size() == 1);
+    }
+
+    @Test
+    void shouldRemainConsistentWithManyThreads() throws JsonProcessingException, InterruptedException {
+        EntandoApp app = newTestEntandoApp();
+        Ingress myIngress = getTestIngress();
+        myIngress.getSpec().getRules().get(0).getHttp().getPaths().clear();
+        final int total = 50;
+        ExecutorService executor = Executors.newFixedThreadPool(total);
+        //When I create multiple ingresses at the same time with different paths
+        for (int i = 0; i < total; i++) {
+            Ingress tmp = objectMapper.readValue(objectMapper.writeValueAsString(myIngress), Ingress.class);
+            tmp.getSpec().getRules().get(0).getHttp().getPaths().add(new HTTPIngressPathBuilder()
+                    .withPath("/path/" + i)
+                    .withNewBackend()
+                    .withServiceName("service-for-path" + i)
+                    .withServicePort(new IntOrString(8080))
+                    .endBackend()
+                    .build());
+            executor.submit(() -> getSimpleK8SClient().ingresses().createIngress(app, tmp));
+        }
+        executor.shutdown();
+        executor.awaitTermination(120, TimeUnit.SECONDS);
+        Ingress actual = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName());
+        //Then the paths should be consistent
+        assertThat(actual.getSpec().getRules().get(0).getHttp().getPaths().size(), is(total));
+        for (int i = 0; i < total; i++) {
+            int finalI = i;
+            assertTrue(actual.getSpec().getRules().get(0).getHttp().getPaths().stream()
+                    .anyMatch(httpIngressPath -> httpIngressPath.getPath().equals("/path/" + finalI)));
+        }
     }
 
     @Test

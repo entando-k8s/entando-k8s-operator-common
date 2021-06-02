@@ -1,16 +1,13 @@
 To test:
 
+Capability Timeout
+
 ExternalService that uses IP address
-DelegatingService
+ExternalService with no delegating service
 One outer hexagon test
 Failed DB preparation
 Failed DeployCommand
-ExternalService with no delegating service
 Capability request that times out
 Test an SSOClientConfig with permissions and roles
 Test SpringBoot container example
-
-To implement:
-Add a list of capabilityScopes that are acceptable for the capability consumer and change the current scope property
-to the preferred scope
 

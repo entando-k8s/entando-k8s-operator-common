@@ -163,7 +163,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         assertThat("It has a db status", helper.entandoPlugins().getOperations()
                 .inNamespace(EntandoPluginE2ETestHelper.TEST_PLUGIN_NAMESPACE)
                 .withName(TEST_PLUGIN_NAME)
-                .fromServer().get().getStatus().forDbQualifiedBy("db").isPresent());
+                .fromServer().get().getStatus().getServerStatus("db").isPresent());
     }
 
     protected void verifyPluginDeployment() {
@@ -185,7 +185,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
         assertTrue(helper.entandoPlugins().getOperations()
                 .inNamespace(EntandoPluginE2ETestHelper.TEST_PLUGIN_NAMESPACE)
                 .withName(TEST_PLUGIN_NAME)
-                .fromServer().get().getStatus().forServerQualifiedBy("server").isPresent());
+                .fromServer().get().getStatus().getServerStatus("server").isPresent());
     }
 
 }

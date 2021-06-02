@@ -66,7 +66,7 @@ public class EntandoAppE2ETestHelper extends E2ETestHelperBase<EntandoApp> {
                             .inNamespace(entandoApp.getMetadata().getNamespace())
                             .withName(entandoApp.getMetadata().getName())
                             .fromServer().get().getStatus();
-                    return status.forServerQualifiedBy("server").isPresent()
+                    return status.getServerStatus("server").isPresent()
                             && status.getPhase() == EntandoDeploymentPhase.SUCCESSFUL;
                 });
 

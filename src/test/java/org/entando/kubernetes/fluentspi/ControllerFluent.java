@@ -47,7 +47,7 @@ public class ControllerFluent<N extends ControllerFluent<N>> implements Runnable
             k8sClient.updatePhase(resourceToProcess, EntandoDeploymentPhase.SUCCESSFUL);
         } catch (Exception e) {
             e.printStackTrace();
-            k8sClient.deploymentFailed(resourceToProcess, e);
+            k8sClient.deploymentFailed(resourceToProcess, e, null);
             throw new CommandLine.ExecutionException(new CommandLine(this), e.getMessage());
         }
 

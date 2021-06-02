@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.spi.client.impl;
 
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -88,7 +87,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         });
         step("When I update its status to DeploymentFailed", () -> {
             getKubernetesClientForControllers().updateStatus(testResource, new ExposedServerStatus("my-webapp"));
-            getKubernetesClientForControllers().deploymentFailed(testResource, new IllegalStateException("nope"));
+            getKubernetesClientForControllers().deploymentFailed(testResource, new IllegalStateException("nope"), null);
         });
         step("Then the failure reflects on the TestResource", () -> {
             final TestResource actual = getKubernetesClientForControllers()
@@ -120,7 +119,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             final TestResource actual = getKubernetesClientForControllers()
                     .load(TestResource.class, testResource.getMetadata().getNamespace(), testResource.getMetadata().getName());
             attachResource("TestResource", actual);
-            assertTrue(actual.getStatus().forServerQualifiedBy("my-webapp").isPresent());
+            assertThat(actual.getStatus().getServerStatus("my-webapp")).isPresent();
         });
         step("And a STATUS_CHANGE event has been issued to Kubernetes", () -> {
             final List<Event> events = getKubernetesClientForControllers().listEventsFor(testResource);
@@ -172,7 +171,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                 getKubernetesClientForControllers().updateStatus(serializedEntandoResource, new ExposedServerStatus("my-webapp")));
         step("Then the updated status reflects on the SerializedEntandoResource", () -> {
             final SerializedEntandoResource actual = getKubernetesClientForControllers().reload(serializedEntandoResource);
-            assertThat(actual.getStatus().forServerQualifiedBy("my-webapp")).isPresent();
+            assertThat(actual.getStatus().getServerStatus("my-webapp")).isPresent();
             attachResource("TestResource", actual);
         });
         step("And a STATUS_CHANGE event has been issued to Kubernetes", () -> {

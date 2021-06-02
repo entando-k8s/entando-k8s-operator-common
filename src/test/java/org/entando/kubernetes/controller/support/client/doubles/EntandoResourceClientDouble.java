@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
+import static java.util.Optional.ofNullable;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -118,7 +120,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends EntandoCustomResource> T updateStatus(T customResource, AbstractServerStatus status) {
+    public synchronized <T extends EntandoCustomResource> T updateStatus(T customResource, AbstractServerStatus status) {
         final T found = (T) getNamespace(customResource).getCustomResources(customResource.getKind())
                 .get(customResource.getMetadata().getName());
         found.getStatus().putServerStatus(status);
@@ -127,7 +129,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends EntandoCustomResource> T updatePhase(T customResource, EntandoDeploymentPhase phase) {
+    public synchronized <T extends EntandoCustomResource> T updatePhase(T customResource, EntandoDeploymentPhase phase) {
         final T found = (T) getNamespace(customResource).getCustomResources(customResource.getKind())
                 .get(customResource.getMetadata().getName());
         found.getStatus().updateDeploymentPhase(phase, found.getMetadata().getGeneration());
@@ -137,13 +139,14 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason) {
+    public synchronized <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason, String qualifier) {
         final T found = (T) getNamespace(customResource).getCustomResources(customResource.getKind())
                 .get(customResource.getMetadata().getName());
-        if (found.getStatus().findCurrentServerStatus().isEmpty()) {
-            found.getStatus().putServerStatus(new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
+        String qualifierToUse = ofNullable(qualifier).orElse(NameUtils.MAIN_QUALIFIER);
+        if (found.getStatus().getServerStatus(qualifierToUse).isEmpty()) {
+            found.getStatus().putServerStatus(new InternalServerStatus(qualifierToUse));
         }
-        found.getStatus().findCurrentServerStatus()
+        found.getStatus().getServerStatus(qualifierToUse)
                 .ifPresent(abstractServerStatus -> abstractServerStatus
                         .finishWith(new EntandoControllerFailureBuilder().withException(reason).build()));
         found.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, found.getMetadata().getGeneration());

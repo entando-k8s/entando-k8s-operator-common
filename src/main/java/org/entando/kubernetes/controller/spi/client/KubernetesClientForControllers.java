@@ -55,7 +55,7 @@ public interface KubernetesClientForControllers {
 
     <T extends EntandoCustomResource> T updatePhase(T customResource, EntandoDeploymentPhase phase);
 
-    <T extends EntandoCustomResource> T deploymentFailed(T entandoCustomResource, Exception reason);
+    <T extends EntandoCustomResource> T deploymentFailed(T entandoCustomResource, Exception reason, String qualifier);
 
     default EntandoCustomResource resolveCustomResourceToProcess(Collection<Class<? extends EntandoCustomResource>> supportedTypes) {
         String resourceName = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME);
