@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
@@ -139,13 +138,8 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         return client.v1().events().inAnyNamespace().withLabels(ResourceUtils.labelsFromResource(resource)).list().getItems();
     }
 
-    protected Supplier<IllegalStateException> notFound(String kind, String namespace, String name) {
-        return () -> new IllegalStateException(format("Could not find the %s '%s' in the namespace %s", kind, name, namespace));
-    }
-
     public <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName) {
-        return ofNullable(getOperations(clzz).inNamespace(resourceNamespace)
-                .withName(resourceName).get()).orElseThrow(() -> notFound(clzz.getSimpleName(), resourceNamespace, resourceName).get());
+        return getOperations(clzz).inNamespace(resourceNamespace).withName(resourceName).fromServer().get();
     }
 
     @SuppressWarnings("unchecked")

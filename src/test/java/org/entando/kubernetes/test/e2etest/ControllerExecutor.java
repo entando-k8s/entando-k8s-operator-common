@@ -124,6 +124,7 @@ public class ControllerExecutor {
         addTo(result, new EnvVar("ENTANDO_RESOURCE_ACTION", action.name(), null));
         addTo(result, new EnvVar("ENTANDO_RESOURCE_NAMESPACE", resource.getMetadata().getNamespace(), null));
         addTo(result, new EnvVar("ENTANDO_RESOURCE_NAME", resource.getMetadata().getName(), null));
+        addTo(result, new EnvVar("ENTANDO_RESOURCE_KIND", resource.getKind(), null));
         return new ArrayList<>(result.values());
     }
 

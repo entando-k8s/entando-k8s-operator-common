@@ -44,21 +44,23 @@ public class KubernetesRestInterceptor implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Logger logger = Logger.getLogger(method.getDeclaringClass().getName());
-        logger.log(Level.INFO, () -> buildEnterMessage(method, args));
+        logger.logp(Level.INFO, method.getDeclaringClass().getName(), method.getName(), () -> buildEnterMessage(method, args));
         try {
             return method.invoke(delegate, args);
         } catch (InvocationTargetException e) {
-            logger.log(Level.SEVERE, e.getTargetException(), () -> String.format("Failure executing method %s in class %s",
-                    method.getName(),
-                    method.getDeclaringClass().getName()));
+            logger.logp(Level.SEVERE, method.getDeclaringClass().getName(), method.getName(), e.getTargetException(),
+                    () -> String.format("Failure executing method %s in class %s",
+                            method.getName(),
+                            method.getDeclaringClass().getName()));
             throw e.getTargetException();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, e, () -> String.format("Failure executing method %s in class %s",
-                    method.getName(),
-                    method.getDeclaringClass().getName()));
+            logger.logp(Level.SEVERE, method.getDeclaringClass().getName(), method.getName(), e,
+                    () -> String.format("Failure executing method %s in class %s",
+                            method.getName(),
+                            method.getDeclaringClass().getName()));
             throw e;
         } finally {
-            logger.log(Level.INFO, () ->
+            logger.logp(Level.INFO, method.getDeclaringClass().getName(), method.getName(), () ->
                     String.format("Exiting method %s in class %s", method.getName(),
                             method.getDeclaringClass().getName()));
 
@@ -85,7 +87,7 @@ public class KubernetesRestInterceptor implements InvocationHandler {
             }
             if (!(first.isPresent() || second.isPresent())) {
                 message.append(" with ")
-                        .append(Arrays.stream(args).map(Object::toString).collect(Collectors.joining(",")));
+                        .append(Arrays.stream(args).map(o -> o == null ? "null" : o.toString()).collect(Collectors.joining(",")));
             }
         }
         return message.toString();
