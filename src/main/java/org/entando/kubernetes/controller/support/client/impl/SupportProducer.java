@@ -18,9 +18,11 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.HttpClientAware;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
@@ -42,6 +44,7 @@ public class SupportProducer {
         if (kubernetesClient == null) {
             ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withRequestTimeout(30000).withConnectionTimeout(30000);
             kubernetesClient = new DefaultKubernetesClient(configBuilder.build());
+            ((HttpClientAware) kubernetesClient).getHttpClient().networkInterceptors().removeIf(HttpLoggingInterceptor.class::isInstance);
         }
         return kubernetesClient;
     }
