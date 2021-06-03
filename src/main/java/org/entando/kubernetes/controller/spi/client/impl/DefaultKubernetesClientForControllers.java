@@ -39,6 +39,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -63,10 +64,11 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
     protected final KubernetesClient client;
-    protected ConfigMap crdNameMap;
+    private ConfigMap crdNameMap;
 
     public DefaultKubernetesClientForControllers(KubernetesClient client) {
         this.client = client;
+
     }
 
     @Override
@@ -81,25 +83,6 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
 
     @Override
     public void prepareConfig() {
-        crdNameMap = client.configMaps().inNamespace(client.getNamespace()).withName(ENTANDO_CRD_NAMES_CONFIG_MAP).get();
-        if (crdNameMap == null) {
-            crdNameMap = client.configMaps().inNamespace(client.getNamespace())
-                    .create(new ConfigMapBuilder()
-                            .withNewMetadata()
-                            .withNamespace(client.getNamespace())
-                            .withName(ENTANDO_CRD_NAMES_CONFIG_MAP)
-                            .endMetadata()
-                            .addToData(client.apiextensions().v1beta1().customResourceDefinitions()
-                                    .withLabel(LabelNames.CRD_OF_INTEREST.getName())
-                                    .list()
-                                    .getItems()
-                                    .stream()
-                                    .collect(Collectors
-                                            .toMap(crd -> crd.getSpec().getNames().getKind() + "." + crd.getSpec().getGroup(),
-                                                    crd -> crd.getMetadata().getName())))
-                            .build());
-
-        }
         EntandoOperatorConfigBase.setConfigMap(loadOperatorConfig());
         EntandoOperatorSpiConfig.getCertificateAuthoritySecretName()
                 .ifPresent(s -> TrustStoreHelper
@@ -300,7 +283,32 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     }
 
     private CustomResourceDefinitionContext resolveDefinitionContext(String kind, String apiVersion) {
+        final String key = kind + "." + apiVersion.substring(0, apiVersion.indexOf("/"));
+        final String name = getCrdNameMap().getData().get(key);
         return CustomResourceDefinitionContext.fromCrd(client.apiextensions().v1beta1().customResourceDefinitions()
-                .withName(crdNameMap.getData().get(kind + "." + apiVersion.substring(0, apiVersion.indexOf("/")))).get());
+                .withName(name).get());
+    }
+
+    protected ConfigMap getCrdNameMap() {
+        crdNameMap = Objects.requireNonNullElseGet(crdNameMap,
+                () -> Objects.requireNonNullElseGet(
+                        client.configMaps().inNamespace(client.getNamespace()).withName(ENTANDO_CRD_NAMES_CONFIG_MAP).get(),
+                        () -> client.configMaps().inNamespace(client.getNamespace())
+                                .create(new ConfigMapBuilder()
+                                        .withNewMetadata()
+                                        .withNamespace(client.getNamespace())
+                                        .withName(ENTANDO_CRD_NAMES_CONFIG_MAP)
+                                        .endMetadata()
+                                        .addToData(client.apiextensions().v1beta1().customResourceDefinitions()
+                                                .withLabel(LabelNames.CRD_OF_INTEREST.getName())
+                                                .list()
+                                                .getItems()
+                                                .stream()
+                                                .collect(Collectors
+                                                        .toMap(crd -> crd.getSpec().getNames().getKind() + "." + crd.getSpec().getGroup(),
+                                                                crd -> crd.getMetadata().getName())))
+                                        .build())));
+
+        return crdNameMap;
     }
 }

@@ -82,7 +82,6 @@ public class DefaultSimpleK8SClient implements SimpleK8SClient<EntandoResourceCl
     @Override
     public EntandoResourceClient entandoResources() {
         if (this.entandoResourceClient == null) {
-
             this.entandoResourceClient = intercepted(new DefaultEntandoResourceClient(kubernetesClient));
         }
         return this.entandoResourceClient;
