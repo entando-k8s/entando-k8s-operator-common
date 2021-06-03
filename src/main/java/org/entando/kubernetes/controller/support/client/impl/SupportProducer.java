@@ -53,7 +53,8 @@ public class SupportProducer {
 
     @Produces
     public DeploymentProcessor deploymentProcessor() {
-        return new SerializingDeploymentProcessor(entandoResourceClient(), new InProcessCommandStream(getSimpleKubernetesClient(), keycloakClient()));
+        return new SerializingDeploymentProcessor(entandoResourceClient(),
+                new InProcessCommandStream(getSimpleKubernetesClient(), keycloakClient()));
     }
 
     @Produces
