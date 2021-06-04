@@ -49,9 +49,10 @@ public class SupportProducer {
             //Rather fix this programmatically than try to figure out how to control logging in all the different dev and runtime
             // environments
             ((HttpClientAware) kubernetesClient).getHttpClient().networkInterceptors().stream()
-                    .filter(HttpLoggingInterceptor.class::isInstance).map(HttpLoggingInterceptor.class::cast).findFirst().ifPresent(
-                    interceptor -> interceptor.setLevel(Level.NONE)
-            );
+                    .filter(HttpLoggingInterceptor.class::isInstance)
+                    .map(HttpLoggingInterceptor.class::cast)
+                    .findFirst()
+                    .ifPresent(interceptor -> interceptor.setLevel(Level.NONE));
         }
         return kubernetesClient;
     }

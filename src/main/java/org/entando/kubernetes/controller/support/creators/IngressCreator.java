@@ -119,7 +119,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         return ingress;
     }
 
-    private Ingress newIngress(IngressClient ingressClient, Map<String,HTTPIngressPath> paths,
+    private Ingress newIngress(IngressClient ingressClient, Map<String, HTTPIngressPath> paths,
             IngressingDeployable<?> deployable) {
         return new IngressBuilder()
                 .withNewMetadata()
@@ -142,7 +142,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
     }
 
     private Map<String, String> toPathAnnotations(Map<String, HTTPIngressPath> paths) {
-        return paths.entrySet().stream().collect(Collectors.toMap(Entry::getKey, entry->entry.getValue().getPath()));
+        return paths.entrySet().stream().collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().getPath()));
     }
 
     private Map<String, String> forNginxIngress(IngressingDeployable<?> deployable) {

@@ -41,7 +41,7 @@ class ExceptionUtilsTest {
 
     @Test
     void testRetry() {
-        ValueHolder<Integer> count = new ValueHolder<>();
+        final ValueHolder<Integer> count = new ValueHolder<>();
         //Success
         this.start = System.currentTimeMillis();
         assertThat(retry(() -> "123", e -> e.getMessage().equals("Now"), 3)).isEqualTo("123");

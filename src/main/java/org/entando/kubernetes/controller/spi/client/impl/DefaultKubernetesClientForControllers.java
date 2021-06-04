@@ -232,7 +232,9 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
             UnaryOperator<EventBuilder> eventPopulator) {
         issueEvent(customResource, eventPopulator);
         //Could be updating the status concurrently from multiple Deployables
-        return retry(() -> performStatusUpdate(customResource, consumer), e -> e instanceof KubernetesClientException && ((KubernetesClientException) e).getCode() == HttpURLConnection.HTTP_CONFLICT, 4);
+        return retry(() -> performStatusUpdate(customResource, consumer),
+                e -> e instanceof KubernetesClientException && ((KubernetesClientException) e).getCode() == HttpURLConnection.HTTP_CONFLICT,
+                4);
     }
 
     private <T extends EntandoCustomResource> void issueEvent(T customResource, UnaryOperator<EventBuilder> eventPopulator) {
