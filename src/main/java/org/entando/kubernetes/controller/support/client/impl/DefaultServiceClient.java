@@ -16,12 +16,13 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
+
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
@@ -83,13 +84,7 @@ public class DefaultServiceClient implements ServiceClient {
             oper.inNamespace(resource.getMetadata().getNamespace()).withName(resource.getMetadata().getName()).delete();
         }
         resource.getMetadata().setResourceVersion(null);
-        for (int i = 0; i < 10; i++) {
-            try {
-                return oper.inNamespace(resource.getMetadata().getNamespace()).create(resource);
-            } catch (KubernetesClientException e) {
-                //Waiting for K8S to delete it.
-            }
-        }
-        throw new IllegalStateException("Could not create.");
+        //retry because it may still be in the process of being deleted
+        return retry(() -> oper.inNamespace(resource.getMetadata().getNamespace()).create(resource), KubernetesClient.class::isInstance, 5);
     }
 }

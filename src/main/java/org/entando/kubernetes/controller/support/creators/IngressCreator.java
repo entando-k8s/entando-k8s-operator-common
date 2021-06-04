@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
@@ -118,11 +119,12 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         return ingress;
     }
 
-    private Ingress newIngress(IngressClient ingressClient, List<HTTPIngressPath> paths,
+    private Ingress newIngress(IngressClient ingressClient, Map<String,HTTPIngressPath> paths,
             IngressingDeployable<?> deployable) {
         return new IngressBuilder()
                 .withNewMetadata()
-                .withAnnotations(forNginxIngress(deployable))
+                .addToAnnotations(forNginxIngress(deployable))
+                .addToAnnotations(toPathAnnotations(paths))
                 .withName(deployable.getIngressName())
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .addToLabels(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName())
@@ -134,9 +136,13 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                 .addNewRule()
                 .withHost(determineIngressHost(ingressClient, deployable))
                 .withNewHttp()
-                .withPaths(paths)
+                .withPaths(new ArrayList<>(paths.values()))
                 .endHttp()
                 .endRule().endSpec().build();
+    }
+
+    private Map<String, String> toPathAnnotations(Map<String, HTTPIngressPath> paths) {
+        return paths.entrySet().stream().collect(Collectors.toMap(Entry::getKey, entry->entry.getValue().getPath()));
     }
 
     private Map<String, String> forNginxIngress(IngressingDeployable<?> deployable) {

@@ -26,6 +26,7 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 
 public interface SsoAwareContainer extends DeployableContainer, HasWebContext, KeycloakPreference {
 
+    @Override
     SsoConnectionInfo getSsoConnectionInfo();
 
     SsoClientConfig getSsoClientConfig();
@@ -34,6 +35,7 @@ public interface SsoAwareContainer extends DeployableContainer, HasWebContext, K
         return KeycloakName.ofTheRealm(this);
     }
 
+    @Override
     default String getPublicClientIdToUse() {
         return KeycloakName.ofThePublicClient(this);
     }

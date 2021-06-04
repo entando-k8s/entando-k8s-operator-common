@@ -19,6 +19,10 @@ package org.entando.kubernetes.controller.spi.common;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import org.entando.kubernetes.model.common.EntandoControllerFailure;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -29,6 +33,22 @@ public class ExceptionUtils {
         e.printStackTrace(new PrintWriter(stringWriter));
         final String failedObjectName = r.getMetadata().getNamespace() + "/" + r.getMetadata().getName();
         return new EntandoControllerFailure(r.getKind(), failedObjectName, e.getMessage(), stringWriter.toString());
+    }
+
+    public static <T> T retry(Supplier<T> supplier, Predicate<RuntimeException> ignoreExceptionWhen, int count) {
+        for (int i = 0; i < count - 1; i++) {
+            try {
+                return supplier.get();
+            } catch (RuntimeException e) {
+                if (!ignoreExceptionWhen.test(e)) {
+                    throw e;
+                }
+                long actualCount = i + 1L;
+                final long duration = actualCount * actualCount;
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(duration));
+            }
+        }
+        return supplier.get();
     }
 
     public interface IoVulnerable<T> {

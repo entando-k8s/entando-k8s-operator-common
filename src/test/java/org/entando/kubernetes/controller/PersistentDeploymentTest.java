@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller;
 import static io.qameta.allure.Allure.step;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -175,6 +176,6 @@ class PersistentDeploymentTest extends ControllerTestBase implements FluentTrave
     @Disabled("TODO")
     @Description("Should create and mount PersistentVolumeClaims using defaults derived from the Entando Operator config properties")
     void createPersistentVolumeClaimUsingDefaults() {
-
+        fail("Not implemented");
     }
 }

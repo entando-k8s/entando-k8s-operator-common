@@ -99,7 +99,6 @@ public class DefaultIngressClient implements IngressClient {
                             return existing;
                         });
             } else {
-                e.printStackTrace();
                 throw e;
             }
         }

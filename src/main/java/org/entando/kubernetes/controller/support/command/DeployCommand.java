@@ -115,9 +115,6 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
             EntandoImageResolver entandoImageResolver = new EntandoImageResolver(
                     k8sClient.entandoResources().loadDockerImageInfoConfigMap(),
                     deployable.getCustomResource());
-            if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
-                prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable<?>) deployable);
-            }
             if (persistentVolumeClaimCreator.needsPersistentVolumeClaims(deployable)) {
                 createPersistentVolumeClaims(k8sClient);
             }
@@ -134,10 +131,14 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
                         deployable,
                         ofNullable(ingress));
             }
+            if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
+                prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable<?>) deployable);
+            }
             createDeployment(k8sClient, entandoImageResolver);
             waitForPod(k8sClient);
         } catch (Exception e) {
             getStatus().finishWith(ExceptionUtils.failureOf(entandoCustomResource, e));
+            k8sClient.entandoResources().updateStatus(entandoCustomResource, getStatus());
         }
         return deployable.createResult(getDeployment(), getService(), ingress, getPod()).withStatus(getStatus());
     }

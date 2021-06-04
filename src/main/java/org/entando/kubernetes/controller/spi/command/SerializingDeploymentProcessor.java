@@ -26,7 +26,6 @@ public class SerializingDeploymentProcessor implements DeploymentProcessor {
 
     private final KubernetesClientForControllers entandoResourceClient;
     private final CommandStream commandStream;
-    private Deployable<?> deployable;
 
     public SerializingDeploymentProcessor(KubernetesClientForControllers entandoResourceClient, CommandStream commandStream) {
         this.entandoResourceClient = entandoResourceClient;
@@ -36,14 +35,13 @@ public class SerializingDeploymentProcessor implements DeploymentProcessor {
     @Override
     public <T extends ServiceDeploymentResult<T>> T processDeployable(Deployable<T> deployable, int timeoutSeconds)
             throws TimeoutException {
-        this.deployable = deployable;
         String result = commandStream.process(
                 SupportedCommand.PROCESS_DEPLOYABLE,
                 SerializationHelper.serialize(deployable),
                 timeoutSeconds);
         SerializableDeploymentResult<?> serializedResult = DeserializationHelper.deserialize(entandoResourceClient, result);
         if (serializedResult.getStatus().hasFailed()) {
-            throw new EntandoControllerException("Creation of Kubernetes resources has failed");
+            throw new EntandoControllerException("Creation of Kubernetes resources has failed:");
         }
         return deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),
                 serializedResult.getPod())

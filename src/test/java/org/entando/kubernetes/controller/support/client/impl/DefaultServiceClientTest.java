@@ -83,7 +83,7 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
         });
         step("Then it has reflects the new annotation", () -> {
             final Service second = getSimpleK8SClient().services().loadService(testResource, "my-service");
-            assertThat(second.getMetadata().getAnnotations().get("test")).isEqualTo("234");
+            assertThat(second.getMetadata().getAnnotations()).containsEntry("test", "234");
         });
     }
 

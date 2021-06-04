@@ -17,7 +17,9 @@
 package org.entando.kubernetes.controller.support.client.impl;
 
 import static java.lang.Thread.sleep;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
 
+import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +30,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
@@ -35,6 +38,7 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -150,8 +154,15 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
                 newRealm.setSslRequired(SslRequired.NONE.name().toLowerCase());
             }
             newRealm.setDisplayName(realm);
-            keycloak.realms().create(newRealm);
-            createFirstUser(realmResource);
+            try {
+                keycloak.realms().create(newRealm);
+                createFirstUser(realmResource);
+            } catch (ClientErrorException e) {
+                //Another thread could be creating  the realm
+                if (e.getResponse().getStatus() != HttpURLConnection.HTTP_CONFLICT) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -305,13 +316,24 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     }
 
     private void assignServiceAccountRole(RealmResource realmResource, ClientResource clientResource, Permission serviceRole) {
-        findByClientId(realmResource, serviceRole.getClientId()).ifPresent(toAssociateClientResource -> {
-            String toAssociateClientUuid = toAssociateClientResource.toRepresentation().getId();
-            RoleRepresentation role = toAssociateClientResource.roles().get(serviceRole.getRole()).toRepresentation();
-            realmResource.users().get(clientResource.getServiceAccountUser().getId()).roles()
-                    .clientLevel(toAssociateClientUuid)
-                    .add(Collections.singletonList(role));
-        });
+        //Could still be creating the client in question from another Deployable for the same resource
+        //NB for this reason it is essential we perform client creation as early as possible in the Deploy command,
+        //e.g. BEFORE creating the schema or populating the database
+        retry(() -> {
+                    final ClientResource toAssociateClientResource = findByClientId(realmResource, serviceRole.getClientId())
+                            .orElseThrow(() -> new ClientErrorException(Status.NOT_FOUND));
+
+                    String toAssociateClientUuid = toAssociateClientResource.toRepresentation().getId();
+                    RoleRepresentation role = toAssociateClientResource.roles().get(serviceRole.getRole()).toRepresentation();
+                    realmResource.users().get(clientResource.getServiceAccountUser().getId()).roles()
+                            .clientLevel(toAssociateClientUuid)
+                            .add(Collections.singletonList(role));
+                    return null;
+                }, e -> e instanceof ClientErrorException
+                        && ((ClientErrorException) e).getResponse().getStatus() == HttpURLConnection.HTTP_NOT_FOUND,
+                5
+        );
+
     }
 
     private Optional<ClientResource> findByClientId(RealmResource realmResource, String clientId) {

@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.container;
 
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.Secret;
@@ -45,7 +46,7 @@ public class ProvidedSsoCapability implements SsoConnectionInfo {
     }
 
     @Override
-    public String determineBaseUrl() {
+    public String getBaseUrlToUse() {
         if (useExternalService() || EntandoOperatorSpiConfig.forceExternalAccessToKeycloak()) {
             return getExternalBaseUrl();
         } else {
@@ -74,7 +75,11 @@ public class ProvidedSsoCapability implements SsoConnectionInfo {
 
     @Override
     public Optional<String> getInternalBaseUrl() {
-        return ofNullable(exposedService.getInternalBaseUrl());
+        if (exposedService.getService() == null) {
+            return Optional.empty();
+        } else {
+            return of(exposedService.getInternalBaseUrl());
+        }
     }
 
 }

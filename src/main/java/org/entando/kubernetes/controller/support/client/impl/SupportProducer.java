@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import okhttp3.logging.HttpLoggingInterceptor;
+import okhttp3.logging.HttpLoggingInterceptor.Level;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
@@ -44,7 +45,13 @@ public class SupportProducer {
         if (kubernetesClient == null) {
             ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withRequestTimeout(30000).withConnectionTimeout(30000);
             kubernetesClient = new DefaultKubernetesClient(configBuilder.build());
-            ((HttpClientAware) kubernetesClient).getHttpClient().networkInterceptors().removeIf(HttpLoggingInterceptor.class::isInstance);
+            //Somehow when using the default JBoss Logging config in Quarkus HttpLoggingInterceptor ends up logging at trace level.
+            //Rather fix this programmatically than try to figure out how to control logging in all the different dev and runtime
+            // environments
+            ((HttpClientAware) kubernetesClient).getHttpClient().networkInterceptors().stream()
+                    .filter(HttpLoggingInterceptor.class::isInstance).map(HttpLoggingInterceptor.class::cast).findFirst().ifPresent(
+                    interceptor -> interceptor.setLevel(Level.NONE)
+            );
         }
         return kubernetesClient;
     }

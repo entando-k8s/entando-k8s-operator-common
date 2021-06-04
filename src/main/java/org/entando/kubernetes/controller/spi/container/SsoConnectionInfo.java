@@ -26,7 +26,7 @@ import org.entando.kubernetes.controller.spi.common.SecretUtils;
 
 public interface SsoConnectionInfo {
 
-    String determineBaseUrl();
+    String getBaseUrlToUse();
 
     default String getUsername() {
         return decodeSecretValue(SecretUtils.USERNAME_KEY);

@@ -36,7 +36,7 @@ public class ConfigMapBasedSsoConnectionInfo implements SsoConnectionInfo {
     }
 
     @Override
-    public String determineBaseUrl() {
+    public String getBaseUrlToUse() {
         if (EntandoOperatorSpiConfig.forceExternalAccessToKeycloak()) {
             return getExternalBaseUrl();
         } else {

@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller.spi.client.impl;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -30,11 +31,13 @@ import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
+import java.net.HttpURLConnection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -153,7 +156,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
 
     @Override
     public <T extends EntandoCustomResource> T updateStatus(T customResource, AbstractServerStatus status) {
-        return performStatusUpdate(customResource,
+        return issueEventAndPerformStatusUpdate(customResource,
                 t -> t.getStatus().putServerStatus(status),
                 e -> e.withType("Normal")
                         .withReason("StatusUpdate")
@@ -182,7 +185,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
 
     @Override
     public <T extends EntandoCustomResource> T updatePhase(T customResource, EntandoDeploymentPhase phase) {
-        return performStatusUpdate(customResource,
+        return issueEventAndPerformStatusUpdate(customResource,
                 t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
                 e -> e.withType("Normal")
                         .withReason("PhaseUpdated")
@@ -196,7 +199,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     }
 
     public <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason, String serverQualifier) {
-        return performStatusUpdate(customResource,
+        return issueEventAndPerformStatusUpdate(customResource,
                 t -> {
                     String qualifierToUse = ofNullable(serverQualifier).orElse(NameUtils.MAIN_QUALIFIER);
                     if (t.getStatus().getServerStatus(qualifierToUse).isEmpty()) {
@@ -225,12 +228,14 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         );
     }
 
-    @SuppressWarnings({"unchecked", "java:S1905", "java:S1874"})
-    //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
-    //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
-    //TODO find a way to serialize to our generic objects using the HashMaps from the Raw custom resources
-    private <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer,
+    private <T extends EntandoCustomResource> T issueEventAndPerformStatusUpdate(T customResource, Consumer<T> consumer,
             UnaryOperator<EventBuilder> eventPopulator) {
+        issueEvent(customResource, eventPopulator);
+        //Could be updating the status concurrently from multiple Deployables
+        return retry(() -> performStatusUpdate(customResource, consumer), e -> e instanceof KubernetesClientException && ((KubernetesClientException) e).getCode() == HttpURLConnection.HTTP_CONFLICT, 4);
+    }
+
+    private <T extends EntandoCustomResource> void issueEvent(T customResource, UnaryOperator<EventBuilder> eventPopulator) {
         final EventBuilder doneableEvent = new EventBuilder()
                 .withNewMetadata()
                 .withNamespace(customResource.getMetadata().getNamespace())
@@ -252,6 +257,12 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                 .withFieldPath("status")
                 .endInvolvedObject();
         client.v1().events().inNamespace(customResource.getMetadata().getNamespace()).create(eventPopulator.apply(doneableEvent).build());
+    }
+
+    @SuppressWarnings({"unchecked", "java:S1905", "java:S1874"})
+    //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
+    //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
+    private <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer) {
         if (customResource instanceof SerializedEntandoResource) {
             return ioSafe(() -> {
                 SerializedEntandoResource ser = (SerializedEntandoResource) customResource;
@@ -305,7 +316,8 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                                                 .getItems()
                                                 .stream()
                                                 .collect(Collectors
-                                                        .toMap(crd -> crd.getSpec().getNames().getKind() + "." + crd.getSpec().getGroup(),
+                                                        .toMap(crd -> crd.getSpec().getNames().getKind() + "." + crd.getSpec()
+                                                                        .getGroup(),
                                                                 crd -> crd.getMetadata().getName())))
                                         .build())));
 

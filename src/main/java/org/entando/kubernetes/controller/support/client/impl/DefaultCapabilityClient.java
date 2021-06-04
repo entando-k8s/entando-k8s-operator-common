@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.client.impl;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
@@ -45,8 +46,7 @@ public class DefaultCapabilityClient implements CapabilityClient, WaitingClient 
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByName(String namespace, String name) {
-        return Optional
-                .ofNullable(client.customResources(ProvidedCapability.class).inNamespace(namespace).withName(name).fromServer().get());
+        return ofNullable(client.customResources(ProvidedCapability.class).inNamespace(namespace).withName(name).fromServer().get());
     }
 
     @Override
@@ -94,15 +94,17 @@ public class DefaultCapabilityClient implements CapabilityClient, WaitingClient 
     public SerializedCapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability) {
         final AbstractServerStatus serverStatus = providedCapability.getStatus().findCurrentServerStatus()
                 .orElseThrow(IllegalStateException::new);
-        Service service = client.services().inNamespace(providedCapability.getMetadata().getNamespace())
-                .withName(serverStatus.getServiceName()).get();
+        Service service = ofNullable(serverStatus.getServiceName())
+                .map(s -> client.services().inNamespace(providedCapability.getMetadata().getNamespace())
+                        .withName(s).get()).orElse(null);
         Secret adminSecret = serverStatus.getAdminSecretName()
                 .map(s -> client.secrets().inNamespace(providedCapability.getMetadata().getNamespace()).withName(s).get())
                 .orElse(null);
         Ingress ingress = null;
         if (serverStatus instanceof ExposedServerStatus) {
-            ingress = client.extensions().ingresses().inNamespace(providedCapability.getMetadata().getNamespace())
-                    .withName(((ExposedServerStatus) serverStatus).getIngressName()).get();
+            ingress = ofNullable(((ExposedServerStatus) serverStatus).getIngressName())
+                    .map(s -> client.extensions().ingresses().inNamespace(providedCapability.getMetadata().getNamespace())
+                            .withName(s).get()).orElse(null);
         }
         return new SerializedCapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);
     }
