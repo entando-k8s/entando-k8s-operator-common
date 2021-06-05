@@ -101,7 +101,8 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
                 .username(username)
                 .password(password)
                 .build();
-        retry(() -> {
+        retry(
+                () -> {
                     if (!isKeycloakAvailable(attemptedKeycloak)) {
                         throw new IllegalStateException();
                     }
