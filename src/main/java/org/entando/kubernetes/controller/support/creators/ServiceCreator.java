@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import io.fabric8.kubernetes.api.model.EndpointPort;
+import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.EndpointsBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -29,13 +30,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.MayRequireDelegateService;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.deployable.ExternalService;
 import org.entando.kubernetes.controller.support.client.ServiceClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class ServiceCreator extends AbstractK8SResourceCreator {
+
+    private static final int TCP4_NUMBER_OF_BYTES = 4;
+    private static final int TCP6_NUMBER_OF_SEGMENTS = 8;
 
     private Service primaryService;
 
@@ -46,35 +54,6 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
     public ServiceCreator(EntandoCustomResource entandoCustomResource, Service primaryService) {
         super(entandoCustomResource);
         this.primaryService = primaryService;
-    }
-
-    private Service newService(Deployable<?> deployable) {
-        final String nameQualifier = deployable.getQualifier().orElse(null);
-        ObjectMeta objectMeta = fromCustomResource(true, resolveName(nameQualifier, "service"),
-                nameQualifier);
-        return new ServiceBuilder()
-                .withMetadata(objectMeta)
-                .withNewSpec()
-                .withSelector(labelsFromResource(nameQualifier))
-                .withType("ClusterIP")
-                .withPorts(buildPorts(deployable))
-                .endSpec()
-                .build();
-    }
-
-    private List<ServicePort> buildPorts(Deployable<?> deployable) {
-        return deployable.getContainers().stream().filter(ServiceBackingContainer.class::isInstance)
-                .map(ServiceBackingContainer.class::cast)
-                .map(this::newServicePort).collect(Collectors.toList());
-    }
-
-    private ServicePort newServicePort(ServiceBackingContainer deployableContainer) {
-        return new ServicePortBuilder()
-                .withName(deployableContainer.getNameQualifier() + "-port")
-                .withPort(deployableContainer.getPrimaryPort())
-                .withProtocol("TCP")
-                .withTargetPort(new IntOrString(deployableContainer.getPrimaryPort()))
-                .build();
     }
 
     public void createService(ServiceClient services, Deployable<?> deployable) {
@@ -105,12 +84,110 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
         return delegatingService;
     }
 
+    public void createExternalService(SimpleK8SClient<?> k8sClient, ExternalService externalService) {
+        this.primaryService = k8sClient.services().createOrReplaceService(entandoCustomResource, newExternalService(externalService));
+        if (isIpAddress(externalService)) {
+            k8sClient.services().createOrReplaceEndpoints(entandoCustomResource, newEndpoints(externalService));
+        }
+    }
+
+    private Service newService(Deployable<?> deployable) {
+        final String nameQualifier = deployable.getQualifier().orElse(null);
+        ObjectMeta objectMeta = fromCustomrResource(nameQualifier);
+        return new ServiceBuilder()
+                .withMetadata(objectMeta)
+                .withNewSpec()
+                .withSelector(labelsFromResource(nameQualifier))
+                .withType("ClusterIP")
+                .withPorts(buildPorts(deployable))
+                .endSpec()
+                .build();
+    }
+
+    private List<ServicePort> buildPorts(Deployable<?> deployable) {
+        return deployable.getContainers().stream().filter(ServiceBackingContainer.class::isInstance)
+                .map(ServiceBackingContainer.class::cast)
+                .map(this::newServicePort).collect(Collectors.toList());
+    }
+
+    private ServicePort newServicePort(ServiceBackingContainer deployableContainer) {
+        return new ServicePortBuilder()
+                .withName(deployableContainer.getNameQualifier() + "-port")
+                .withPort(deployableContainer.getPrimaryPort())
+                .withProtocol("TCP")
+                .withTargetPort(new IntOrString(deployableContainer.getPrimaryPort()))
+                .build();
+    }
+
     private List<EndpointPort> toEndpointPorts(List<ServicePort> ports) {
         return ports.stream()
                 .map(servicePort -> new EndpointPort(servicePort.getAppProtocol(), servicePort.getName(), servicePort.getPort(),
                         servicePort.getProtocol()))
                 .collect(Collectors.toList());
 
+    }
+
+    private Endpoints newEndpoints(ExternalService externalService) {
+        return new EndpointsBuilder()
+                //Needs to match the service name exactly
+                .withMetadata(fromCustomrResource(null))
+                .addNewSubset()
+                .addNewAddress()
+                .withIp(externalService.getHost())
+                .endAddress()
+                .addNewPort()
+                .withPort(externalService.getPort())
+                .endPort()
+                .endSubset()
+                .build();
+    }
+
+    private Service newExternalService(ExternalService externalService) {
+        return new ServiceBuilder()
+                .withMetadata(fromCustomrResource(null))
+                .withNewSpec()
+                .withExternalName(FluentTernary.useNull(String.class).when(isIpAddress(externalService))
+                        .orElse(externalService.getHost()))
+                .withType(FluentTernary.use("ClusterIP").when(isIpAddress(externalService)).orElse("ExternalName"))
+                .addNewPort()
+                .withNewTargetPort(
+                        externalService.getPort())
+                .withPort(externalService.getPort())
+                .endPort()
+                .endSpec()
+                .build();
+    }
+
+    private ObjectMeta fromCustomrResource(String qualifier) {
+        return fromCustomResource(true, resolveName(qualifier, NameUtils.DEFAULT_SERVICE_SUFFIX), qualifier);
+    }
+
+    private boolean isIpAddress(ExternalService externalService) {
+        String host = externalService.getHost();
+        try {
+            String[] split = host.split("\\.");
+            if (split.length == TCP4_NUMBER_OF_BYTES) {
+                for (String s : split) {
+                    int i = Integer.parseInt(s);
+                    if (i > 255 || i < 0) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                split = host.split("\\:");
+
+                if (split.length == TCP6_NUMBER_OF_SEGMENTS) {
+                    for (String s : split) {
+                        Integer.parseInt(s, 176);
+                    }
+                    return true;
+                }
+            }
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return false;
     }
 
     public Service getService() {

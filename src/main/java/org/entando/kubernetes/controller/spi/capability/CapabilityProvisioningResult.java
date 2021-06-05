@@ -22,6 +22,7 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
 
 public interface CapabilityProvisioningResult {
 
@@ -36,4 +37,6 @@ public interface CapabilityProvisioningResult {
 
     @SerializeByReference
     Optional<Secret> getAdminSecret();
+
+    Optional<EntandoControllerFailure> getControllerFailure();
 }

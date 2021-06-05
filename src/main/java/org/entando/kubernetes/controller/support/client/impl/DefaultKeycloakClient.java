@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
-import static java.lang.Thread.sleep;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
 
 import java.net.HttpURLConnection;
@@ -64,7 +63,6 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     public static final String MASTER_REALM = "master";
     public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
     private static final Logger LOGGER = Logger.getLogger(DefaultKeycloakClient.class.getName());
-    private static final int MAX_RETRY_COUNT = 180;
     private Keycloak keycloak;
     private boolean isHttps = false;
     private String currentUser;
@@ -103,25 +101,13 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
                 .username(username)
                 .password(password)
                 .build();
-        int count = 0;
-        boolean connectionFailed = true;
-        while (connectionFailed) {
-            try {
-                if (isKeycloakAvailable(attemptedKeycloak)) {
-                    connectionFailed = false;
-                } else {
-                    count++;
-                    if (count > MAX_RETRY_COUNT) {
-                        throw new IllegalStateException("Could not connect to " + baseUrl);
-                    } else {
-                        sleep(1000);
+        retry(() -> {
+                    if (!isKeycloakAvailable(attemptedKeycloak)) {
+                        throw new IllegalStateException();
                     }
-                }
-            } catch (InterruptedException e) {
-                LOGGER.log(Level.WARNING, "Should not happen", e);
-                Thread.currentThread().interrupt();
-            }
-        }
+                    return null;
+                },
+                IllegalStateException.class::isInstance, 8);
         this.keycloak = attemptedKeycloak;
     }
 

@@ -20,5 +20,11 @@ import java.util.concurrent.TimeoutException;
 
 public interface CommandStream {
 
+    /**
+     * This method should not through any exceptions other than TimeoutException for timeouts on the client side, and exceptions related to
+     * IO and/or Serialization. Exceptions produced on the other side will be logged on the status of the EntandoCustomResource in question.
+     * The string returned also has a controllerFailure attached to it directly or indirectly
+     */
+
     String process(SupportedCommand command, String target, int timeoutSeconds) throws TimeoutException;
 }

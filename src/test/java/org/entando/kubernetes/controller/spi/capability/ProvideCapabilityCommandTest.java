@@ -21,9 +21,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
-import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
@@ -144,8 +143,10 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         doAnswer(andGenerateFailEvent()).when(capabilityClient).createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
         when(capabilityClient.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         //When I attempt to fulfill the capability
-        assertThrows(EntandoControllerException.class,
-                () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS));
+        final CapabilityProvisioningResult result = capabilityProvider
+                .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+        //Then the result has a controllerFailure
+        assertTrue(result.getControllerFailure().isPresent());
     }
 
     @Test
@@ -159,17 +160,19 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withResolutionScopePreference(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage")).build();
-        when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
+        when(capabilityClient.providedCapabilityByLabels(anyMap()))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(LabelNames.CAPABILITY_PROVISION_SCOPE.getName(), CapabilityScope.DEDICATED.getCamelCaseName())
                         .build(), new CapabilityRequirement())));
         //When I attempt to fulfill the capability
-        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
-                TIMEOUT_SECONDS));
+        final CapabilityProvisioningResult result = capabilityProvider
+                .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+        //Then the result has a controllerFailure
+        assertTrue(result.getControllerFailure().isPresent());
     }
 
     @Test
-    void shouldFailWhenThereIsAnImplementationMismatch() {
+    void shouldFailWhenThereIsAnImplementationMismatch() throws TimeoutException {
         //Given I have an TestResource
         final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
         //with a cluster scoped capability requirement for a MYSQL server
@@ -179,7 +182,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage"))
                 .build();
-        when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
+        when(capabilityClient.providedCapabilityByLabels(anyMap()))
                 .thenReturn(Optional.of(new ProvidedCapability(new ObjectMetaBuilder()
                         .addToLabels(LabelNames.CAPABILITY_PROVISION_SCOPE.getName(),
                                 CapabilityScope.LABELED.getCamelCaseName())
@@ -187,8 +190,10 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                                 StandardCapabilityImplementation.POSTGRESQL.getCamelCaseName())
                         .build(), new CapabilityRequirement())));
         //When I attempt to fulfill the capability
-        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
-                TIMEOUT_SECONDS));
+        final CapabilityProvisioningResult result = capabilityProvider
+                .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+        //Then the result has a controllerFailure
+        assertTrue(result.getControllerFailure().isPresent());
     }
 
     @Test
@@ -223,7 +228,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
     }
 
     @Test
-    void shouldFailWhenNoLabelsProvidedForLabeledCapability() {
+    void shouldFailWhenNoLabelsProvidedForLabeledCapability() throws TimeoutException {
         //Given I have an TestResource
         final TestResource forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
 
@@ -232,8 +237,10 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.LABELED)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
-        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
-                TIMEOUT_SECONDS));
+        final CapabilityProvisioningResult result = capabilityProvider
+                .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+        //Then the result has a controllerFailure
+        assertTrue(result.getControllerFailure().isPresent());
     }
 
     @Test
@@ -279,8 +286,10 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withProvisioningStrategy(
                         CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
-        assertThrows(IllegalArgumentException.class, () -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
-                TIMEOUT_SECONDS));
+        final CapabilityProvisioningResult result = capabilityProvider
+                .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+        //Then the result has a controllerFailure
+        assertTrue(result.getControllerFailure().isPresent());
     }
 
     @Test

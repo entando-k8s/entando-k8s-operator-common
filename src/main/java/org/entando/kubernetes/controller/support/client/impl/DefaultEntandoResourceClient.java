@@ -29,7 +29,7 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DefaultEntandoResourceClient extends DefaultKubernetesClientForControllers implements
-        EntandoResourceClient, PatchableClient {
+        EntandoResourceClient {
 
     public DefaultEntandoResourceClient(KubernetesClient client) {
         super(client);

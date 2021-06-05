@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller;
 
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -30,13 +29,13 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
-import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
@@ -49,6 +48,7 @@ import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
 import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.test.common.CapabilityStatusEmulator;
 import org.entando.kubernetes.test.common.InProcessTestData;
@@ -167,44 +167,83 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         });
         step("But the controller that processes this capability updates the Phase on its status to 'FAILED'", () ->
                 doAnswer(andGenerateFailEvent()).when(clientDouble.capabilities()).createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS)));
-        step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerException", () ->
-                assertThatThrownBy(() -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS))
-                        .isInstanceOf(EntandoControllerException.class));
+        step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerFailure", () -> {
+            final CapabilityProvisioningResult result = capabilityProvider
+                    .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+            final Optional<EntandoControllerFailure> controllerFailure = result.getControllerFailure();
+            assertThat(controllerFailure).isPresent();
+            assertThat(controllerFailure.get().getDetailMessage()).contains("java.lang.IllegalStateException");
+
+        });
     }
 
     @Test
-    @Description("Should fail when the labels match but there is a scope mismatch")
-    void shouldFailWhenThereIsAScopeMismatch() {
+    @Description("The request for a new required Capability should fail if times out")
+    void shouldFailWhenTimingOut() {
         step("Given I have an TestResource", () -> {
             this.forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
-            attachKubernetesResource("TestResource", this.forResource);
+            attachKubernetesResource("TestResource", forResource);
         });
-        step("And I have already created a capability with the label 'Environment=Stage' but it is a cluster scoped capability", () -> {
+        step("With a cluster scoped capability requirement for a MYSQL server", () -> {
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
                     .withImplementation(StandardCapabilityImplementation.MYSQL)
                     .withResolutionScopePreference(CapabilityScope.CLUSTER)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
+            attachKubernetesResource("CapabilityRequirement", theCapabilityRequirement);
+        });
+        step("But the controller that processes this capability updates the Phase on its status to 'FAILED'", () -> {
+            return doAnswer((Answer<?>) invocationOnMock -> {
+                throw new TimeoutException();
+            }).when(clientDouble.capabilities()).createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        });
+        step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerFailure", () -> {
+            final CapabilityProvisioningResult result = capabilityProvider
+                    .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+            final Optional<EntandoControllerFailure> controllerFailure = result.getControllerFailure();
+            assertThat(controllerFailure).isPresent();
+            assertThat(controllerFailure.get().getDetailMessage()).contains("java.util.concurrent.TimeoutException");
+
+        });
+    }
+
+    @Test
+    @Description("Should fail when the a specified capability match but there is a scope mismatch")
+    void shouldFailWhenThereIsAScopeMismatch() {
+        step("Given I have an TestResource", () -> {
+            this.forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+            attachKubernetesResource("TestResource", this.forResource);
+        });
+        step("And I have already created a capability with the 'dedicated' scope", () -> {
+            this.theCapabilityRequirement = new CapabilityRequirementBuilder()
+                    .withCapability(StandardCapability.DBMS)
+                    .withImplementation(StandardCapabilityImplementation.MYSQL)
+                    .withResolutionScopePreference(CapabilityScope.DEDICATED)
+                    .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
                     .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt());
             this.capabilityResult = capabilityProvider
                     .provideCapability(forResource, this.theCapabilityRequirement, 10);
-            capabilityResult.getProvidedCapability().getMetadata().getLabels().put("Environment", "Stage");
-            getClient().entandoResources().createOrPatchEntandoResource(capabilityResult.getProvidedCapability());
         });
         step("And I have requirement for a Labeled capability", () -> {
             //with a cluster scoped capability requirement for a MYSQL server
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
                     .withImplementation(StandardCapabilityImplementation.MYSQL)
-                    .withResolutionScopePreference(CapabilityScope.LABELED)
-                    .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
-                    .withSelector(Collections.singletonMap("Environment", "Stage")).build();
+                    .withResolutionScopePreference(CapabilityScope.SPECIFIED)
+                    .withSpecifiedCapability(new ResourceReference(MY_APP_NAMESPACE, "my-app-db"))
+                    .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
         });
         step("Expect my request for the CapabilityRequirement to be fulfilled to result in an IllegalArgumentException",
-                () -> assertThatThrownBy(() -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
-                        TIMEOUT_SECONDS)).isInstanceOf(IllegalArgumentException.class));
+                () -> {
+                    final CapabilityProvisioningResult result = capabilityProvider
+                            .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+                    final Optional<EntandoControllerFailure> controllerFailure = result.getControllerFailure();
+                    assertThat(controllerFailure.get().getMessage()).isEqualTo(
+                            "The capability Dbms was found, but its supported provisioning scopes are 'Dedicated' instead of the "
+                                    + "requested 'Specified' scopes");
+                });
     }
 
     @Test
@@ -215,34 +254,42 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             this.forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
             attachKubernetesResource("TestResource", this.forResource);
         });
-        step("And I have already created a capability with the label 'Environment=Stage' but it specifies PostgreSQL as implementation",
+        step("And I have already created a capability at the cluster level but it specifies PostgreSQL as implementation",
                 () -> {
                     this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                             .withCapability(StandardCapability.DBMS)
                             .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
-                            .withResolutionScopePreference(CapabilityScope.CLUSTER)
+                            .withResolutionScopePreference(CapabilityScope.SPECIFIED)
+                            .withSpecifiedCapability(new ResourceReference(MY_APP_NAMESPACE, "my-db"))
                             .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
                     doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
                             .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt());
                     this.capabilityResult = capabilityProvider
                             .provideCapability(forResource, this.theCapabilityRequirement, 10);
-                    capabilityResult.getProvidedCapability().getMetadata().getLabels().put("Environment", "Stage");
-                    getClient().entandoResources().createOrPatchEntandoResource(capabilityResult.getProvidedCapability());
                 });
         step("But now I have requirement for a MySQL implementation using the same Labels", () -> {
             //with a cluster scoped capability requirement for a MYSQL server
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.DBMS)
                     .withImplementation(StandardCapabilityImplementation.MYSQL)
-                    .withResolutionScopePreference(CapabilityScope.LABELED)
-                    .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
-                    .withSelector(Collections.singletonMap("Environment", "Stage")).build();
+                    .withResolutionScopePreference(CapabilityScope.SPECIFIED)
+                    .withSpecifiedCapability(new ResourceReference(MY_APP_NAMESPACE, "my-db"))
+                    .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
         });
 
-        step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerException", () ->
-                assertThatThrownBy(() -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS))
-                        .isInstanceOf(IllegalArgumentException.class));
+        step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerFailure indicating that there was an"
+                        + " implementation mismatch",
+                () -> {
+                    final CapabilityProvisioningResult result = capabilityProvider
+                            .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+                    final Optional<EntandoControllerFailure> controllerFailure = result.getControllerFailure();
+                    assertThat(controllerFailure).isPresent();
+                    assertThat(controllerFailure.get().getMessage())
+                            .isEqualTo(
+                                    "The capability Dbms was found, but its implementation is Postgresql instead of the requested Mysql");
+                    attachKubernetesResource("EntandoControllerFailure", controllerFailure.get());
+                });
     }
 
     @Test
@@ -307,9 +354,14 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     .withImplementation(StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.LABELED)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         });
-        step("Expect a request to fulfil this CapabilityRequirement to result in an IllegalArgumentException", () ->
-                assertThatThrownBy(() -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement,
-                        TIMEOUT_SECONDS)).isInstanceOf(IllegalArgumentException.class));
+        step("Expect a request to fulfil this CapabilityRequirement to result in an IllegalArgumentException", () -> {
+            final CapabilityProvisioningResult result = capabilityProvider
+                    .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+            final Optional<EntandoControllerFailure> controllerFailure = result.getControllerFailure();
+            assertThat(controllerFailure).isPresent();
+            assertThat(controllerFailure.get().getMessage())
+                    .isEqualTo("A requirement for a labeled capability needs at least one label to resolve the required capability.");
+        });
     }
 
     @Test
@@ -377,9 +429,15 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                             CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             attachSpiResource("CapabilityRequirement", this.theCapabilityRequirement);
         });
-        step("Expect a request to fulfil this CapabilityRequirement to result in an IllegalStateException", () ->
-                assertThatThrownBy(() -> capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS))
-                        .isInstanceOf(IllegalArgumentException.class));
+        step("Expect a request to fulfil this CapabilityRequirement to result in an EntandoControllerFailure", () -> {
+            final CapabilityProvisioningResult result = capabilityProvider
+                    .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+            final Optional<EntandoControllerFailure> controllerFailure = result.getControllerFailure();
+            assertThat(controllerFailure).isPresent();
+            assertThat(controllerFailure.get().getMessage()).isEqualTo(
+                    "A requirement for a specified capability needs a valid name and optional namespace to resolve the required "
+                            + "capability.");
+        });
     }
 
     @Test
@@ -559,10 +617,11 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
     }
 
     private Answer<?> andGenerateFailEvent() {
+        final IllegalStateException reason = new IllegalStateException();
         return invocationOnMock -> {
             scheduler.schedule(() -> {
                 ProvidedCapability capability = invocationOnMock.getArgument(0);
-                clientDouble.entandoResources().deploymentFailed(capability, new IllegalStateException(), null);
+                clientDouble.entandoResources().deploymentFailed(capability, reason, null);
             }, 300, TimeUnit.MILLISECONDS);
             return invocationOnMock.callRealMethod();
         };

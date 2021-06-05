@@ -91,12 +91,16 @@ public class DeserializationHelper implements InvocationHandler {
             }
         } else {
             if (method.getReturnType() == List.class) {
-                Class<?> typeArgument = resolveFirstTypeArgument(method);
+                Class<?> typeArgument = resolveTypeArgument(method, 0);
                 return ((List<?>) result).stream()
                         .map(deserializedMap -> resolveRawObjectOrMap(method, deserializedMap, typeArgument))
                         .collect(Collectors.toList());
+            } else if (method.getReturnType() == Map.class) {
+                final Class<?> type = resolveTypeArgument(method, 1);
+                return ((Map<String, ?>) result).entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, entry -> resolveRawObjectOrMap(method, entry.getValue(), type)));
             } else if (method.getReturnType() == Optional.class) {
-                final Class<?> type = resolveFirstTypeArgument(method);
+                final Class<?> type = resolveTypeArgument(method, 0);
                 return Optional.of(resolveRawObjectOrMap(method, result, type));
             } else {
                 return resolveRawObjectOrMap(method, result, method.getReturnType());
@@ -125,8 +129,8 @@ public class DeserializationHelper implements InvocationHandler {
         }
     }
 
-    private Class<?> resolveFirstTypeArgument(Method method) {
-        return (Class<?>) ((ParameterizedType) method.getGenericReturnType()).getActualTypeArguments()[0];
+    private Class<?> resolveTypeArgument(Method method, int i) {
+        return (Class<?>) ((ParameterizedType) method.getGenericReturnType()).getActualTypeArguments()[i];
     }
 
     private Object createResult(Object[] objects)

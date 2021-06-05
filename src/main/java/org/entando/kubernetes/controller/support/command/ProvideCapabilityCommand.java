@@ -22,22 +22,24 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
-import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ResourceReference;
 
-//TODO Think of how to use with CommandStream
 public class ProvideCapabilityCommand {
 
     private final CapabilityClient client;
@@ -46,22 +48,28 @@ public class ProvideCapabilityCommand {
         this.client = client;
     }
 
-    public SerializedCapabilityProvisioningResult execute(HasMetadata forResource, CapabilityRequirement capabilityRequirement,
-            int timeoutSeconds) throws TimeoutException {
+    /**
+     * This method is not allowed to throw any exceptions. Any error conditions associated with the execution of this method should be
+     * attached to the CapabilityProvisioningResult, or if a ProvidedCapability was created, it will be attached to this
+     * ProvidedCapability.
+     */
+
+    public SerializedCapabilityProvisioningResult execute(HasMetadata forResource, CapabilityRequirement requirement, int timeoutSeconds) {
         try {
-            final List<CapabilityScope> resolutionScopePreference = determinResolutionScopePreference(capabilityRequirement);
-            Optional<ProvidedCapability> match = findCapability(forResource, capabilityRequirement, resolutionScopePreference);
-            match.ifPresent(c -> validateCapabilityCriteria(capabilityRequirement, resolutionScopePreference, c));
-            return loadProvisioningResult(
-                    match.orElseGet(
-                            () -> makeNewCapabilityAvailable(forResource, capabilityRequirement, resolutionScopePreference.get(0),
-                                    timeoutSeconds)));
-        } catch (TimeoutHolderException e) {
-            throw e.getCause();
+            final List<CapabilityScope> resolutionScopePreference = determineResolutionScopePreference(requirement);
+            Optional<ProvidedCapability> match = findCapability(forResource, requirement, resolutionScopePreference);
+            match.ifPresent(c -> validateCapabilityCriteria(requirement, resolutionScopePreference, c));
+            return loadProvisioningResult(match.orElseGet(
+                    () -> makeNewCapabilityAvailable(forResource, requirement, resolutionScopePreference.get(0),
+                            timeoutSeconds)));
+        } catch (EntandoControllerException e) {
+            return new SerializedCapabilityProvisioningResult((ProvidedCapability) e.getKubernetesResource(), ExceptionUtils.failureOf(e));
+        } catch (Exception e) {
+            return new SerializedCapabilityProvisioningResult(ExceptionUtils.failureOf(forResource, e));
         }
     }
 
-    private List<CapabilityScope> determinResolutionScopePreference(CapabilityRequirement capabilityRequirement) {
+    private List<CapabilityScope> determineResolutionScopePreference(CapabilityRequirement capabilityRequirement) {
         List<CapabilityScope> requirementScopes = capabilityRequirement.getResolutionScopePreference();
         if (requirementScopes.isEmpty()) {
             requirementScopes = Collections.singletonList(CapabilityScope.NAMESPACE);
@@ -75,18 +83,26 @@ public class ProvideCapabilityCommand {
 
     private void validateCapabilityCriteria(CapabilityRequirement capabilityRequirement, List<CapabilityScope> requirementScope,
             ProvidedCapability c) {
-        if (requirementScope.stream().noneMatch(s -> s.getCamelCaseName()
-                .equals(c.getMetadata().getLabels().get(LabelNames.CAPABILITY_PROVISION_SCOPE.getName())))) {
-            throw new IllegalArgumentException(
-                    format("The capability %s was found, but its provision scope is %s instead of the requested %s scope",
+        Set<CapabilityScope> required = new HashSet<>(requirementScope);
+        Set<CapabilityScope> provided = new HashSet<>(c.getSpec().getResolutionScopePreference());
+        provided.add(CapabilityScope.forValue(c.getMetadata().getLabels().get(LabelNames.CAPABILITY_PROVISION_SCOPE.getName())));
+        required.retainAll(provided);
+        if (required.isEmpty()) {
+
+            throw new EntandoControllerException(c,
+                    format("The capability %s was found, but its supported provisioning scopes are '%s' instead of the requested '%s' "
+                                    + "scopes",
                             capabilityRequirement.getCapability().getCamelCaseName(),
-                            c.getMetadata().getLabels().get(LabelNames.CAPABILITY_PROVISION_SCOPE.getName()),
-                            requirementScope.get(0).getCamelCaseName()
-                    ));
+                            c.getSpec().getResolutionScopePreference().stream()
+                                    .map(CapabilityScope::getCamelCaseName)
+                                    .collect(Collectors.joining(",")),
+                            requirementScope.stream()
+                                    .map(CapabilityScope::getCamelCaseName)
+                                    .collect(Collectors.joining(","))));
         }
         if (!capabilityRequirement.getImplementation().map(i -> i.getCamelCaseName()
                 .equals(c.getMetadata().getLabels().get(LabelNames.CAPABILITY_IMPLEMENTATION.getName()))).orElse(true)) {
-            throw new IllegalArgumentException(
+            throw new EntandoControllerException(c,
                     format("The capability %s was found, but its implementation is %s instead of the requested %s",
                             capabilityRequirement.getCapability().getCamelCaseName(),
                             c.getMetadata().getLabels().get(LabelNames.CAPABILITY_IMPLEMENTATION.getName()),
@@ -108,6 +124,7 @@ public class ProvideCapabilityCommand {
 
     private Optional<ProvidedCapability> resolveCapabilityByScope(HasMetadata forResource, CapabilityRequirement capabilityRequirement,
             CapabilityScope capabilityScope) {
+        final Map<String, String> baseLabels = determineCapabilityLabels(capabilityRequirement, capabilityScope);
         switch (capabilityScope) {
             case DEDICATED:
                 return client.providedCapabilityByName(forResource.getMetadata().getNamespace(),
@@ -122,24 +139,25 @@ public class ProvideCapabilityCommand {
                                 resourceReference.getName());
             case LABELED:
                 if (capabilityRequirement.getSelector() == null || capabilityRequirement.getSelector().isEmpty()) {
-                    throw new IllegalArgumentException("A requirement for a labeled capability needs at least one label to resolve "
+                    throw new EntandoControllerException("A requirement for a labeled capability needs at least one label to resolve "
                             + "the required capability.");
                 }
-                return client.providedCapabilityByLabels(capabilityRequirement.getSelector());
+                baseLabels.putAll(capabilityRequirement.getSelector());
+                return client.providedCapabilityByLabels(baseLabels);
             case NAMESPACE:
                 return client
                         .providedCapabilityByLabels(forResource.getMetadata().getNamespace(),
-                                determineCapabilityLabels(capabilityRequirement, capabilityScope));
+                                baseLabels);
             case CLUSTER:
             default:
-                return client.providedCapabilityByLabels(determineCapabilityLabels(capabilityRequirement, capabilityScope));
+                return client.providedCapabilityByLabels(baseLabels);
         }
     }
 
     private Map<String, String> determineCapabilityLabels(CapabilityRequirement capabilityRequirement, CapabilityScope scope) {
         Map<String, String> result = new HashMap<>();
         result.put(LabelNames.CAPABILITY.getName(), capabilityRequirement.getCapability().getCamelCaseName());
-        //In the absence of implementation and scope, it is the Controller's responsibility to make the decions and populate the
+        //In the absence of implementation and scope, it is the Controller's responsibility to make the decisions and populate the
         // ProvidedCapability's labels
         capabilityRequirement.getImplementation().ifPresent(impl -> result.put(LabelNames.CAPABILITY_IMPLEMENTATION.getName(),
                 impl.getCamelCaseName()));
@@ -148,23 +166,21 @@ public class ProvideCapabilityCommand {
     }
 
     private ProvidedCapability makeNewCapabilityAvailable(HasMetadata forResource, CapabilityRequirement requiredCapability,
-            CapabilityScope requirementScope, int timeoutSeconds) throws TimeoutHolderException {
+            CapabilityScope requirementScope, int timeoutSeconds) {
         try {
             final ProvidedCapability capabilityRequirement = buildProvidedCapabilityFor(forResource, requiredCapability);
-            final ProvidedCapability providedCapability = client.createAndWaitForCapability(capabilityRequirement, timeoutSeconds);
-            if (providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.FAILED) {
-                throw new EntandoControllerException("Could not provide capability");
-            }
+            client.createAndWaitForCapability(capabilityRequirement, timeoutSeconds);
             return findCapability(forResource, requiredCapability, Collections.singletonList(requirementScope))
                     .orElseThrow(IllegalStateException::new);
         } catch (TimeoutException e) {
-            throw new TimeoutHolderException(e);
+            throw new EntandoControllerException(e);
         }
+
     }
 
     private ProvidedCapability buildProvidedCapabilityFor(HasMetadata forResource, CapabilityRequirement capabilityRequirement) {
         ObjectMetaBuilder metaBuilder = new ObjectMetaBuilder();
-        switch (determinResolutionScopePreference(capabilityRequirement).get(0)) {
+        switch (determineResolutionScopePreference(capabilityRequirement).get(0)) {
             case DEDICATED:
                 metaBuilder = metaBuilder.withNamespace(forResource.getMetadata().getNamespace())
                         .withName(forResource.getMetadata().getName() + "-" + capabilityRequirement.getCapability().getSuffix());
@@ -194,7 +210,7 @@ public class ProvideCapabilityCommand {
                         .withName(calculateDefaultName(capabilityRequirement) + "-in-cluster");
         }
         metaBuilder.addToLabels(
-                determineCapabilityLabels(capabilityRequirement, determinResolutionScopePreference(capabilityRequirement).get(0)));
+                determineCapabilityLabels(capabilityRequirement, determineResolutionScopePreference(capabilityRequirement).get(0)));
         return new ProvidedCapability(metaBuilder.build(), capabilityRequirement);
     }
 
@@ -204,15 +220,4 @@ public class ProvideCapabilityCommand {
                 .getHypenatedName();
     }
 
-    private static class TimeoutHolderException extends RuntimeException {
-
-        public TimeoutHolderException(TimeoutException timeoutException) {
-            super(timeoutException);
-        }
-
-        @Override
-        public synchronized TimeoutException getCause() {
-            return (TimeoutException) super.getCause();
-        }
-    }
 }

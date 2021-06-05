@@ -19,8 +19,12 @@ package org.entando.kubernetes.controller;
 import static io.qameta.allure.Allure.step;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -28,10 +32,13 @@ import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
+import java.util.concurrent.TimeUnit;
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
@@ -41,11 +48,15 @@ import org.entando.kubernetes.fluentspi.DeployableContainerFluent;
 import org.entando.kubernetes.fluentspi.DeployableFluent;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.test.common.FluentTraversals;
+import org.entando.kubernetes.test.common.PodBehavior;
 import org.entando.kubernetes.test.common.SourceLink;
+import org.entando.kubernetes.test.common.ValueHolder;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -60,9 +71,10 @@ import picocli.CommandLine;
                 + " I can focus on my development tasks")
 @Issue("ENG-2284")
 @SourceLink("MinimalDeploymentTest.java")
-class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversals, VariableReferenceAssertions {
+class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversals, VariableReferenceAssertions, PodBehavior {
 
     private TestResource entandoCustomResource;
+    private Integer timeoutSeconds = 60;
 
     /*
     Classes to be implemented by the controller provider
@@ -98,6 +110,7 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
             DeploymentProcessor deploymentProcessor, CapabilityProvider capabilityProvider) {
         return new BasicController(kubernetesClientForControllers, deploymentProcessor)
                 .withDeployable(deployable)
+                .withTimeoutSeconds(timeoutSeconds)
                 .withSupportedClass(TestResource.class);
     }
 
@@ -196,7 +209,111 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
     }
 
     @Test
-    @AllureId("test12")
+    @Description("Should track failed deployments on the status of the EntandoCustomResource")
+    void minimalDeploymentThatFailsToStartSuccessfully() {
+        step("Given I have a basic Deployable", () -> this.deployable = new BasicDeployable());
+        step("and a basic DeployableContainer qualified as 'server' that uses the image test/my-image:6.3.2 and exports port 8081",
+                () -> {
+                    deployable.withContainer(
+                            new BasicDeployableContainer().withDockerImageInfo("test/my-image:6.3.2").withNameQualifier("server")
+                                    .withPrimaryPort(8081));
+                    attachSpiResource("DeployableContainer", SerializationHelper.serialize(deployable.getContainers().get(0)));
+                });
+        step("But the pod of the deployment is going to fail to start up successfully", () ->
+                when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app")).thenAnswer(inv -> {
+                    Pod pod = (Pod) inv.callRealMethod();
+                    return podWithFailedStatus(pod);
+                }));
+        final EntandoCustomResource entandoCustomResource = new TestResource()
+                .withNames(MY_NAMESPACE, MY_APP)
+                .withSpec(new BasicDeploymentSpec());
+        ValueHolder<AbstractThrowableAssert<?, ? extends Throwable>> thrown = new ValueHolder<>();
+        step("When the controller processes a new TestResource", () -> {
+            thrown.set(assertThatThrownBy(
+                    () -> runControllerAgainstCustomResource(entandoCustomResource)));
+        });
+        final Deployment deployment = getClient().deployments()
+                .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
+        step(format("Then a Deployment was created reflecting the name of the TestResource and the suffix '%s'",
+                NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
+                () -> {
+                    attachKubernetesResource("Deployment", deployment);
+                    assertThat(deployment).isNotNull();
+                });
+        step("But the controller throws a CommandLine.ExecutionException", () -> {
+            thrown.get().isInstanceOf(CommandLine.ExecutionException.class);
+            thrown.get().hasMessageContaining("Deployment failed. Please inspect the logs of the pod my-namespace/my-app-deployment");
+        });
+
+        step("And the status on the TestResource indicates that the deployment has failed and makes some diagnostic info available", () -> {
+            final EntandoCustomResource resource = getClient().entandoResources().reload(entandoCustomResource);
+            assertThat(resource.getStatus().hasFailed()).isTrue();
+            assertThat(resource.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.FAILED);
+            assertThat(resource.getStatus().findFailedServerStatus().get().getEntandoControllerFailure().getMessage())
+                    .isEqualTo("Deployment failed. Please inspect the logs of the pod my-namespace/my-app-deployment");
+        });
+        attachKubernetesState();
+    }
+
+    @Test
+    @Disabled("Low priority unlikely scenario")
+    @Description("Should track failures even when a status update on the EntandoCustomResource itself failed (Unlikely but possible)")
+    void minimalDeploymentThatFailsOnStatusUpdate() {
+        fail();
+    }
+
+    @Test
+    @Description("Should track failures when the deployment of the EntandoCustomResource times out")
+    void minimalDeploymentThatTimesOut() {
+        step("Given I have a basic Deployable", () -> this.deployable = new BasicDeployable());
+        step("and a basic DeployableContainer qualified as 'server' that uses the image test/my-image:6.3.2 and exports port 8081",
+                () -> {
+                    deployable.withContainer(
+                            new BasicDeployableContainer().withDockerImageInfo("test/my-image:6.3.2").withNameQualifier("server")
+                                    .withPrimaryPort(8081));
+                    attachSpiResource("DeployableContainer", SerializationHelper.serialize(deployable.getContainers().get(0)));
+                });
+        step("But the timeout for the deployment is set unrealistically low to 1 second", () -> this.timeoutSeconds = 1);
+        step("And there is a 3 second delay when waiting for the pod", () ->
+                when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app")).thenAnswer(inv -> {
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(3));
+                    return inv.callRealMethod();
+                }));
+        final EntandoCustomResource entandoCustomResource = new TestResource()
+                .withNames(MY_NAMESPACE, MY_APP)
+                .withSpec(new BasicDeploymentSpec());
+        ValueHolder<AbstractThrowableAssert<?, ? extends Throwable>> thrown = new ValueHolder<>();
+        step("When the controller processes a new TestResource", () -> {
+            thrown.set(assertThatThrownBy(
+                    () -> runControllerAgainstCustomResource(entandoCustomResource)));
+        });
+        final Deployment deployment = getClient().deployments()
+                .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
+        step(format("Then a Deployment was created reflecting the name of the TestResource and the suffix '%s'",
+                NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
+                () -> {
+                    attachKubernetesResource("Deployment", deployment);
+                    assertThat(deployment).isNotNull();
+                });
+        step("But the controller throws a CommandLine.ExecutionException", () -> {
+            thrown.get().isInstanceOf(CommandLine.ExecutionException.class);
+            thrown.get().hasMessageContaining(
+                    "java.util.concurrent.TimeoutException");
+        });
+
+        step("And the status on the TestResource indicates that the deployment has failed and makes some diagnostic info "
+                        + "available",
+                () -> {
+                    final EntandoCustomResource resource = getClient().entandoResources().reload(entandoCustomResource);
+                    assertThat(resource.getStatus().hasFailed()).isTrue();
+                    assertThat(resource.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.FAILED);
+                    assertThat(resource.getStatus().findFailedServerStatus().get().getEntandoControllerFailure().getDetailMessage())
+                            .contains("java.util.concurrent.TimeoutException");
+                });
+        attachKubernetesState();
+    }
+
+    @Test
     @Description("Should reflect both direct custom environment variables and environment variables referring to Secret keys")
     void minimalDeploymentWithEnvironmentVariables() {
         step("Given I have a basic Deployable that specifies a Secret to be created", () -> {

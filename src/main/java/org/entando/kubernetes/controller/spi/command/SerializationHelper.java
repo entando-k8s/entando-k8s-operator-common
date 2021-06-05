@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.command;
 
+import static java.util.Optional.ofNullable;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -90,7 +91,7 @@ public class SerializationHelper {
                 if (ReflectionUtil.getAnnotation(nonSerializableObject.getClass(), method.getName(), SerializeByReference.class) != null) {
                     return new ImmutablePair<>(ReflectionUtil.propertyName(method), new ResourceReference((HasMetadata) value));
                 } else if (ReflectionUtil.getAnnotation(nonSerializableObject.getClass(), method.getName(), JsonIgnore.class) == null) {
-                    return Optional.ofNullable(toJsonSafeValue(value))
+                    return ofNullable(toJsonSafeValue(value))
                             .map(jsonSafeValue -> new ImmutablePair<>(ReflectionUtil.propertyName(method), jsonSafeValue))
                             .orElse(null);
                 }
@@ -107,6 +108,7 @@ public class SerializationHelper {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static Object toJsonSafeValue(Object value) {
         if (value instanceof Number || value instanceof Boolean || value instanceof String) {
             return value;
@@ -117,6 +119,10 @@ public class SerializationHelper {
         } else if (value instanceof List) {
             List<?> list = (List<?>) value;
             return list.stream().map(SerializationHelper::toJsonSafeValue).collect(Collectors.toList());
+        } else if (value instanceof Map) {
+            Map<String, ?> map = (Map<String, ?>) value;
+            return map.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, entry -> ofNullable(toJsonSafeValue(entry.getValue())).orElse("")));
         } else if (value != null) {
             if (value.getClass().getAnnotation(JsonDeserialize.class) != null) {
                 //We know how to serialize this

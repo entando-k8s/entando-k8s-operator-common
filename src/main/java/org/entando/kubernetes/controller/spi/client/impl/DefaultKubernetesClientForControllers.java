@@ -16,37 +16,28 @@
 
 package org.entando.kubernetes.controller.spi.client.impl;
 
-import static java.lang.String.format;
-import static java.util.Optional.ofNullable;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
-import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Event;
-import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
-import java.net.HttpURLConnection;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
@@ -54,18 +45,12 @@ import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
-import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
-import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.InternalServerStatus;
 
 public class DefaultKubernetesClientForControllers implements KubernetesClientForControllers {
 
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'");
     protected final KubernetesClient client;
     private ConfigMap crdNameMap;
 
@@ -118,7 +103,6 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
 
     public SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
         return ioSafe(() -> {
-
             final CustomResourceDefinitionContext context = resolveDefinitionContext(kind, apiVersion);
             final Map<String, Object> crMap = client.customResource(context).get(namespace, name);
             final ObjectMapper objectMapper = new ObjectMapper();
@@ -129,6 +113,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         });
     }
 
+    @Override
     public HasMetadata loadStandardResource(String kind, String namespace, String name) {
         return SupportedStandardResourceKind.resolveFromKind(kind)
                 .map(k -> k.getOperation(client)
@@ -154,22 +139,6 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         return client.customResources((Class) c);
     }
 
-    @Override
-    public <T extends EntandoCustomResource> T updateStatus(T customResource, AbstractServerStatus status) {
-        return issueEventAndPerformStatusUpdate(customResource,
-                t -> t.getStatus().putServerStatus(status),
-                e -> e.withType("Normal")
-                        .withReason("StatusUpdate")
-                        .withMessage(format("The %s  %s/%s received status update %s/%s ",
-                                customResource.getKind(),
-                                customResource.getMetadata().getNamespace(),
-                                customResource.getMetadata().getName(),
-                                status.getType(),
-                                status.getQualifier()))
-                        .withAction("STATUS_CHANGE")
-        );
-    }
-
     @SuppressWarnings({"unchecked"})
     public <T extends EntandoCustomResource> T reload(T customResource) {
         if (customResource instanceof SerializedEntandoResource) {
@@ -183,88 +152,16 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         }
     }
 
-    @Override
-    public <T extends EntandoCustomResource> T updatePhase(T customResource, EntandoDeploymentPhase phase) {
-        return issueEventAndPerformStatusUpdate(customResource,
-                t -> t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration()),
-                e -> e.withType("Normal")
-                        .withReason("PhaseUpdated")
-                        .withMessage(format("The deployment of %s  %s/%s was updated  to %s",
-                                customResource.getKind(),
-                                customResource.getMetadata().getNamespace(),
-                                customResource.getMetadata().getName(),
-                                phase.name()))
-                        .withAction("PHASE_CHANGE")
-        );
-    }
-
-    public <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason, String serverQualifier) {
-        return issueEventAndPerformStatusUpdate(customResource,
-                t -> {
-                    String qualifierToUse = ofNullable(serverQualifier).orElse(NameUtils.MAIN_QUALIFIER);
-                    if (t.getStatus().getServerStatus(qualifierToUse).isEmpty()) {
-                        t.getStatus().putServerStatus(new InternalServerStatus(qualifierToUse));
-                    }
-                    t.getStatus().getServerStatus(qualifierToUse)
-                            .ifPresent(
-                                    newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder()
-                                            .withException(reason)
-                                            .withFailedObjectName(customResource.getMetadata().getNamespace(),
-                                                    customResource.getMetadata().getName())
-                                            .withFailedObjectType(customResource.getKind())
-                                            .build()));
-                    t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());
-                },
-                e -> e.withType("Error")
-                        .withReason("Failed")
-                        .withMessage(
-                                format("The deployment of %s %s/%s failed due to %s. Fix the root cause and then trigger a redeployment "
-                                                + "by adding the annotation 'entando.org/processing-instruction: force'",
-                                        customResource.getKind(),
-                                        customResource.getMetadata().getNamespace(),
-                                        customResource.getMetadata().getName(),
-                                        reason.getMessage()))
-                        .withAction("FAILED")
-        );
-    }
-
-    private <T extends EntandoCustomResource> T issueEventAndPerformStatusUpdate(T customResource, Consumer<T> consumer,
-            UnaryOperator<EventBuilder> eventPopulator) {
-        issueEvent(customResource, eventPopulator);
-        //Could be updating the status concurrently from multiple Deployables
-        return retry(() -> performStatusUpdate(customResource, consumer),
-                e -> e instanceof KubernetesClientException && ((KubernetesClientException) e).getCode() == HttpURLConnection.HTTP_CONFLICT,
-                4);
-    }
-
-    private <T extends EntandoCustomResource> void issueEvent(T customResource, UnaryOperator<EventBuilder> eventPopulator) {
-        final EventBuilder doneableEvent = new EventBuilder()
-                .withNewMetadata()
-                .withNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName() + "-" + NameUtils.randomNumeric(8))
-                .withLabels(ResourceUtils.labelsFromResource(customResource))
-                .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))
-                .endMetadata()
-                .withCount(1)
-                .withFirstTimestamp(dateTimeFormatter.format(LocalDateTime.now()))
-                .withLastTimestamp(dateTimeFormatter.format(LocalDateTime.now()))
-                .withNewSource(NameUtils.controllerNameOf(customResource), null)
-                .withNewInvolvedObject()
-                .withKind(customResource.getKind())
-                .withNamespace(customResource.getMetadata().getNamespace())
-                .withName(customResource.getMetadata().getName())
-                .withUid(customResource.getMetadata().getUid())
-                .withResourceVersion(customResource.getMetadata().getResourceVersion())
-                .withApiVersion(customResource.getApiVersion())
-                .withFieldPath("status")
-                .endInvolvedObject();
-        client.v1().events().inNamespace(customResource.getMetadata().getNamespace()).create(eventPopulator.apply(doneableEvent).build());
+    public <T extends EntandoCustomResource> void issueEvent(T customResource, Event event) {
+        client.v1().events().inNamespace(customResource.getMetadata().getNamespace())
+                .create(event);
     }
 
     @SuppressWarnings({"unchecked", "java:S1905", "java:S1874"})
     //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
     //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
-    private <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer) {
+    @Override
+    public <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer) {
         if (customResource instanceof SerializedEntandoResource) {
             return ioSafe(() -> {
                 SerializedEntandoResource ser = (SerializedEntandoResource) customResource;

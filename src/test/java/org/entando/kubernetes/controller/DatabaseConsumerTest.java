@@ -19,9 +19,12 @@ package org.entando.kubernetes.controller;
 import static io.qameta.allure.Allure.step;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -30,6 +33,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
 import java.util.Map;
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
@@ -49,8 +53,12 @@ import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.test.common.CommonLabels;
+import org.entando.kubernetes.test.common.PodBehavior;
 import org.entando.kubernetes.test.common.SourceLink;
+import org.entando.kubernetes.test.common.ValueHolder;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -64,7 +72,7 @@ import picocli.CommandLine;
 @Feature("As a controller developer, I would like to request the Database capability so that I can deploy containers that use the database")
 @Issue("ENG-2284")
 @SourceLink("DatabaseConsumerTest.java")
-class DatabaseConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
+class DatabaseConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels, PodBehavior {
 
     public static final String MY_APP_SERVER_SECRET = "my-app-server-secret";
 
@@ -126,6 +134,8 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                             .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
                             .withResolutionScopePreference(CapabilityScope.NAMESPACE)
                             .addAllToCapabilityParameters(Map.of(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, "my_db"))
+                            .addAllToCapabilityParameters(
+                                    Map.of(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX + "connectionTimeout", "300"))
                             .build();
                 });
         final BasicDbAwareContainer container = deployable
@@ -166,6 +176,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                                 + ".my-namespace.svc.cluster.local");
                 verifyDbJobAdminCredentials(adminSecret, schemaCreationContainer);
                 verifyDbJobSchemaCredentials(MY_APP_SERVER_SECRET, schemaCreationContainer);
+                assertThat(theVariableNamed("JDBC_PARAMETERS").on(schemaCreationContainer)).isEqualTo("connectionTimeout=300");
             });
             step("and the second container populates the database with some initial state", () -> {
                 final Container populator = dbPreparationPod.getSpec().getInitContainers().get(1);
@@ -189,6 +200,77 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
 
     }
 
+    @Test
+    @Description("Should track failure when the database preparation Pod failed on the status of the EntandoCustomResource and NOT create"
+            + " a deployment")
+    void dbawareDeploymentFailsWhenDatabasePreparationFailed() {
+        step("Given I have a basic Deployable", () -> this.deployable = new BasicDbAwareDeployable());
+        step("Given I have a basic DbAwareDeployable", () -> {
+            this.deployable = new BasicDbAwareDeployable();
+            attachSpiResource("Deployable", deployable);
+        });
+        step(format("And I have a custom resource of kind TestResource with name '%s'", MY_APP), () -> {
+            this.entandoCustomResource = new TestResource()
+                    .withNames(MY_NAMESPACE, MY_APP)
+                    .withSpec(new BasicDeploymentSpec());
+            attachKubernetesResource("TestResource", entandoCustomResource);
+            this.deployable.withCustomResource(this.entandoCustomResource);
+        });
+        step("And I have requested a requirement for a Database capability",
+                () -> {
+                    this.databaseRequirement = new CapabilityRequirementBuilder()
+                            .withCapability(StandardCapability.DBMS)
+                            .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
+                            .withResolutionScopePreference(CapabilityScope.NAMESPACE)
+                            .addAllToCapabilityParameters(Map.of(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, "my_db"))
+                            .build();
+                });
+        final BasicDbAwareContainer container = deployable
+                .withContainer(new BasicDbAwareContainer().withDockerImageInfo("test/my-spring-boot-image:6.3.2")
+                        .withPrimaryPort(8081)
+                        .withNameQualifier("server"));
+        step("and a basic DbAwareContainer using the image 'test/my-spring-boot-image:6.3.2'", () -> {
+            attachSpiResource("Container", container);
+        });
+        step("And there is a controller to process requests for the DBMS capability requested",
+                () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.POSTGRESQL, "my_db")).when(getClient().capabilities())
+                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+        step("But the database preparation pod is going to fail", () ->
+                when(getClient().pods().runToCompletion(any())).thenAnswer(inv -> {
+                    Pod pod = (Pod) inv.callRealMethod();
+                    return podWithFailedStatus(pod);
+                }));
+        final EntandoCustomResource entandoCustomResource = new TestResource()
+                .withNames(MY_NAMESPACE, MY_APP)
+                .withSpec(new BasicDeploymentSpec());
+        ValueHolder<AbstractThrowableAssert<?, ? extends Throwable>> thrown = new ValueHolder<>();
+        step("When the controller processes a new TestResource", () -> {
+            thrown.set(assertThatThrownBy(
+                    () -> runControllerAgainstCustomResource(entandoCustomResource)));
+        });
+        final Deployment deployment = getClient().deployments()
+                .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
+        step(format("Then no Deployment was created reflecting the name of the TestResource and the suffix '%s'",
+                NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
+                () -> {
+                    attachKubernetesResource("Deployment", deployment);
+                    assertThat(deployment).isNull();
+                });
+        step("And the controller throws a CommandLine.ExecutionException", () -> {
+            thrown.get().isInstanceOf(CommandLine.ExecutionException.class);
+            thrown.get().hasMessageContaining("Database preparation failed. Please inspect the logs of the pod ");
+        });
+
+        step("And the status on the TestResource indicates that the deployment has failed and makes some diagnostic info available", () -> {
+            final EntandoCustomResource resource = getClient().entandoResources().reload(entandoCustomResource);
+            assertThat(resource.getStatus().hasFailed()).isTrue();
+            assertThat(resource.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.FAILED);
+            assertThat(resource.getStatus().findFailedServerStatus().get().getEntandoControllerFailure().getMessage())
+                    .contains("Database preparation failed. Please inspect the logs of the pod ");
+        });
+        attachKubernetesState();
+    }
+
     private void verifySpringJdbcVars(String schemaSecret, Container populator) {
         step(format("the DB schema credentials from the Secret '%s'", schemaSecret), () -> {
             assertThat(theVariableReferenceNamed(SpringProperty.SPRING_DATASOURCE_USERNAME.name()).on(populator))
@@ -201,7 +283,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
 
         final String jdbcUrl = "jdbc:postgresql://" + NameUtils
                 .standardServiceName(this.capabilityProvisioningResult.getProvidedCapability())
-                + ".my-namespace.svc.cluster.local:5432/my_db";
+                + ".my-namespace.svc.cluster.local:5432/my_db?connectionTimeout=300";
         step(format("and the JDBC connection string '%s'", jdbcUrl),
                 () -> assertThat(theVariableNamed(SpringProperty.SPRING_DATASOURCE_URL.name()).on(populator)).isEqualTo(
                         jdbcUrl));

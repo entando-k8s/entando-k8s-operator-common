@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.common;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -24,15 +25,22 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.entando.kubernetes.model.common.EntandoControllerFailure;
-import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class ExceptionUtils {
 
-    public static EntandoControllerFailure failureOf(EntandoCustomResource r, Exception e) {
+    public static EntandoControllerFailure failureOf(HasMetadata r, Exception e) {
         final StringWriter stringWriter = new StringWriter();
         e.printStackTrace(new PrintWriter(stringWriter));
-        final String failedObjectName = r.getMetadata().getNamespace() + "/" + r.getMetadata().getName();
-        return new EntandoControllerFailure(r.getKind(), failedObjectName, e.getMessage(), stringWriter.toString());
+        if (r == null) {
+            return new EntandoControllerFailure(null, null, e.getMessage(), stringWriter.toString());
+        } else {
+            final String failedObjectName = r.getMetadata().getNamespace() + "/" + r.getMetadata().getName();
+            return new EntandoControllerFailure(r.getKind(), failedObjectName, e.getMessage(), stringWriter.toString());
+        }
+    }
+
+    public static EntandoControllerFailure failureOf(EntandoControllerException e) {
+        return failureOf(e.getKubernetesResource(), e);
     }
 
     public static <T> T retry(Supplier<T> supplier, Predicate<RuntimeException> ignoreExceptionWhen, int count) {

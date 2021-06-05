@@ -21,13 +21,16 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Optional;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
 
 public class SerializedCapabilityProvisioningResult implements CapabilityProvisioningResult {
 
-    private final ProvidedCapability providedCapability;
-    private final Service service;
-    private final Ingress ingress;
-    private final Secret adminSecret;
+    private ProvidedCapability providedCapability;
+    private Service service;
+    private Ingress ingress;
+    private Secret adminSecret;
+    private EntandoControllerFailure controllerFailure;
 
     public SerializedCapabilityProvisioningResult(ProvidedCapability providedCapability, Service service, Ingress ingress,
             Secret adminSecret) {
@@ -35,6 +38,15 @@ public class SerializedCapabilityProvisioningResult implements CapabilityProvisi
         this.service = service;
         this.ingress = ingress;
         this.adminSecret = adminSecret;
+    }
+
+    public SerializedCapabilityProvisioningResult(ProvidedCapability providedCapability, EntandoControllerFailure controllerFailure) {
+        this.providedCapability = providedCapability;
+        this.controllerFailure = controllerFailure;
+    }
+
+    public SerializedCapabilityProvisioningResult(EntandoControllerFailure controllerFailure) {
+        this.controllerFailure = controllerFailure;
     }
 
     @Override
@@ -55,5 +67,11 @@ public class SerializedCapabilityProvisioningResult implements CapabilityProvisi
     @Override
     public Optional<Secret> getAdminSecret() {
         return Optional.ofNullable(adminSecret);
+    }
+
+    @Override
+    public Optional<EntandoControllerFailure> getControllerFailure() {
+        return Optional.ofNullable(controllerFailure)
+                .or(() -> providedCapability.getStatus().findFailedServerStatus().map(AbstractServerStatus::getEntandoControllerFailure));
     }
 }

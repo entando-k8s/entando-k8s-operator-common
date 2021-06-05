@@ -34,7 +34,7 @@ import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
-import org.entando.kubernetes.controller.support.command.CreateExternalServiceCommand;
+import org.entando.kubernetes.controller.support.creators.ServiceCreator;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseServiceBuilder;
@@ -148,8 +148,8 @@ public class ExternalDatabaseE2ETestHelper extends
         getOperations().inNamespace(namespace).create(externalDatabase);
         final EntandoDatabaseService entandoDatabaseService = getOperations().inNamespace(namespace)
                 .withName(externalDatabase.getMetadata().getName()).get();
-        new CreateExternalServiceCommand(new ExternalDatabaseService(entandoDatabaseService), entandoDatabaseService)
-                .execute(new DefaultSimpleK8SClient(client));
+        final ServiceCreator serviceCreator = new ServiceCreator(entandoDatabaseService);
+        serviceCreator.createExternalService(new DefaultSimpleK8SClient(client), new ExternalDatabaseService(entandoDatabaseService));
         await().atMost(60, SECONDS).until(
                 () -> client.services().inNamespace(namespace).withName(MY_EXTERNAL_DB + "-db-service").fromServer().get()
                         != null);

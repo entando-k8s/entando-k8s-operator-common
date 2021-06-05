@@ -177,7 +177,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
         }
 
         @Override
-        public String process(SupportedCommand supportedCommand, String data, int timeoutSeconds) throws TimeoutException {
+        public String process(SupportedCommand supportedCommand, String data, int timeoutSeconds) {
             //a bit of a hack:
             AtomicReference<String> resultHolder = new AtomicReference<>();
             step(format("Executing command %s", supportedCommand.name()), () -> {

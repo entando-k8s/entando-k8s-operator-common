@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.spi.command;
 
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
-import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 
@@ -40,9 +39,6 @@ public class SerializingDeploymentProcessor implements DeploymentProcessor {
                 SerializationHelper.serialize(deployable),
                 timeoutSeconds);
         SerializableDeploymentResult<?> serializedResult = DeserializationHelper.deserialize(entandoResourceClient, result);
-        if (serializedResult.getStatus().hasFailed()) {
-            throw new EntandoControllerException("Creation of Kubernetes resources has failed:");
-        }
         return deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),
                 serializedResult.getPod())
                 .withStatus(serializedResult.getStatus());

@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.controller.support.command;
 
-import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.CapabilityForResource;
 import org.entando.kubernetes.controller.spi.command.CommandStream;
 import org.entando.kubernetes.controller.spi.command.DefaultSerializableDeploymentResult;
@@ -36,7 +35,7 @@ public class InProcessCommandStream implements CommandStream {
     private final SimpleKeycloakClient keycloakClient;
 
     /**
-     * This class is mainly for some intial testing. It will eventually be replaced by a CommandStream that runs the CLI. NB!!!! Keep thie
+     * This class is mainly for some initial testing. It will eventually be replaced by a CommandStream that runs the CLI. NB!!!! Keep the
      * SimpleK8SClient there for testing purposes to ensure the test uses the same podWatcherQueue.
      */
     public InProcessCommandStream(SimpleK8SClient<?> simpleK8SClient, SimpleKeycloakClient keycloakClient) {
@@ -45,7 +44,7 @@ public class InProcessCommandStream implements CommandStream {
     }
 
     @Override
-    public String process(SupportedCommand supportedCommand, String data, int timeoutSeconds) throws TimeoutException {
+    public String process(SupportedCommand supportedCommand, String data, int timeoutSeconds) {
         if (supportedCommand == SupportedCommand.PROCESS_DEPLOYABLE) {
             return processDeployment(data, timeoutSeconds);
         } else {
@@ -53,7 +52,7 @@ public class InProcessCommandStream implements CommandStream {
         }
     }
 
-    private String provideCapability(String capability, int timeoutSeconds) throws TimeoutException {
+    private String provideCapability(String capability, int timeoutSeconds) {
         ProvideCapabilityCommand capabilityProvider = new ProvideCapabilityCommand(simpleK8SClient.capabilities());
         final CapabilityForResource r = DeserializationHelper.deserialize(simpleK8SClient.entandoResources(), capability);
         return SerializationHelper
@@ -61,7 +60,7 @@ public class InProcessCommandStream implements CommandStream {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private String processDeployment(String deployable, int timeoutSeconds) throws TimeoutException {
+    private String processDeployment(String deployable, int timeoutSeconds) {
         final Deployable deserializedDeployable = DeserializationHelper.deserialize(simpleK8SClient.entandoResources(), deployable);
         DeployCommand<? extends ServiceDeploymentResult> command = null;
         if (deserializedDeployable instanceof IngressingDeployable) {
@@ -74,12 +73,10 @@ public class InProcessCommandStream implements CommandStream {
         if (result instanceof ExposedDeploymentResult) {
             serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),
                     result.getService(), ((ExposedDeploymentResult) result).getIngress()).withStatus(result.getStatus());
-
         } else {
             serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),
                     result.getService(), null).withStatus(result.getStatus());
         }
-
         return SerializationHelper.serialize(serializableDeploymentResult);
     }
 }

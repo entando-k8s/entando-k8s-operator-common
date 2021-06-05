@@ -33,7 +33,6 @@ import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
-import io.fabric8.kubernetes.api.model.apps.DeploymentStatus;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -76,14 +75,6 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .createOrPatchDeployment(entandoCustomResource,
                         newDeployment(imageResolver, deployable, deploymentClient.supportsStartupProbes()));
         return deployment;
-    }
-
-    public DeploymentStatus reloadDeployment(DeploymentClient deployments) {
-        if (deployment == null) {
-            return null;
-        }
-        deployment = deployments.loadDeployment(entandoCustomResource, deployment.getMetadata().getName());
-        return deployment.getStatus() == null ? new DeploymentStatus() : deployment.getStatus();
     }
 
     public Deployment getDeployment() {

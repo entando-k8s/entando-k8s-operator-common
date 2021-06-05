@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.support.client.doubles;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Endpoints;
+import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -38,6 +39,7 @@ public class NamespaceDouble {
     private final Map<String, Service> services = new ConcurrentHashMap<>();
     private final Map<String, Ingress> ingresses = new ConcurrentHashMap<>();
     private final Map<String, Deployment> deployments = new ConcurrentHashMap<>();
+    private final Map<String, Event> events = new ConcurrentHashMap<>();
     private final Map<String, Pod> pods = new ConcurrentHashMap<>();
     private final Map<String, PersistentVolumeClaim> persistentVolumeClaims = new ConcurrentHashMap<>();
     private final Map<String, Endpoints> endpointsMap = new ConcurrentHashMap<>();
@@ -173,6 +175,7 @@ public class NamespaceDouble {
         result.put("services", services.values());
         result.put("ingresses", ingresses.values());
         result.put("deployments", deployments.values());
+        result.put("events", events.values());
         result.put("pods", pods.values());
         result.put("persistentVolumeClaims", persistentVolumeClaims.values());
         result.put("endpointsMap", endpointsMap.values());
@@ -193,5 +196,10 @@ public class NamespaceDouble {
 
     public void putConfigMap(ConfigMap configMap) {
         this.configMaps.put(configMap.getMetadata().getName(), configMap);
+    }
+
+    public Event putEvent(Event event) {
+        this.events.put(event.getMetadata().getName(), event);
+        return event;
     }
 }

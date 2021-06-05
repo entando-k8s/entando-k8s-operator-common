@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.fluentspi;
 
+import static java.util.Optional.ofNullable;
+
 import java.util.Collections;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
@@ -24,6 +26,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
+import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import picocli.CommandLine;
@@ -58,7 +61,7 @@ public class DatabaseConsumingControllerFluent<N extends DatabaseConsumingContro
 
     @Override
     public void run() {
-        final EntandoCustomResource resourceToProcess = k8sClient.resolveCustomResourceToProcess(Collections.singleton(supportedClass));
+        EntandoCustomResource resourceToProcess = k8sClient.resolveCustomResourceToProcess(Collections.singleton(supportedClass));
         try {
             k8sClient.updatePhase(resourceToProcess, EntandoDeploymentPhase.STARTED);
             final ProvidedDatabaseCapability databaseCapability = new ProvidedDatabaseCapability(
@@ -66,13 +69,21 @@ public class DatabaseConsumingControllerFluent<N extends DatabaseConsumingContro
             );
             final DefaultExposedDeploymentResult result = deploymentProcessor
                     .processDeployable(deployable.withProvidedDatabase(databaseCapability).withCustomResource(resourceToProcess), 60);
-            k8sClient.updateStatus(resourceToProcess, result.getStatus());
-            k8sClient.updatePhase(resourceToProcess, EntandoDeploymentPhase.SUCCESSFUL);
+            //The result may be used here, but its latest state already sits on the entandoCustomResource.status.serverStatuses
+            //At this point the status on our local resourceToProcess is out of sync and needs to be reloaded
+
+            //This call implicitly reloads the custom resource, calculates the correct final phase and applies it to the status
+            resourceToProcess = k8sClient.deploymentEnded(resourceToProcess);
         } catch (Exception e) {
             e.printStackTrace();
-            k8sClient.deploymentFailed(resourceToProcess, e, NameUtils.MAIN_QUALIFIER);
-            throw new CommandLine.ExecutionException(new CommandLine(this), e.getMessage());
+            //This call implicitly reloads the custom resource and applies the failedStatus to it
+            resourceToProcess = k8sClient.deploymentFailed(resourceToProcess, e, NameUtils.MAIN_QUALIFIER);
         }
-
+        if (resourceToProcess.getStatus().hasFailed()) {
+            throw new CommandLine.ExecutionException(new CommandLine(this), resourceToProcess.getStatus().findFailedServerStatus()
+                    .map(AbstractServerStatus::getEntandoControllerFailure)
+                    .flatMap(f -> ofNullable(f.getDetailMessage()).or(() -> ofNullable(f.getMessage())))
+                    .orElse("Deployment Failed"));
+        }
     }
 }

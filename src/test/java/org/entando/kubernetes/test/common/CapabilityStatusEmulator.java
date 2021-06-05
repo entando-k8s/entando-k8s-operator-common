@@ -21,6 +21,7 @@ import static java.lang.String.format;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -69,6 +70,10 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
 
     default ArgumentMatcher<ProvidedCapability> matchesCapability(StandardCapability capability) {
         return t -> t != null && t.getSpec().getCapability() == capability;
+    }
+
+    default <T extends HasMetadata> ArgumentMatcher<T> matchesResource(String namespace, String name) {
+        return t -> t != null && namespace.equals(t.getMetadata().getNamespace()) && name.equals(t.getMetadata().getName());
     }
 
     default ProvidedCapability putInternalServerStatus(ProvidedCapability providedCapability, int port,

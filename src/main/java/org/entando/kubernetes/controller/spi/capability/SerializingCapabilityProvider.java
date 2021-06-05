@@ -27,12 +27,10 @@ import org.entando.kubernetes.controller.spi.command.CommandStream;
 import org.entando.kubernetes.controller.spi.command.DeserializationHelper;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.command.SupportedCommand;
-import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
 
 public class SerializingCapabilityProvider implements CapabilityProvider {
@@ -50,11 +48,7 @@ public class SerializingCapabilityProvider implements CapabilityProvider {
             int timeoutSeconds) throws TimeoutException {
         final String provisioningResult = commandStream.process(SupportedCommand.PROVIDE_CAPABILITY,
                 SerializationHelper.serialize(new SerializableCapabilityForResource(forResource, capabilityRequirement)), timeoutSeconds);
-        final CapabilityProvisioningResult result = DeserializationHelper.deserialize(kubernetesClient, provisioningResult);
-        if (result.getProvidedCapability().getStatus().getPhase() == EntandoDeploymentPhase.FAILED) {
-            throw new EntandoControllerException("Could not provide capability");
-        }
-        return result;
+        return DeserializationHelper.deserialize(kubernetesClient, provisioningResult);
     }
 
     @Override
