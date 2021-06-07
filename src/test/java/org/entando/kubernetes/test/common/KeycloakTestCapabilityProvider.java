@@ -70,6 +70,11 @@ public class KeycloakTestCapabilityProvider {
     }
 
     public ProvidedCapability provideKeycloakCapability() {
+        final ProvidedCapability providedCapability = createKeycloakCapability();
+        return forceSuccessfulStatus(providedCapability);
+    }
+
+    public ProvidedCapability createKeycloakCapability() {
         final ProvidedCapability requiredCapability = new ProvidedCapabilityBuilder()
                 .withNewMetadata()
                 .withNamespace(targetNamespace)
@@ -99,9 +104,13 @@ public class KeycloakTestCapabilityProvider {
                         .endExternallyProvidedService()
                         .endSpec()
                         .build());
+        return providedCapability;
+    }
+
+    private ProvidedCapability forceSuccessfulStatus(ProvidedCapability providedCapability) {
         final ExposedServerStatus serverStatus = new ExposedServerStatus(NameUtils.MAIN_QUALIFIER);
         serverStatus.setExternalBaseUrl(getBaseUrlString());
-        serverStatus.setAdminSecretName(NameUtils.standardAdminSecretName(requiredCapability));
+        serverStatus.setAdminSecretName(NameUtils.standardAdminSecretName(providedCapability));
         client.entandoResources().updateStatus(providedCapability, serverStatus);
         return client.entandoResources().updatePhase(providedCapability, EntandoDeploymentPhase.SUCCESSFUL);
     }
