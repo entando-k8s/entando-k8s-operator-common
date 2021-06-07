@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.assertj.core.api.ThrowableAssert;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
-import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.ProvidedCapabilityBuilder;
@@ -217,18 +217,17 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
 
     @Test
     @Description("Should create a providedCapability and wait for its status to enter a complectionPhase")
-    void shouldCreateAProvidedCapabilityAndWaitForItsStatusToEnterAComplectionPhase() {
+    void shouldCreateAProvidedCapabilityAndWaitForItsStatusToEnterACompletionPhase() {
         ValueHolder<ProvidedCapability> capability = new ValueHolder<>();
-        step("Given I have a ProvidedCapability", () -> {
-            capability.set(newCapability("my-capability"));
+        step("Given I have created a ProvidedCapability", () -> {
+            capability.set(getClient().capabilities().createCapability(newCapability("my-capability")));
             attachResource("ProvidedCapability", capability.get());
         });
         step("And there is a background process such as a controller that updates the Phase on its Status to 'SUCCESSFUL'", () -> {
             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
             executor.schedule(() -> {
                 try {
-                    DefaultKubernetesClientForControllers clientForControllers = new DefaultKubernetesClientForControllers(
-                            getFabric8Client());
+                    KubernetesClientForControllers clientForControllers = getClient().entandoResources();
                     await().atMost(10, TimeUnit.SECONDS)
                             .until(() -> clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE, "my-capability") != null);
                     capability.set(clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE, "my-capability"));
@@ -239,12 +238,12 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
                 }
             }, 2, TimeUnit.SECONDS);
         });
-        step("When I create the capability and wait for its completion phase", () -> {
+        step("When I wait for the ProvidedCapability to enter a completion phase", () -> {
             capability.set(getClient().capabilities().waitForCapabilityCompletion(
-                    capability.get(), anyInt()));
+                    capability.get(), 3));
             attachResource("ProvidedCapability", capability.get());
         });
-        step("When it reflects the 'SUCCESSFUL' Phase and the correct state", () -> {
+        step("Then it reflects the 'SUCCESSFUL' Phase and the correct state", () -> {
             assertThat(capability.get().getMetadata().getName()).isEqualTo("my-capability");
             assertThat(capability.get().getSpec().getCapability()).isEqualTo(StandardCapability.SSO);
             assertThat(capability.get().getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.SUCCESSFUL);
@@ -254,11 +253,11 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
     }
 
     @Test
-    @Description("Should throw a TimeoutException when a providedCapability does not enter a complectionPhase within the time specified")
+    @Description("Should throw a TimeoutException when a providedCapability does not enter a completionPhase within the time specified")
     void shouldThrowTimeoutException() throws TimeoutException {
         ValueHolder<ProvidedCapability> capability = new ValueHolder<>();
-        step("Given I have a ProvidedCapability", () -> {
-            capability.set(newCapability("my-capability"));
+        step("Given I have created a ProvidedCapability", () -> {
+            capability.set(getClient().capabilities().createCapability(newCapability("my-capability")));
             attachResource("ProvidedCapability", capability.get());
         });
         step("And there is no background process that updates the Phase on its Status");
@@ -266,7 +265,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         step("When I create the capability and wait for its completion phase with a timeout of one second", () -> {
             exceptionAssert.set((ThrowableAssert) assertThatThrownBy(() ->
                     getClient().capabilities().waitForCapabilityCompletion(
-                            capability.get(), anyInt())));
+                            capability.get(), 1)));
         });
         step("Then a TimeoutException is through", () -> {
             exceptionAssert.get().isInstanceOf(TimeoutException.class);
