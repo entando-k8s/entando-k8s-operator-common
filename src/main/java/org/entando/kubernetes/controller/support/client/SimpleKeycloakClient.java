@@ -17,7 +17,7 @@
 package org.entando.kubernetes.controller.support.client;
 
 import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
-import org.entando.kubernetes.model.plugin.Permission;
+import org.entando.kubernetes.model.common.Permission;
 
 public interface SimpleKeycloakClient {
 

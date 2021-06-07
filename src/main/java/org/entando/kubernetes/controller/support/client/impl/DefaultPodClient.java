@@ -23,10 +23,10 @@ import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.PodClient;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 
 public class DefaultPodClient implements PodClient {
 
@@ -51,7 +51,7 @@ public class DefaultPodClient implements PodClient {
             FilterWatchListDeletable<Pod, PodList> podResource = client.pods().inNamespace(namespace).withLabels(labels);
             podResource.delete();
             return podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
-                    EntandoOperatorConfig.getPodShutdownTimeoutSeconds(),
+                    EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds(),
                     TimeUnit.SECONDS);
         });
     }
@@ -62,7 +62,7 @@ public class DefaultPodClient implements PodClient {
             this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
             return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName())
                     .waitUntilCondition(got -> PodResult.of(got).getState() == State.COMPLETED,
-                            EntandoOperatorConfig.getPodCompletionTimeoutSeconds(), TimeUnit.SECONDS);
+                            EntandoOperatorSpiConfig.getPodCompletionTimeoutSeconds(), TimeUnit.SECONDS);
         });
     }
 
@@ -82,7 +82,7 @@ public class DefaultPodClient implements PodClient {
                 client.pods().inNamespace(namespace).withLabel(labelName, labelValue).waitUntilCondition(
                         got -> got != null && got.getStatus() != null && (PodResult.of(got).getState() == State.READY
                                 || PodResult.of(got).getState() == State.COMPLETED),
-                        EntandoOperatorConfig.getPodReadinessTimeoutSeconds(),
+                        EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds(),
                         TimeUnit.SECONDS));
 
     }

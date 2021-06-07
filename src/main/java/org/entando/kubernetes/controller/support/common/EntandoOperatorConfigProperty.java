@@ -57,9 +57,6 @@ public enum EntandoOperatorConfigProperty implements ConfigProperty {
     // creates a dns mapping from the specified hostname *.*.*.*.nip.io to the corresponding ip *.*.*.* . typically it should point to
     // hosting machine ip address (https://nip.io/)
     ENTANDO_DEFAULT_ROUTING_SUFFIX,
-    ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS,
-    ENTANDO_POD_READINESS_TIMEOUT_SECONDS,
-    ENTANDO_POD_SHUTDOWN_TIMEOUT_SECONDS,
     ENTANDO_CLUSTER_INFRASTRUCTURE_SECRET_NAME,
     ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE,
     ENTANDO_INGRESS_CLASS,

@@ -245,7 +245,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private Probe buildReadinessProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
-        int maximumStartupTimeSeconds = deployableContainer.getMaximumStartupTimeSeconds().orElse(DEFAULT_STARTUP_TIME);
+        int maximumStartupTimeSeconds = calculateMaximumStartupTimeSeconds(deployableContainer);
         ProbeBuilder builder = buildHealthProbe(deployableContainer);
         if (assumeStartupProbe) {
             //No delay, only allow one failure for accuracy, check every 10 seconds
@@ -262,8 +262,13 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
         return builder.withTimeoutSeconds(5).build();
     }
 
+    private Integer calculateMaximumStartupTimeSeconds(DeployableContainer deployableContainer) {
+        return Math.round(deployableContainer.getMaximumStartupTimeSeconds().orElse(DEFAULT_STARTUP_TIME)
+                * EntandoOperatorSpiConfig.getTimeoutAdjustmentRatio());
+    }
+
     private Probe buildLivenessProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
-        int maximumStartupTimeSeconds = deployableContainer.getMaximumStartupTimeSeconds().orElse(120);
+        int maximumStartupTimeSeconds = calculateMaximumStartupTimeSeconds(deployableContainer);
         ProbeBuilder builder = buildHealthProbe(deployableContainer).withPeriodSeconds(10).withFailureThreshold(1).withTimeoutSeconds(3);
         if (!assumeStartupProbe) {
             //Delay the entire maximum allowed startup time and a bit. We don't want the container to get caught in a crash loop
@@ -274,7 +279,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private Probe buildStartupProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
         if (assumeStartupProbe) {
-            int maximumStartupTimeSeconds = deployableContainer.getMaximumStartupTimeSeconds().orElse(120);
+            int maximumStartupTimeSeconds = calculateMaximumStartupTimeSeconds(deployableContainer);
             ProbeBuilder builder = buildHealthProbe(deployableContainer);
             //Stretch out the periodSeconds to allow for 10 attempts during startup
             builder = builder.withPeriodSeconds(maximumStartupTimeSeconds / 10)

@@ -25,7 +25,7 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.KeycloakTestHelper;
-import org.entando.kubernetes.model.plugin.Permission;
+import org.entando.kubernetes.model.common.Permission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
