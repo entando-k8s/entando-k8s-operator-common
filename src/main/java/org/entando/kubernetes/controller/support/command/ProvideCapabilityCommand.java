@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
@@ -169,15 +168,10 @@ public class ProvideCapabilityCommand {
 
     private ProvidedCapability makeNewCapabilityAvailable(HasMetadata forResource, CapabilityRequirement requiredCapability,
             CapabilityScope requirementScope) {
-        try {
-            final ProvidedCapability capabilityRequirement = buildProvidedCapabilityFor(forResource, requiredCapability);
-            client.createCapability(capabilityRequirement);
-            return findCapability(forResource, requiredCapability, Collections.singletonList(requirementScope))
-                    .orElseThrow(IllegalStateException::new);
-        } catch (TimeoutException e) {
-            throw new EntandoControllerException(e);
-        }
-
+        final ProvidedCapability capabilityRequirement = buildProvidedCapabilityFor(forResource, requiredCapability);
+        client.createCapability(capabilityRequirement);
+        return findCapability(forResource, requiredCapability, Collections.singletonList(requirementScope))
+                .orElseThrow(IllegalStateException::new);
     }
 
     private ProvidedCapability buildProvidedCapabilityFor(HasMetadata forResource, CapabilityRequirement capabilityRequirement) {
