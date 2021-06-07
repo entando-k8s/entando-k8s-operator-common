@@ -147,7 +147,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
         });
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.POSTGRESQL, "my_db")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("When the controller processes a new TestResource", () -> {
             runControllerAgainstCustomResource(entandoCustomResource);
         });
@@ -234,7 +234,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
         });
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.POSTGRESQL, "my_db")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("But the database preparation pod is going to fail", () ->
                 when(getClient().pods().runToCompletion(any())).thenAnswer(inv -> {
                     Pod pod = (Pod) inv.callRealMethod();

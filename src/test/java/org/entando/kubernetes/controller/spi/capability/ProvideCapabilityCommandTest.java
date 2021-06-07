@@ -23,6 +23,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -44,6 +45,7 @@ import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResu
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
+import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.controller.support.command.ProvideCapabilityCommand;
@@ -81,7 +83,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
             new InProcessCommandStream(clientDouble, null));
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
     private ProvidedCapability foundCapability;
-    private static final String OPERATOR_NAMESPACE = "entando-operator";
+    private static final String OPERATOR_NAMESPACE = AbstractK8SClientDouble.CONTROLLER_NAMESPACE;
 
     @BeforeEach
     void beforeEach() {
@@ -100,12 +102,9 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withImplementation(
                         StandardCapabilityImplementation.MYSQL).withResolutionScopePreference(CapabilityScope.CLUSTER)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
-        when(capabilityClient.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
+
         doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
-                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
-        when(capabilityClient.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(capabilityClient.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
+                .waitForCapabilityCompletion(any(), anyInt());
         //When I attempt to fulfill the capability
         final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient)
                 .execute(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
@@ -139,8 +138,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withImplementation(StandardCapabilityImplementation.MYSQL)
                 .withResolutionScopePreference(CapabilityScope.CLUSTER)
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
-        when(capabilityClient.getNamespace()).thenReturn(OPERATOR_NAMESPACE);
-        doAnswer(andGenerateFailEvent()).when(capabilityClient).createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+        doAnswer(andGenerateFailEvent()).when(capabilityClient).waitForCapabilityCompletion(any(), anyInt());
         when(capabilityClient.providedCapabilityByLabels(any())).thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         //When I attempt to fulfill the capability
         final CapabilityProvisioningResult result = capabilityProvider
@@ -207,7 +205,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
                 .withSelector(Collections.singletonMap("Environment", "Stage")).build();
         doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
-                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+                .waitForCapabilityCompletion(any(), anyInt());
         when(capabilityClient.providedCapabilityByLabels(Collections.singletonMap("Environment", "Stage")))
                 .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
         when(capabilityClient.buildCapabilityProvisioningResult(any()))
@@ -256,11 +254,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                         new ResourceReference("my-db-namespace", "my-db")).build();
         //When I attempt to fulfill the capability
         doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
-                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
-        when(capabilityClient.providedCapabilityByName("my-db-namespace", "my-db"))
-                .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(capabilityClient.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
+                .waitForCapabilityCompletion(any(), anyInt());
         //When I attempt to fulfill the capability
         final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
                 theCapabilityRequirement, TIMEOUT_SECONDS);
@@ -303,11 +297,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withProvisioningStrategy(
                         CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         doAnswer(andGenerateSuccessEventFor(withServiceResult())).when(capabilityClient)
-                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
-        when(capabilityClient.providedCapabilityByLabels(eq(forResource.getMetadata().getNamespace()), any()))
-                .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(capabilityClient.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
+                .waitForCapabilityCompletion(any(), anyInt());
         //When I attempt to fulfill the capability
         final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
                 theCapabilityRequirement, TIMEOUT_SECONDS);
@@ -336,11 +326,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
         //When I attempt to fulfill the capability
         doAnswer(andGenerateSuccessEventFor(withServiceResult()
         )).when(capabilityClient)
-                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
-        when(capabilityClient.providedCapabilityByName(any(), any()))
-                .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(capabilityClient.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
+                .waitForCapabilityCompletion(any(), anyInt());
         //When I attempt to fulfill the capability
         final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
                 theCapabilityRequirement, TIMEOUT_SECONDS);
@@ -367,11 +353,7 @@ class ProvideCapabilityCommandTest implements InProcessTestData {
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         //When I attempt to fulfill the capability
         doAnswer(andGenerateSuccessEventFor(withExposedServiceResult())).when(capabilityClient)
-                .createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
-        when(capabilityClient.providedCapabilityByName(any(), any()))
-                .thenAnswer(invocationOnMock -> Optional.ofNullable(foundCapability));
-        when(capabilityClient.buildCapabilityProvisioningResult(any()))
-                .thenAnswer(invocationOnMock -> new SerializedCapabilityProvisioningResult(foundCapability, null, null, null));
+                .waitForCapabilityCompletion(any(), anyInt());
         //When I attempt to fulfill the capability
         final SerializedCapabilityProvisioningResult capabilityResult = new ProvideCapabilityCommand(capabilityClient).execute(forResource,
                 theCapabilityRequirement, TIMEOUT_SECONDS);

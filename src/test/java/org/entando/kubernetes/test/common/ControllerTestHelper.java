@@ -19,7 +19,6 @@ package org.entando.kubernetes.test.common;
 import static io.qameta.allure.Allure.step;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 
@@ -88,7 +87,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
             getScheduler().schedule(() -> runControllerAgainstCapabilityAndUpdateStatus(invocationOnMock.getArgument(0)), 200L,
                     TimeUnit.MILLISECONDS);
             return invocationOnMock.callRealMethod();
-        }).when(getClient().capabilities()).createAndWaitForCapability(argThat(matchesCapability(capability)), anyInt());
+        }).when(getClient().capabilities()).createCapability(argThat(matchesCapability(capability)));
         getCapabilityProvider().provideCapability(forResource, capabilityRequirement, 60);
     }
 

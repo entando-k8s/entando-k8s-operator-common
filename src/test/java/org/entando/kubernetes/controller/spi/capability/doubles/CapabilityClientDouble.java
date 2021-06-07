@@ -61,6 +61,13 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
     }
 
     @Override
+    public Optional<ProvidedCapability> providedCapabilityByLabels(Map<String, String> labels) {
+        return byLabels(getNamespaces().values().stream().flatMap(
+                ns -> ns.getCustomResources(ProvidedCapability.class).values().stream()).collect(Collectors.toList()),
+                labels);
+    }
+
+    @Override
     public Optional<ProvidedCapability> providedCapabilityByLabels(String namespace, Map<String, String> labels) {
         if (namespace == null && labels == null) {
             return Optional.empty();
@@ -69,14 +76,14 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
     }
 
     @Override
-    public Optional<ProvidedCapability> providedCapabilityByLabels(Map<String, String> labels) {
-        return byLabels(getNamespaces().values().stream().flatMap(
-                ns -> ns.getCustomResources(ProvidedCapability.class).values().stream()).collect(Collectors.toList()),
-                labels);
+    public ProvidedCapability createCapability(ProvidedCapability providedCapability) {
+        return getCluster().getResourceProcessor()
+                .processResource(getNamespace(providedCapability).getCustomResources(providedCapability.getKind()), providedCapability);
     }
 
+
     @Override
-    public ProvidedCapability createAndWaitForCapability(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
+    public ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
         if (capability != null) {
             CompletableFuture<ProvidedCapability> future = new CompletableFuture<>();
             getCluster().getResourceProcessor().watch(new Watcher<ProvidedCapability>() {

@@ -59,12 +59,14 @@ public class ProvideCapabilityCommand {
             final List<CapabilityScope> resolutionScopePreference = determineResolutionScopePreference(requirement);
             Optional<ProvidedCapability> match = findCapability(forResource, requirement, resolutionScopePreference);
             match.ifPresent(c -> validateCapabilityCriteria(requirement, resolutionScopePreference, c));
-            return loadProvisioningResult(match.orElseGet(
-                    () -> makeNewCapabilityAvailable(forResource, requirement, resolutionScopePreference.get(0),
-                            timeoutSeconds)));
+            ProvidedCapability providedCapability = match.orElseGet(
+                    () -> makeNewCapabilityAvailable(forResource, requirement, resolutionScopePreference.get(0)));
+            providedCapability = client.waitForCapabilityCompletion(providedCapability, timeoutSeconds);
+            return loadProvisioningResult(providedCapability);
         } catch (EntandoControllerException e) {
             return new SerializedCapabilityProvisioningResult((ProvidedCapability) e.getKubernetesResource(), ExceptionUtils.failureOf(e));
         } catch (Exception e) {
+            e.printStackTrace();
             return new SerializedCapabilityProvisioningResult(ExceptionUtils.failureOf(forResource, e));
         }
     }
@@ -166,10 +168,10 @@ public class ProvideCapabilityCommand {
     }
 
     private ProvidedCapability makeNewCapabilityAvailable(HasMetadata forResource, CapabilityRequirement requiredCapability,
-            CapabilityScope requirementScope, int timeoutSeconds) {
+            CapabilityScope requirementScope) {
         try {
             final ProvidedCapability capabilityRequirement = buildProvidedCapabilityFor(forResource, requiredCapability);
-            client.createAndWaitForCapability(capabilityRequirement, timeoutSeconds);
+            client.createCapability(capabilityRequirement);
             return findCapability(forResource, requiredCapability, Collections.singletonList(requirementScope))
                     .orElseThrow(IllegalStateException::new);
         } catch (TimeoutException e) {

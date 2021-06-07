@@ -30,7 +30,9 @@ public interface CapabilityClient {
 
     Optional<ProvidedCapability> providedCapabilityByLabels(String namespace, Map<String, String> labels);
 
-    ProvidedCapability createAndWaitForCapability(ProvidedCapability providedCapability, int timeoutSeconds) throws TimeoutException;
+    ProvidedCapability createCapability(ProvidedCapability providedCapability);
+
+    ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException;
 
     String getNamespace();
 

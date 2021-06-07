@@ -26,6 +26,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
@@ -61,16 +62,23 @@ public class DefaultCapabilityClient implements CapabilityClient, WaitingClient 
     }
 
     @Override
-    public ProvidedCapability createAndWaitForCapability(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
-        client.customResources(ProvidedCapability.class).inNamespace(capability.getMetadata().getNamespace())
+    public ProvidedCapability createCapability(ProvidedCapability capability) {
+        return client.customResources(ProvidedCapability.class).inNamespace(capability.getMetadata().getNamespace())
                 .create(capability);
+    }
+
+    @Override
+    public ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
         try {
             return interruptionSafe(() -> client.customResources(ProvidedCapability.class)
                     .inNamespace(capability.getMetadata().getNamespace())
                     .withName(capability.getMetadata().getName())
                     .waitUntilCondition(providedCapability -> providedCapability.getStatus() != null
-                                    && (providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.FAILED
-                                    || providedCapability.getStatus().getPhase() == EntandoDeploymentPhase.SUCCESSFUL), timeoutSeconds,
+                                    && providedCapability.getStatus().getPhase() != null
+                                    && Set.of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED,
+                            EntandoDeploymentPhase.SUCCESSFUL)
+                                    .contains(providedCapability.getStatus().getPhase()),
+                            timeoutSeconds,
                             TimeUnit.SECONDS));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("matching condition not found")) {

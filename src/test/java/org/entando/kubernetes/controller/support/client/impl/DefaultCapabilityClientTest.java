@@ -21,6 +21,7 @@ import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
@@ -239,8 +240,8 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
             }, 2, TimeUnit.SECONDS);
         });
         step("When I create the capability and wait for its completion phase", () -> {
-            capability.set(getClient().capabilities().createAndWaitForCapability(
-                    capability.get(), 10));
+            capability.set(getClient().capabilities().waitForCapabilityCompletion(
+                    capability.get(), anyInt()));
             attachResource("ProvidedCapability", capability.get());
         });
         step("When it reflects the 'SUCCESSFUL' Phase and the correct state", () -> {
@@ -264,8 +265,8 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         ValueHolder<ThrowableAssert> exceptionAssert = new ValueHolder<>();
         step("When I create the capability and wait for its completion phase with a timeout of one second", () -> {
             exceptionAssert.set((ThrowableAssert) assertThatThrownBy(() ->
-                    getClient().capabilities().createAndWaitForCapability(
-                            capability.get(), 1)));
+                    getClient().capabilities().waitForCapabilityCompletion(
+                            capability.get(), anyInt())));
         });
         step("Then a TimeoutException is through", () -> {
             exceptionAssert.get().isInstanceOf(TimeoutException.class);

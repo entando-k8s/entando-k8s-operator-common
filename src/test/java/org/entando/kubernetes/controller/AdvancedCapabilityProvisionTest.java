@@ -113,7 +113,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         });
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("When I request for the CapabilityRequirement to be fulfilled", () -> {
             this.capabilityResult = capabilityProvider.provideCapability(forResource, theCapabilityRequirement, 10);
             attachSpiResource("CapabilityProvisioningResult", this.capabilityResult);
@@ -166,7 +166,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             attachKubernetesResource("CapabilityRequirement", theCapabilityRequirement);
         });
         step("But the controller that processes this capability updates the Phase on its status to 'FAILED'", () ->
-                doAnswer(andGenerateFailEvent()).when(clientDouble.capabilities()).createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS)));
+                doAnswer(andGenerateFailEvent()).when(clientDouble.capabilities()).waitForCapabilityCompletion(any(), anyInt()));
         step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerFailure", () -> {
             final CapabilityProvisioningResult result = capabilityProvider
                     .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
@@ -195,7 +195,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         step("But the controller that processes this capability updates the Phase on its status to 'FAILED'", () -> {
             return doAnswer((Answer<?>) invocationOnMock -> {
                 throw new TimeoutException();
-            }).when(clientDouble.capabilities()).createAndWaitForCapability(any(), eq(TIMEOUT_SECONDS));
+            }).when(clientDouble.capabilities()).waitForCapabilityCompletion(any(), anyInt());
         });
         step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerFailure", () -> {
             final CapabilityProvisioningResult result = capabilityProvider
@@ -221,7 +221,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     .withResolutionScopePreference(CapabilityScope.DEDICATED)
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
-                    .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt());
+                    .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt());
             this.capabilityResult = capabilityProvider
                     .provideCapability(forResource, this.theCapabilityRequirement, 10);
         });
@@ -263,7 +263,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                             .withSpecifiedCapability(new ResourceReference(MY_APP_NAMESPACE, "my-db"))
                             .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
                     doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
-                            .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt());
+                            .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt());
                     this.capabilityResult = capabilityProvider
                             .provideCapability(forResource, this.theCapabilityRequirement, 10);
                 });
@@ -310,7 +310,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         });
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
 
         step("When I request for the CapabilityRequirement to be fulfilled", () -> {
             this.capabilityResult = capabilityProvider.provideCapability(forResource, theCapabilityRequirement, 10);
@@ -386,7 +386,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                 });
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("When I request for the CapabilityRequirement to fulfilled", () -> {
             this.capabilityResult = this.capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
         });
@@ -459,7 +459,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         });
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("When I request for my CapabilityRequirement to be fulfilled", () -> {
             this.capabilityResult = this.capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
             attachSpiResource("CapabilityProvisioningResult", this.capabilityResult);
@@ -499,7 +499,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         });
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("And I have created a Capability to be usable by others in the same namespace", () -> {
             //with a cluster scoped capability requirement for a MYSQL server
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
@@ -548,7 +548,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                 .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
         step("And there is a controller to process requests for the DBMS capability requested",
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.MYSQL, "my_db")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
 
         step("When I request for my CapabilityRequirement to be fulfilled", () -> {
             this.capabilityResult = this.capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
@@ -596,7 +596,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         });
         step("And there is a controller to process requests for the SSO capability requested",
                 () -> doAnswer(withAnSsoCapabilityStatus("mykeycloak.com", "my-realm")).when(getClient().capabilities())
-                        .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.SSO)), anyInt()));
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.SSO)), anyInt()));
 
         step("When I request for my CapabilityRequirement to be fulfilled", () -> {
             this.capabilityResult = this.capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);

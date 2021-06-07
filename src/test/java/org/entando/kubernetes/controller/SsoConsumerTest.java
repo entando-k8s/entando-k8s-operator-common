@@ -159,7 +159,7 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
                 () -> {
                     doAnswer(withAnSsoCapabilityStatus("mykeycloak.com", "my-realm"))
                             .when(getClient().capabilities())
-                            .createAndWaitForCapability(argThat(matchesCapability(StandardCapability.SSO)), anyInt());
+                            .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.SSO)), anyInt());
                     when(keycloakClient.prepareClientAndReturnSecret(any())).thenReturn(GENERATED_SSO_CLIENT_SECRET);
                 });
         step("When the controller processes a new TestResource", () -> {
