@@ -81,7 +81,6 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
                 .processResource(getNamespace(providedCapability).getCustomResources(providedCapability.getKind()), providedCapability);
     }
 
-
     @Override
     public ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
         if (capability != null) {

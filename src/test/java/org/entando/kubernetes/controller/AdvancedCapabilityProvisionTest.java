@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 
 import io.qameta.allure.Description;
@@ -32,10 +31,10 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
@@ -166,7 +165,8 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             attachKubernetesResource("CapabilityRequirement", theCapabilityRequirement);
         });
         step("But the controller that processes this capability updates the Phase on its status to 'FAILED'", () ->
-                doAnswer(andGenerateFailEvent()).when(clientDouble.capabilities()).waitForCapabilityCompletion(any(), anyInt()));
+                doAnswer(withFailedExposedServerStatus(NameUtils.MAIN_QUALIFIER, new IllegalStateException()))
+                        .when(clientDouble.capabilities()).waitForCapabilityCompletion(any(), anyInt()));
         step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerFailure", () -> {
             final CapabilityProvisioningResult result = capabilityProvider
                     .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
@@ -616,14 +616,4 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
         });
     }
 
-    private Answer<?> andGenerateFailEvent() {
-        final IllegalStateException reason = new IllegalStateException();
-        return invocationOnMock -> {
-            scheduler.schedule(() -> {
-                ProvidedCapability capability = invocationOnMock.getArgument(0);
-                clientDouble.entandoResources().deploymentFailed(capability, reason, null);
-            }, 300, TimeUnit.MILLISECONDS);
-            return invocationOnMock.callRealMethod();
-        };
-    }
 }

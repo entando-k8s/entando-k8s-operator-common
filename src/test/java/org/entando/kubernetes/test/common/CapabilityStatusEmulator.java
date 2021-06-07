@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.common.ConfigProperty;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.container.ProvidedSsoCapability;
@@ -170,6 +171,26 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
                 derivedParameters.put(ProvidedDatabaseCapability.DBMS_VENDOR_PARAMETER, vendor.name().toLowerCase(Locale.ROOT));
                 DbmsVendorConfig dbmsVendorConfig = DbmsVendorConfig.valueOf(vendor.name());
                 return putInternalServerStatus(invocationOnMock.getArgument(0), dbmsVendorConfig.getDefaultPort(), derivedParameters);
+            }, 200L, TimeUnit.MILLISECONDS);
+            return invocationOnMock.callRealMethod();
+        };
+    }
+
+    default Answer<Object> withFailedExposedServerStatus(String qualifier, Exception exception) {
+        return withFailedServerStatus(exception, new ExposedServerStatus(qualifier));
+    }
+
+    default Answer<Object> withFailedInternalServerStatus(String qualifier, Exception exception) {
+        return withFailedServerStatus(exception, new ExposedServerStatus(qualifier));
+    }
+
+    private Answer<Object> withFailedServerStatus(Exception exception, ExposedServerStatus exposedServerStatus) {
+        return invocationOnMock -> {
+            getScheduler().schedule(() -> {
+                ProvidedCapability pc = invocationOnMock.getArgument(0);
+                exposedServerStatus.finishWith(ExceptionUtils.failureOf(pc, exception));
+                pc = getClient().entandoResources().updateStatus(pc, exposedServerStatus);
+                return getClient().entandoResources().updatePhase(pc, EntandoDeploymentPhase.FAILED);
             }, 200L, TimeUnit.MILLISECONDS);
             return invocationOnMock.callRealMethod();
         };
