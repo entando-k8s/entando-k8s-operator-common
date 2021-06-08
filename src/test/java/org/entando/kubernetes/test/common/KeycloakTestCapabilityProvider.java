@@ -22,9 +22,11 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
+import javax.ws.rs.NotFoundException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
@@ -53,20 +55,22 @@ public class KeycloakTestCapabilityProvider {
         this.targetNamespace = targetNamespace;
     }
 
-    public void deleteTestRealms() {
-        ProvidedCapability providedCapability = provideKeycloakCapability();
+    public void deleteTestRealms(ProvidedCapability providedCapability, String... names) {
+        final ProvidedCapability reloaded = client.entandoResources().reload(providedCapability);
         final ProvidedSsoCapability sso = new ProvidedSsoCapability(
-                new SerializedCapabilityProvisioningResult(providedCapability, null, null, client.secrets()
-                        .loadSecret(providedCapability,
-                                providedCapability.getStatus().findCurrentServerStatus().get().getAdminSecretName().get())));
+                new SerializedCapabilityProvisioningResult(reloaded, null, null, client.secrets()
+                        .loadSecret(reloaded,
+                                reloaded.getStatus().findCurrentServerStatus().get().getAdminSecretName().get())));
         final DefaultKeycloakClient keycloak = new DefaultKeycloakClient();
         keycloak.login(sso.getExternalBaseUrl(), sso.getUsername(), sso.getPassword());
-        keycloak.getKeycloak().realms().findAll().stream()
-                .filter(realm -> !realm.getRealm().equals("master"))
+        Arrays.stream(names)
                 .forEach(realm -> {
-                    keycloak.getKeycloak().realm(realm.getRealm()).remove();
+                    try {
+                        keycloak.getKeycloak().realm(realm).remove();
+                    } catch (NotFoundException e) {
+                        //This is OK
+                    }
                 });
-
     }
 
     public ProvidedCapability provideKeycloakCapability() {
