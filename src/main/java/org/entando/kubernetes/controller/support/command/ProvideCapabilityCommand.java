@@ -190,9 +190,9 @@ public class ProvideCapabilityCommand {
             case LABELED:
                 metaBuilder = metaBuilder.withNamespace(forResource.getMetadata().getNamespace())
                         .withName(
-                                capabilityRequirement.getImplementation().map(i -> i.getHypenatedName() + "-").orElse("")
+                                capabilityRequirement.getImplementation().map(i -> i.getHyphenatedName() + "-").orElse("")
                                         + capabilityRequirement
-                                        .getCapability().getHypenatedName() + "-" + NameUtils
+                                        .getCapability().getHyphenatedName() + "-" + NameUtils
                                         .randomNumeric(4))
                         .addToLabels(capabilityRequirement.getSelector());
                 break;
@@ -212,8 +212,8 @@ public class ProvideCapabilityCommand {
 
     private String calculateDefaultName(CapabilityRequirement capabilityRequirement) {
         return "default" + capabilityRequirement.getImplementation()
-                .map(i -> "-" + i.getHypenatedName()).orElse("") + "-" + capabilityRequirement.getCapability()
-                .getHypenatedName();
+                .map(i -> "-" + i.getHyphenatedName()).orElse("") + "-" + capabilityRequirement.getCapability()
+                .getHyphenatedName();
     }
 
 }

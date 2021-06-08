@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Objects;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
@@ -64,7 +65,6 @@ public class KeycloakTestCapabilityProvider {
                 .filter(realm -> !realm.getRealm().equals("master"))
                 .forEach(realm -> {
                     keycloak.getKeycloak().realm(realm.getRealm()).remove();
-                    System.out.println("Removed " + realm.getRealm());
                 });
 
     }
@@ -102,6 +102,7 @@ public class KeycloakTestCapabilityProvider {
                         .withPort(getPort())
                         .withPath(getBaseUrl().getPath())
                         .endExternallyProvidedService()
+                        .addAllToCapabilityParameters(Map.of(ProvidedSsoCapability.DEFAULT_REALM_PARAMETER, targetNamespace))
                         .endSpec()
                         .build());
         return providedCapability;
