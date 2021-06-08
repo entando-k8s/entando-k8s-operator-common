@@ -24,14 +24,17 @@ import java.util.concurrent.TimeoutException;
  */
 public class EntandoControllerException extends RuntimeException {
 
-    private HasMetadata resource;
+    private final HasMetadata resource;
 
     public EntandoControllerException(String message) {
         super(message);
+        this.resource = null;
     }
 
     public EntandoControllerException(TimeoutException timeoutException) {
         super(timeoutException);
+        this.resource = null;
+
     }
 
     public EntandoControllerException(HasMetadata resource, String message) {

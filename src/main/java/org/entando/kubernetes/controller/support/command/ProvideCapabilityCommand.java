@@ -65,7 +65,6 @@ public class ProvideCapabilityCommand {
         } catch (EntandoControllerException e) {
             return new SerializedCapabilityProvisioningResult((ProvidedCapability) e.getKubernetesResource(), ExceptionUtils.failureOf(e));
         } catch (Exception e) {
-            e.printStackTrace();
             return new SerializedCapabilityProvisioningResult(ExceptionUtils.failureOf(forResource, e));
         }
     }

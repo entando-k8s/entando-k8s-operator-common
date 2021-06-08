@@ -20,6 +20,7 @@ import static io.qameta.allure.Allure.step;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
@@ -276,7 +277,8 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
         step("But the timeout for the deployment is set unrealistically low to 1 second", () -> this.timeoutSeconds = 1);
         step("And there is a 3 second delay when waiting for the pod", () ->
                 when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app")).thenAnswer(inv -> {
-                    Thread.sleep(TimeUnit.SECONDS.toMillis(3));
+                    long start = System.currentTimeMillis();
+                    await().until(() -> TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start) >= 3);
                     return inv.callRealMethod();
                 }));
         final EntandoCustomResource entandoCustomResource = new TestResource()

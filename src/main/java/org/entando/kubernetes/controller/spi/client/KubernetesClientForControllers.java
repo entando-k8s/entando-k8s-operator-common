@@ -172,9 +172,7 @@ public interface KubernetesClientForControllers {
 
     default <T extends EntandoCustomResource> T deploymentEnded(T customResource) {
         return issueEventAndPerformStatusUpdate(customResource,
-                t -> {
-                    t.getStatus().updateDeploymentPhase(t.getStatus().calculateFinalPhase(), t.getMetadata().getGeneration());
-                },
+                t -> t.getStatus().updateDeploymentPhase(t.getStatus().calculateFinalPhase(), t.getMetadata().getGeneration()),
                 e -> e.withType("Normal")
                         .withReason("PhaseUpdated")
                         .withMessage(format("The deployment of %s  %s/%s was updated  to %s",

@@ -21,6 +21,8 @@ import java.time.format.DateTimeFormatter;
 
 public class FormatUtils {
 
+    @SuppressWarnings("java:S5164")
+    //there is no memory leak here - DateTimeFormatter is a self contained, immutable object.
     private static final ThreadLocal<DateTimeFormatter> dateTimeFormatter = ThreadLocal
             .withInitial(() -> DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss'Z'"));
 
