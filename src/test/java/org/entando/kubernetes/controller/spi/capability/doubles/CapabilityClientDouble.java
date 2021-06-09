@@ -37,7 +37,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
-import org.entando.kubernetes.controller.support.client.WaitingClient;
 import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.ClusterDouble;
 import org.entando.kubernetes.controller.support.client.doubles.NamespaceDouble;
@@ -46,7 +45,7 @@ import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
 
-public class CapabilityClientDouble extends AbstractK8SClientDouble implements CapabilityClient, WaitingClient {
+public class CapabilityClientDouble extends AbstractK8SClientDouble implements CapabilityClient {
 
     public CapabilityClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
         super(namespaces, cluster);

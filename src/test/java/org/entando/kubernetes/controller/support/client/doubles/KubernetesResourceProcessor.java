@@ -20,13 +20,17 @@ import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.HashSet;
@@ -43,11 +47,45 @@ public class KubernetesResourceProcessor {
 
     public <T extends HasMetadata> T processResource(Map<String, T> existingMap, T newResourceState) {
         populateUid(newResourceState);
+        updateGeneration(existingMap, newResourceState);
         validateResourceVersion(existingMap, newResourceState);
         T clone = clone(newResourceState);
         putClone(existingMap, clone);
         fireEvents(newResourceState, clone);
         return clone;
+    }
+
+    private <T extends HasMetadata> void updateGeneration(Map<String, T> existingMap, T newResourceState) {
+        HasMetadata existingResource = existingMap.get(newResourceState.getMetadata().getName());
+        if (existingResource == null) {
+            if (newResourceState.getMetadata().getGeneration() == null) {
+                //To allow consuming code to artificially manipulate the metadata.generation for testing purposes
+                newResourceState.getMetadata().setGeneration(1L);
+            }
+        } else if (existingResource != newResourceState) {
+            Object existingSpec = null;
+            Object newSpec = null;
+            try {
+                final Method getSpec = newResourceState.getClass().getMethod("getSpec");
+                existingSpec = getSpec.invoke(existingResource);
+                newSpec = getSpec.invoke(newResourceState);
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                if (newResourceState instanceof ConfigMap) {
+                    existingSpec = ((ConfigMap) existingResource).getData();
+                    newSpec = ((ConfigMap) newResourceState).getData();
+                } else if (newResourceState instanceof Secret) {
+                    existingSpec = ((Secret) existingResource).getData();
+                    newSpec = ((Secret) newResourceState).getData();
+                    if (newSpec == null) {
+                        existingSpec = ((Secret) existingResource).getStringData();
+                        newSpec = ((Secret) newResourceState).getStringData();
+                    }
+                }
+            }
+            if (newSpec != null && !newSpec.equals(existingSpec)) {
+                newResourceState.getMetadata().setGeneration(ofNullable(existingResource.getMetadata().getGeneration()).orElse(0L) + 1);
+            }
+        }
     }
 
     private <T extends HasMetadata> void putClone(Map<String, T> existingMap, T clone) {

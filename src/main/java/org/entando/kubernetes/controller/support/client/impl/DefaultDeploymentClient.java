@@ -25,11 +25,11 @@ import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
-import org.entando.kubernetes.controller.support.client.WaitingClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public class DefaultDeploymentClient implements DeploymentClient, WaitingClient {
+public class DefaultDeploymentClient implements DeploymentClient {
 
     private final KubernetesClient client;
 
@@ -74,7 +74,7 @@ public class DefaultDeploymentClient implements DeploymentClient, WaitingClient 
             FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
-            interruptionSafe(() -> podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
+            ExceptionUtils.interruptionSafe(() -> podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
                     EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds(),
                     TimeUnit.SECONDS));
             //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod

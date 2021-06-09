@@ -59,6 +59,15 @@ public class ExceptionUtils {
         return supplier.get();
     }
 
+    public static <T> T interruptionSafe(Interruptable<T> i) {
+        try {
+            return i.run();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
     public interface IoVulnerable<T> {
 
         T invoke() throws IOException;
@@ -73,5 +82,10 @@ public class ExceptionUtils {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public interface Interruptable<T> {
+
+        T run() throws InterruptedException;
     }
 }

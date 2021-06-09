@@ -30,14 +30,14 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
-import org.entando.kubernetes.controller.support.client.WaitingClient;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
 
-public class DefaultCapabilityClient implements CapabilityClient, WaitingClient {
+public class DefaultCapabilityClient implements CapabilityClient {
 
     private final KubernetesClient client;
 
@@ -70,7 +70,7 @@ public class DefaultCapabilityClient implements CapabilityClient, WaitingClient 
     @Override
     public ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
         try {
-            return interruptionSafe(() -> client.customResources(ProvidedCapability.class)
+            return ExceptionUtils.interruptionSafe(() -> client.customResources(ProvidedCapability.class)
                     .inNamespace(capability.getMetadata().getNamespace())
                     .withName(capability.getMetadata().getName())
                     .waitUntilCondition(providedCapability -> providedCapability.getStatus() != null

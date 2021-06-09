@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.support.client;
 import io.fabric8.kubernetes.api.model.Pod;
 import java.util.Map;
 
-public interface PodClient extends WaitingClient {
+public interface PodClient {
 
     Pod start(Pod pod);
 

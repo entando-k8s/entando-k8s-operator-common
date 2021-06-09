@@ -24,6 +24,7 @@ import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.PodClient;
@@ -47,7 +48,7 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public void removeAndWait(String namespace, Map<String, String> labels) {
-        interruptionSafe(() -> {
+        ExceptionUtils.interruptionSafe(() -> {
             FilterWatchListDeletable<Pod, PodList> podResource = client.pods().inNamespace(namespace).withLabels(labels);
             podResource.delete();
             return podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
@@ -58,7 +59,7 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public Pod runToCompletion(Pod pod) {
-        return interruptionSafe(() -> {
+        return ExceptionUtils.interruptionSafe(() -> {
             this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
             return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName())
                     .waitUntilCondition(got -> PodResult.of(got).getState() == State.COMPLETED,
@@ -78,7 +79,7 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue) {
-        return interruptionSafe(() ->
+        return ExceptionUtils.interruptionSafe(() ->
                 client.pods().inNamespace(namespace).withLabel(labelName, labelValue).waitUntilCondition(
                         got -> got != null && got.getStatus() != null && (PodResult.of(got).getState() == State.READY
                                 || PodResult.of(got).getState() == State.COMPLETED),
