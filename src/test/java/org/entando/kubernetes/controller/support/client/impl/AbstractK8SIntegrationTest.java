@@ -16,46 +16,37 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
+import static org.awaitility.Awaitility.await;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
 import io.qameta.allure.Allure;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
-import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.DeletionWaiter;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.test.common.FluentTraversals;
-import org.entando.kubernetes.test.common.InterProcessTestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-public abstract class AbstractK8SIntegrationTest implements FluentTraversals, InterProcessTestData {
+public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
+    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test1";
+    public static final String MY_APP_NAMESPACE_2 = MY_APP_NAMESPACE_1 + "2";
     protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     protected KubernetesClient fabric8Client;
-
-    protected <R extends HasMetadata,
-            L extends KubernetesResourceList<R>,
-            O extends Resource<R>> void deleteAll(MixedOperation<R, L, O> operation) {
-        for (String s : getNamespacesToUse()) {
-            new DeletionWaiter<>(operation).fromNamespace(s).waitingAtMost(100, TimeUnit.SECONDS);
-        }
-    }
 
     public ScheduledExecutorService getScheduler() {
         return scheduler;
@@ -63,7 +54,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
 
     protected TestResource newTestResource() {
         return new TestResource()
-                .withNames(MY_APP_NAMESPACE, MY_APP)
+                .withNames(MY_APP_NAMESPACE_1, "my-app")
                 .withSpec(new BasicDeploymentSpecBuilder()
                         .withReplicas(1)
                         .build());
@@ -72,33 +63,15 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
     @AfterEach
     void teardown() {
         scheduler.shutdownNow();
+        System.clearProperty(Config.KUBERNETES_DISABLE_AUTO_CONFIG_SYSTEM_PROPERTY);
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_OF_INTEREST.getJvmSystemProperty());
     }
-
-    protected abstract String[] getNamespacesToUse();
 
     protected final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
 
     protected KubernetesClient getFabric8Client() {
         return this.fabric8Client;
-    }
-
-    protected void prepareCrdNameMap() throws IOException {
-        this.fabric8Client.apiextensions().v1beta1().customResourceDefinitions().createOrReplace(objectMapper.readValue(
-                Thread.currentThread().getContextClassLoader().getResource("testresources.test.org.crd.yaml"),
-                CustomResourceDefinition.class)
-        );
-        this.fabric8Client.configMaps().inNamespace(fabric8Client.getNamespace()).createOrReplace(new ConfigMapBuilder()
-                .withNewMetadata()
-                .withNamespace(fabric8Client.getNamespace())
-                .withName(DefaultKubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP)
-                .endMetadata()
-                .addToData("EntandoApp.entando.org", "entandoapps.entando.org")
-                .addToData("EntandoPlugin.entando.org", "entandoplugins.entando.org")
-                .addToData("EntandoDatabaseService.entando.org", "entandodatabaseservices.entando.org")
-                .addToData("EntandoKeycloakServer.entando.org", "entandokeycloakservers.entando.org")
-                .addToData("TestResource.test.org", "testresources.test.org")
-                .build());
-        new DefaultKubernetesClientForControllers(this.fabric8Client).prepareConfig();
     }
 
     protected void attachResource(String name, HasMetadata resource) throws JsonProcessingException {
@@ -111,9 +84,17 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals, In
 
     @BeforeEach
     public void setup() {
-        fabric8Client = new DefaultKubernetesClient();
-        Arrays.stream(getNamespacesToUse())
-                .filter(s -> fabric8Client.namespaces().withName(s).get() == null)
-                .forEach(s -> TestFixturePreparation.createNamespace(fabric8Client, s));
+        fabric8Client = new SupportProducer().getKubernetesClient();
+        for (String s : getNamespacesToUse()) {
+            fabric8Client.namespaces().withName(s).delete();
+        }
+        for (String s : getNamespacesToUse()) {
+            await().atMost(3, TimeUnit.MINUTES).ignoreExceptions().until(() -> {
+                TestFixturePreparation.createNamespace(fabric8Client, s);
+                return true;
+            });
+        }
     }
+
+    protected abstract String[] getNamespacesToUse();
 }

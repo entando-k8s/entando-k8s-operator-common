@@ -19,9 +19,13 @@ package org.entando.kubernetes.controller.spi.client.impl;
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.apps.v1.DeploymentOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.PersistentVolumeClaimOperationsImpl;
@@ -32,11 +36,13 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest;
@@ -45,7 +51,7 @@ import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
 import org.entando.kubernetes.test.common.ValueHolder;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -62,20 +68,22 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
 
     DefaultKubernetesClientForControllers getKubernetesClientForControllers() throws IOException {
         if (clientForControllers == null) {
-            prepareCrdNameMap();
             clientForControllers = new DefaultKubernetesClientForControllers(getFabric8Client());
             clientForControllers.prepareConfig();
         }
         return clientForControllers;
     }
 
-    @BeforeEach
-    void deleteAll() throws IOException {
-        super.prepareCrdNameMap();
-        deleteAll(getFabric8Client().apps().deployments());
-        deleteAll(getFabric8Client().pods());
-        deleteAll(getFabric8Client().customResources(TestResource.class));
-        deleteAll(getFabric8Client().v1().events());
+    @BeforeAll
+    static void beforeAll() throws IOException {
+        DefaultKubernetesClient fabric8Client = new DefaultKubernetesClient();
+        final CustomResourceDefinition customResourceDefinition = new ObjectMapper(new YAMLFactory()).readValue(
+                Thread.currentThread().getContextClassLoader().getResource("testresources.test.org.crd.yaml"),
+                CustomResourceDefinition.class);
+        customResourceDefinition.getMetadata().setLabels(Map.of(LabelNames.CRD_OF_INTEREST.getName(), "TestResource"));
+        fabric8Client.apiextensions().v1beta1().customResourceDefinitions().createOrReplace(customResourceDefinition);
+        fabric8Client.configMaps().inNamespace(fabric8Client.getNamespace())
+                .withName(DefaultKubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP).delete();
     }
 
     @Test
@@ -208,7 +216,6 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
     @Test
     @Description("Should retrieve standard Kubernetes resources generically without needing to know the implementation class")
     void shouldRetrieveStandardResourceGenerically() {
-        final int numberOfReplicas = 5;
         step("Given I have created an instance of a Pod", () -> {
             final Pod startedPod = this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())
                     .create(new PodBuilder()
@@ -296,6 +303,6 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
 
     @Override
     protected String[] getNamespacesToUse() {
-        return new String[]{newTestResource().getMetadata().getNamespace()};
+        return new String[]{MY_APP_NAMESPACE_1};
     }
 }

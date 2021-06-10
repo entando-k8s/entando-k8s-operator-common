@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller.support.common;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+import org.assertj.core.api.Assertions;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorComplianceMode;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
@@ -33,6 +34,29 @@ class EntandoOperatorConfigTest {
     @AfterEach
     void resetPropertiesTested() {
         System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_K8S_OPERATOR_COMPLIANCE_MODE.getJvmSystemProperty());
+    }
+
+    @Test
+    void testIsClusterScope() {
+        //Because it will use the current namespace
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty());
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty());
+        Assertions.assertThat(EntandoOperatorConfig.isClusterScopedDeployment()).isFalse();
+        //OLM contract
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(),
+                OperatorDeploymentType.OLM.getName());
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty());
+        Assertions.assertThat(EntandoOperatorConfig.isClusterScopedDeployment()).isTrue();
+        //Using current namespace again
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(),
+                OperatorDeploymentType.HELM.getName());
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty());
+        Assertions.assertThat(EntandoOperatorConfig.isClusterScopedDeployment()).isFalse();
+        //The Helm deployment expects "*" for cluster scope
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(),
+                OperatorDeploymentType.HELM.getName());
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty(), "*");
+        Assertions.assertThat(EntandoOperatorConfig.isClusterScopedDeployment()).isTrue();
     }
 
     @Test

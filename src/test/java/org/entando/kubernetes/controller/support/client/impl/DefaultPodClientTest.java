@@ -33,8 +33,7 @@ import org.assertj.core.api.Assertions;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
-import org.entando.kubernetes.model.app.EntandoApp;
-import org.junit.jupiter.api.BeforeEach;
+import org.entando.kubernetes.fluentspi.TestResource;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -45,13 +44,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 @EnableRuleMigrationSupport
 class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
 
-    private final EntandoApp entandoApp = newTestEntandoApp();
-
-    @BeforeEach
-    void cleanup() {
-        super.deleteAll(getFabric8Client().apps().deployments());
-        super.deleteAll(getFabric8Client().pods());
-    }
+    private final TestResource testResource = newTestResource();
 
     @Test
     void shouldWaitForPreviouslyStartedPod() {
@@ -59,7 +52,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
                 .withNewMetadata()
                 .withName("my-pod")
-                .withNamespace(entandoApp.getMetadata().getNamespace())
+                .withNamespace(testResource.getMetadata().getNamespace())
                 .addToLabels("pod-label", "123")
                 .endMetadata()
                 .withNewSpec()
@@ -71,7 +64,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endSpec()
                 .build());
         //When I wait for the pod
-        final Pod pod = getSimpleK8SClient().pods().waitForPod(entandoApp.getMetadata().getNamespace(), "pod-label", "123");
+        final Pod pod = getSimpleK8SClient().pods().waitForPod(testResource.getMetadata().getNamespace(), "pod-label", "123");
         //Then the current thread only proceeds once the pod is ready
         assertThat(PodResult.of(pod).getState(), is(State.READY));
         assertThat(PodResult.of(pod).hasFailed(), is(false));
@@ -83,7 +76,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
                 .withNewMetadata()
                 .withName("my-pod")
-                .withNamespace(entandoApp.getMetadata().getNamespace())
+                .withNamespace(testResource.getMetadata().getNamespace())
                 .addToLabels("pod-label", "123")
                 .endMetadata()
                 .withNewSpec()
@@ -95,10 +88,11 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endSpec()
                 .build());
         //When I wait for the pod
-        getSimpleK8SClient().pods().removeAndWait(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "123"));
+        getSimpleK8SClient().pods().removeAndWait(testResource.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "123"));
         //Then the current thread only proceeds once the pod is ready
         assertThat(
-                getSimpleK8SClient().pods().loadPod(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "123")),
+                getSimpleK8SClient().pods()
+                        .loadPod(testResource.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "123")),
                 is(nullValue()));
     }
 
@@ -108,7 +102,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
                 .withNewMetadata()
                 .withName("successful-pod")
-                .withNamespace(entandoApp.getMetadata().getNamespace())
+                .withNamespace(testResource.getMetadata().getNamespace())
                 .addToLabels("pod-label", "successful-pod")
                 .addToLabels("label", "value")
                 .endMetadata()
@@ -125,7 +119,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
                 .withNewMetadata()
                 .withName("failed-pod")
-                .withNamespace(entandoApp.getMetadata().getNamespace())
+                .withNamespace(testResource.getMetadata().getNamespace())
                 .addToLabels("label", "value")
                 .addToLabels("pod-label", "failed-pod")
                 .endMetadata()
@@ -141,13 +135,13 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .build());
         //When I wait for the pod
         getSimpleK8SClient().pods()
-                .removeSuccessfullyCompletedPods(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("label", "value"));
+                .removeSuccessfullyCompletedPods(testResource.getMetadata().getNamespace(), Collections.singletonMap("label", "value"));
         //Then the current thread only proceeds once the pod is ready
         await().atMost(10, TimeUnit.SECONDS).until(() -> getSimpleK8SClient().pods()
-                .loadPod(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "successful-pod")) == null);
+                .loadPod(testResource.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "successful-pod")) == null);
         assertThat(
                 getSimpleK8SClient().pods()
-                        .loadPod(entandoApp.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "failed-pod")),
+                        .loadPod(testResource.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "failed-pod")),
                 is(notNullValue()));
     }
 
@@ -157,7 +151,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         final Pod pod = new PodBuilder()
                 .withNewMetadata()
                 .withName("my-pod")
-                .withNamespace(entandoApp.getMetadata().getNamespace())
+                .withNamespace(testResource.getMetadata().getNamespace())
                 .addToLabels("pod-label", "123")
                 .endMetadata()
                 .withNewSpec()
@@ -227,6 +221,6 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Override
     protected String[] getNamespacesToUse() {
-        return new String[]{entandoApp.getMetadata().getNamespace()};
+        return new String[]{MY_APP_NAMESPACE_1};
     }
 }

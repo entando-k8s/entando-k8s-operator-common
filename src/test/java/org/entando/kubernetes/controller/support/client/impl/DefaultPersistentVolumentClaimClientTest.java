@@ -22,10 +22,8 @@ import static org.hamcrest.Matchers.is;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
-import org.awaitility.core.ConditionTimeoutException;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
-import org.entando.kubernetes.model.app.EntandoApp;
-import org.junit.jupiter.api.BeforeEach;
+import org.entando.kubernetes.fluentspi.TestResource;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -35,23 +33,14 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 @EnableRuleMigrationSupport
 class DefaultPersistentVolumentClaimClientTest extends AbstractSupportK8SIntegrationTest {
 
-    private final EntandoApp entandoApp = newTestEntandoApp();
-
-    @BeforeEach
-    void deletePersistentVolumeClaims() {
-        try {
-            super.deleteAll(getFabric8Client().persistentVolumeClaims());
-        } catch (ConditionTimeoutException e) {
-            //Happens on the build server depending test sequence. Not too big an issue. Just slows down the build
-        }
-    }
+    private final TestResource testResource = newTestResource();
 
     @Test
     void shouldCreatePersistentVolumeClaimIfAbsent() {
         //Given I have an existing PersistentVolumeClaim  with the annotation "test: 123"
         final PersistentVolumeClaim firstPvc = new PersistentVolumeClaimBuilder()
                 .withNewMetadata()
-                .withNamespace(entandoApp.getMetadata().getNamespace())
+                .withNamespace(testResource.getMetadata().getNamespace())
                 .withName("my-pvc")
                 .addToAnnotations("test", "123")
                 .endMetadata()
@@ -63,19 +52,19 @@ class DefaultPersistentVolumentClaimClientTest extends AbstractSupportK8SIntegra
                 .withAccessModes("ReadWriteOnce")
                 .endSpec()
                 .build();
-        getSimpleK8SClient().persistentVolumeClaims().createPersistentVolumeClaimIfAbsent(entandoApp, firstPvc);
+        getSimpleK8SClient().persistentVolumeClaims().createPersistentVolumeClaimIfAbsent(testResource, firstPvc);
         //When I attempt to findOrCreate a PersistentVolumeClaim  with the same name but with the annotation "test: 234"
         firstPvc.getMetadata().getAnnotations().put("test", "234");
-        getSimpleK8SClient().persistentVolumeClaims().createPersistentVolumeClaimIfAbsent(entandoApp, firstPvc);
+        getSimpleK8SClient().persistentVolumeClaims().createPersistentVolumeClaimIfAbsent(testResource, firstPvc);
         //Then it has the original PersistentVolumeClaim remains in tact
         final PersistentVolumeClaim secondPvc = getSimpleK8SClient().persistentVolumeClaims()
-                .loadPersistentVolumeClaim(entandoApp, "my-pvc");
+                .loadPersistentVolumeClaim(testResource, "my-pvc");
         assertThat(secondPvc.getMetadata().getAnnotations().get("test"), is("123"));
     }
 
     @Override
     protected String[] getNamespacesToUse() {
-        return new String[]{entandoApp.getMetadata().getNamespace()};
+        return new String[]{MY_APP_NAMESPACE_1};
     }
 
 }

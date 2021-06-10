@@ -22,11 +22,8 @@ import static org.hamcrest.Matchers.is;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
-import java.io.IOException;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.fluentspi.TestResource;
-import org.entando.kubernetes.model.app.EntandoApp;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -36,16 +33,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 @EnableRuleMigrationSupport
 class DefaultDeploymentClientTest extends AbstractSupportK8SIntegrationTest {
 
-    private final EntandoApp customResource = newTestEntandoApp();
-
-    @BeforeEach
-    void deleteAll() throws IOException {
-        super.prepareCrdNameMap();
-        deleteAll(getFabric8Client().apps().deployments());
-        deleteAll(getFabric8Client().pods());
-        deleteAll(getFabric8Client().customResources(TestResource.class));
-        deleteAll(getFabric8Client().v1().events());
-    }
+    private final TestResource customResource = newTestResource();
 
     @Test
     void shouldReflectChangesThatWerePatchedAfterInitialCreation() {
@@ -82,6 +70,6 @@ class DefaultDeploymentClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Override
     protected String[] getNamespacesToUse() {
-        return new String[]{MY_APP_NAMESPACE};
+        return new String[]{MY_APP_NAMESPACE_1};
     }
 }

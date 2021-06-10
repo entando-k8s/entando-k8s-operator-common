@@ -31,9 +31,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
-import org.entando.kubernetes.model.app.EntandoApp;
+import org.entando.kubernetes.fluentspi.TestResource;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -45,17 +44,12 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Override
     protected String[] getNamespacesToUse() {
-        return new String[]{newTestEntandoApp().getMetadata().getNamespace()};
-    }
-
-    @BeforeEach
-    void deleteIngresses() {
-        super.deleteAll(getFabric8Client().extensions().ingresses());
+        return new String[]{MY_APP_NAMESPACE_1};
     }
 
     @Test
     void shouldRemovePathFromIngress() {
-        EntandoApp app = newTestEntandoApp();
+        TestResource app = newTestResource();
         Ingress myIngress = getTestIngress();
         myIngress.getMetadata().setNamespace(app.getMetadata().getNamespace());
         Ingress deployedIngress = this.getSimpleK8SClient().ingresses().createIngress(app, myIngress);
@@ -77,7 +71,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Test
     void shouldRemainConsistentWithManyThreads() throws JsonProcessingException, InterruptedException {
-        EntandoApp app = newTestEntandoApp();
+        TestResource app = newTestResource();
         Ingress myIngress = getTestIngress();
         myIngress.getSpec().getRules().get(0).getHttp().getPaths().clear();
         final int total = 20;
@@ -110,7 +104,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
     void shouldAddHttpPath() {
         //Given I have an Ingress
         Ingress myIngress = getTestIngress();
-        final EntandoApp app = newTestEntandoApp();
+        final TestResource app = newTestResource();
         myIngress.getMetadata().setNamespace(app.getMetadata().getNamespace());
         Ingress deployedIngress = this.getSimpleK8SClient().ingresses().createIngress(app, myIngress);
         //When I add the path '/new-path' to it

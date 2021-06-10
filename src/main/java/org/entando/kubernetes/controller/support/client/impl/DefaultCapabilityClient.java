@@ -23,6 +23,8 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import java.net.HttpURLConnection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
@@ -52,7 +55,28 @@ public class DefaultCapabilityClient implements CapabilityClient {
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByLabels(Map<String, String> labels) {
-        return client.customResources(ProvidedCapability.class).inAnyNamespace().withLabels(labels).list().getItems().stream().findFirst();
+        if (EntandoOperatorConfig.isClusterScopedDeployment()) {
+            return client.customResources(ProvidedCapability.class).inAnyNamespace().withLabels(labels).list().getItems().stream()
+                    .findFirst();
+        } else {
+            for (String namespace : EntandoOperatorConfig.getAllAccessibleNamespaces()) {
+                try {
+                    final Optional<ProvidedCapability> providedCapability = client.customResources(ProvidedCapability.class)
+                            .inNamespace(namespace)
+                            .withLabels(labels).list().getItems().stream()
+                            .findFirst();
+                    if (providedCapability.isPresent()) {
+                        return providedCapability;
+                    }
+                } catch (KubernetesClientException e) {
+                    if (e.getCode() != HttpURLConnection.HTTP_FORBIDDEN) {
+                        throw e;
+                    }
+                }
+            }
+
+        }
+        return Optional.empty();
     }
 
     @Override

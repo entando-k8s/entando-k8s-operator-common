@@ -37,7 +37,6 @@ import org.entando.kubernetes.controller.support.client.impl.integrationtesthelp
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.test.common.ValueHolder;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -46,13 +45,6 @@ import org.junit.jupiter.api.Test;
 @Feature("As a support developer, I would like perform common operations on Services and Endpoints resources through a simple "
         + "interface to reduce the learning curve")
 class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
-
-    @BeforeEach
-    void deleteServices() {
-        deleteAll(getFabric8Client().services());
-        deleteAll(getFabric8Client().pods());
-        deleteAll(getFabric8Client().extensions().ingresses());
-    }
 
     @Test
     @Description("Should create or replace an existing Service with the new value without generating duplicate exceptions")
@@ -218,7 +210,6 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Override
     protected String[] getNamespacesToUse() {
-        TestResource testResource = newTestResource();
-        return new String[]{testResource.getMetadata().getNamespace(), testResource.getMetadata().getNamespace() + "2"};
+        return new String[]{MY_APP_NAMESPACE_1, MY_APP_NAMESPACE_2};
     }
 }
