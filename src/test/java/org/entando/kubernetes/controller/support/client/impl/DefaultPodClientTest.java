@@ -49,6 +49,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     @Test
     void shouldWaitForPreviouslyStartedPod() {
         //Given I have started a new Pod
+        awaitDefaultToken(testResource.getMetadata().getNamespace());
         final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
                 .withNewMetadata()
                 .withName("my-pod")
@@ -68,6 +69,14 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         //Then the current thread only proceeds once the pod is ready
         assertThat(PodResult.of(pod).getState(), is(State.READY));
         assertThat(PodResult.of(pod).hasFailed(), is(false));
+    }
+
+    private void awaitDefaultToken(String namespace) {
+        await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
+                .until(() -> {
+                    return getFabric8Client().secrets().inNamespace(namespace).list()
+                            .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default"));
+                });
     }
 
     @Test
@@ -147,6 +156,8 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Test
     void shouldRunPodToCompletion() {
+        awaitDefaultToken(testResource.getMetadata().getNamespace());
+
         //Given I have started a new Pod
         final Pod pod = new PodBuilder()
                 .withNewMetadata()
