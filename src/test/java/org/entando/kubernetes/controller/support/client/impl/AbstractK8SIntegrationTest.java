@@ -16,23 +16,21 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
+import static java.util.Optional.ofNullable;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.qameta.allure.Allure;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
@@ -91,9 +89,19 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
         for (String s : getNamespacesToUse()) {
             await().atMost(3, TimeUnit.MINUTES).ignoreExceptions().until(() -> {
                 TestFixturePreparation.createNamespace(fabric8Client, s);
+                await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
+                        .until(() -> getFabric8Client().secrets().inNamespace(s).list()
+                                .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default")));
                 return true;
             });
         }
+    }
+
+    protected boolean isValidTokenSecret(Secret s, String serviceAccountName) {
+        return s.getType().equals("kubernetes.io/service-account-token") && s.getMetadata().getAnnotations() != null
+                && serviceAccountName.equals(s.getMetadata().getAnnotations().get("kubernetes.io/service-account.name"))
+                && s.getData() != null
+                && ofNullable(s.getData().get("token")).map(t -> t.length() > 0).orElse(false);
     }
 
     protected abstract String[] getNamespacesToUse();

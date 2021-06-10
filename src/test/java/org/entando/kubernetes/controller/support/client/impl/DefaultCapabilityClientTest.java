@@ -231,12 +231,13 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         for (ProvidedCapability providedCapability : entandoCustomResource) {
             createRoleBindingForClusterRole(providedCapability, serviceAccount);
         }
+        await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
+                .until(() -> getFabric8Client().secrets().inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
+                        .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "test-account")));
         final List<Secret> items = getFabric8Client().secrets().inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
                 .getItems();
         final Secret tokenSecret = items.stream()
-                .filter(s -> s.getType().equals("kubernetes.io/service-account-token") && s.getMetadata().getAnnotations() != null
-                        && "test-account"
-                        .equals(s.getMetadata().getAnnotations().get("kubernetes.io/service-account.name"))).findFirst().get();
+                .filter(s -> isValidTokenSecret(s, "test-account")).findFirst().get();
         String token = new String(Base64.getDecoder().decode(tokenSecret.getData().get("token")), StandardCharsets.UTF_8);
         Config config = new ConfigBuilder().build();
         System.setProperty(Config.KUBERNETES_DISABLE_AUTO_CONFIG_SYSTEM_PROPERTY, "true");
