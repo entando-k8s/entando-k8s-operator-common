@@ -54,6 +54,8 @@ import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer.SpringProperty;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
@@ -66,7 +68,8 @@ import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public interface ControllerTestHelper extends FluentTraversals, CapabilityStatusEmulator<SimpleK8SClientDouble> {
+public interface ControllerTestHelper extends FluentTraversals, CapabilityStatusEmulator<SimpleK8SClientDouble>,
+        VariableReferenceAssertions {
 
     String DEFAULT_TLS_SECRET = "default-tls-secret";
     String MY_APP = "my-app";
@@ -212,6 +215,18 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
             assertThat(theVariableReferenceNamed(DATABASE_PASSWORD).on(resultingContainer).getSecretKeyRef().getKey())
                     .isEqualTo(SecretUtils.PASSSWORD_KEY);
         });
+    }
+
+    default void verifySpringSecurityVariables(Container thePluginContainer, String baseUrl, String ssoSecret) {
+        assertThat(theVariableNamed(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name())
+                .on(thePluginContainer)).isEqualTo(baseUrl);
+
+        assertThat(theVariableReferenceNamed(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name())
+                .on(thePluginContainer))
+                .matches(theSecretKey(ssoSecret, KeycloakName.CLIENT_SECRET_KEY));
+        assertThat(theVariableReferenceNamed(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name())
+                .on(thePluginContainer))
+                .matches(theSecretKey(ssoSecret, KeycloakName.CLIENT_ID_KEY));
     }
 
     default void verifyDbJobAdminCredentials(String adminSecret, Container resultingContainer) {

@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.creators;
 
+import static java.util.Optional.ofNullable;
+
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPathBuilder;
@@ -69,8 +71,9 @@ public class IngressPathCreator {
     }
 
     private HTTPIngressPath newHttpPath(IngressingPathOnPort ingressingPathOnPort, Service service) {
+        //A null path causes NPE down the line
         return new HTTPIngressPathBuilder()
-                .withPath(ingressingPathOnPort.getWebContextPath())
+                .withPath(ofNullable(ingressingPathOnPort.getWebContextPath()).orElse("/" + entandoCustomResource.getMetadata().getName()))
                 .withNewBackend()
                 .withServiceName(service.getMetadata().getName())
                 .withNewServicePort(ingressingPathOnPort.getPortForIngressPath())

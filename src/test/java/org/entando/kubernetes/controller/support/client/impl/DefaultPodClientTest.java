@@ -71,14 +71,6 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         assertThat(PodResult.of(pod).hasFailed(), is(false));
     }
 
-    private void awaitDefaultToken(String namespace) {
-        await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
-                .until(() -> {
-                    return getFabric8Client().secrets().inNamespace(namespace).list()
-                            .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default"));
-                });
-    }
-
     @Test
     void shouldRemoveAndWait() {
         //Given I have started a new Pod

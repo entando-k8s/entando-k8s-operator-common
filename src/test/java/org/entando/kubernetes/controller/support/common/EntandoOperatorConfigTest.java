@@ -37,6 +37,20 @@ class EntandoOperatorConfigTest {
     }
 
     @Test
+    void testDeploymentType() {
+        System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty());
+        Assertions.assertThat(EntandoOperatorConfig.getOperatorDeploymentType()).isEqualTo(OperatorDeploymentType.HELM);
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(),
+                OperatorDeploymentType.OLM.getName());
+        Assertions.assertThat(EntandoOperatorConfig.getOperatorDeploymentType()).isEqualTo(OperatorDeploymentType.OLM);
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(),
+                OperatorDeploymentType.HELM.getName());
+        Assertions.assertThat(EntandoOperatorConfig.getOperatorDeploymentType()).isEqualTo(OperatorDeploymentType.HELM);
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty(), "invalid");
+        Assertions.assertThat(EntandoOperatorConfig.getOperatorDeploymentType()).isEqualTo(OperatorDeploymentType.HELM);
+    }
+
+    @Test
     void testIsClusterScope() {
         //Because it will use the current namespace
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE.getJvmSystemProperty());

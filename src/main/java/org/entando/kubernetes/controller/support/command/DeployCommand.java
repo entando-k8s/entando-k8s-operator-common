@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
@@ -110,11 +111,13 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
             this.entandoCustomResource = k8sClient.entandoResources()
                     .deploymentFailed(entandoCustomResource, (Exception) e.getCause(),
                             deployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER));
+            getStatus().finishWith(ExceptionUtils.failureOf(entandoCustomResource, (Exception) e.getCause()));
         } catch (Exception e) {
             //most likely a timeout exception
             this.entandoCustomResource = k8sClient.entandoResources()
                     .deploymentFailed(entandoCustomResource, e,
                             deployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER));
+            getStatus().finishWith(ExceptionUtils.failureOf(entandoCustomResource, e));
         }
         //Note that this line will only be executed if there was an exception
         return deployable.createResult(getDeployment(), getService(), ingress, pod).withStatus(getStatus());
