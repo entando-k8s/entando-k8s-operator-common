@@ -148,7 +148,8 @@ class ExampleCapabilityTest extends ControllerTestBase {
 
         step("And the resulting DatabaseServiceResult reflects the correct information to connect to the deployed DBMS service", () -> {
             DatabaseConnectionInfo connectionInfo = new ProvidedDatabaseCapability(
-                    getCapabilityProvider().loadProvisioningResult(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get()));
+                    getCapabilityProvider()
+                            .loadProvisioningResult(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get()));
             Allure.attachment("DatabaseServiceResult", SerializationHelper.serialize(connectionInfo));
             assertThat(connectionInfo.getDatabaseName()).isEqualTo("default_postgresql_dbms_in_namespace");
             assertThat(connectionInfo.getPort()).isEqualTo("5432");

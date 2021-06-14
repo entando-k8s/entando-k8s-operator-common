@@ -18,7 +18,6 @@ package org.entando.kubernetes.controller.spi.capability;
 
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
-import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
