@@ -73,6 +73,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Test
     void shouldRemoveAndWait() {
+        awaitDefaultToken(testResource.getMetadata().getNamespace());
         //Given I have started a new Pod
         final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
                 .withNewMetadata()
@@ -99,6 +100,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Test
     void shouldRemoveSuccessfullyCompletedPods() {
+        awaitDefaultToken(testResource.getMetadata().getNamespace());
         //Given I have started a new Pod
         getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
                 .withNewMetadata()
@@ -177,6 +179,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     @Test
     @Disabled("Currently used for optimization only")
     void testProbes() throws TimeoutException, IOException {
+        awaitDefaultToken(testResource.getMetadata().getNamespace());
         step("Given I have started a new Pod");
         final Pod startedPod = this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())
                 .createOrReplace(new PodBuilder()
