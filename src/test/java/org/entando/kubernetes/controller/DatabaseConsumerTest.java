@@ -156,7 +156,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                 () -> {
                     this.capabilityProvisioningResult = getCapabilityProvider().loadProvisioningResult(
                             getClient().capabilities().providedCapabilityByName(MY_NAMESPACE, "default-postgresql-dbms-in-namespace")
-                                    .get());
+                                    .get().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get());
                 });
         step("And a database preparation Pod was run for the DbAwareDeployable", () -> {
             step("identified by the labels + " + dbPreparationJobLabels(entandoCustomResource, NameUtils.MAIN_QUALIFIER));

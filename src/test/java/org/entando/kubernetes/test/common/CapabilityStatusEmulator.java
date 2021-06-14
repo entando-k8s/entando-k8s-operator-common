@@ -52,6 +52,7 @@ import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ExposedServerStatus;
 import org.entando.kubernetes.model.common.InternalServerStatus;
+import org.entando.kubernetes.model.common.ResourceReference;
 import org.mockito.ArgumentMatcher;
 import org.mockito.stubbing.Answer;
 
@@ -120,6 +121,8 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
     private ProvidedCapability putStatus(ProvidedCapability providedCapability, int port,
             Map<String, String> derivedDeploymentParameters, AbstractServerStatus status) {
         providedCapability.getStatus().putServerStatus(status);
+        status.setProvidedCapability(
+                new ResourceReference(providedCapability.getMetadata().getNamespace(), providedCapability.getMetadata().getName()));
         final Service service = getClient().services().createOrReplaceService(providedCapability, new ServiceBuilder()
                 .withNewMetadata()
                 .withNamespace(providedCapability.getMetadata().getNamespace())

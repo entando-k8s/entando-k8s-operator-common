@@ -171,7 +171,7 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
                     this.capabilityProvisioningResult = getCapabilityProvider().loadProvisioningResult(
                             getClient().capabilities().providedCapabilityByName(MY_NAMESPACE,
                                     "default-keycloak-sso-in-namespace")
-                                    .get());
+                                    .get().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get());
                 });
         step("And a Secret was created carrying the SSO CLientID and ClienSecret", () -> {
             final Secret secret = getClient().secrets().loadSecret(entandoCustomResource, "my-client-secret");

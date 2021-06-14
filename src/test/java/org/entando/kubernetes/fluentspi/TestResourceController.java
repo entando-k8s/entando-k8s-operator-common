@@ -32,6 +32,7 @@ import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ResourceReference;
 import picocli.CommandLine;
 
 @CommandLine.Command()
@@ -94,6 +95,8 @@ public class TestResourceController implements Runnable {
             }
             final TestResourceDeploymentResult result = deploymentProcessor
                     .processDeployable(new TestResourceDeployable(testResource, port), 60);
+            result.getStatus().setProvidedCapability(
+                    new ResourceReference(providedCapability.getMetadata().getNamespace(), providedCapability.getMetadata().getName()));
             k8sClient.updateStatus(providedCapability, result.getStatus());
             k8sClient.updateStatus(testResource, result.getStatus());
             k8sClient.updatePhase(providedCapability, EntandoDeploymentPhase.SUCCESSFUL);

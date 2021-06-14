@@ -52,22 +52,23 @@ public class SerializingCapabilityProvider implements CapabilityProvider {
     }
 
     @Override
-    public CapabilityProvisioningResult loadProvisioningResult(ProvidedCapability providedCapability) {
-        final AbstractServerStatus serverStatus = providedCapability.getStatus().findCurrentServerStatus()
-                .orElseThrow(IllegalStateException::new);
+    public CapabilityProvisioningResult loadProvisioningResult(AbstractServerStatus serverStatus) {
+        final String capabilityNamespace = serverStatus.getProvidedCapability().getNamespace().orElseThrow(IllegalArgumentException::new);
         Service service = ofNullable(serverStatus.getServiceName()).map(s -> (Service) kubernetesClient
-                .loadStandardResource("Service", providedCapability.getMetadata().getNamespace(), s)).orElse(null);
+                .loadStandardResource("Service", capabilityNamespace, s)).orElse(null);
         Secret adminSecret = serverStatus.getAdminSecretName()
-                .map(s -> (Secret) kubernetesClient.loadStandardResource("Secret", providedCapability.getMetadata().getNamespace(), s))
+                .map(s -> (Secret) kubernetesClient.loadStandardResource("Secret", capabilityNamespace, s))
                 .orElse(null);
         Ingress ingress = null;
         if (serverStatus instanceof ExposedServerStatus) {
             final ExposedServerStatus exposedServerStatus = (ExposedServerStatus) serverStatus;
             ingress = ofNullable(exposedServerStatus.getIngressName())
                     .map(i -> (Ingress) kubernetesClient
-                            .loadStandardResource("Ingress", providedCapability.getMetadata().getNamespace(), i))
+                            .loadStandardResource("Ingress", capabilityNamespace, i))
                     .orElse(null);
         }
+        ProvidedCapability providedCapability = kubernetesClient
+                .load(ProvidedCapability.class, capabilityNamespace, serverStatus.getProvidedCapability().getName());
         return new SerializedCapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);
     }
 }
