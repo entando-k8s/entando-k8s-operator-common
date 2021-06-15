@@ -230,6 +230,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
     @Description("Should retrieve standard Kubernetes resources generically without needing to know the implementation class")
     void shouldRetrieveStandardResourceGenerically() {
         step("Given I have created an instance of a Pod", () -> {
+            awaitDefaultToken(MY_APP_NAMESPACE_1);
             final Pod startedPod = this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())
                     .create(new PodBuilder()
                             .withNewMetadata()
@@ -269,6 +270,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
     @Description("Should execute commands against pods and reflect the correct result code")
     void shouldExecuteCommandOnPodAndWait() throws IOException, InterruptedException, TimeoutException {
         step("Given I have started a new Pod", () -> {
+            awaitDefaultToken(MY_APP_NAMESPACE_1);
             this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
                     .waitUntilCondition(Objects::isNull, 20L, TimeUnit.SECONDS);
             final Pod startedPod = this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())

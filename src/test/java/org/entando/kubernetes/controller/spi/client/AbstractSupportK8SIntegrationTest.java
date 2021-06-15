@@ -33,9 +33,5 @@ public abstract class AbstractSupportK8SIntegrationTest extends AbstractK8SInteg
         return defaultSimpleK8SClient;
     }
 
-    protected void awaitDefaultToken(String namespace) {
-        await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
-                .until(() -> getFabric8Client().secrets().inNamespace(namespace).list()
-                        .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default")));
-    }
+
 }

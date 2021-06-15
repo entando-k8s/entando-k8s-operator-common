@@ -52,6 +52,12 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
         return scheduler;
     }
 
+    protected void awaitDefaultToken(String namespace) {
+        await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
+                .until(() -> getFabric8Client().secrets().inNamespace(namespace).list()
+                        .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default")));
+    }
+
     protected TestResource newTestResource() {
         return new TestResource()
                 .withNames(MY_APP_NAMESPACE_1, "my-app")

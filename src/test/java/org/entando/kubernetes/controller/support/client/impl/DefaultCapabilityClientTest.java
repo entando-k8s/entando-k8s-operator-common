@@ -364,7 +364,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         });
         step("When I wait for the ProvidedCapability to enter a completion phase", () -> {
             capability.set(getClient().capabilities().waitForCapabilityCompletion(
-                    capability.get(), 5));
+                    capability.get(), 15));
             attachResource("ProvidedCapability", capability.get());
         });
         step("Then it reflects the 'SUCCESSFUL' Phase and the correct state", () -> {
