@@ -168,11 +168,10 @@ public interface KubernetesClientForControllers {
                         .withName(status.getOriginatingControllerPod().getName())
                         .endRelated()
                         .withReason("StatusUpdate")
-                        .withMessage(format("The %s  %s/%s received status update %s/%s ",
+                        .withMessage(format("The %s  %s/%s received status update for %s ",
                                 customResource.getKind(),
                                 customResource.getMetadata().getNamespace(),
                                 customResource.getMetadata().getName(),
-                                status.getType(),
                                 status.getQualifier()))
                         .withAction("STATUS_CHANGE")
         );
