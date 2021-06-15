@@ -21,8 +21,8 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Optional;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoControllerFailure;
+import org.entando.kubernetes.model.common.ServerStatus;
 
 public class SerializedCapabilityProvisioningResult implements CapabilityProvisioningResult {
 
@@ -38,11 +38,6 @@ public class SerializedCapabilityProvisioningResult implements CapabilityProvisi
         this.service = service;
         this.ingress = ingress;
         this.adminSecret = adminSecret;
-    }
-
-    public SerializedCapabilityProvisioningResult(ProvidedCapability providedCapability, EntandoControllerFailure controllerFailure) {
-        this.providedCapability = providedCapability;
-        this.controllerFailure = controllerFailure;
     }
 
     public SerializedCapabilityProvisioningResult(EntandoControllerFailure controllerFailure) {
@@ -72,6 +67,6 @@ public class SerializedCapabilityProvisioningResult implements CapabilityProvisi
     @Override
     public Optional<EntandoControllerFailure> getControllerFailure() {
         return Optional.ofNullable(controllerFailure)
-                .or(() -> providedCapability.getStatus().findFailedServerStatus().map(AbstractServerStatus::getEntandoControllerFailure));
+                .or(() -> providedCapability.getStatus().findFailedServerStatus().flatMap(ServerStatus::getEntandoControllerFailure));
     }
 }

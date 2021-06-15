@@ -75,6 +75,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
     String MY_APP = "my-app";
     String MY_NAMESPACE = "my-namespace";
     String ENTANDO_RESOURCE_ACTION = "entando.resource.action";
+    String TEST_CONTROLLER_POD = "test-controller-pod";
 
     default Optional<SimpleKeycloakClient> getKeycloakClient() {
         return java.util.Optional.empty();
@@ -102,6 +103,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
                 entandoCustomResource.getMetadata().getNamespace());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND.getJvmSystemProperty(), entandoCustomResource.getKind());
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
         getClient().entandoResources().createOrPatchEntandoResource(entandoCustomResource);
         final SimpleKeycloakClient keycloakClient = this.getKeycloakClient().orElse(null);
         final AllureAttachingCommandStream commandStream = new AllureAttachingCommandStream(getClient(), keycloakClient);
@@ -122,6 +124,7 @@ public interface ControllerTestHelper extends FluentTraversals, CapabilityStatus
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
                 providedCapability.getMetadata().getNamespace());
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND.getJvmSystemProperty(), providedCapability.getKind());
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
         final SimpleKeycloakClient keycloakClient = this.getKeycloakClient().orElse(null);
         final AllureAttachingCommandStream commandStream = new AllureAttachingCommandStream(getClient(), keycloakClient);
         Runnable controller = createController(getClient().entandoResources(),

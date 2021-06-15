@@ -16,11 +16,6 @@
 
 package org.entando.kubernetes.controller.spi.capability;
 
-import static java.util.Optional.ofNullable;
-
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.CommandStream;
@@ -28,10 +23,7 @@ import org.entando.kubernetes.controller.spi.command.DeserializationHelper;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.command.SupportedCommand;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
-import org.entando.kubernetes.model.capability.ProvidedCapability;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
 
 public class SerializingCapabilityProvider implements CapabilityProvider {
 
@@ -51,24 +43,4 @@ public class SerializingCapabilityProvider implements CapabilityProvider {
         return DeserializationHelper.deserialize(kubernetesClient, provisioningResult);
     }
 
-    @Override
-    public CapabilityProvisioningResult loadProvisioningResult(AbstractServerStatus serverStatus) {
-        final String capabilityNamespace = serverStatus.getProvidedCapability().getNamespace().orElseThrow(IllegalArgumentException::new);
-        Service service = ofNullable(serverStatus.getServiceName()).map(s -> (Service) kubernetesClient
-                .loadStandardResource("Service", capabilityNamespace, s)).orElse(null);
-        Secret adminSecret = serverStatus.getAdminSecretName()
-                .map(s -> (Secret) kubernetesClient.loadStandardResource("Secret", capabilityNamespace, s))
-                .orElse(null);
-        Ingress ingress = null;
-        if (serverStatus instanceof ExposedServerStatus) {
-            final ExposedServerStatus exposedServerStatus = (ExposedServerStatus) serverStatus;
-            ingress = ofNullable(exposedServerStatus.getIngressName())
-                    .map(i -> (Ingress) kubernetesClient
-                            .loadStandardResource("Ingress", capabilityNamespace, i))
-                    .orElse(null);
-        }
-        ProvidedCapability providedCapability = kubernetesClient
-                .load(ProvidedCapability.class, capabilityNamespace, serverStatus.getProvidedCapability().getName());
-        return new SerializedCapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);
-    }
 }

@@ -20,7 +20,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.StatusBuilder;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.io.IOException;
 import org.entando.kubernetes.test.common.ValueHolder;
 import org.junit.jupiter.api.Tag;
@@ -37,6 +42,34 @@ class ExceptionUtilsTest {
         assertThatThrownBy(() -> ioSafe(() -> {
             throw new IOException();
         })).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void testWithDiagnostics() {
+        HasMetadata pod = new PodBuilder()
+                .withNewMetadata()
+                .withNamespace("my-namespace")
+                .withName("my-pod")
+                .endMetadata()
+                .build();
+        assertThatThrownBy(() -> withDiagnostics(() -> {
+            throw new IOException();
+        }, () -> pod)).isInstanceOf(EntandoControllerException.class);
+        assertThatThrownBy(() -> withDiagnostics(() -> {
+            throw new IOException();
+        }, () -> null)).isInstanceOf(EntandoControllerException.class);
+        assertThatThrownBy(() -> withDiagnostics(() -> {
+            throw new KubernetesClientException(new StatusBuilder()
+                    .withMessage("my message")
+                    .withCode(404)
+                    .build());
+        }, () -> pod)).isInstanceOf(EntandoControllerException.class);
+        assertThatThrownBy(() -> withDiagnostics(() -> {
+            throw new KubernetesClientException(new StatusBuilder()
+                    .withMessage("my message")
+                    .withCode(404)
+                    .build());
+        }, () -> null)).isInstanceOf(KubernetesClientException.class);
     }
 
     @Test

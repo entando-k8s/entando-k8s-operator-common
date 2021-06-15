@@ -168,7 +168,7 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
         step("Then an SSO capability was provided for the SsoAwareDeployable with a name reflecting that it is the default            "
                         + "    Keycloak SSO service in the namespace",
                 () -> {
-                    this.capabilityProvisioningResult = getCapabilityProvider().loadProvisioningResult(
+                    this.capabilityProvisioningResult = getClient().entandoResources().loadCapabilityProvisioningResult(
                             getClient().capabilities().providedCapabilityByName(MY_NAMESPACE,
                                     "default-keycloak-sso-in-namespace")
                                     .get().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get());

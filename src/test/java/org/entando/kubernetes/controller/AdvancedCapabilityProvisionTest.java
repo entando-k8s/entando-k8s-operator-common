@@ -35,7 +35,6 @@ import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.fluentspi.TestResource;
@@ -49,6 +48,7 @@ import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoControllerFailure;
 import org.entando.kubernetes.model.common.ResourceReference;
+import org.entando.kubernetes.model.common.ServerStatus;
 import org.entando.kubernetes.test.common.CapabilityStatusEmulator;
 import org.entando.kubernetes.test.common.InProcessTestData;
 import org.entando.kubernetes.test.common.SourceLink;
@@ -123,7 +123,6 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
             assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.CLUSTER);
-            assertThat(providedCapability.getServiceReference().getNamespace()).contains(AbstractK8SClientDouble.CONTROLLER_NAMESPACE);
         });
         step("And its name 'default-mysql-dbms-in-cluster' reflects the fact that it is the default MySQL DBMS capability in the cluster",
                 () -> {
@@ -165,7 +164,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             attachKubernetesResource("CapabilityRequirement", theCapabilityRequirement);
         });
         step("But the controller that processes this capability updates the Phase on its status to 'FAILED'", () ->
-                doAnswer(withFailedExposedServerStatus(NameUtils.MAIN_QUALIFIER, new IllegalStateException()))
+                doAnswer(withFailedServerStatus(NameUtils.MAIN_QUALIFIER, new IllegalStateException()))
                         .when(clientDouble.capabilities()).waitForCapabilityCompletion(any(), anyInt()));
         step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerFailure", () -> {
             final CapabilityProvisioningResult result = capabilityProvider
@@ -192,11 +191,10 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
             attachKubernetesResource("CapabilityRequirement", theCapabilityRequirement);
         });
-        step("But the controller that processes this capability updates the Phase on its status to 'FAILED'", () -> {
-            return doAnswer((Answer<?>) invocationOnMock -> {
-                throw new TimeoutException();
-            }).when(clientDouble.capabilities()).waitForCapabilityCompletion(any(), anyInt());
-        });
+        step("But the controller that processes this capability updates the Phase on its status to 'FAILED'",
+                () -> doAnswer((Answer<?>) invocationOnMock -> {
+                    throw new TimeoutException();
+                }).when(clientDouble.capabilities()).waitForCapabilityCompletion(any(), anyInt()));
         step("Expect a request to fulfil this capabilityRequirement to result in an EntandoControllerFailure", () -> {
             final CapabilityProvisioningResult result = capabilityProvider
                     .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
@@ -398,7 +396,9 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
                     assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.SPECIFIED);
                     assertThat(providedCapability.getMetadata().getNamespace()).isEqualTo("my-db-namespace");
-                    assertThat(providedCapability.getServiceReference().getName()).isEqualTo("my-db-service");
+                    assertThat(
+                            providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getServiceName)
+                                    .get()).isEqualTo("my-db-service");
                 });
         step("And subsequent requests for a DBMS Capability with the same name and namespace specified result in the same"
                         + " ProvidedCapability",
@@ -470,8 +470,8 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
             assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.NAMESPACE);
-            assertTrue(providedCapability.getIngressReference().isEmpty());
-            assertThat(providedCapability.getServiceReference().getNamespace()).contains(forResource.getMetadata().getNamespace());
+            assertTrue(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getIngressName)
+                    .isEmpty());
         });
         step("With the name 'default-mysql-dbms-in-namespace-service' indicating that it is the default MySQL DBMS in the namespace", () ->
                 assertThat(providedCapability.getMetadata().getName()).isEqualTo("default-mysql-dbms-in-namespace"));
@@ -528,8 +528,8 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
             assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.NAMESPACE);
-            assertTrue(providedCapability.getIngressReference().isEmpty());
-            assertThat(providedCapability.getServiceReference().getNamespace()).contains(forResource.getMetadata().getNamespace());
+            assertTrue(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getIngressName)
+                    .isEmpty());
         });
     }
 
@@ -560,8 +560,8 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.DBMS);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.MYSQL);
             assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.DEDICATED);
-            assertTrue(providedCapability.getIngressReference().isEmpty());
-            assertThat(providedCapability.getServiceReference().getNamespace()).contains(forResource.getMetadata().getNamespace());
+            assertTrue(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getIngressName)
+                    .isEmpty());
         });
         step("With the name 'my-app-db' indicating that it is the MySQL DBMS dedicated to the TestResource 'my-app' in the same namespace",
                 () ->
@@ -608,10 +608,9 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.SSO);
             assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.KEYCLOAK);
             assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.DEDICATED);
-            assertThat(providedCapability.getServiceReference().getNamespace()).contains(forResource.getMetadata().getNamespace());
-            assertThat(providedCapability.getServiceReference().getName()).startsWith(forResource.getMetadata().getName() + "-sso-service");
-            assertThat(providedCapability.getIngressReference().get().getNamespace()).contains(forResource.getMetadata().getNamespace());
-            assertThat(providedCapability.getIngressReference().get().getName())
+            assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getServiceName).get())
+                    .startsWith(forResource.getMetadata().getName() + "-sso-service");
+            assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getIngressName).get())
                     .isEqualTo(forResource.getMetadata().getName() + "-sso-ingress");
         });
     }

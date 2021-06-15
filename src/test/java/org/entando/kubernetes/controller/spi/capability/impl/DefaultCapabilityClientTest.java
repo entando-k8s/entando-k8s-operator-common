@@ -40,7 +40,7 @@
 //import org.entando.kubernetes.model.capability.ProvidedCapability;
 //import org.entando.kubernetes.model.capability.ProvidedCapabilityBuilder;
 //import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-//import org.entando.kubernetes.model.common.ExposedServerStatus;
+//import org.entando.kubernetes.model.common.ServerStatus;
 //import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.Tag;
 //import org.junit.jupiter.api.Tags;
@@ -151,7 +151,7 @@
 //        defaultCapabilityClient.createAndWatchResource(providedCapability, new CapabilityRequirementWatcher(new CompletableFuture<>()));
 //        final ProvidedCapability createdCapability = getDefaultSimpleK8SClient().entandoResources().reload(providedCapability);
 //        //And I have updated its status
-//        final ExposedServerStatus status = new ExposedServerStatus("main");
+//        final ServerStatus status = new ServerStatus("main");
 //        status.finish();
 //        //With an adminSecret
 //        final Secret adminSecret = getFabric8Client().secrets().inNamespace(MY_APP_NAMESPACE).createOrReplace(new SecretBuilder()

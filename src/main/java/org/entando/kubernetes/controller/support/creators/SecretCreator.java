@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -68,16 +69,19 @@ public class SecretCreator extends AbstractK8SResourceCreator {
     private void cloneControllerSecret(SecretClient client, String name) {
         final Secret secret = client.loadControllerSecret(name);
         if (secret != null) {
-            client.createSecretIfAbsent(entandoCustomResource, new SecretBuilder()
-                    .withNewMetadata()
-                    .withLabels(secret.getMetadata().getLabels())
-                    .withAnnotations(secret.getMetadata().getAnnotations())
-                    .withName(name)
-                    .endMetadata()
-                    .withType(secret.getType())
-                    .withData(secret.getData())
-                    .withStringData(secret.getStringData())
-                    .build());
+            withDiagnostics(() -> {
+                client.createSecretIfAbsent(entandoCustomResource, new SecretBuilder()
+                        .withNewMetadata()
+                        .withLabels(secret.getMetadata().getLabels())
+                        .withAnnotations(secret.getMetadata().getAnnotations())
+                        .withName(name)
+                        .endMetadata()
+                        .withType(secret.getType())
+                        .withData(secret.getData())
+                        .withStringData(secret.getStringData())
+                        .build());
+                return null;
+            }, () -> secret);
         }
     }
 

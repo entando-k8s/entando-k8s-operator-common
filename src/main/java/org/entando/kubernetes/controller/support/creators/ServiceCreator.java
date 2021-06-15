@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.creators;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
+
 import io.fabric8.kubernetes.api.model.EndpointPort;
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.EndpointsBuilder;
@@ -57,7 +59,8 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
     }
 
     public void createService(ServiceClient services, Deployable<?> deployable) {
-        primaryService = services.createOrReplaceService(entandoCustomResource, newService(deployable));
+        final Service service = newService(deployable);
+        primaryService = withDiagnostics(() -> services.createOrReplaceService(entandoCustomResource, service), () -> service);
     }
 
     public Service newDelegatingService(ServiceClient services, MayRequireDelegateService ingressingDeployable) {
@@ -66,28 +69,34 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
                 .withName(ingressingDeployable.getIngressName() + "-to-" + primaryService.getMetadata().getName())
                 .withNamespace(ingressingDeployable.getIngressNamespace())
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(this.entandoCustomResource)).build();
-        Service delegatingService = services.createOrReplaceDelegateService(new ServiceBuilder()
+        final Service builtService = new ServiceBuilder()
                 .withMetadata(metaData)
                 .withNewSpec()
                 .withPorts(new ArrayList<>(primaryService.getSpec().getPorts()))
                 .endSpec()
-                .build());
+                .build();
+
+        Service delegatingService = withDiagnostics(() -> services.createOrReplaceDelegateService(builtService), () -> builtService);
         //This is just a workaround for Openshift where the DNS is not shared across namespaces. Joining the networks is an alternative
         // solution
-        services.createOrReplaceDelegateEndpoints(new EndpointsBuilder()
+        final Endpoints builtEndpoints = new EndpointsBuilder()
                 .withMetadata(metaData)
                 .addNewSubset()
                 .addNewAddress().withIp(primaryService.getSpec().getClusterIP()).endAddress()
                 .withPorts(toEndpointPorts(primaryService.getSpec().getPorts()))
                 .endSubset()
-                .build());
+                .build();
+        withDiagnostics(() -> services.createOrReplaceDelegateEndpoints(builtEndpoints), () -> builtEndpoints);
         return delegatingService;
     }
 
     public void createExternalService(SimpleK8SClient<?> k8sClient, ExternalService externalService) {
-        this.primaryService = k8sClient.services().createOrReplaceService(entandoCustomResource, newExternalService(externalService));
+        final Service newExternalService = newExternalService(externalService);
+        this.primaryService = withDiagnostics(() -> k8sClient.services().createOrReplaceService(entandoCustomResource, newExternalService),
+                () -> newExternalService);
         if (isIpAddress(externalService)) {
-            k8sClient.services().createOrReplaceEndpoints(entandoCustomResource, newEndpoints(externalService));
+            final Endpoints newEndpoints = newEndpoints(externalService);
+            withDiagnostics(() -> k8sClient.services().createOrReplaceEndpoints(entandoCustomResource, newEndpoints), () -> newEndpoints);
         }
     }
 

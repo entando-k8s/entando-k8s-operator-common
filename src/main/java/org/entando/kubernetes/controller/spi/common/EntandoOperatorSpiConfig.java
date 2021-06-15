@@ -24,6 +24,11 @@ public class EntandoOperatorSpiConfig extends EntandoOperatorConfigBase {
     private EntandoOperatorSpiConfig() {
     }
 
+    public static String getControllerPodName() {
+        //Absolutely essential. Fail if not set
+        return lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME).orElseThrow(IllegalStateException::new);
+    }
+
     public static boolean assumeExternalHttpsProvider() {
         return lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER)
                 .map(Boolean::valueOf).orElse(false);
@@ -65,9 +70,9 @@ public class EntandoOperatorSpiConfig extends EntandoOperatorConfigBase {
         }
     }
 
-    public static long getPodCompletionTimeoutSeconds() {
-        return Math.round(lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS).map(Long::valueOf)
-                .orElse(600L) * getTimeoutAdjustmentRatio());
+    public static int getPodCompletionTimeoutSeconds() {
+        return Math.round(lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_POD_COMPLETION_TIMEOUT_SECONDS).map(Integer::valueOf)
+                .orElse(600) * getTimeoutAdjustmentRatio());
     }
 
     public static float getTimeoutAdjustmentRatio() {
@@ -75,14 +80,13 @@ public class EntandoOperatorSpiConfig extends EntandoOperatorConfigBase {
                 .lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_TIMEOUT_ADJUSTMENT_RATIO).map(Float::valueOf).orElse(1F);
     }
 
-    public static long getPodReadinessTimeoutSeconds() {
-        return Math.round(lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS).map(Long::valueOf)
-                .orElse(600L) * getTimeoutAdjustmentRatio());
+    public static int getPodReadinessTimeoutSeconds() {
+        return Math.round(lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_POD_READINESS_TIMEOUT_SECONDS).map(Integer::valueOf)
+                .orElse(600) * getTimeoutAdjustmentRatio());
     }
 
-    public static long getPodShutdownTimeoutSeconds() {
-        return Math
-                .round(lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_POD_SHUTDOWN_TIMEOUT_SECONDS).map(Long::valueOf).orElse(120L)
-                        * getTimeoutAdjustmentRatio());
+    public static int getPodShutdownTimeoutSeconds() {
+        return Math.round(lookupProperty(EntandoOperatorSpiConfigProperty.ENTANDO_POD_SHUTDOWN_TIMEOUT_SECONDS).map(Integer::valueOf)
+                .orElse(120) * getTimeoutAdjustmentRatio());
     }
 }

@@ -22,6 +22,7 @@ import org.entando.kubernetes.controller.spi.command.DefaultSerializableDeployme
 import org.entando.kubernetes.controller.spi.command.DeserializationHelper;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.command.SupportedCommand;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
@@ -45,10 +46,11 @@ public class InProcessCommandStream implements CommandStream {
 
     @Override
     public String process(SupportedCommand supportedCommand, String data, int timeoutSeconds) {
+        final int adjustedTimeOutSeconds = Math.round(timeoutSeconds * EntandoOperatorSpiConfig.getTimeoutAdjustmentRatio());
         if (supportedCommand == SupportedCommand.PROCESS_DEPLOYABLE) {
-            return processDeployment(data, timeoutSeconds);
+            return processDeployment(data, adjustedTimeOutSeconds);
         } else {
-            return provideCapability(data, timeoutSeconds);
+            return provideCapability(data, adjustedTimeOutSeconds);
         }
     }
 

@@ -53,8 +53,10 @@ import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ServerStatus;
 import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.PodBehavior;
 import org.entando.kubernetes.test.common.SourceLink;
@@ -154,7 +156,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
         step("Then a database capability was provided for the DbAwareDeployable with a name reflecting that it is the default PostgreSQL "
                         + "DBMS in the namespace",
                 () -> {
-                    this.capabilityProvisioningResult = getCapabilityProvider().loadProvisioningResult(
+                    this.capabilityProvisioningResult = getClient().entandoResources().loadCapabilityProvisioningResult(
                             getClient().capabilities().providedCapabilityByName(MY_NAMESPACE, "default-postgresql-dbms-in-namespace")
                                     .get().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get());
                 });
@@ -265,7 +267,8 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
             final EntandoCustomResource resource = getClient().entandoResources().reload(entandoCustomResource);
             assertThat(resource.getStatus().hasFailed()).isTrue();
             assertThat(resource.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.FAILED);
-            assertThat(resource.getStatus().findFailedServerStatus().get().getEntandoControllerFailure().getMessage())
+            assertThat(resource.getStatus().findFailedServerStatus().flatMap(ServerStatus::getEntandoControllerFailure).map(
+                    EntandoControllerFailure::getMessage).get())
                     .contains("Database preparation failed. Please inspect the logs of the pod ");
         });
         attachKubernetesState();

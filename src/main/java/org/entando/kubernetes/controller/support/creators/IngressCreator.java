@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
@@ -99,7 +100,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         if (this.ingress == null) {
             Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service),
                     ingressingDeployable);
-            this.ingress = ingressClient.createIngress(entandoCustomResource, newIngress);
+            this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress), () -> newIngress);
         } else {
             if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
                 final String host = determineIngressHost(ingressClient, ingressingDeployable);

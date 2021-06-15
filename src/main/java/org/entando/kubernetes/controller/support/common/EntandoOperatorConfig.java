@@ -139,4 +139,7 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
 
     }
 
+    public static Optional<Integer> getNumberOfReadinessFailures() {
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_NUMBER_OF_READINESS_FAILURES).map(Integer::valueOf);
+    }
 }

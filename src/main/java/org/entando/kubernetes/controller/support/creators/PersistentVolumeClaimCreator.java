@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import static java.util.Collections.singletonMap;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
@@ -50,11 +51,17 @@ public class PersistentVolumeClaimCreator extends AbstractK8SResourceCreator {
         this.persistentVolumeClaims = deployable.getContainers().stream()
                 .filter(PersistentVolumeAwareContainer.class::isInstance)
                 .map(PersistentVolumeAwareContainer.class::cast)
-                .map(deployableContainer -> k8sClient
-                        .createPersistentVolumeClaimIfAbsent(entandoCustomResource,
-                                newPersistentVolumeClaim(deployable, deployableContainer)))
+                .map(deployableContainer -> createPersistentVolumClaimIfAbsent(k8sClient, deployable, deployableContainer))
                 .collect(Collectors.toList());
 
+    }
+
+    private PersistentVolumeClaim createPersistentVolumClaimIfAbsent(PersistentVolumeClaimClient k8sClient, Deployable<?> deployable,
+            PersistentVolumeAwareContainer deployableContainer) {
+        final PersistentVolumeClaim persistentVolumeClaim = newPersistentVolumeClaim(deployable, deployableContainer);
+        return withDiagnostics(
+                () -> k8sClient.createPersistentVolumeClaimIfAbsent(entandoCustomResource, persistentVolumeClaim),
+                () -> persistentVolumeClaim);
     }
 
     public List<PersistentVolumeClaim> reloadPersistentVolumeClaims(PersistentVolumeClaimClient k8sClient) {

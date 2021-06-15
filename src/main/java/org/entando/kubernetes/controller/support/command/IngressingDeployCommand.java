@@ -22,7 +22,6 @@ import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
 
 /**
  * On addition of an Entando CustomResource, the DeployCommand is invoked for every service and database that needs to be deployed.
@@ -53,7 +52,7 @@ public class IngressingDeployCommand<T extends ExposedDeploymentResult<T>> exten
         } else {
             ingressCreator.createIngress(k8sClient.ingresses(), ingressingDeployable, serviceCreator.getService());
         }
-        ((ExposedServerStatus) status).setIngressName(ingressCreator.getIngress().getMetadata().getName());
+        status.setIngressName(ingressCreator.getIngress().getMetadata().getName());
         k8sClient.entandoResources().updateStatus(entandoCustomResource, status);
     }
 

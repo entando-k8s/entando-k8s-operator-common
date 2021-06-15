@@ -31,6 +31,8 @@ public class NameUtils {
     public static final String DEFAULT_SERVER_QUALIFIER = "server";
     public static final String DEFAULT_INGRESS_SUFFIX = "ingress";
     public static final String MAIN_QUALIFIER = "main";
+    public static final String DB_QUALIFIER = "db";
+    public static final String SSO_QUALIFIER = "sso";
     public static final String DEFAULT_DEPLOYMENT_SUFFIX = "deployment";
     public static final String DEFAULT_PVC_SUFFIX = "pvc";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();

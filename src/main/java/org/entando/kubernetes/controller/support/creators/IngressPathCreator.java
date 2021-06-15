@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
@@ -58,9 +59,9 @@ public class IngressPathCreator {
                 .collect(Collectors.toList());
         for (IngressingPathOnPort ingressingContainer : ingressingContainers) {
             String qualifier = ((DeployableContainer) ingressingContainer).getNameQualifier();
-            ingressClient.addHttpPath(ingress, newHttpPath(ingressingContainer, service), Collections
+            withDiagnostics(() -> ingressClient.addHttpPath(ingress, newHttpPath(ingressingContainer, service), Collections
                     .singletonMap(pathAnnotationName(qualifier),
-                            ingressingContainer.getWebContextPath()));
+                            ingressingContainer.getWebContextPath())), () -> ingress);
 
         }
         return ingressClient.loadIngress(ingress.getMetadata().getNamespace(), ingress.getMetadata().getName());

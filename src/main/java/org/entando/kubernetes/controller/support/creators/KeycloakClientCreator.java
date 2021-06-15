@@ -16,8 +16,10 @@
 
 package org.entando.kubernetes.controller.support.creators;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 import static org.entando.kubernetes.controller.support.creators.IngressCreator.getIngressServerUrl;
 
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.Optional;
@@ -94,14 +96,18 @@ public class KeycloakClientCreator {
         }
         String keycloakClientSecret = client.prepareClientAndReturnSecret(ssoClientConfig);
         String secretName = KeycloakName.forTheClientSecret(ssoClientConfig);
-        secrets.createSecretIfAbsent(entandoCustomResource, new SecretBuilder()
+        final Secret builtSecret = new SecretBuilder()
                 .withNewMetadata()
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(entandoCustomResource))
                 .withName(secretName)
                 .endMetadata()
                 .addToStringData(KeycloakName.CLIENT_ID_KEY, ssoClientConfig.getClientId())
                 .addToStringData(KeycloakName.CLIENT_SECRET_KEY, keycloakClientSecret)
-                .build());
+                .build();
+        withDiagnostics(() -> {
+            secrets.createSecretIfAbsent(entandoCustomResource, builtSecret);
+            return null;
+        }, () -> builtSecret);
     }
 
 }

@@ -17,7 +17,6 @@
 package org.entando.kubernetes.controller.spi.common;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import java.util.concurrent.TimeoutException;
 
 /*
  * Throw this exception to disrupt the current progression of objects being installed.
@@ -31,14 +30,19 @@ public class EntandoControllerException extends RuntimeException {
         this.resource = null;
     }
 
-    public EntandoControllerException(TimeoutException timeoutException) {
-        super(timeoutException);
+    public EntandoControllerException(Exception cause) {
+        super(cause);
         this.resource = null;
 
     }
 
     public EntandoControllerException(HasMetadata resource, String message) {
         super(message);
+        this.resource = resource;
+    }
+
+    public EntandoControllerException(HasMetadata resource, Exception cause) {
+        super(cause);
         this.resource = resource;
     }
 

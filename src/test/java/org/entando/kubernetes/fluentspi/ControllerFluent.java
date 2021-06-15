@@ -23,8 +23,8 @@ import org.entando.kubernetes.controller.spi.client.KubernetesClientForControlle
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.ServerStatus;
 import picocli.CommandLine;
 
 public class ControllerFluent<N extends ControllerFluent<N>> implements Runnable {
@@ -59,7 +59,7 @@ public class ControllerFluent<N extends ControllerFluent<N>> implements Runnable
         }
         if (resourceToProcess.getStatus().hasFailed()) {
             throw new CommandLine.ExecutionException(new CommandLine(this), resourceToProcess.getStatus().findFailedServerStatus()
-                    .map(AbstractServerStatus::getEntandoControllerFailure)
+                    .flatMap(ServerStatus::getEntandoControllerFailure)
                     .flatMap(f -> ofNullable(f.getDetailMessage()).or(() -> ofNullable(f.getMessage())))
                     .orElse("Deployment Failed"));
         }

@@ -44,6 +44,7 @@ import java.util.concurrent.TimeoutException;
 import org.assertj.core.api.ThrowableAssert;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.EntandoRbacRole;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
@@ -52,7 +53,7 @@ import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
+import org.entando.kubernetes.model.common.ServerStatus;
 import org.entando.kubernetes.test.common.CapabilityStatusEmulator;
 import org.entando.kubernetes.test.common.ValueHolder;
 import org.junit.jupiter.api.Tag;
@@ -350,7 +351,11 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
                     await().atMost(10, TimeUnit.SECONDS)
                             .until(() -> clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE_1, "my-capability") != null);
                     capability.set(clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE_1, "my-capability"));
-                    capability.set(clientForControllers.updateStatus(capability.get(), new ExposedServerStatus("server")));
+                    capability.set(clientForControllers.updateStatus(capability.get(),
+                            new ServerStatus("server").withOriginatingControllerPod(
+                                    client.entandoResources()
+                                            .getNamespace(), EntandoOperatorSpiConfig.getControllerPodName()))
+                    );
                     capability.set(clientForControllers.updatePhase(capability.get(), EntandoDeploymentPhase.SUCCESSFUL));
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -359,7 +364,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         });
         step("When I wait for the ProvidedCapability to enter a completion phase", () -> {
             capability.set(getClient().capabilities().waitForCapabilityCompletion(
-                    capability.get(), 3));
+                    capability.get(), 5));
             attachResource("ProvidedCapability", capability.get());
         });
         step("Then it reflects the 'SUCCESSFUL' Phase and the correct state", () -> {

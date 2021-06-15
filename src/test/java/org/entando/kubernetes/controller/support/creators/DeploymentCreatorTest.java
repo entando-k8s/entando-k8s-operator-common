@@ -116,14 +116,14 @@ class DeploymentCreatorTest implements InProcessTestData, FluentTraversals {
         final Probe readinessProbe = thePrimaryContainer.getReadinessProbe();
         assertThat(readinessProbe.getHttpGet().getPort().getIntVal(), is(8084));
         assertThat(readinessProbe.getHttpGet().getPath(), is("/k8s/actuator/health"));
-        //That is delayed by half the maxStartupTime
-        assertThat(readinessProbe.getInitialDelaySeconds(), is(120 / 3));
+        //That is delayed by a sixth the maxStartupTime
+        assertThat(readinessProbe.getInitialDelaySeconds(), is(120 / 6));
         assertThat(readinessProbe.getSuccessThreshold(), is(nullValue()));
-        //is allowed to fail 3 times during startup
-        assertThat(readinessProbe.getFailureThreshold(), is(3));
+        //is allowed to fail 6 - 1 times during startup
+        assertThat(readinessProbe.getFailureThreshold(), is(5));
         assertThat(readinessProbe.getPeriodSeconds(), is(120 / 6));
         assertThat(readinessProbe.getTimeoutSeconds(), is(5));
-        //And a livenessprbe
+        //And a livenessprobe
         final Probe livenessProbe = thePrimaryContainer.getLivenessProbe();
         assertThat(livenessProbe.getHttpGet().getPort().getIntVal(), is(8084));
         assertThat(livenessProbe.getHttpGet().getPath(), is("/k8s/actuator/health"));

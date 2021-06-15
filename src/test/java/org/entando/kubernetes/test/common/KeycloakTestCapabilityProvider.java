@@ -41,7 +41,7 @@ import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.ProvidedCapabilityBuilder;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
+import org.entando.kubernetes.model.common.ServerStatus;
 
 public class KeycloakTestCapabilityProvider {
 
@@ -60,7 +60,7 @@ public class KeycloakTestCapabilityProvider {
         final ProvidedSsoCapability sso = new ProvidedSsoCapability(
                 new SerializedCapabilityProvisioningResult(reloaded, null, null, client.secrets()
                         .loadSecret(reloaded,
-                                reloaded.getStatus().findCurrentServerStatus().get().getAdminSecretName().get())));
+                                reloaded.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getAdminSecretName().get())));
         final DefaultKeycloakClient keycloak = new DefaultKeycloakClient();
         keycloak.login(sso.getExternalBaseUrl(), sso.getUsername(), sso.getPassword());
         Arrays.stream(names)
@@ -113,7 +113,7 @@ public class KeycloakTestCapabilityProvider {
     }
 
     private ProvidedCapability forceSuccessfulStatus(ProvidedCapability providedCapability) {
-        final ExposedServerStatus serverStatus = new ExposedServerStatus(NameUtils.MAIN_QUALIFIER);
+        final ServerStatus serverStatus = new ServerStatus(NameUtils.MAIN_QUALIFIER);
         serverStatus.setExternalBaseUrl(getBaseUrlString());
         serverStatus.setAdminSecretName(NameUtils.standardAdminSecretName(providedCapability));
         client.entandoResources().updateStatus(providedCapability, serverStatus);

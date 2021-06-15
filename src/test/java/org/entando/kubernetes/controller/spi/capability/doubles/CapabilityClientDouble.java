@@ -19,7 +19,6 @@ package org.entando.kubernetes.controller.spi.capability.doubles;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
-import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.Watcher;
@@ -36,14 +35,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.ClusterDouble;
 import org.entando.kubernetes.controller.support.client.doubles.NamespaceDouble;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
+import org.entando.kubernetes.model.common.ServerStatus;
 
 public class CapabilityClientDouble extends AbstractK8SClientDouble implements CapabilityClient {
 
@@ -134,22 +133,16 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
         if (providedCapability == null) {
             return null;
         }
-        AbstractServerStatus status = providedCapability.getStatus().findCurrentServerStatus()
+        ServerStatus status = providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)
                 .orElseThrow(IllegalStateException::new);
         NamespaceDouble namespace = getNamespace(providedCapability);
-        Ingress ingress = null;
-        if (status instanceof ExposedServerStatus && !Strings.isNullOrEmpty(((ExposedServerStatus) status).getIngressName())) {
-            ingress = namespace.getIngress(((ExposedServerStatus) status).getIngressName());
-        }
-        Service service = null;
-        if (!Strings.isNullOrEmpty(status.getServiceName())) {
-            service = namespace.getService(status.getServiceName());
-        }
+        Ingress ingress = status.getIngressName().map(namespace::getIngress).orElse(null);
+        Service service = status.getServiceName().map(namespace::getService).orElse(null);
         return new SerializedCapabilityProvisioningResult(
                 providedCapability,
                 service,
                 ingress,
-                status.getAdminSecretName().map(s -> namespace.getSecret(s)).orElse(null)
+                status.getAdminSecretName().map(namespace::getSecret).orElse(null)
         );
     }
 

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
@@ -43,6 +44,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
     public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test1";
     public static final String MY_APP_NAMESPACE_2 = MY_APP_NAMESPACE_1 + "2";
+    public static final String TEST_CONTROLLER_POD = "test-controller-pod";
     protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     protected KubernetesClient fabric8Client;
 
@@ -62,6 +64,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
     void teardown() {
         scheduler.shutdownNow();
         System.clearProperty(Config.KUBERNETES_DISABLE_AUTO_CONFIG_SYSTEM_PROPERTY);
+        System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty());
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty());
         System.clearProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_OF_INTEREST.getJvmSystemProperty());
     }
@@ -82,6 +85,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
     @BeforeEach
     public void setup() {
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
         fabric8Client = new SupportProducer().getKubernetesClient();
         for (String s : getNamespacesToUse()) {
             fabric8Client.namespaces().withName(s).delete();

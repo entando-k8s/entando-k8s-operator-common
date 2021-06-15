@@ -70,6 +70,7 @@ class AddExampleWithContainerizedDatabaseTest implements FluentIntegrationTestin
 
     public static final String TEST_PLUGIN_NAME = EntandoPluginE2ETestHelper.TEST_PLUGIN_NAME + "-name-longer-than-32";
     private final K8SIntegrationTestHelper helper = new K8SIntegrationTestHelper();
+    @SuppressWarnings("unchecked")
     private final SampleController<DefaultExposedDeploymentResult> controller =
             new SampleController<>(
                     new DefaultSimpleK8SClient(helper.getClient()), new DefaultKeycloakClient()) {

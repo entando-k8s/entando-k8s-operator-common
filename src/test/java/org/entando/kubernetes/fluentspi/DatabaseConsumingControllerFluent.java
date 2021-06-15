@@ -26,9 +26,9 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ServerStatus;
 import picocli.CommandLine;
 
 /*
@@ -81,7 +81,7 @@ public class DatabaseConsumingControllerFluent<N extends DatabaseConsumingContro
         }
         if (resourceToProcess.getStatus().hasFailed()) {
             throw new CommandLine.ExecutionException(new CommandLine(this), resourceToProcess.getStatus().findFailedServerStatus()
-                    .map(AbstractServerStatus::getEntandoControllerFailure)
+                    .flatMap(ServerStatus::getEntandoControllerFailure)
                     .flatMap(f -> ofNullable(f.getDetailMessage()).or(() -> ofNullable(f.getMessage())))
                     .orElse("Deployment Failed"));
         }

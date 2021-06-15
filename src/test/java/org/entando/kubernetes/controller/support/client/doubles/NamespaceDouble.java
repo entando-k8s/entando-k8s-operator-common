@@ -158,6 +158,7 @@ public class NamespaceDouble {
         return (Map<String, T>) customResources.computeIfAbsent(kind, s -> new ConcurrentHashMap<>());
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> T getCustomResource(String kind, String name) {
         return (T) getCustomResources(kind).get(name);
     }

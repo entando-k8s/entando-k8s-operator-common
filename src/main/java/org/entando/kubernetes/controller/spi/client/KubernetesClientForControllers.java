@@ -24,7 +24,9 @@ import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.ByteArrayInputStream;
@@ -38,16 +40,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.FormatUtils;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
-import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
+import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.InternalServerStatus;
+import org.entando.kubernetes.model.common.ServerStatus;
 
 public interface KubernetesClientForControllers {
 
@@ -127,12 +133,12 @@ public interface KubernetesClientForControllers {
                 .withLastTimestamp(FormatUtils.format(LocalDateTime.now()))
                 .withNewSource(NameUtils.controllerNameOf(customResource), null)
                 .withNewInvolvedObject()
+                .withApiVersion(customResource.getApiVersion())
                 .withKind(customResource.getKind())
                 .withNamespace(customResource.getMetadata().getNamespace())
                 .withName(customResource.getMetadata().getName())
                 .withUid(customResource.getMetadata().getUid())
                 .withResourceVersion(customResource.getMetadata().getResourceVersion())
-                .withApiVersion(customResource.getApiVersion())
                 .withFieldPath("status")
                 .endInvolvedObject();
         return eventPopulator.apply(doneableEvent).build();
@@ -151,10 +157,16 @@ public interface KubernetesClientForControllers {
 
     <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer);
 
-    default <T extends EntandoCustomResource> T updateStatus(T customResource, AbstractServerStatus status) {
+    default <T extends EntandoCustomResource> T updateStatus(T customResource, ServerStatus status) {
         return issueEventAndPerformStatusUpdate(customResource,
                 t -> t.getStatus().putServerStatus(status),
                 e -> e.withType("Normal")
+                        .withNewRelated()
+                        .withApiVersion("v1")
+                        .withKind("Pod")
+                        .withNamespace(status.getOriginatingControllerPod().getNamespace().orElse(getNamespace()))
+                        .withName(status.getOriginatingControllerPod().getName())
+                        .endRelated()
                         .withReason("StatusUpdate")
                         .withMessage(format("The %s  %s/%s received status update %s/%s ",
                                 customResource.getKind(),
@@ -203,21 +215,20 @@ public interface KubernetesClientForControllers {
         );
     }
 
-    default <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception reason, String serverQualifier) {
+    default <T extends EntandoCustomResource> T deploymentFailed(T customResource, Exception cause, String serverQualifier) {
+        final EntandoControllerFailure entandoControllerFailure = ExceptionUtils.failureOf(customResource, cause);
         return issueEventAndPerformStatusUpdate(customResource,
                 t -> {
                     String qualifierToUse = ofNullable(serverQualifier).orElse(NameUtils.MAIN_QUALIFIER);
                     if (t.getStatus().getServerStatus(qualifierToUse).isEmpty()) {
-                        t.getStatus().putServerStatus(new InternalServerStatus(qualifierToUse));
+                        t.getStatus().putServerStatus(new ServerStatus(qualifierToUse));
                     }
+                    //Never overwrite existing exceptions. Exceptions are cleared on start event.
+                    //More specific exceptions should be set in the commands and creators.
+                    //This is more for use from the Controllers
                     t.getStatus().getServerStatus(qualifierToUse).filter(status -> !status.hasFailed())
                             .ifPresent(
-                                    newStatus -> newStatus.finishWith(new EntandoControllerFailureBuilder()
-                                            .withException(reason)
-                                            .withFailedObjectName(customResource.getMetadata().getNamespace(),
-                                                    customResource.getMetadata().getName())
-                                            .withFailedObjectType(customResource.getKind())
-                                            .build()));
+                                    newStatus -> newStatus.finishWith(entandoControllerFailure));
                     t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());
                 },
                 e -> e.withType("Error")
@@ -229,9 +240,33 @@ public interface KubernetesClientForControllers {
                                         customResource.getKind(),
                                         customResource.getMetadata().getNamespace(),
                                         customResource.getMetadata().getName(),
-                                        reason.getMessage()))
+                                        cause.getMessage()))
                         .withAction("FAILED")
+                        .withNewRelated()
+                        .withApiVersion("v1")
+                        .withKind("Pod")
+                        .withNamespace(getNamespace())
+                        .withName(EntandoOperatorSpiConfig.getControllerPodName())
+                        .endRelated()
+
         );
+    }
+
+    default CapabilityProvisioningResult loadCapabilityProvisioningResult(ServerStatus serverStatus) {
+        final String capabilityNamespace = serverStatus.getOriginatingCustomResource().getNamespace()
+                .orElseThrow(IllegalArgumentException::new);
+        Service service = serverStatus.getServiceName().map(s -> (Service) loadStandardResource("Service", capabilityNamespace, s))
+                .orElse(null);
+        Secret adminSecret = serverStatus.getAdminSecretName()
+                .map(s -> (Secret) loadStandardResource("Secret", capabilityNamespace, s))
+                .orElse(null);
+        Ingress ingress = serverStatus.getIngressName()
+                .map(i -> (Ingress) loadStandardResource("Ingress", capabilityNamespace, i))
+                .orElse(null);
+        ProvidedCapability providedCapability = load(ProvidedCapability.class, capabilityNamespace,
+                serverStatus.getOriginatingCustomResource().getName());
+        return new SerializedCapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);
+
     }
 
     <T extends EntandoCustomResource> void issueEvent(T customResource, Event event);

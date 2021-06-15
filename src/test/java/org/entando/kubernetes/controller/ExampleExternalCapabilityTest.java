@@ -117,7 +117,7 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
                         assertThat(testResource.getSpec().getExternalHostName()).contains("pg.apps.serv.run");
                     });
             step("and the ProvidedCapability's status carries the name of the correct admin secret to use",
-                    () -> assertThat(providedCapability.getStatus().findCurrentServerStatus().get().getAdminSecretName())
+                    () -> assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getAdminSecretName())
                             .contains("my-existing-dbms-admin-secret"));
         });
         step("And an 'ExternalName' Service  was provisioned:", () -> {
@@ -209,7 +209,7 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
                         assertThat(testResource.getSpec().getExternalHostName()).contains("10.0.0.234");
                     });
             step("and the ProvidedCapability's status carries the name of the correct admin secret to use",
-                    () -> assertThat(providedCapability.getStatus().findCurrentServerStatus().get().getAdminSecretName())
+                    () -> assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getAdminSecretName())
                             .contains("my-existing-dbms-admin-secret"));
         });
         step("And an 'ClusterIP' Service  was provisioned with an EndPoints pointing to the original IP of the database service:", () -> {

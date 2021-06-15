@@ -26,9 +26,10 @@ import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.result.AbstractServiceResult;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
+import org.entando.kubernetes.model.common.ServerStatus;
 
 public class ProvidedDatabaseCapability extends AbstractServiceResult implements DatabaseConnectionInfo {
 
@@ -36,17 +37,17 @@ public class ProvidedDatabaseCapability extends AbstractServiceResult implements
     public static final String JDBC_PARAMETER_PREFIX = "jdbc-";
     public static final String DBMS_VENDOR_PARAMETER = "dbmsVendor";
     public static final String TABLESPACE_PARAMETER = "tablespace";
-    private final AbstractServerStatus status;
+    private final ServerStatus status;
     private final Map<String, String> capabilityParameters;
 
     public ProvidedDatabaseCapability(CapabilityProvisioningResult serializedCapabilityProvisioningResult) {
         this(serializedCapabilityProvisioningResult.getService(),
-                serializedCapabilityProvisioningResult.getProvidedCapability().getStatus().findCurrentServerStatus()
+                serializedCapabilityProvisioningResult.getProvidedCapability().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)
                         .orElseThrow(IllegalStateException::new),
                 serializedCapabilityProvisioningResult.getProvidedCapability().getSpec().getCapabilityParameters());
     }
 
-    public ProvidedDatabaseCapability(Service service, AbstractServerStatus status, Map<String, String> capabilityParameters) {
+    public ProvidedDatabaseCapability(Service service, ServerStatus status, Map<String, String> capabilityParameters) {
         super(service, status.getAdminSecretName().orElse(null));
         this.status = status;
         this.capabilityParameters = ofNullable(capabilityParameters).orElse(Collections.emptyMap());
@@ -73,7 +74,7 @@ public class ProvidedDatabaseCapability extends AbstractServiceResult implements
         return DbmsVendorConfig.valueOf(findStatus().getDerivedDeploymentParameters().get(DBMS_VENDOR_PARAMETER).toUpperCase(Locale.ROOT));
     }
 
-    private AbstractServerStatus findStatus() {
+    private ServerStatus findStatus() {
         return status;
     }
 

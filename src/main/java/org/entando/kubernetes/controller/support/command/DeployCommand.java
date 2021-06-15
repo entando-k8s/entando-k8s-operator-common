@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.support.command;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimStatus;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -30,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
@@ -38,7 +40,6 @@ import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.spi.deployable.ExternalService;
-import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -51,10 +52,8 @@ import org.entando.kubernetes.controller.support.creators.PersistentVolumeClaimC
 import org.entando.kubernetes.controller.support.creators.SecretCreator;
 import org.entando.kubernetes.controller.support.creators.ServiceAccountCreator;
 import org.entando.kubernetes.controller.support.creators.ServiceCreator;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
-import org.entando.kubernetes.model.common.InternalServerStatus;
+import org.entando.kubernetes.model.common.ServerStatus;
 
 public class DeployCommand<T extends ServiceDeploymentResult<T>> {
 
@@ -66,7 +65,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
     protected final DatabasePreparationPodCreator databasePreparationJobCreator;
     protected final KeycloakClientCreator keycloakClientCreator;
     protected final ServiceAccountCreator serviceAccountCreator;
-    protected final AbstractServerStatus status;
+    protected final ServerStatus status;
     protected EntandoCustomResource entandoCustomResource;
     private Pod pod;
     private final ExecutorService scheduledExecutorService = Executors.newSingleThreadExecutor();
@@ -82,12 +81,9 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
         databasePreparationJobCreator = new DatabasePreparationPodCreator(entandoCustomResource);
         keycloakClientCreator = new KeycloakClientCreator(entandoCustomResource);
         serviceAccountCreator = new ServiceAccountCreator(entandoCustomResource);
-        if (deployable instanceof IngressingDeployable) {
-            status = new ExposedServerStatus();
-        } else {
-            status = new InternalServerStatus();
-        }
-        status.setQualifier(deployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER));
+        status = new ServerStatus(deployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER))
+                .withOriginatingCustomResource(entandoCustomResource);
+
     }
 
     /**
@@ -96,6 +92,8 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
      */
     public T execute(SimpleK8SClient<?> k8sClient, SimpleKeycloakClient potentiallyNullKeycloakClient, int timeoutSeconds) {
         try {
+            status.withOriginatingControllerPod(k8sClient.entandoResources().getNamespace(),
+                    EntandoOperatorSpiConfig.getControllerPodName());
             return scheduledExecutorService.submit(() -> {
                 final Optional<ExternalService> externalService = deployable.getExternalService();
                 if (externalService.isPresent()) {
@@ -223,7 +221,10 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
                     format("Database preparation failed. Please inspect the logs of the pod %s/%s",
                             completedPod.getMetadata().getNamespace(), completedPod.getMetadata().getName()));
         } else if (EntandoOperatorConfig.garbageCollectSuccessfullyCompletedPods()) {
-            k8sClient.pods().deletePod(completedPod);
+            withDiagnostics(() -> {
+                k8sClient.pods().deletePod(completedPod);
+                return null;
+            }, () -> completedPod);
         }
     }
 
@@ -231,7 +232,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
         return serviceCreator.getService();
     }
 
-    public AbstractServerStatus getStatus() {
+    public ServerStatus getStatus() {
         return status;
     }
 

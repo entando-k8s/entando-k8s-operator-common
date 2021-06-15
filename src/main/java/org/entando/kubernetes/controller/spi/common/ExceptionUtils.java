@@ -16,31 +16,62 @@
 
 package org.entando.kubernetes.controller.spi.common;
 
+import static java.util.Optional.ofNullable;
+
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.entando.kubernetes.model.common.EntandoControllerFailure;
+import org.entando.kubernetes.model.common.EntandoControllerFailureBuilder;
 
 public class ExceptionUtils {
 
-    public static EntandoControllerFailure failureOf(HasMetadata r, Exception e) {
-        final StringWriter stringWriter = new StringWriter();
-        e.printStackTrace(new PrintWriter(stringWriter));
-        if (r == null) {
-            return new EntandoControllerFailure(null, null, e.getMessage(), stringWriter.toString());
+    public static EntandoControllerFailure failureOf(EntandoControllerException e) {
+        return failureOf(e.getKubernetesResource(), e);
+    }
+
+    public static EntandoControllerFailure failureOf(HasMetadata resource, Exception e) {
+        //Start with the initial resource if present
+        final EntandoControllerFailureBuilder builder = ofNullable(resource)
+                .map(hasMetadata -> builderFrom(e).withFailedObject(resource))
+                .orElse(builderFrom(e));
+        if (e instanceof EntandoControllerException) {
+            //Overwrite resource details from EntandoControllerException if present because it was
+            //close to the occurrence of the exception
+            EntandoControllerException controllerException = (EntandoControllerException) e;
+            return ofNullable(controllerException.getKubernetesResource())
+                    .map(builder::withFailedObject)
+                    .orElse(builder).build();
+        } else if (e instanceof KubernetesClientException) {
+            //Overwrite resource details from KubernetesClientException if present because it was
+            //close to the occurrence of the exception
+            KubernetesClientException clientException = (KubernetesClientException) e;
+            return ofNullable(clientException.getStatus()).flatMap(s -> ofNullable(s.getDetails()))
+                    .map(details -> builder
+                            .withFailedObjectKind(details.getKind())
+                            .withFailedObjectName(details.getName())
+                            .withFailedObjectNamespace(
+                                    ofNullable(resource).map(hasMetadata -> hasMetadata.getMetadata().getNamespace()).orElse(null)))
+                    .orElse(builder).build();
         } else {
-            final String failedObjectName = r.getMetadata().getNamespace() + "/" + r.getMetadata().getName();
-            return new EntandoControllerFailure(r.getKind(), failedObjectName, e.getMessage(), stringWriter.toString());
+            return builder.build();
         }
     }
 
-    public static EntandoControllerFailure failureOf(EntandoControllerException e) {
-        return failureOf(e.getKubernetesResource(), e);
+    private static EntandoControllerFailureBuilder builderFrom(Exception e) {
+        final StringWriter stringWriter = new StringWriter();
+        e.printStackTrace(new PrintWriter(stringWriter));
+        final EntandoControllerFailureBuilder exceptionBuilder = new EntandoControllerFailureBuilder()
+                .withMessage(e.getMessage())
+                .withDetailMessage(stringWriter.toString());
+        return exceptionBuilder;
     }
 
     public static <T> T retry(Supplier<T> supplier, Predicate<RuntimeException> ignoreExceptionWhen, int count) {
@@ -81,6 +112,16 @@ public class ExceptionUtils {
             return i.invoke();
         } catch (IOException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    public static <T> T withDiagnostics(Callable<T> i, Supplier<HasMetadata> supplier) {
+        try {
+            return i.call();
+        } catch (RuntimeException e) {
+            throw ofNullable(supplier.get()).map(h -> (RuntimeException) new EntandoControllerException(h, e)).orElse(e);
+        } catch (Exception e) {
+            throw ofNullable(supplier.get()).map(h -> new EntandoControllerException(h, e)).orElse(new EntandoControllerException(e));
         }
     }
 

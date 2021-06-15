@@ -42,14 +42,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
+import org.entando.kubernetes.model.common.ServerStatus;
 import org.entando.kubernetes.test.common.ValueHolder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -94,21 +96,27 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             attachResource("TestResource", this.testResource);
         });
         step("When I update its status to DeploymentFailed", () -> {
-            getKubernetesClientForControllers().updateStatus(testResource, new ExposedServerStatus("my-webapp"));
+            getKubernetesClientForControllers().updateStatus(testResource, createServerStatus());
             getKubernetesClientForControllers().deploymentFailed(testResource, new IllegalStateException("nope"), null);
         });
         step("Then the failure reflects on the TestResource", () -> {
             final TestResource actual = getKubernetesClientForControllers()
                     .load(TestResource.class, testResource.getMetadata().getNamespace(), testResource.getMetadata().getName());
             assertThat(actual.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.FAILED);
-            assertThat(actual.getStatus().findCurrentServerStatus().get().getEntandoControllerFailure().getFailedObjectName())
-                    .isEqualTo(testResource.getMetadata().getNamespace() + "/" + testResource.getMetadata().getName());
+            assertThat(actual.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getEntandoControllerFailure().get()
+                    .getFailedObjectName())
+                    .isEqualTo(testResource.getMetadata().getName());
+            assertThat(actual.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getEntandoControllerFailure().get()
+                    .getFailedObjectNamespace())
+                    .isEqualTo(testResource.getMetadata().getNamespace());
             attachResource("TestResource", actual);
         });
         step("And the failure event has been issued to Kubernetes", () -> {
             final List<Event> events = getKubernetesClientForControllers().listEventsFor(testResource);
             attachResources("Events", events);
             assertThat(events).allMatch(event -> event.getInvolvedObject().getName().equals(testResource.getMetadata().getName()));
+            assertThat(events).allMatch(event -> event.getRelated().getName().equals(TEST_CONTROLLER_POD));
+            assertThat(events).allMatch(event -> event.getRelated().getNamespace().equals(clientForControllers.getNamespace()));
             assertThat(events).anyMatch(event -> event.getAction().equals("FAILED"));
         });
 
@@ -121,9 +129,9 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             this.testResource = getKubernetesClientForControllers().createOrPatchEntandoResource(newTestResource());
             attachResource("TestResource", this.testResource);
         });
-        step("When I update its status with an ExposedServiceStatus", () ->
-                getKubernetesClientForControllers().updateStatus(testResource, new ExposedServerStatus("my-webapp")));
-        step("Then the updated ExposedServiceStatus reflects on the TestResource", () -> {
+        step("When I update its status with a ServiceStatus", () ->
+                getKubernetesClientForControllers().updateStatus(testResource, createServerStatus()));
+        step("Then the updated ServiceStatus reflects on the TestResource", () -> {
             final TestResource actual = getKubernetesClientForControllers()
                     .load(TestResource.class, testResource.getMetadata().getNamespace(), testResource.getMetadata().getName());
             attachResource("TestResource", actual);
@@ -175,8 +183,8 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                     CustomResourceDefinitionContext.fromCustomResourceType(TestResource.class));
             attachResource("Opaque Resource", serializedEntandoResource);
         });
-        step("When I update its status with an ExposedServerStatus", () ->
-                getKubernetesClientForControllers().updateStatus(serializedEntandoResource, new ExposedServerStatus("my-webapp")));
+        step("When I update its status with an ServerStatus", () ->
+                getKubernetesClientForControllers().updateStatus(serializedEntandoResource, createServerStatus()));
         step("Then the updated status reflects on the SerializedEntandoResource", () -> {
             final SerializedEntandoResource actual = getKubernetesClientForControllers().reload(serializedEntandoResource);
             assertThat(actual.getStatus().getServerStatus("my-webapp")).isPresent();
@@ -189,6 +197,11 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             assertThat(events).anyMatch(event -> event.getAction().equals("STATUS_CHANGE"));
         });
 
+    }
+
+    private ServerStatus createServerStatus() {
+        return new ServerStatus("my-webapp")
+                .withOriginatingControllerPod(clientForControllers.getNamespace(), EntandoOperatorSpiConfig.getControllerPodName());
     }
 
     @Test

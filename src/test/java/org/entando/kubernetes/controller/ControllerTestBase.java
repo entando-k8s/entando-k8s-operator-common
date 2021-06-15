@@ -20,6 +20,7 @@ import static io.qameta.allure.Allure.step;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.test.common.ControllerTestHelper;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,7 @@ public abstract class ControllerTestBase implements ControllerTestHelper {
 
     @BeforeEach
     final void beforeEach() {
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), "test-pod");
         step("Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'", () -> {
             getClient().entandoResources().registerCustomResourceDefinition("testresources.test.org.crd.yaml");
 

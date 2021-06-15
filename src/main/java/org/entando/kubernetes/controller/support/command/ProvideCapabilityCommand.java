@@ -62,8 +62,6 @@ public class ProvideCapabilityCommand {
                     () -> makeNewCapabilityAvailable(forResource, requirement, resolutionScopePreference.get(0)));
             providedCapability = client.waitForCapabilityCompletion(providedCapability, timeoutSeconds);
             return loadProvisioningResult(providedCapability);
-        } catch (EntandoControllerException e) {
-            return new SerializedCapabilityProvisioningResult((ProvidedCapability) e.getKubernetesResource(), ExceptionUtils.failureOf(e));
         } catch (Exception e) {
             return new SerializedCapabilityProvisioningResult(ExceptionUtils.failureOf(forResource, e));
         }
@@ -88,7 +86,6 @@ public class ProvideCapabilityCommand {
         provided.add(CapabilityScope.forValue(c.getMetadata().getLabels().get(LabelNames.CAPABILITY_PROVISION_SCOPE.getName())));
         required.retainAll(provided);
         if (required.isEmpty()) {
-
             throw new EntandoControllerException(c,
                     format("The capability %s was found, but its supported provisioning scopes are '%s' instead of the requested '%s' "
                                     + "scopes",

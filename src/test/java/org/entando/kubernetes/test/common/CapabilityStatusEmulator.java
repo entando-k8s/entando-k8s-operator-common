@@ -47,12 +47,9 @@ import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
-import org.entando.kubernetes.model.common.AbstractServerStatus;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
-import org.entando.kubernetes.model.common.InternalServerStatus;
-import org.entando.kubernetes.model.common.ResourceReference;
+import org.entando.kubernetes.model.common.ServerStatus;
 import org.mockito.ArgumentMatcher;
 import org.mockito.stubbing.Answer;
 
@@ -78,14 +75,14 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
         return t -> t != null && namespace.equals(t.getMetadata().getNamespace()) && name.equals(t.getMetadata().getName());
     }
 
-    default ProvidedCapability putInternalServerStatus(ProvidedCapability providedCapability, int port,
+    default ProvidedCapability putServerStatus(ProvidedCapability providedCapability, int port,
             Map<String, String> derivedDeploymentParameters) {
-        return putStatus(providedCapability, port, derivedDeploymentParameters, new InternalServerStatus(NameUtils.MAIN_QUALIFIER));
+        return putStatus(providedCapability, port, derivedDeploymentParameters, new ServerStatus(NameUtils.MAIN_QUALIFIER));
     }
 
     default ProvidedCapability putExternalServerStatus(ProvidedCapability providedCapability, String host, int port, String path,
             Map<String, String> derivedParameters) {
-        final ExposedServerStatus status = new ExposedServerStatus(NameUtils.MAIN_QUALIFIER);
+        final ServerStatus status = new ServerStatus(NameUtils.MAIN_QUALIFIER);
         status.setExternalBaseUrl(format("https://%s%s", host, path));
         final Ingress ingress = getClient().ingresses().createIngress(providedCapability, new IngressBuilder()
                 .withNewMetadata()
@@ -119,42 +116,48 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
     }
 
     private ProvidedCapability putStatus(ProvidedCapability providedCapability, int port,
-            Map<String, String> derivedDeploymentParameters, AbstractServerStatus status) {
-        providedCapability.getStatus().putServerStatus(status);
-        status.setProvidedCapability(
-                new ResourceReference(providedCapability.getMetadata().getNamespace(), providedCapability.getMetadata().getName()));
-        final Service service = getClient().services().createOrReplaceService(providedCapability, new ServiceBuilder()
-                .withNewMetadata()
-                .withNamespace(providedCapability.getMetadata().getNamespace())
-                .withName(NameUtils.standardServiceName(providedCapability))
-                .endMetadata()
-                .withNewSpec()
-                .addNewPort()
-                .withPort(port)
-                .endPort()
-                .endSpec()
-                .build());
-        status.setServiceName(service.getMetadata().getName());
-        step(format("with the %s service '%s'", providedCapability.getSpec().getCapability().name(), service.getMetadata().getName()), () ->
-                attachKubernetesResource(providedCapability.getSpec().getCapability().name() + " Service", service));
-        final Secret secret = new SecretBuilder()
-                .withNewMetadata()
-                .withNamespace(providedCapability.getMetadata().getNamespace())
-                .withName(NameUtils.standardAdminSecretName(providedCapability))
-                .endMetadata()
-                .addToStringData("username", "jon")
-                .addToStringData("password", "password123")
-                .build();
-        getClient().secrets().createSecretIfAbsent(providedCapability, secret);
-        step(format("and the admin secret '%s'", secret.getMetadata().getName()), () ->
-                attachKubernetesResource("Admin Secret",
-                        getClient().secrets().loadSecret(providedCapability, secret.getMetadata().getName())));
+            Map<String, String> derivedDeploymentParameters, ServerStatus status) {
+        try {
+            providedCapability.getStatus().putServerStatus(status);
+            status.withOriginatingCustomResource(providedCapability);
+            final Service service = getClient().services().createOrReplaceService(providedCapability, new ServiceBuilder()
+                    .withNewMetadata()
+                    .withNamespace(providedCapability.getMetadata().getNamespace())
+                    .withName(NameUtils.standardServiceName(providedCapability))
+                    .endMetadata()
+                    .withNewSpec()
+                    .addNewPort()
+                    .withPort(port)
+                    .endPort()
+                    .endSpec()
+                    .build());
+            status.setServiceName(service.getMetadata().getName());
+            step(format("with the %s service '%s'", providedCapability.getSpec().getCapability().name(), service.getMetadata().getName()),
+                    () ->
+                            attachKubernetesResource(providedCapability.getSpec().getCapability().name() + " Service", service));
+            final Secret secret = new SecretBuilder()
+                    .withNewMetadata()
+                    .withNamespace(providedCapability.getMetadata().getNamespace())
+                    .withName(NameUtils.standardAdminSecretName(providedCapability))
+                    .endMetadata()
+                    .addToStringData("username", "jon")
+                    .addToStringData("password", "password123")
+                    .build();
+            getClient().secrets().createSecretIfAbsent(providedCapability, secret);
+            step(format("and the admin secret '%s'", secret.getMetadata().getName()), () ->
+                    attachKubernetesResource("Admin Secret",
+                            getClient().secrets().loadSecret(providedCapability, secret.getMetadata().getName())));
 
-        status.setAdminSecretName(secret.getMetadata().getName());
-        derivedDeploymentParameters.forEach(status::putDerivedDeploymentParameter);
-        getClient().entandoResources().updateStatus(providedCapability, status);
-        getClient().entandoResources().updatePhase(providedCapability, EntandoDeploymentPhase.SUCCESSFUL);
-        return getClient().entandoResources().reload(providedCapability);
+            status.setAdminSecretName(secret.getMetadata().getName());
+            status.withOriginatingControllerPod(getClient().entandoResources().getNamespace(), "my-test-pod");
+            derivedDeploymentParameters.forEach(status::putDerivedDeploymentParameter);
+            getClient().entandoResources().updateStatus(providedCapability, status);
+            getClient().entandoResources().updatePhase(providedCapability, EntandoDeploymentPhase.SUCCESSFUL);
+            return getClient().entandoResources().reload(providedCapability);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     default void attachSpiResource(String name, Object resource) {
@@ -173,27 +176,26 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
                 derivedParameters.put(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, databaseName);
                 derivedParameters.put(ProvidedDatabaseCapability.DBMS_VENDOR_PARAMETER, vendor.name().toLowerCase(Locale.ROOT));
                 DbmsVendorConfig dbmsVendorConfig = DbmsVendorConfig.valueOf(vendor.name());
-                return putInternalServerStatus(invocationOnMock.getArgument(0), dbmsVendorConfig.getDefaultPort(), derivedParameters);
+                return putServerStatus(invocationOnMock.getArgument(0), dbmsVendorConfig.getDefaultPort(), derivedParameters);
             }, 200L, TimeUnit.MILLISECONDS);
             return invocationOnMock.callRealMethod();
         };
     }
 
-    default Answer<Object> withFailedExposedServerStatus(String qualifier, Exception exception) {
-        return withFailedServerStatus(exception, new ExposedServerStatus(qualifier));
-    }
-
-    default Answer<Object> withFailedInternalServerStatus(String qualifier, Exception exception) {
-        return withFailedServerStatus(exception, new ExposedServerStatus(qualifier));
-    }
-
-    private Answer<Object> withFailedServerStatus(Exception exception, ExposedServerStatus exposedServerStatus) {
+    default Answer<Object> withFailedServerStatus(String qualifier, Exception exception) {
+        ServerStatus exposedServerStatus = new ServerStatus(qualifier)
+                .withOriginatingControllerPod(getClient().entandoResources().getNamespace(), "test-pod");
         return invocationOnMock -> {
             getScheduler().schedule(() -> {
-                ProvidedCapability pc = invocationOnMock.getArgument(0);
-                exposedServerStatus.finishWith(ExceptionUtils.failureOf(pc, exception));
-                pc = getClient().entandoResources().updateStatus(pc, exposedServerStatus);
-                return getClient().entandoResources().updatePhase(pc, EntandoDeploymentPhase.FAILED);
+                try {
+                    ProvidedCapability pc = invocationOnMock.getArgument(0);
+                    exposedServerStatus.finishWith(ExceptionUtils.failureOf(pc, exception));
+                    pc = getClient().entandoResources().updateStatus(pc, exposedServerStatus);
+                    return getClient().entandoResources().updatePhase(pc, EntandoDeploymentPhase.FAILED);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw e;
+                }
             }, 200L, TimeUnit.MILLISECONDS);
             return invocationOnMock.callRealMethod();
         };

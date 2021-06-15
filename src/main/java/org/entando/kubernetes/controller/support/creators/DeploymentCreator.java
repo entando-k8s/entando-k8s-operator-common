@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.creators;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
+
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -71,10 +73,11 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?> deployable) {
-        deployment = deploymentClient
-                .createOrPatchDeployment(entandoCustomResource,
-                        newDeployment(imageResolver, deployable, deploymentClient.supportsStartupProbes()));
-        return deployment;
+        final Deployment builtDeployment = newDeployment(imageResolver, deployable, deploymentClient.supportsStartupProbes());
+        this.deployment = withDiagnostics(
+                () -> deploymentClient.createOrPatchDeployment(entandoCustomResource, builtDeployment),
+                () -> builtDeployment);
+        return this.deployment;
     }
 
     public Deployment getDeployment() {
@@ -251,14 +254,15 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
             //No delay, only allow one failure for accuracy, check every 10 seconds
             builder = builder.withPeriodSeconds(10).withFailureThreshold(1);
         } else {
-            //Delay half of the maximum allowed startup time
-            //allow for four failures that are spaced out enough time for the
+            //Delay for a 6th of the maximum allowed startup time
+            //allow for 5 failures that are spaced out enough time for the
             //container only to fail after the maximum startup time
-            builder = builder.withInitialDelaySeconds(maximumStartupTimeSeconds / 3)
-                    .withPeriodSeconds(maximumStartupTimeSeconds / 6)
-                    .withFailureThreshold(3);
+            final Integer numberOfFailures = EntandoOperatorConfig.getNumberOfReadinessFailures().orElse(6);
+            builder = builder.withInitialDelaySeconds(maximumStartupTimeSeconds / numberOfFailures)
+                    .withPeriodSeconds(maximumStartupTimeSeconds / numberOfFailures)
+                    .withFailureThreshold(numberOfFailures - 1);
         }
-        //Healthchecks should be fast but we can be a bit forgiving for readiness probes
+        //Liveness checks should be fast but we can be a bit forgiving for readiness probes
         return builder.withTimeoutSeconds(5).build();
     }
 

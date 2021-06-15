@@ -23,9 +23,10 @@ import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
-import org.entando.kubernetes.model.common.ExposedServerStatus;
+import org.entando.kubernetes.model.common.ServerStatus;
 
 public class ProvidedSsoCapability implements SsoConnectionInfo {
 
@@ -62,14 +63,15 @@ public class ProvidedSsoCapability implements SsoConnectionInfo {
 
     @Override
     public String getExternalBaseUrl() {
-        return ((ExposedServerStatus) capabilityResult.getProvidedCapability().getStatus().findCurrentServerStatus()
-                .orElseThrow(IllegalStateException::new)).getExternalBaseUrl();
+        return capabilityResult.getProvidedCapability().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)
+                .flatMap(ServerStatus::getExternalBaseUrl).orElseThrow(IllegalStateException::new);
     }
 
     @Override
     public Optional<String> getDefaultRealm() {
         return ofNullable(
-                capabilityResult.getProvidedCapability().getStatus().findCurrentServerStatus().orElseThrow(IllegalStateException::new)
+                capabilityResult.getProvidedCapability().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)
+                        .orElseThrow(IllegalStateException::new)
                         .getDerivedDeploymentParameters()).flatMap(map -> ofNullable(map.get(DEFAULT_REALM_PARAMETER)));
     }
 
