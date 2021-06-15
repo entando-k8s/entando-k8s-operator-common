@@ -97,7 +97,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
             fabric8Client.namespaces().withName(s).delete();
         }
         for (String s : getNamespacesToUse()) {
-            await().atMost(3, TimeUnit.MINUTES).ignoreExceptions().until(() -> {
+            await().atMost(4, TimeUnit.MINUTES).ignoreExceptions().until(() -> {
                 TestFixturePreparation.createNamespace(fabric8Client, s);
                 await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
                         .until(() -> getFabric8Client().secrets().inNamespace(s).list()
