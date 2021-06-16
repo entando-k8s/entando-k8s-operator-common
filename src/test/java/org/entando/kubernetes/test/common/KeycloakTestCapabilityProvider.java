@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.ws.rs.NotFoundException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
@@ -113,8 +114,11 @@ public class KeycloakTestCapabilityProvider {
     }
 
     private ProvidedCapability forceSuccessfulStatus(ProvidedCapability providedCapability) {
-        final ServerStatus serverStatus = new ServerStatus(NameUtils.MAIN_QUALIFIER);
+        final ServerStatus serverStatus = new ServerStatus(NameUtils.MAIN_QUALIFIER)
+                .withOriginatingCustomResource(providedCapability)
+                .withOriginatingControllerPod(client.entandoResources().getNamespace(), EntandoOperatorSpiConfig.getControllerPodName());
         serverStatus.setExternalBaseUrl(getBaseUrlString());
+
         serverStatus.setAdminSecretName(NameUtils.standardAdminSecretName(providedCapability));
         client.entandoResources().updateStatus(providedCapability, serverStatus);
         return client.entandoResources().updatePhase(providedCapability, EntandoDeploymentPhase.SUCCESSFUL);
