@@ -22,6 +22,8 @@ import static org.entando.kubernetes.controller.support.creators.IngressCreator.
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
@@ -37,6 +39,7 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 public class KeycloakClientCreator {
 
     private final EntandoCustomResource entandoCustomResource;
+    private Map<String, String> ssoClientIds = new HashMap<>();
 
     public KeycloakClientCreator(EntandoCustomResource entandoCustomResource) {
         this.entandoCustomResource = entandoCustomResource;
@@ -104,10 +107,14 @@ public class KeycloakClientCreator {
                 .addToStringData(KeycloakName.CLIENT_ID_KEY, ssoClientConfig.getClientId())
                 .addToStringData(KeycloakName.CLIENT_SECRET_KEY, keycloakClientSecret)
                 .build();
+        ssoClientIds.put(container.getNameQualifier(), ssoClientConfig.getClientId());
         withDiagnostics(() -> {
             secrets.createSecretIfAbsent(entandoCustomResource, builtSecret);
             return null;
         }, () -> builtSecret);
     }
 
+    public Map<String, String> getSsoClientIds() {
+        return ssoClientIds;
+    }
 }

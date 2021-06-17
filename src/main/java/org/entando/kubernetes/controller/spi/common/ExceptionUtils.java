@@ -68,10 +68,9 @@ public class ExceptionUtils {
     private static EntandoControllerFailureBuilder builderFrom(Exception e) {
         final StringWriter stringWriter = new StringWriter();
         e.printStackTrace(new PrintWriter(stringWriter));
-        final EntandoControllerFailureBuilder exceptionBuilder = new EntandoControllerFailureBuilder()
+        return new EntandoControllerFailureBuilder()
                 .withMessage(e.getMessage())
                 .withDetailMessage(stringWriter.toString());
-        return exceptionBuilder;
     }
 
     public static <T> T retry(Supplier<T> supplier, Predicate<RuntimeException> ignoreExceptionWhen, int count) {

@@ -175,7 +175,6 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
                 });
         step("And a Secret was created carrying the SSO CLientID and ClienSecret", () -> {
             final Secret secret = getClient().secrets().loadSecret(entandoCustomResource, "my-client-secret");
-            System.out.println(secret);
         });
         step("And a Deployment was created with a Container that reflects all the environment variables required to connect to the SSO "
                         + "service",
@@ -197,6 +196,11 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
         step("And all the environment variables referring to Secrets are resolved",
                 () -> verifyThatAllVariablesAreMapped(entandoCustomResource, getClient(), getClient().deployments()
                         .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource))));
+        step("And all SSO client ids that have been registered are on the status of the custom resource",
+                () -> assertThat(getClient().entandoResources()
+                        .reload(entandoCustomResource).getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getSsoClientIds()))
+                        .containsEntry("server", "my-client");
+
         attachKubernetesState();
 
     }

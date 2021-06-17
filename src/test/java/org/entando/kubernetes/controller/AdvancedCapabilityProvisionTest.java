@@ -397,8 +397,8 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
                     assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.SPECIFIED);
                     assertThat(providedCapability.getMetadata().getNamespace()).isEqualTo("my-db-namespace");
                     assertThat(
-                            providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getServiceName)
-                                    .get()).isEqualTo("my-db-service");
+                            providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getServiceName))
+                            .contains("my-db-service");
                 });
         step("And subsequent requests for a DBMS Capability with the same name and namespace specified result in the same"
                         + " ProvidedCapability",
@@ -610,8 +610,8 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilitySt
             assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.DEDICATED);
             assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getServiceName).get())
                     .startsWith(forResource.getMetadata().getName() + "-sso-service");
-            assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getIngressName).get())
-                    .isEqualTo(forResource.getMetadata().getName() + "-sso-ingress");
+            assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getIngressName))
+                    .contains(forResource.getMetadata().getName() + "-sso-ingress");
         });
     }
 

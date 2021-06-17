@@ -141,6 +141,7 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
                     keycloakClient.orElseThrow(IllegalStateException::new),
                     deployable,
                     ofNullable(ingress));
+            keycloakClientCreator.getSsoClientIds().forEach(this.status::putSsoClientId);
         }
         if (deployable instanceof DbAwareDeployable && ((DbAwareDeployable<?>) deployable).isExpectingDatabaseSchemas()) {
             prepareDbSchemas(k8sClient, entandoImageResolver, (DbAwareDeployable<?>) deployable);
