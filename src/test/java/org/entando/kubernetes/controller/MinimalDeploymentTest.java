@@ -22,6 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
@@ -222,7 +224,7 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
                     attachSpiResource("DeployableContainer", SerializationHelper.serialize(deployable.getContainers().get(0)));
                 });
         step("But the pod of the deployment is going to fail to start up successfully", () ->
-                when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app", 10))
+                when(getClient().pods().waitForPod(eq(MY_NAMESPACE), eq(LabelNames.DEPLOYMENT.getName()), eq("my-app"), anyInt()))
                         .thenAnswer(inv -> {
                             Pod pod = (Pod) inv.callRealMethod();
                             return podWithFailedStatus(pod);
@@ -278,12 +280,13 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
                 });
         step("But the timeout for the deployment is set unrealistically low to 1 second", () -> this.timeoutSeconds = 1);
         step("And there is a 3 second delay when waiting for the pod", () ->
-                when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app", 10)).thenAnswer(
-                        inv -> {
-                            long start = System.currentTimeMillis();
-                            await().until(() -> TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start) >= 3);
-                            return inv.callRealMethod();
-                        }));
+                when(getClient().pods().waitForPod(eq(MY_NAMESPACE), eq(LabelNames.DEPLOYMENT.getName()), eq("my-app"), anyInt()))
+                        .thenAnswer(
+                                inv -> {
+                                    long start = System.currentTimeMillis();
+                                    await().until(() -> TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start) >= 3);
+                                    return inv.callRealMethod();
+                                }));
         final EntandoCustomResource entandoCustomResource = new TestResource()
                 .withNames(MY_NAMESPACE, MY_APP)
                 .withSpec(new BasicDeploymentSpec());

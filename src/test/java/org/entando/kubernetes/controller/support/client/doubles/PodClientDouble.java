@@ -95,7 +95,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
 
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue, int timeoutSeconds) throws TimeoutException {
-        if (!getNamespace(namespace).getPods().isEmpty()) {
+        if (namespace != null && !getNamespace(namespace).getPods().isEmpty()) {
             Pod result = getNamespace(namespace).getPods().values().stream()
                     .filter(pod -> labelValue.equals(pod.getMetadata().getLabels().get(labelName))).findFirst()
                     .orElseThrow(() ->
