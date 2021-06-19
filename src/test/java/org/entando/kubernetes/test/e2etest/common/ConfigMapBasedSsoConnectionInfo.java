@@ -22,7 +22,7 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
-import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 
 //TODO get rid of this class
 public class ConfigMapBasedSsoConnectionInfo implements SsoConnectionInfo {

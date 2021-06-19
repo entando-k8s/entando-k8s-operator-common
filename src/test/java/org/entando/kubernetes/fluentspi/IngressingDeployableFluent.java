@@ -17,11 +17,11 @@
 package org.entando.kubernetes.fluentspi;
 
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
+import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 
-public class IngressingDeployableFluent<N extends IngressingDeployableFluent<N>> extends SecretiveDeployableFluent<N> implements
-        IngressingDeployable<DefaultExposedDeploymentResult> {
+public class IngressingDeployableFluent<N extends IngressingDeployableFluent<N>> extends SsoAwareDeployableFluent<N>
+        implements PublicIngressingDeployable<DefaultExposedDeploymentResult> {
 
     private String ingressHostName;
     private String ingressName;
@@ -29,10 +29,16 @@ public class IngressingDeployableFluent<N extends IngressingDeployableFluent<N>>
     private boolean ingressRequired;
     private String fileUploadLimit;
     private String tlsSecretName;
+    private String publicClientId;
 
     @Override
     public String getIngressName() {
         return this.ingressName;
+    }
+
+    public N withPublicClientId(String publicClientId) {
+        this.publicClientId = publicClientId;
+        return thisAsN();
     }
 
     public N withIngressName(String ingressName) {
@@ -88,5 +94,10 @@ public class IngressingDeployableFluent<N extends IngressingDeployableFluent<N>>
     public N withIngressHostName(String ingressHostName) {
         this.ingressHostName = ingressHostName;
         return thisAsN();
+    }
+
+    @Override
+    public Optional<String> getPublicClientId() {
+        return Optional.ofNullable(publicClientId);
     }
 }

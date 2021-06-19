@@ -22,7 +22,9 @@ import static org.hamcrest.Matchers.is;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -36,7 +38,7 @@ class DefaultDeploymentClientTest extends AbstractSupportK8SIntegrationTest {
     private final TestResource customResource = newTestResource();
 
     @Test
-    void shouldReflectChangesThatWerePatchedAfterInitialCreation() {
+    void shouldReflectChangesThatWerePatchedAfterInitialCreation() throws TimeoutException {
         Deployment firstDeployment = getSimpleK8SClient().deployments().createOrPatchDeployment(
                 customResource, new DeploymentBuilder().withNewMetadata()
                         .withName("my-deployment")
@@ -59,10 +61,11 @@ class DefaultDeploymentClientTest extends AbstractSupportK8SIntegrationTest {
                         .endSpec()
                         .endTemplate()
                         .endSpec()
-                        .build());
+                        .build(), EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds());
         thePrimaryContainerOn(firstDeployment).getEnv().add(new EnvVar("MY_VAR", "myvalue", null));
 
-        getSimpleK8SClient().deployments().createOrPatchDeployment(customResource, firstDeployment);
+        getSimpleK8SClient().deployments().createOrPatchDeployment(customResource, firstDeployment,
+                EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds());
         final Deployment secondDeployment = getSimpleK8SClient().deployments().loadDeployment(customResource, "my-deployment");
         assertThat(theVariableNamed("MY_VAR").on(thePrimaryContainerOn(secondDeployment)), is("myvalue"));
 

@@ -23,8 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.ForInternalUseOnly;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 import org.entando.kubernetes.model.common.DbmsVendor;
 
 public interface SpringBootDeployableContainer extends DbAwareContainer, SsoAwareContainer, IngressingContainer,
@@ -77,10 +80,10 @@ public interface SpringBootDeployableContainer extends DbAwareContainer, SsoAwar
 
     @Override
     default List<EnvVar> getSsoVariables() {
-        List<EnvVar> vars = SsoAwareContainer.super.getSsoVariables();
-        ofNullable(getSsoConnectionInfo()).ifPresent(ssoConnectionInfo ->
+        List<EnvVar> vars = new ArrayList<>();
+        ofNullable(getSsoConnectionInfo()).ifPresent(info ->
                 vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
-                        ssoConnectionInfo.getExternalBaseUrl() + "/realms/" + getRealmToUse(),
+                        info.getExternalBaseUrl() + "/realms/" + getSsoClientConfig().getRealm(),
                         null)));
 
         String keycloakSecretName = KeycloakName.forTheClientSecret(getSsoClientConfig());
@@ -90,6 +93,12 @@ public interface SpringBootDeployableContainer extends DbAwareContainer, SsoAwar
                 SecretUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_ID_KEY)));
         return vars;
     }
+
+    @ForInternalUseOnly
+    SsoClientConfig getSsoClientConfig();
+
+    @ForInternalUseOnly
+    SsoConnectionInfo getSsoConnectionInfo();
 
     enum SpringProperty {
         SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI,

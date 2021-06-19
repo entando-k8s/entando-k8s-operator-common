@@ -41,7 +41,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.container.ProvidedSsoCapability;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer.SpringProperty;
-import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpec;
 import org.entando.kubernetes.fluentspi.SsoAwareContainerFluent;
@@ -53,6 +53,7 @@ import org.entando.kubernetes.model.capability.CapabilityRequirementBuilder;
 import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
@@ -73,6 +74,7 @@ import picocli.CommandLine;
 class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
 
     public static final String GENERATED_SSO_CLIENT_SECRET = "SOME-ASDF-KEYCLOAK-SECRET";
+    public static final String MY_REALM = "my-realm";
 
     /*
               Classes to be implemented by the controller provider
@@ -126,13 +128,10 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
                     .withSpec(new BasicDeploymentSpec());
             attachKubernetesResource("TestResource", entandoCustomResource);
         });
-        step("And I have a basic BasicSsoAwareDeployable to be exposed on 'myhost.com'", () -> {
-            this.deployable = new BasicSsoAwareDeployable()
-                    .withIngressHostName("myhost.com")
-                    .withIngressRequired(true)
-                    .withIngressNamespace(this.entandoCustomResource.getMetadata().getNamespace())
-                    .withIngressName(NameUtils.standardIngressName(entandoCustomResource));
-            this.deployable.withCustomResource(this.entandoCustomResource);
+        step("And I have a basic BasicSsoAwareDeployable that is not exposed externally", () -> {
+            this.deployable = new BasicSsoAwareDeployable().withCustomResource(this.entandoCustomResource);
+            step("with the SSO client configured for the realm 'my-realm' and the client 'my-client'",
+                    () -> deployable.withSsoClientConfig(new SsoClientConfig("my-realm", "my-client", "my-client")));
             attachSpiResource("Deployable", deployable);
         });
         step("And I have requested a requirement for the SSO capability",
@@ -144,15 +143,11 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
                             .addAllToCapabilityParameters(Map.of(ProvidedSsoCapability.DEFAULT_REALM_PARAMETER, "my-realm"))
                             .build();
                 });
-        final BasicSsoAwareContainer container = deployable
-                .withContainer(new BasicSsoAwareContainer().withDockerImageInfo("test/my-spring-boot-image:6.3.2")
-                        .withPrimaryPort(8081)
-                        .withNameQualifier("server")
-                        .withWebContextPath("/my-app")
-                        .withHealthCheckPath("/my-app/health"));
         step("And a basic SsoAwareContainer using the image 'test/my-spring-boot-image:6.3.2'", () -> {
-            step("with the SSO client configured for the realm 'my-realm' and the client 'my-client'",
-                    () -> container.withSoClientConfig(new SsoClientConfig("my-realm", "my-client", "my-client")));
+            final BasicSsoAwareContainer container = deployable
+                    .withContainer(new BasicSsoAwareContainer().withDockerImageInfo("test/my-spring-boot-image:6.3.2")
+                            .withPrimaryPort(8081)
+                            .withNameQualifier("server"));
             attachSpiResource("Container", container);
         });
         step("And there is a controller to process requests for the SSO capability requested",
@@ -162,8 +157,13 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
                             .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.SSO)), anyInt());
                     when(keycloakClient.prepareClientAndReturnSecret(any())).thenReturn(GENERATED_SSO_CLIENT_SECRET);
                 });
+
         step("When the controller processes a new TestResource", () -> {
             runControllerAgainstCustomResource(entandoCustomResource);
+        });
+        step("The deployment process completed successfully", () -> {
+            this.entandoCustomResource = getClient().entandoResources().reload(entandoCustomResource);
+            assertThat(this.entandoCustomResource.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.SUCCESSFUL);
         });
         step("Then an SSO capability was provided for the SsoAwareDeployable with a name reflecting that it is the default            "
                         + "    Keycloak SSO service in the namespace",
@@ -172,6 +172,7 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
                             getClient().capabilities().providedCapabilityByName(MY_NAMESPACE,
                                     "default-keycloak-sso-in-namespace")
                                     .get().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get());
+                    assertThat(this.capabilityProvisioningResult).isNotNull();
                 });
         step("And a Secret was created carrying the SSO CLientID and ClienSecret", () -> {
             final Secret secret = getClient().secrets().loadSecret(entandoCustomResource, "my-client-secret");
@@ -196,10 +197,13 @@ class SsoConsumerTest extends ControllerTestBase implements VariableReferenceAss
         step("And all the environment variables referring to Secrets are resolved",
                 () -> verifyThatAllVariablesAreMapped(entandoCustomResource, getClient(), getClient().deployments()
                         .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource))));
-        step("And all SSO client ids that have been registered are on the status of the custom resource",
-                () -> assertThat(getClient().entandoResources()
-                        .reload(entandoCustomResource).getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getSsoClientIds()))
-                        .containsEntry("server", "my-client");
+        step("And all SSO client information that has been registered is on the status of the custom resource",
+                () -> {
+                    final TestResource reloaded = getClient().entandoResources()
+                            .reload(entandoCustomResource);
+                    assertThat(reloaded.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getSsoClientId()).contains("my-client");
+                    assertThat(reloaded.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getSsoRealm()).contains(MY_REALM);
+                });
 
         attachKubernetesState();
 

@@ -19,58 +19,41 @@ package org.entando.kubernetes.fluentspi;
 import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer.SpringProperty;
 import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
-import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
-import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
-import org.entando.kubernetes.model.common.KeycloakToUse;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 
-public class SsoAwareContainerFluent<N extends SsoAwareContainerFluent<N>> extends IngressingContainerFluent<N> implements
+public abstract class SsoAwareContainerFluent<N extends SsoAwareContainerFluent<N>> extends DeployableContainerFluent<N> implements
         SsoAwareContainer {
 
     private SsoConnectionInfo ssoConnectionInfo;
     private SsoClientConfig ssoClientConfig;
 
-    @Override
-    public Optional<KeycloakToUse> getPreferredKeycloakToUse() {
-        return Optional.empty();
-    }
-
-    @Override
-    public SsoConnectionInfo getSsoConnectionInfo() {
-        return this.ssoConnectionInfo;
-    }
-
-    public N withSsoConnectionConfig(SsoConnectionInfo ssoConnectionInfo) {
+    public N withSsoConnectionInfo(SsoConnectionInfo ssoConnectionInfo) {
         this.ssoConnectionInfo = ssoConnectionInfo;
         return thisAsN();
     }
 
-    @Override
-    public SsoClientConfig getSsoClientConfig() {
-        return this.ssoClientConfig;
-    }
-
-    public N withSoClientConfig(SsoClientConfig ssoClientConfig) {
+    public N withSsoClientConfig(SsoClientConfig ssoClientConfig) {
         this.ssoClientConfig = ssoClientConfig;
         return thisAsN();
     }
 
     @Override
     public List<EnvVar> getSsoVariables() {
-        List<EnvVar> vars = SsoAwareContainer.super.getSsoVariables();
-        ofNullable(getSsoConnectionInfo()).ifPresent(ssoConnectionInfo -> {
-            final String realmToUse = KeycloakName.ofTheRealm(this);
+        List<EnvVar> vars = new ArrayList<>();
+        ofNullable(ssoConnectionInfo).ifPresent(si -> {
             vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),
-                    ssoConnectionInfo.getExternalBaseUrl() + "/realms/" + realmToUse,
+                    ssoConnectionInfo.getExternalBaseUrl() + "/realms/" + ssoClientConfig.getRealm(),
                     null));
         });
 
-        String keycloakSecretName = KeycloakName.forTheClientSecret(getSsoClientConfig());
+        String keycloakSecretName = KeycloakName.forTheClientSecret(ssoClientConfig);
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name(), null,
                 SecretUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_SECRET_KEY)));
         vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name(), null,

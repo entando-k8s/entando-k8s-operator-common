@@ -18,20 +18,21 @@ package org.entando.kubernetes.controller.support.client;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 public interface PodClient {
 
     Pod start(Pod pod);
 
-    Pod waitForPod(String namespace, String labelName, String labelValue);
+    Pod waitForPod(String namespace, String labelName, String labelValue, int timeoutSeconds) throws TimeoutException;
 
     Pod loadPod(String namespace, Map<String, String> labels);
 
-    Pod runToCompletion(Pod pod);
+    Pod runToCompletion(Pod pod, int timeoutSeconds) throws TimeoutException;
 
     void removeSuccessfullyCompletedPods(String namespace, Map<String, String> labels);
 
-    void removeAndWait(String namespace, Map<String, String> labels);
+    void removeAndWait(String namespace, Map<String, String> labels, int timeoutSeconds) throws TimeoutException;
 
     void deletePod(Pod pod);
 }

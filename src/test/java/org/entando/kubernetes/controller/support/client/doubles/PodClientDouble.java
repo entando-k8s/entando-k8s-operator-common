@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.model.PodStatusBuilder;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.PodClient;
@@ -50,7 +51,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
-    public void removeAndWait(String namespace, Map<String, String> labels) {
+    public void removeAndWait(String namespace, Map<String, String> labels, int timeoutSeconds) {
         getNamespace(namespace).getPods().values().removeIf(
                 pod -> labels.entrySet().stream()
                         .allMatch(labelEntry -> pod.getMetadata().getLabels().containsKey(labelEntry.getKey()) && pod.getMetadata()
@@ -64,7 +65,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
-    public Pod runToCompletion(Pod pod) {
+    public Pod runToCompletion(Pod pod, int timeoutSeconds) {
         if (pod != null) {
             getNamespace(pod).putPod(pod);
             pod.setStatus(new PodStatusBuilder().withPhase("Complete").build());
@@ -93,7 +94,7 @@ public class PodClientDouble extends AbstractK8SClientDouble implements PodClien
     }
 
     @Override
-    public Pod waitForPod(String namespace, String labelName, String labelValue) {
+    public Pod waitForPod(String namespace, String labelName, String labelValue, int timeoutSeconds) throws TimeoutException {
         if (!getNamespace(namespace).getPods().isEmpty()) {
             Pod result = getNamespace(namespace).getPods().values().stream()
                     .filter(pod -> labelValue.equals(pod.getMetadata().getLabels().get(labelName))).findFirst()

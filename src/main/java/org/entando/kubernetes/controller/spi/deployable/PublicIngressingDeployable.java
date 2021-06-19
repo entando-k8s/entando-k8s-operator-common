@@ -16,9 +16,10 @@
 
 package org.entando.kubernetes.controller.spi.deployable;
 
-import org.entando.kubernetes.controller.spi.common.KeycloakPreference;
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 
-public interface PublicIngressingDeployable<T extends ExposedDeploymentResult<T>> extends IngressingDeployable<T>, KeycloakPreference {
+public interface PublicIngressingDeployable<T extends ExposedDeploymentResult<T>> extends IngressingDeployable<T>, SsoAwareDeployable<T> {
 
+    Optional<String> getPublicClientId();
 }

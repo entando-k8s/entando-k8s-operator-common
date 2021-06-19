@@ -39,7 +39,7 @@ public class DeploymentClientDouble extends AbstractK8SClientDouble implements D
     }
 
     @Override
-    public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace, Deployment deployment) {
+    public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace, Deployment deployment, int timeoutSeconds) {
         if (peerInNamespace == null) {
             return null;
         }

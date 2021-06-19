@@ -19,6 +19,11 @@ package org.entando.kubernetes.controller;
 import static io.qameta.allure.Allure.step;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
@@ -28,18 +33,30 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
+import org.entando.kubernetes.controller.spi.container.ProvidedSsoCapability;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpec;
 import org.entando.kubernetes.fluentspi.ExposingControllerFluent;
 import org.entando.kubernetes.fluentspi.IngressingContainerFluent;
 import org.entando.kubernetes.fluentspi.IngressingDeployableFluent;
 import org.entando.kubernetes.fluentspi.TestResource;
+import org.entando.kubernetes.model.capability.CapabilityRequirement;
+import org.entando.kubernetes.model.capability.CapabilityRequirementBuilder;
+import org.entando.kubernetes.model.capability.CapabilityScope;
+import org.entando.kubernetes.model.capability.StandardCapability;
+import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.test.common.CertificateSecretHelper;
+import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.entando.kubernetes.test.common.ValueHolder;
 import org.entando.kubernetes.test.common.VariableReferenceAssertions;
@@ -49,23 +66,30 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import picocli.CommandLine;
 
 @ExtendWith(MockitoExtension.class)
 @Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure"), @Tag("pre-deployment")})
-@Feature("As a controller developer, I would like to expose my service over HTTP so that others can access it")
+@Feature("As a controller developer, I would like to request the OIDC capability so that I can use it to provide single sign on to my "
+        + "users")
 @Issue("ENG-2284")
-@SourceLink("ExposedServiceTest.java")
-class ExposedServiceTest extends ControllerTestBase implements VariableReferenceAssertions {
+@SourceLink("SsoConsumerTest.java")
+class ExposedServiceTestTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
 
-    private BasicIngressingDeployable deployable;
-    private TestResource entandoCustomResource;
+    public static final String GENERATED_SSO_CLIENT_SECRET = "SOME-ASDF-KEYCLOAK-SECRET";
 
+    /*
+              Classes to be implemented by the controller provider
+            */
+    @CommandLine.Command()
     public static class BasicExposingController extends ExposingControllerFluent<BasicExposingController> {
 
         public BasicExposingController(KubernetesClientForControllers k8sClient,
-                DeploymentProcessor deploymentProcessor) {
-            super(k8sClient, deploymentProcessor);
+                DeploymentProcessor deploymentProcessor,
+                CapabilityProvider capabilityProvider) {
+            super(k8sClient, deploymentProcessor, capabilityProvider);
         }
     }
 
@@ -73,22 +97,36 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
 
     }
 
-    public static class BasicIngressingContainer extends IngressingContainerFluent<BasicIngressingContainer> {
+    public static class BasicIngressContainer extends IngressingContainerFluent<BasicIngressContainer> {
 
+    }
+
+    private CapabilityRequirement ssoRequirement;
+    private BasicIngressingDeployable deployable;
+    private TestResource entandoCustomResource;
+    private CapabilityProvisioningResult capabilityProvisioningResult;
+    @Mock
+    SimpleKeycloakClient keycloakClient;
+
+    @Override
+    public Optional<SimpleKeycloakClient> getKeycloakClient() {
+        return Optional.ofNullable(keycloakClient);
+    }
+
+    @Override
+    public Runnable createController(KubernetesClientForControllers entandoResourceClientDouble,
+            DeploymentProcessor deploymentProcessor,
+            CapabilityProvider capabilityProvider) {
+        return new BasicExposingController(entandoResourceClientDouble, deploymentProcessor, capabilityProvider)
+                .withDeployable(this.deployable)
+                .withSsoRequirement(this.ssoRequirement)
+                .withSupportedClass(TestResource.class);
     }
 
     @AfterEach
     @BeforeEach
     void resetSystemPropertiesUsed() {
         System.clearProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CA_SECRET_NAME.getJvmSystemProperty());
-    }
-
-    @Override
-    public Runnable createController(KubernetesClientForControllers kubernetesClientForControllers, DeploymentProcessor deploymentProcessor,
-            CapabilityProvider capabilityProvider) {
-        return new BasicExposingController(kubernetesClientForControllers, deploymentProcessor)
-                .withDeployable(deployable)
-                .withSupportedClass(TestResource.class);
     }
 
     @Test
@@ -105,7 +143,7 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
                     CertificateSecretHelper.buildCertificateSecretsFromDirectory(
                             entandoCustomResource.getMetadata().getNamespace(),
                             Paths.get("src", "test", "resources", "tls", "ampie.dynu.net"))
-                            .forEach(secret -> getClient().secrets().createSecretIfAbsent(entandoCustomResource, secret));
+                            .forEach(secret -> getClient().secrets().overwriteControllerSecret(secret));
                     step(format("a standard TLS Secret named '%s'", CertificateSecretHelper.TEST_TLS_SECRET), () ->
                             attachKubernetesResource("TlsSecret",
                                     getClient().secrets().loadSecret(entandoCustomResource,
@@ -126,6 +164,23 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
                                     getClient().secrets()
                                             .loadSecret(entandoCustomResource, TrustStoreHelper.DEFAULT_TRUSTSTORE_SECRET)));
                 });
+        step("And there is a controller to process requests for the SSO capability requested",
+                () -> {
+                    doAnswer(withAnSsoCapabilityStatus("mykeycloak.com", "my-realm"))
+                            .when(getClient().capabilities())
+                            .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.SSO)), anyInt());
+                    when(keycloakClient.prepareClientAndReturnSecret(any())).thenReturn(GENERATED_SSO_CLIENT_SECRET);
+                });
+        step("And I have requested a requirement for the SSO capability",
+                () -> {
+                    this.ssoRequirement = new CapabilityRequirementBuilder()
+                            .withCapability(StandardCapability.SSO)
+                            .withImplementation(StandardCapabilityImplementation.KEYCLOAK)
+                            .withResolutionScopePreference(CapabilityScope.NAMESPACE)
+                            .addAllToCapabilityParameters(Map.of(ProvidedSsoCapability.DEFAULT_REALM_PARAMETER, "my-realm"))
+                            .build();
+                });
+
         step(format(
                 "And I have an IngressingDeployable that specifies the TLS Secret %s and the hostname 'myhost.com', targeting an Ingress "
                         + "in the same namespace as the custom resource ",
@@ -136,11 +191,12 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
                             .withTlsSecretName(CertificateSecretHelper.TEST_TLS_SECRET)
                             .withIngressRequired(true)
                             .withIngressNamespace(this.entandoCustomResource.getMetadata().getNamespace())
-                            .withIngressName(NameUtils.standardIngressName(entandoCustomResource));
+                            .withIngressName(NameUtils.standardIngressName(entandoCustomResource))
+                            .withSsoClientConfig(new SsoClientConfig("my-realm", "my-client", "my-client"));
                     attachSpiResource("Deployable", deployable);
                 });
-        final BasicIngressingContainer container = deployable
-                .withContainer(new BasicIngressingContainer().withDockerImageInfo("test/my-image:6.3.2")
+        final BasicIngressContainer container = deployable
+                .withContainer(new BasicIngressContainer().withDockerImageInfo("test/my-image:6.3.2")
                         .withPrimaryPort(8081)
                         .withNameQualifier("server"));
         step("and a TrustStoreAware, IngressingContainer with the context path '/my-app' and the health check path '/my-app/health'",
@@ -227,8 +283,25 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
             CertificateSecretHelper.buildCertificateSecretsFromDirectory(
                     firstResource.get().getMetadata().getNamespace(),
                     Paths.get("src", "test", "resources", "tls", "ampie.dynu.net"))
-                    .forEach(secret -> getClient().secrets().createSecretIfAbsent(firstResource.get(), secret));
+                    .forEach(secret -> getClient().secrets().overwriteControllerSecret(secret));
         });
+        step("And there is a controller to process requests for the SSO capability requested",
+                () -> {
+                    doAnswer(withAnSsoCapabilityStatus("mykeycloak.com", "my-realm"))
+                            .when(getClient().capabilities())
+                            .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.SSO)), anyInt());
+                    when(keycloakClient.prepareClientAndReturnSecret(any())).thenReturn(GENERATED_SSO_CLIENT_SECRET);
+                });
+        step("And I have requested a requirement for the SSO capability",
+                () -> {
+                    this.ssoRequirement = new CapabilityRequirementBuilder()
+                            .withCapability(StandardCapability.SSO)
+                            .withImplementation(StandardCapabilityImplementation.KEYCLOAK)
+                            .withResolutionScopePreference(CapabilityScope.NAMESPACE)
+                            .addAllToCapabilityParameters(Map.of(ProvidedSsoCapability.DEFAULT_REALM_PARAMETER, "my-realm"))
+                            .build();
+                });
+
         step(format(
                 "And I have an IngressingDeployable that specifies the TLS Secret %s and the hostname 'myhost.com', targeting an Ingress "
                         + "in the same namespace as the custom resource ",
@@ -239,13 +312,15 @@ class ExposedServiceTest extends ControllerTestBase implements VariableReference
                             .withTlsSecretName(CertificateSecretHelper.TEST_TLS_SECRET)
                             .withIngressRequired(true)
                             .withIngressNamespace(firstResource.get().getMetadata().getNamespace())
-                            .withIngressName(NameUtils.standardIngressName(firstResource.get()));
+                            .withIngressName(NameUtils.standardIngressName(firstResource.get()))
+                            .withSsoClientConfig(new SsoClientConfig("my-realm", "my-client", "my-client"));
                     attachSpiResource("Deployable", deployable);
                 });
-        final BasicIngressingContainer container = deployable
-                .withContainer(new BasicIngressingContainer().withDockerImageInfo("test/my-image:6.3.2")
+        final BasicIngressContainer container = deployable
+                .withContainer(new BasicIngressContainer().withDockerImageInfo("test/my-image:6.3.2")
                         .withPrimaryPort(8081)
-                        .withNameQualifier("server"));
+                        .withNameQualifier("server")
+                        .withSsoClientConfig(new SsoClientConfig("my-realm", "my-client", "my-client")));
         step(format(
                 "and I have deployed the first TestResource '%s' in namespace '%s' with the context path '/my-app' and the health check "
                         + "path "

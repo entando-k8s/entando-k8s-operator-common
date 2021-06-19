@@ -165,6 +165,10 @@ public class KubernetesResourceProcessor {
         return registerWatcherHolder(new WatcherHolder<T>(watcher, context, namespace));
     }
 
+    public <T extends HasMetadata> Watch watch(Watcher<T> watcher, CustomResourceDefinitionContext context, String namespace, String name) {
+        return registerWatcherHolder(new WatcherHolder<T>(watcher, context, namespace, name));
+    }
+
     public <T extends HasMetadata> Watch watch(Watcher<T> watcher, CustomResourceDefinitionContext context) {
         return registerWatcherHolder(new WatcherHolder<T>(watcher, context));
     }
@@ -219,6 +223,10 @@ public class KubernetesResourceProcessor {
 
         public WatcherHolder(Watcher<T> watcher, CustomResourceDefinitionContext context) {
             this(watcher, context, null, null, null);
+        }
+
+        public WatcherHolder(Watcher<T> watcher, CustomResourceDefinitionContext context, String namespace, String name) {
+            this(watcher, context, namespace, name, null);
         }
 
         public String getKind() {

@@ -16,8 +16,8 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
-import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
@@ -25,14 +25,12 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.net.HttpURLConnection;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
-import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
@@ -93,28 +91,17 @@ public class DefaultCapabilityClient implements CapabilityClient {
 
     @Override
     public ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
-        try {
-            return ExceptionUtils.interruptionSafe(() -> client.customResources(ProvidedCapability.class)
-                    .inNamespace(capability.getMetadata().getNamespace())
-                    .withName(capability.getMetadata().getName())
-                    .waitUntilCondition(providedCapability -> providedCapability.getStatus() != null
-                                    && providedCapability.getStatus().getPhase() != null
-                                    && Set.of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED,
-                            EntandoDeploymentPhase.SUCCESSFUL)
-                                    .contains(providedCapability.getStatus().getPhase()),
-                            timeoutSeconds,
-                            TimeUnit.SECONDS));
-        } catch (IllegalArgumentException e) {
-            if (e.getMessage().contains("matching condition not found")) {
-                //NB!! keep an eye on this. It is an annoying implementation detail that we need to sync with
-                throw new TimeoutException(
-                        format("Timed out waiting for ProvidedCapability. Please check the logs of the controller that processes the "
-                                        + "capability '%s.capability.org'",
-                                (capability.getSpec().getImplementation().map(i -> i.name() + ".").orElse("") + capability.getSpec()
-                                        .getCapability().name()).toLowerCase(Locale.ROOT)));
-            }
-            throw e;
-        }
+        return interruptionSafe(() -> client.customResources(ProvidedCapability.class)
+                .inNamespace(capability.getMetadata().getNamespace())
+                .withName(capability.getMetadata().getName())
+                .waitUntilCondition(providedCapability -> providedCapability.getStatus() != null
+                                && providedCapability.getStatus().getPhase() != null
+                                && Set.of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED,
+                        EntandoDeploymentPhase.SUCCESSFUL)
+                                .contains(providedCapability.getStatus().getPhase()),
+                        timeoutSeconds,
+                        TimeUnit.SECONDS));
+
     }
 
     @Override
@@ -132,8 +119,7 @@ public class DefaultCapabilityClient implements CapabilityClient {
         Secret adminSecret = serverStatus.getAdminSecretName()
                 .map(s -> client.secrets().inNamespace(providedCapability.getMetadata().getNamespace()).withName(s).get())
                 .orElse(null);
-        Ingress ingress = null;
-        ingress = serverStatus.getIngressName()
+        Ingress ingress = serverStatus.getIngressName()
                 .map(s -> client.extensions().ingresses().inNamespace(providedCapability.getMetadata().getNamespace())
                         .withName(s).get()).orElse(null);
         return new SerializedCapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);

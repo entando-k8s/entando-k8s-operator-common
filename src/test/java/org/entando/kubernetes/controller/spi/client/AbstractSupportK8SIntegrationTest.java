@@ -16,9 +16,6 @@
 
 package org.entando.kubernetes.controller.spi.client;
 
-import static org.awaitility.Awaitility.await;
-
-import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest;
 import org.entando.kubernetes.controller.support.client.impl.DefaultSimpleK8SClient;
 
@@ -32,6 +29,5 @@ public abstract class AbstractSupportK8SIntegrationTest extends AbstractK8SInteg
         }
         return defaultSimpleK8SClient;
     }
-
 
 }

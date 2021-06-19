@@ -17,15 +17,16 @@
 package org.entando.kubernetes.controller.support.client;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
-import org.entando.kubernetes.controller.spi.result.ExposedService;
+import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public interface EntandoResourceClient extends KubernetesClientForControllers {
 
     <T extends EntandoCustomResource> T reload(T customResource);
 
-    ExposedService loadExposedService(EntandoCustomResource resource);
+    SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds) throws TimeoutException;
 
     ConfigMap loadDockerImageInfoConfigMap();
 

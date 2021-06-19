@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -89,26 +91,56 @@ public class ExceptionUtils {
         return supplier.get();
     }
 
-    public static <T> T interruptionSafe(Interruptable<T> i) {
+    public static <T> T interruptionSafe(Interruptable<T> i) throws TimeoutException {
         try {
             return i.run();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
+        } catch (ExecutionException e) {
+            throw maybeWrapAndThrow(e.getCause());
+        } catch (RuntimeException e) {
+            throw maybeWrapAndThrow(e);
         }
     }
 
-    public interface IoVulnerable<T> {
+    private static RuntimeException maybeWrapAndThrow(Throwable cause) throws TimeoutException {
+        if (cause instanceof IllegalArgumentException && cause.getMessage().contains("matching condition not found")) {
+            //NB!!! this is a risky assumption but generally the Fabric8 BaseOperation.waitUntilCondition methods throw
+            //an IllegalArgumentException with a message containing the above text when the conditions times out
+            throw new TimeoutException(cause.getMessage());
+        } else if (cause instanceof RuntimeException) {
+            return (RuntimeException) cause;
+        } else if (cause instanceof TimeoutException) {
+            throw (TimeoutException) cause;
+        }
+        return new IllegalStateException(cause);
+    }
+
+    public interface IoCall<T> {
 
         T invoke() throws IOException;
+    }
+
+    public interface IoAction {
+
+        void invoke() throws IOException;
     }
 
     private ExceptionUtils() {
     }
 
-    public static <T> T ioSafe(IoVulnerable<T> i) {
+    public static <T> T ioSafe(IoCall<T> i) {
         try {
             return i.invoke();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static void ioSafe(IoAction i) {
+        try {
+            i.invoke();
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -126,6 +158,6 @@ public class ExceptionUtils {
 
     public interface Interruptable<T> {
 
-        T run() throws InterruptedException;
+        T run() throws InterruptedException, ExecutionException, TimeoutException;
     }
 }

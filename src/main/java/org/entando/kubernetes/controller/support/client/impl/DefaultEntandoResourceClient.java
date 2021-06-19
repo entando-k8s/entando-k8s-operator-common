@@ -17,16 +17,10 @@
 package org.entando.kubernetes.controller.support.client.impl;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
-import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
-import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DefaultEntandoResourceClient extends DefaultKubernetesClientForControllers implements
         EntandoResourceClient {
@@ -41,22 +35,4 @@ public class DefaultEntandoResourceClient extends DefaultKubernetesClientForCont
                 .withName(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap()).fromServer().get();
     }
 
-    @Override
-    public ExposedService loadExposedService(EntandoCustomResource resource) {
-        return new ExposedService(
-                loadService(resource, NameUtils.standardServiceName(resource)),
-                loadIngress(resource, NameUtils.standardIngressName(resource)));
-    }
-
-    private Service loadService(EntandoCustomResource peerInNamespace, String name) {
-        return client.services().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
-    }
-
-    private Ingress loadIngress(EntandoCustomResource peerInNamespace, String name) {
-        return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
-    }
-
-    protected Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {
-        return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
-    }
 }

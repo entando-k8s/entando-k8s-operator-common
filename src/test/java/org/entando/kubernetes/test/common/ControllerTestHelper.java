@@ -68,7 +68,7 @@ import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
-public interface ControllerTestHelper extends FluentTraversals, CapabilityStatusEmulator<SimpleK8SClientDouble>,
+public interface ControllerTestHelper extends FluentTraversals, CustomResourceStatusEmulator<SimpleK8SClientDouble>,
         VariableReferenceAssertions {
 
     String DEFAULT_TLS_SECRET = "default-tls-secret";

@@ -29,7 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
@@ -55,13 +57,15 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     public Pod runToCompletion(
             SimpleK8SClient<?> client,
             DbAwareDeployable<?> dbAwareDeployable,
-            EntandoImageResolver entandoImageResolver) {
+            EntandoImageResolver entandoImageResolver) throws TimeoutException {
         client.pods().removeAndWait(
                 entandoCustomResource.getMetadata().getNamespace(),
-                buildUniqueLabels(dbAwareDeployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER)));
+                buildUniqueLabels(dbAwareDeployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER)),
+                EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds());
         return client.pods().runToCompletion(
                 buildJobPod(client.secrets(), entandoImageResolver, dbAwareDeployable,
-                        dbAwareDeployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER)));
+                        dbAwareDeployable.getQualifier().orElse(NameUtils.MAIN_QUALIFIER)),
+                EntandoOperatorSpiConfig.getPodCompletionTimeoutSeconds());
     }
 
     private Pod buildJobPod(SecretClient secretClient, EntandoImageResolver entandoImageResolver, DbAwareDeployable<?> dbAwareDeployable,

@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.spi.client;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
 
 import io.fabric8.kubernetes.api.model.Event;
@@ -35,7 +36,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -61,6 +61,9 @@ public interface KubernetesClientForControllers {
     String ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME = "entando-operator-config";
 
     void prepareConfig();
+
+    SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds)
+            throws TimeoutException;
 
     String getNamespace();
 
@@ -101,23 +104,16 @@ public interface KubernetesClientForControllers {
         }
         sb.append("exit $?\n");
         ByteArrayInputStream in = new ByteArrayInputStream(sb.toString().getBytes());
-        try {
-            final CompletableFuture<ExecutionResult> future = new CompletableFuture<>();
-            ExecutionResult listener = new ExecutionResult(future);
-            podResource.inContainer(containerName)
-                    .readingInput(in)
-                    .writingOutput(listener.getOutput())
-                    .writingError(listener.getOutput())
-                    .writingErrorChannel(listener.getErrorChannel())
-                    .withTTY()
-                    .usingListener(listener).exec();
-            return future.get(timeoutSeconds, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        } catch (ExecutionException e) {
-            throw new IllegalStateException(e);
-        }
+        final CompletableFuture<ExecutionResult> future = new CompletableFuture<>();
+        ExecutionResult listener = new ExecutionResult(future);
+        podResource.inContainer(containerName)
+                .readingInput(in)
+                .writingOutput(listener.getOutput())
+                .writingError(listener.getOutput())
+                .writingErrorChannel(listener.getErrorChannel())
+                .withTTY()
+                .usingListener(listener).exec();
+        return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
     }
 
     default <T extends EntandoCustomResource> Event populateEvent(T customResource, UnaryOperator<EventBuilder> eventPopulator) {

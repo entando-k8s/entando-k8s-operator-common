@@ -101,6 +101,14 @@ public class NameUtils {
         return resource.getMetadata().getName() + "-" + DEFAULT_SERVICE_SUFFIX;
     }
 
+    public static String standardServiceName(EntandoCustomResource resource, String qualifier) {
+        if (NameUtils.MAIN_QUALIFIER.equals(qualifier)) {
+            return standardServiceName(resource);
+        } else {
+            return resource.getMetadata().getName() + "-" + qualifier + "-" + DEFAULT_SERVICE_SUFFIX;
+        }
+    }
+
     public static String standardDeployment(EntandoCustomResource resource) {
         return resource.getMetadata().getName() + "-" + DEFAULT_DEPLOYMENT_SUFFIX;
     }

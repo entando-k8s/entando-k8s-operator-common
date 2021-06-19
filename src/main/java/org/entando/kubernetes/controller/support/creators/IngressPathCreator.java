@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
@@ -58,7 +57,7 @@ public class IngressPathCreator {
                 .filter(path -> this.httpPathIsAbsent(ingress, path))
                 .collect(Collectors.toList());
         for (IngressingPathOnPort ingressingContainer : ingressingContainers) {
-            String qualifier = ((DeployableContainer) ingressingContainer).getNameQualifier();
+            String qualifier = ingressingContainer.getNameQualifier();
             withDiagnostics(() -> ingressClient.addHttpPath(ingress, newHttpPath(ingressingContainer, service), Collections
                     .singletonMap(pathAnnotationName(qualifier),
                             ingressingContainer.getWebContextPath())), () -> ingress);

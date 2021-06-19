@@ -222,10 +222,11 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
                     attachSpiResource("DeployableContainer", SerializationHelper.serialize(deployable.getContainers().get(0)));
                 });
         step("But the pod of the deployment is going to fail to start up successfully", () ->
-                when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app")).thenAnswer(inv -> {
-                    Pod pod = (Pod) inv.callRealMethod();
-                    return podWithFailedStatus(pod);
-                }));
+                when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app", 10))
+                        .thenAnswer(inv -> {
+                            Pod pod = (Pod) inv.callRealMethod();
+                            return podWithFailedStatus(pod);
+                        }));
         final EntandoCustomResource entandoCustomResource = new TestResource()
                 .withNames(MY_NAMESPACE, MY_APP)
                 .withSpec(new BasicDeploymentSpec());
@@ -277,11 +278,12 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
                 });
         step("But the timeout for the deployment is set unrealistically low to 1 second", () -> this.timeoutSeconds = 1);
         step("And there is a 3 second delay when waiting for the pod", () ->
-                when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app")).thenAnswer(inv -> {
-                    long start = System.currentTimeMillis();
-                    await().until(() -> TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start) >= 3);
-                    return inv.callRealMethod();
-                }));
+                when(getClient().pods().waitForPod(MY_NAMESPACE, LabelNames.DEPLOYMENT.getName(), "my-app", 10)).thenAnswer(
+                        inv -> {
+                            long start = System.currentTimeMillis();
+                            await().until(() -> TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start) >= 3);
+                            return inv.callRealMethod();
+                        }));
         final EntandoCustomResource entandoCustomResource = new TestResource()
                 .withNames(MY_NAMESPACE, MY_APP)
                 .withSpec(new BasicDeploymentSpec());

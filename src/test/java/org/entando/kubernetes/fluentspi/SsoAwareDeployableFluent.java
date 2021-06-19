@@ -16,45 +16,50 @@
 
 package org.entando.kubernetes.fluentspi;
 
-import static java.util.Optional.ofNullable;
-
-import java.util.Optional;
-import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
-import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
+import org.entando.kubernetes.controller.spi.deployable.SsoAwareDeployable;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
-import org.entando.kubernetes.model.common.KeycloakToUse;
 
-public class SsoAwareDeployableFluent<N extends SsoAwareDeployableFluent<N>> extends IngressingDeployableFluent<N> implements
-        PublicIngressingDeployable<DefaultExposedDeploymentResult> {
+public class SsoAwareDeployableFluent<N extends SsoAwareDeployableFluent<N>> extends SecretiveDeployableFluent<N> implements
+        SsoAwareDeployable<DefaultExposedDeploymentResult> {
 
-    private KeycloakToUse preferredKeycloakToUse;
     private SsoConnectionInfo ssoConnectionInfo;
+    private SsoClientConfig ssoClientConfig;
+
+    public N withSsoClientConfig(SsoClientConfig ssoClientConfig) {
+        this.ssoClientConfig = ssoClientConfig;
+        getContainers().stream()
+                .filter(IngressingContainerFluent.class::isInstance)
+                .map(IngressingContainerFluent.class::cast)
+                .forEach(c -> c.withSsoClientConfig(ssoClientConfig));
+        return thisAsN();
+    }
 
     @Override
     public SsoConnectionInfo getSsoConnectionInfo() {
         return this.ssoConnectionInfo;
     }
 
-    public <C extends DeployableContainerFluent<C>> C withContainer(C container) {
-        ofNullable(ssoConnectionInfo).ifPresent(((SsoAwareContainerFluent<?>) container)::withSsoConnectionConfig);
-        return super.withContainer(container);
-
-    }
-
-    public N withSsoConnectionConfig(SsoConnectionInfo ssoConnectionInfo) {
-        this.ssoConnectionInfo = ssoConnectionInfo;
-        getContainers().stream().filter(SsoAwareContainerFluent.class::isInstance).map(SsoAwareContainerFluent.class::cast)
-                .forEach(c -> c.withSsoConnectionConfig(ssoConnectionInfo));
-        return thisAsN();
+    @Override
+    public SsoClientConfig getSsoClientConfig() {
+        return ssoClientConfig;
     }
 
     @Override
-    public Optional<KeycloakToUse> getPreferredKeycloakToUse() {
-        return Optional.ofNullable(this.preferredKeycloakToUse);
+    public <C extends DeployableContainerFluent<C>> C withContainer(C container) {
+        if (this.ssoClientConfig != null && container instanceof SsoAwareContainerFluent) {
+            ((SsoAwareContainerFluent<?>) container).withSsoClientConfig(this.ssoClientConfig);
+        }
+        return super.withContainer(container);
     }
 
-    public N withPreferredKeycloakToUse(KeycloakToUse preferredKeycloakToUse) {
-        this.preferredKeycloakToUse = preferredKeycloakToUse;
+    public N withSsoConnectionInfo(SsoConnectionInfo ssoConnectionInfo) {
+        this.ssoConnectionInfo = ssoConnectionInfo;
+        getContainers().stream()
+                .filter(SsoAwareContainerFluent.class::isInstance)
+                .map(SsoAwareContainerFluent.class::cast)
+                .forEach(c -> c.withSsoConnectionInfo(ssoConnectionInfo));
         return thisAsN();
     }
 

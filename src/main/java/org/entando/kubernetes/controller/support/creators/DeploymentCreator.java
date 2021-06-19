@@ -75,7 +75,8 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable<?> deployable) {
         final Deployment builtDeployment = newDeployment(imageResolver, deployable, deploymentClient.supportsStartupProbes());
         this.deployment = withDiagnostics(
-                () -> deploymentClient.createOrPatchDeployment(entandoCustomResource, builtDeployment),
+                () -> deploymentClient.createOrPatchDeployment(entandoCustomResource, builtDeployment,
+                        EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds()),
                 () -> builtDeployment);
         return this.deployment;
     }
@@ -160,8 +161,8 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .collect(Collectors.toList());
     }
 
-    private Container newContainer(EntandoImageResolver imageResolver,
-            DeployableContainer deployableContainer, boolean supportStartupProbes) {
+    private Container newContainer(EntandoImageResolver imageResolver, DeployableContainer deployableContainer,
+            boolean supportStartupProbes) {
         return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + "-" + CONTAINER_SUFFIX)
                 .withImage(imageResolver.determineImageUri(deployableContainer.getDockerImageInfo()))
                 .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse("IfNotPresent"))

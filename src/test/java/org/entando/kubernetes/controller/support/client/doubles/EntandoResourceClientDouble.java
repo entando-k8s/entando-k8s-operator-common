@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -26,7 +28,8 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
@@ -34,7 +37,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
@@ -42,12 +47,9 @@ import org.entando.kubernetes.controller.spi.client.KubernetesClientForControlle
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
-import org.entando.kubernetes.controller.spi.common.NameUtils;
-import org.entando.kubernetes.controller.spi.result.ExposedService;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.externaldatabase.EntandoDatabaseService;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
@@ -81,10 +83,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
         return null;
     }
 
-    public void putEntandoDatabaseService(EntandoDatabaseService externalDatabase) {
-        createOrPatchEntandoResource(externalDatabase);
-    }
-
     @Override
     public String getNamespace() {
         return CONTROLLER_NAMESPACE;
@@ -108,26 +106,33 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
+    public SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds)
+            throws TimeoutException {
+        CompletableFuture<SerializedEntandoResource> future = new CompletableFuture<>();
+        getCluster().getResourceProcessor().watch(new Watcher<SerializedEntandoResource>() {
+            @Override
+            public void eventReceived(Action action, SerializedEntandoResource hasMetadata) {
+
+            }
+
+            @Override
+            public void onClose(WatcherException e) {
+
+            }
+        }, customResource.getDefinition(), customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
+        return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
+    }
+
+    @Override
     public <T extends EntandoCustomResource> T load(Class<T> clzz, String namespace, String name) {
         Map<String, T> customResources = getNamespace(namespace).getCustomResources(clzz);
         return customResources.get(name);
     }
 
     @Override
-    public ExposedService loadExposedService(EntandoCustomResource resource) {
-        NamespaceDouble namespace = getNamespace(resource);
-        Service service = namespace.getService(
-                resource.getMetadata().getName() + "-" + NameUtils.DEFAULT_SERVER_QUALIFIER + "-" + NameUtils.DEFAULT_SERVICE_SUFFIX);
-        Ingress ingress = namespace.getIngress(
-                resource.getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
-        return new ExposedService(service, ingress);
-    }
-
-    @Override
     public ConfigMap loadDockerImageInfoConfigMap() {
         return getNamespace(EntandoOperatorConfig.getEntandoDockerImageInfoNamespace().orElse(CONTROLLER_NAMESPACE))
                 .getConfigMap(EntandoOperatorConfig.getEntandoDockerImageInfoConfigMap());
-
     }
 
     @Override

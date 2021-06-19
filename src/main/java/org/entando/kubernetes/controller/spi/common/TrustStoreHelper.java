@@ -86,7 +86,7 @@ public final class TrustStoreHelper {
         });
     }
 
-    public static <T> T safely(ExceptionSafe<T> t) {
+    private static <T> T safely(ExceptionSafe<T> t) {
         try {
             return t.invoke();
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {

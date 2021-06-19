@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
+
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -24,8 +26,7 @@ import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.util.concurrent.TimeUnit;
-import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
-import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
+import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -63,8 +64,8 @@ public class DefaultDeploymentClient implements DeploymentClient {
     }
 
     @Override
-    public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace,
-            Deployment deployment) {
+    public Deployment createOrPatchDeployment(EntandoCustomResource peerInNamespace, Deployment deployment, int timeoutSeconds)
+            throws TimeoutException {
         Deployment existingDeployment = getDeploymenResourceFor(peerInNamespace, deployment).get();
         if (existingDeployment == null) {
             return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(deployment);
@@ -74,8 +75,8 @@ public class DefaultDeploymentClient implements DeploymentClient {
             FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
-            ExceptionUtils.interruptionSafe(() -> podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
-                    EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds(),
+            interruptionSafe(() -> podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
+                    timeoutSeconds,
                     TimeUnit.SECONDS));
             //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod
             return getDeploymenResourceFor(peerInNamespace, deployment).patch(deployment);

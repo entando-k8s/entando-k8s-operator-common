@@ -238,7 +238,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                 () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.POSTGRESQL, "my_db")).when(getClient().capabilities())
                         .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("But the database preparation pod is going to fail", () ->
-                when(getClient().pods().runToCompletion(any())).thenAnswer(inv -> {
+                when(getClient().pods().runToCompletion(any(), anyInt())).thenAnswer(inv -> {
                     Pod pod = (Pod) inv.callRealMethod();
                     return podWithFailedStatus(pod);
                 }));

@@ -33,6 +33,7 @@ import io.qameta.allure.Feature;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.fluentspi.TestResource;
@@ -136,7 +137,8 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
                     .endContainer()
                     .endSpec()
                     .build());
-            final Pod pod = getSimpleK8SClient().pods().waitForPod(testResource1.getMetadata().getNamespace(), "pod-label", "123");
+            final Pod pod = getSimpleK8SClient().pods().waitForPod(testResource1.getMetadata().getNamespace(), "pod-label", "123",
+                    EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds());
             attachResource("Pod", pod);
         });
         step("And I have created a service to expose it internally", () -> {

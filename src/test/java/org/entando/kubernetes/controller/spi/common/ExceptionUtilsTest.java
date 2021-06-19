@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.StatusBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.io.IOException;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
 import org.entando.kubernetes.test.common.ValueHolder;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -70,6 +71,21 @@ class ExceptionUtilsTest {
                     .withCode(404)
                     .build());
         }, () -> null)).isInstanceOf(KubernetesClientException.class);
+    }
+
+    @Test
+    void testWithKubernetesClientExceptionToFailure() {
+        final EntandoControllerFailure failure = ExceptionUtils
+                .failureOf(new PodBuilder().withNewMetadata().withNamespace("my-namespace").withName("my-name").endMetadata().build(),
+                        new KubernetesClientException(new StatusBuilder()
+                                .withMessage("my message")
+                                .withCode(404)
+                                .build()));
+        assertThat(failure.getFailedObjectName()).isEqualTo("my-name");
+        assertThat(failure.getFailedObjectNamespace()).isEqualTo("my-namespace");
+        assertThat(failure.getFailedObjectKind()).isEqualTo("Pod");
+        assertThat(failure.getFailedObjectApiVersion()).isEqualTo("v1");
+        assertThat(failure.getMessage()).isEqualTo("my message");
     }
 
     @Test

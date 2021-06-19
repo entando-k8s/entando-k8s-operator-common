@@ -31,6 +31,7 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
 import io.qameta.allure.Allure;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -48,12 +49,13 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ServerStatus;
 import org.mockito.ArgumentMatcher;
 import org.mockito.stubbing.Answer;
 
-public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends EntandoResourceClient>> {
+public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extends EntandoResourceClient>> {
 
     T getClient();
 
@@ -75,55 +77,98 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
         return t -> t != null && namespace.equals(t.getMetadata().getNamespace()) && name.equals(t.getMetadata().getName());
     }
 
-    default ProvidedCapability putServerStatus(ProvidedCapability providedCapability, int port,
+    default <T extends EntandoCustomResource> T putServerStatus(T customResource, int port,
             Map<String, String> derivedDeploymentParameters) {
-        return putStatus(providedCapability, port, derivedDeploymentParameters, new ServerStatus(NameUtils.MAIN_QUALIFIER));
+        return putStatus(customResource, port, derivedDeploymentParameters, new ServerStatus(NameUtils.MAIN_QUALIFIER));
     }
 
-    default ProvidedCapability putExternalServerStatus(ProvidedCapability providedCapability, String host, int port, String path,
+    default <T extends EntandoCustomResource> T putInternalServerStatus(T customResource, int port, ServerStatus status) {
+        return putStatus(customResource, port, Collections.emptyMap(), status);
+    }
+
+    default <T extends EntandoCustomResource> T putExposedServerStatus(T customResource, String host, int port, ServerStatus status) {
+        //TODO this may need to change if we expose two paths on on Deployment
+        return putExternalServerStatus(customResource, host, port, status.getWebContexts().values().iterator().next(),
+                Collections.emptyMap(), status);
+    }
+
+    default <T extends EntandoCustomResource> T putExternalServerStatus(T customResource, String host, int port, String path,
             Map<String, String> derivedParameters) {
         final ServerStatus status = new ServerStatus(NameUtils.MAIN_QUALIFIER);
-        status.setExternalBaseUrl(format("https://%s%s", host, path));
-        final Ingress ingress = getClient().ingresses().createIngress(providedCapability, new IngressBuilder()
-                .withNewMetadata()
-                .withNamespace(providedCapability.getMetadata().getNamespace())
-                .withName(NameUtils.standardIngressName(providedCapability))
-                .endMetadata()
-                .withNewSpec()
-                .addNewRule()
-                .withHost(host)
-                .withNewHttp()
-                .addNewPath()
-                .withNewBackend()
-                .withServiceName(NameUtils.standardServiceName(providedCapability))
-                .withServicePort(new IntOrString(port))
-                .endBackend()
-                .withPath(path)
-                .endPath()
-                .endHttp()
-                .endRule()
-                .addNewTl()
-                .addNewHost(host)
+        return putExternalServerStatus(customResource, host, port, path, derivedParameters, status);
+    }
 
-                .endTl()
-                .endSpec()
-                .build());
+    private <T extends EntandoCustomResource> T putExternalServerStatus(T customResource, String host, int port, String path,
+            Map<String, String> derivedParameters, ServerStatus status) {
+        status.setExternalBaseUrl(format("https://%s%s", host, path));
+        Ingress ingress = getClient().ingresses()
+                .loadIngress(customResource.getMetadata().getNamespace(), NameUtils.standardIngressName(customResource));
+        if (ingress == null) {
+            ingress = getClient().ingresses().createIngress(customResource, new IngressBuilder()
+                    .withNewMetadata()
+                    .withNamespace(customResource.getMetadata().getNamespace())
+                    .withName(NameUtils.standardIngressName(customResource))
+                    .endMetadata()
+                    .withNewSpec()
+                    .addNewRule()
+                    .withHost(host)
+                    .withNewHttp()
+                    .addNewPath()
+                    .withNewBackend()
+                    .withServiceName(NameUtils.standardServiceName(customResource, status.getQualifier()))
+                    .withServicePort(new IntOrString(port))
+                    .endBackend()
+                    .withPath(path)
+                    .endPath()
+                    .endHttp()
+                    .endRule()
+                    .addNewTl()
+                    .addNewHost(host)
+                    .endTl()
+                    .endSpec()
+                    .build());
+        } else {
+            ingress = getClient().ingresses().editIngress(customResource, NameUtils.standardIngressName(customResource))
+                    .editSpec()
+                    .editFirstRule()
+                    .editHttp()
+                    .addNewPath()
+                    .withNewBackend()
+                    .withServiceName(NameUtils.standardServiceName(customResource, status.getQualifier()))
+                    .withServicePort(new IntOrString(port))
+                    .endBackend()
+                    .withPath(path)
+                    .endPath()
+                    .endHttp()
+                    .endRule()
+                    .endSpec()
+                    .done();
+        }
         status.setIngressName(ingress.getMetadata().getName());
-        final ProvidedCapability updatedCapability = putStatus(providedCapability, port, derivedParameters, status);
+        final T updatedCapability = putStatus(customResource, port, derivedParameters, status);
+        Ingress finalIngress = ingress;
         step(format("and the Ingress '%s'", ingress.getMetadata().getName()), () ->
-                attachKubernetesResource(providedCapability.getSpec().getCapability().name() + " Ingress", ingress));
+                attachKubernetesResource(resolveServiceType(customResource) + " Ingress", finalIngress));
         return updatedCapability;
     }
 
-    private ProvidedCapability putStatus(ProvidedCapability providedCapability, int port,
+    private String resolveServiceType(EntandoCustomResource customResource) {
+        if (customResource instanceof ProvidedCapability) {
+            return ((ProvidedCapability) customResource).getSpec().getCapability().name();
+        } else {
+            return customResource.getKind();
+        }
+    }
+
+    private <T extends EntandoCustomResource> T putStatus(T customResource, int port,
             Map<String, String> derivedDeploymentParameters, ServerStatus status) {
         try {
-            providedCapability.getStatus().putServerStatus(status);
-            status.withOriginatingCustomResource(providedCapability);
-            final Service service = getClient().services().createOrReplaceService(providedCapability, new ServiceBuilder()
+            customResource.getStatus().putServerStatus(status);
+            status.withOriginatingCustomResource(customResource);
+            final Service service = getClient().services().createOrReplaceService(customResource, new ServiceBuilder()
                     .withNewMetadata()
-                    .withNamespace(providedCapability.getMetadata().getNamespace())
-                    .withName(NameUtils.standardServiceName(providedCapability))
+                    .withNamespace(customResource.getMetadata().getNamespace())
+                    .withName(NameUtils.standardServiceName(customResource, status.getQualifier()))
                     .endMetadata()
                     .withNewSpec()
                     .addNewPort()
@@ -132,28 +177,28 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
                     .endSpec()
                     .build());
             status.setServiceName(service.getMetadata().getName());
-            step(format("with the %s service '%s'", providedCapability.getSpec().getCapability().name(), service.getMetadata().getName()),
+            step(format("with the %s service '%s'", resolveServiceType(customResource), service.getMetadata().getName()),
                     () ->
-                            attachKubernetesResource(providedCapability.getSpec().getCapability().name() + " Service", service));
+                            attachKubernetesResource(resolveServiceType(customResource) + " Service", service));
             final Secret secret = new SecretBuilder()
                     .withNewMetadata()
-                    .withNamespace(providedCapability.getMetadata().getNamespace())
-                    .withName(NameUtils.standardAdminSecretName(providedCapability))
+                    .withNamespace(customResource.getMetadata().getNamespace())
+                    .withName(NameUtils.standardAdminSecretName(customResource))
                     .endMetadata()
                     .addToStringData("username", "jon")
                     .addToStringData("password", "password123")
                     .build();
-            getClient().secrets().createSecretIfAbsent(providedCapability, secret);
+            getClient().secrets().createSecretIfAbsent(customResource, secret);
             step(format("and the admin secret '%s'", secret.getMetadata().getName()), () ->
                     attachKubernetesResource("Admin Secret",
-                            getClient().secrets().loadSecret(providedCapability, secret.getMetadata().getName())));
+                            getClient().secrets().loadSecret(customResource, secret.getMetadata().getName())));
 
             status.setAdminSecretName(secret.getMetadata().getName());
             status.withOriginatingControllerPod(getClient().entandoResources().getNamespace(), "my-test-pod");
             derivedDeploymentParameters.forEach(status::putDerivedDeploymentParameter);
-            getClient().entandoResources().updateStatus(providedCapability, status);
-            getClient().entandoResources().updatePhase(providedCapability, EntandoDeploymentPhase.SUCCESSFUL);
-            return getClient().entandoResources().reload(providedCapability);
+            getClient().entandoResources().updateStatus(customResource, status);
+            getClient().entandoResources().updatePhase(customResource, EntandoDeploymentPhase.SUCCESSFUL);
+            return getClient().entandoResources().reload(customResource);
         } catch (RuntimeException e) {
             e.printStackTrace();
             throw e;
@@ -188,10 +233,10 @@ public interface CapabilityStatusEmulator<T extends SimpleK8SClient<? extends En
         return invocationOnMock -> {
             getScheduler().schedule(() -> {
                 try {
-                    ProvidedCapability pc = invocationOnMock.getArgument(0);
-                    exposedServerStatus.finishWith(ExceptionUtils.failureOf(pc, exception));
-                    pc = getClient().entandoResources().updateStatus(pc, exposedServerStatus);
-                    return getClient().entandoResources().updatePhase(pc, EntandoDeploymentPhase.FAILED);
+                    EntandoCustomResource cr = invocationOnMock.getArgument(0);
+                    exposedServerStatus.finishWith(ExceptionUtils.failureOf(cr, exception));
+                    cr = getClient().entandoResources().updateStatus(cr, exposedServerStatus);
+                    return getClient().entandoResources().updatePhase(cr, EntandoDeploymentPhase.FAILED);
                 } catch (Exception e) {
                     e.printStackTrace();
                     throw e;

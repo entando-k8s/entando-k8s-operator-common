@@ -35,7 +35,6 @@ import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ServiceBackingContainer;
 import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
-import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.container.TrustStoreAwareContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
@@ -43,6 +42,8 @@ import org.entando.kubernetes.controller.spi.deployable.ExternalService;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
 import org.entando.kubernetes.controller.spi.deployable.Secretive;
+import org.entando.kubernetes.controller.spi.deployable.SsoAwareDeployable;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.spi.result.ServiceResult;
@@ -60,7 +61,7 @@ public class ReflectionUtil {
                     PersistentVolumeAwareContainer.class, PublicIngressingDeployable.class, Secretive.class,
                     SerializableDeploymentResult.class,
                     ServiceBackingContainer.class, ServiceDeploymentResult.class, ServiceResult.class,
-                    SsoAwareContainer.class, SsoConnectionInfo.class,
+                    SsoAwareDeployable.class, SsoAwareContainer.class, SsoConnectionInfo.class,
                     TrustStoreAwareContainer.class);
 
     private ReflectionUtil() {

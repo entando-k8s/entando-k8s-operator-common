@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
@@ -57,23 +59,17 @@ public class ControllerExecutor {
         this.controllerImageResolver = controllerImageResolver;
     }
 
-    public Pod startControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
+    public Pod runControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) throws TimeoutException {
         removeObsoleteControllerPods(resource);
         Pod pod = buildControllerPod(action, resource, imageVersionToUse);
-        return client.pods().start(pod);
+        return client.pods().runToCompletion(pod, EntandoOperatorSpiConfig.getPodCompletionTimeoutSeconds());
     }
 
-    public Pod runControllerFor(Action action, EntandoCustomResource resource, String imageVersionToUse) {
-        removeObsoleteControllerPods(resource);
-        Pod pod = buildControllerPod(action, resource, imageVersionToUse);
-        return client.pods().runToCompletion(pod);
-    }
-
-    private void removeObsoleteControllerPods(EntandoCustomResource resource) {
+    private void removeObsoleteControllerPods(EntandoCustomResource resource) throws TimeoutException {
         this.client.pods().removeAndWait(controllerNamespace, Map.of(
                 LabelNames.RESOURCE_KIND.getName(), resource.getKind(),
                 LabelNames.RESOURCE_NAMESPACE.getName(), resource.getMetadata().getNamespace(),
-                resource.getKind(), resource.getMetadata().getName()));
+                resource.getKind(), resource.getMetadata().getName()), EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds());
     }
 
     private Pod buildControllerPod(Action action, EntandoCustomResource resource, String imageVersionToUse) {

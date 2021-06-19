@@ -14,7 +14,7 @@
  *
  */
 
-package org.entando.kubernetes.controller.spi.container;
+package org.entando.kubernetes.controller.spi.deployable;
 
 import static java.util.Optional.ofNullable;
 

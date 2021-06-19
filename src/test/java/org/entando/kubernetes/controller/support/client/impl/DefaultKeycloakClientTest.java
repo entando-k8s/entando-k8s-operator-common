@@ -22,7 +22,7 @@ import static org.hamcrest.core.Is.is;
 
 import java.util.List;
 import java.util.Optional;
-import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.FluentIntegrationTesting;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.KeycloakTestHelper;
 import org.entando.kubernetes.model.common.Permission;

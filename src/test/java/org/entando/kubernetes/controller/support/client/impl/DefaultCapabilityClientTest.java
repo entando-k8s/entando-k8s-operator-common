@@ -54,7 +54,7 @@ import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ServerStatus;
-import org.entando.kubernetes.test.common.CapabilityStatusEmulator;
+import org.entando.kubernetes.test.common.CustomResourceStatusEmulator;
 import org.entando.kubernetes.test.common.ValueHolder;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -65,7 +65,7 @@ import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 @Feature("As a support developer, I would like perform common operations on the ProvidedCapability resources through a simple "
         + "interface to reduce the learning curve")
 @EnableRuleMigrationSupport
-class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements CapabilityStatusEmulator<DefaultSimpleK8SClient> {
+class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements CustomResourceStatusEmulator<DefaultSimpleK8SClient> {
 
     private DefaultSimpleK8SClient client;
 

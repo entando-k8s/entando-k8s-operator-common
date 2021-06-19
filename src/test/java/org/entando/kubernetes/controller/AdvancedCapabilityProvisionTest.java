@@ -49,7 +49,7 @@ import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoControllerFailure;
 import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.common.ServerStatus;
-import org.entando.kubernetes.test.common.CapabilityStatusEmulator;
+import org.entando.kubernetes.test.common.CustomResourceStatusEmulator;
 import org.entando.kubernetes.test.common.InProcessTestData;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +66,7 @@ import org.mockito.stubbing.Answer;
         + " can find the optimal balance of reuse of our Capabilities")
 @Issue("ENG-2284")
 @SourceLink("AdvancedCapabilityProvisionTest.java")
-class AdvancedCapabilityProvisionTest implements InProcessTestData, CapabilityStatusEmulator<SimpleK8SClientDouble> {
+class AdvancedCapabilityProvisionTest implements InProcessTestData, CustomResourceStatusEmulator<SimpleK8SClientDouble> {
 
     public static final int TIMEOUT_SECONDS = 30;
     private TestResource forResource;

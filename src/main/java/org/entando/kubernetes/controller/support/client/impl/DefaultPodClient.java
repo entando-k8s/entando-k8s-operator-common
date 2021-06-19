@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
+
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -23,8 +25,8 @@ import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
-import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.PodClient;
@@ -47,23 +49,23 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
-    public void removeAndWait(String namespace, Map<String, String> labels) {
-        ExceptionUtils.interruptionSafe(() -> {
+    public void removeAndWait(String namespace, Map<String, String> labels, int timeoutSeconds) throws TimeoutException {
+        interruptionSafe(() -> {
             FilterWatchListDeletable<Pod, PodList> podResource = client.pods().inNamespace(namespace).withLabels(labels);
             podResource.delete();
             return podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
-                    EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds(),
+                    timeoutSeconds,
                     TimeUnit.SECONDS);
         });
     }
 
     @Override
-    public Pod runToCompletion(Pod pod) {
-        return ExceptionUtils.interruptionSafe(() -> {
+    public Pod runToCompletion(Pod pod, int timeoutSeconds) throws TimeoutException {
+        return interruptionSafe(() -> {
             this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
             return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName())
                     .waitUntilCondition(got -> PodResult.of(got).getState() == State.COMPLETED,
-                            EntandoOperatorSpiConfig.getPodCompletionTimeoutSeconds(), TimeUnit.SECONDS);
+                            timeoutSeconds, TimeUnit.SECONDS);
         });
     }
 
@@ -78,8 +80,8 @@ public class DefaultPodClient implements PodClient {
     }
 
     @Override
-    public Pod waitForPod(String namespace, String labelName, String labelValue) {
-        return ExceptionUtils.interruptionSafe(() ->
+    public Pod waitForPod(String namespace, String labelName, String labelValue, int timeoutSeconds) throws TimeoutException {
+        return interruptionSafe(() ->
                 client.pods().inNamespace(namespace).withLabel(labelName, labelValue).waitUntilCondition(
                         got -> got != null && got.getStatus() != null && (PodResult.of(got).getState() == State.READY
                                 || PodResult.of(got).getState() == State.COMPLETED),

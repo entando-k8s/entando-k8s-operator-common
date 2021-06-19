@@ -199,6 +199,41 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
 
     }
 
+    @Test
+    @Description("Wait for the completion of an opaque custom resource")
+    void shouldWaitForKnownCustomResourceStatus() throws IOException {
+        step("Given I have created an instance of the CustomResourceDefinition TestResource", () -> {
+            this.testResource = getKubernetesClientForControllers().createOrPatchEntandoResource(newTestResource());
+            attachResource("TestResource", testResource);
+        });
+        SerializedEntandoResource serializedEntandoResource = objectMapper
+                .readValue(objectMapper.writeValueAsBytes(testResource), SerializedEntandoResource.class);
+        step("But it is represented in an opaque format using the SerializedEntandoResource class", () -> {
+            serializedEntandoResource.setDefinition(
+                    CustomResourceDefinitionContext.fromCustomResourceType(TestResource.class));
+            attachResource("Opaque Resource", serializedEntandoResource);
+        });
+        step("And I will update its status phase to 'SUCCESSFUL' within 300 milliseconds", () -> {
+            getScheduler().schedule(
+                    () -> getKubernetesClientForControllers().updatePhase(serializedEntandoResource, EntandoDeploymentPhase.SUCCESSFUL),
+                    300,
+                    TimeUnit.MILLISECONDS);
+        });
+        final long start = System.currentTimeMillis();
+        final ValueHolder<SerializedEntandoResource> value = new ValueHolder<>();
+        step("When I wait for the SerializedEntandoResource deployment to be completed", () -> {
+            value.set(getKubernetesClientForControllers().waitForCompletion(serializedEntandoResource, 60));
+        });
+        step("Then the latest version of the resource is available and its phase is 'SUCCESSFUL'", () -> {
+            attachResource("TestResource", value.get());
+            assertThat(value.get().getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.SUCCESSFUL);
+        });
+        step("And the completion was acknowlededged within a reasonable amount of time from the status update", () -> {
+            assertThat(System.currentTimeMillis() - start).isLessThan(5000L);
+        });
+
+    }
+
     private ServerStatus createServerStatus() {
         return new ServerStatus("my-webapp")
                 .withOriginatingControllerPod(clientForControllers.getNamespace(), EntandoOperatorSpiConfig.getControllerPodName());

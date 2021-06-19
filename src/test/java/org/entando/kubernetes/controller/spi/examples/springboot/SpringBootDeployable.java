@@ -25,8 +25,9 @@ import java.util.List;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
-import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
@@ -39,13 +40,16 @@ public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
         DbAwareDeployable<DefaultExposedDeploymentResult> {
 
     private final EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource;
+    private final SsoConnectionInfo ssoConnectionInfo;
     private final DeployableContainer container;
 
     public SpringBootDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource,
             SsoConnectionInfo ssoConnectionInfo,
             DatabaseConnectionInfo databaseConnectionInfo) {
         this.customResource = customResource;
-        container = new SampleSpringBootDeployableContainer<>(customResource, ssoConnectionInfo, databaseConnectionInfo);
+        this.ssoConnectionInfo = ssoConnectionInfo;
+        container = new SampleSpringBootDeployableContainer<>(customResource, databaseConnectionInfo, ssoConnectionInfo,
+                new SsoClientConfig("entando", "asdf", "asdf"));
     }
 
     /**
@@ -90,4 +94,5 @@ public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
     public boolean isIngressRequired() {
         return true;
     }
+
 }

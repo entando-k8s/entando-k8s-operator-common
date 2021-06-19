@@ -24,9 +24,6 @@ import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.command.SupportedCommand;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
-import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
-import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
-import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 
@@ -63,22 +60,12 @@ public class InProcessCommandStream implements CommandStream {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private String processDeployment(String deployable, int timeoutSeconds) {
-        final Deployable deserializedDeployable = DeserializationHelper.deserialize(simpleK8SClient.entandoResources(), deployable);
-        DeployCommand<? extends ServiceDeploymentResult> command = null;
-        if (deserializedDeployable instanceof IngressingDeployable) {
-            command = new IngressingDeployCommand<>((IngressingDeployable<?>) deserializedDeployable);
-        } else {
-            command = new DeployCommand(deserializedDeployable);
-        }
-        final ServiceDeploymentResult result = command.execute(simpleK8SClient, keycloakClient, timeoutSeconds);
-        DefaultSerializableDeploymentResult serializableDeploymentResult = null;
-        if (result instanceof ExposedDeploymentResult) {
-            serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),
-                    result.getService(), ((ExposedDeploymentResult) result).getIngress()).withStatus(result.getStatus());
-        } else {
-            serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),
-                    result.getService(), null).withStatus(result.getStatus());
-        }
+        final Deployable<DefaultSerializableDeploymentResult> deserializedDeployable = DeserializationHelper
+                .deserialize(simpleK8SClient.entandoResources(), deployable);
+        DeployCommand<DefaultSerializableDeploymentResult> command = new DeployCommand(deserializedDeployable);
+        final DefaultSerializableDeploymentResult result = command.execute(simpleK8SClient, keycloakClient, timeoutSeconds);
+        DefaultSerializableDeploymentResult serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),
+                result.getService(), result.getIngress()).withStatus(result.getStatus());
         return SerializationHelper.serialize(serializableDeploymentResult);
     }
 }

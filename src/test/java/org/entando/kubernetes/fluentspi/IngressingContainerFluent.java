@@ -20,7 +20,7 @@ import java.util.Optional;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.TrustStoreAwareContainer;
 
-public class IngressingContainerFluent<N extends IngressingContainerFluent<N>> extends DeployableContainerFluent<N> implements
+public class IngressingContainerFluent<N extends IngressingContainerFluent<N>> extends SsoAwareContainerFluent<N> implements
         IngressingContainer, TrustStoreAwareContainer {
 
     private String webContextPath;
@@ -45,4 +45,5 @@ public class IngressingContainerFluent<N extends IngressingContainerFluent<N>> e
         this.healthCheckPath = healthCheckPath;
         return thisAsN();
     }
+
 }

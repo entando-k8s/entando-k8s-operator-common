@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.client.impl;
 
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,9 +25,13 @@ import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.ListOptions;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.Watch;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -36,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -48,6 +55,7 @@ import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 
 public class DefaultKubernetesClientForControllers implements KubernetesClientForControllers {
 
@@ -57,6 +65,37 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     public DefaultKubernetesClientForControllers(KubernetesClient client) {
         this.client = client;
 
+    }
+
+    @Override
+    public SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds)
+            throws TimeoutException {
+        final CompletableFuture<SerializedEntandoResource> future = new CompletableFuture<>();
+        try (Watch ignore = ioSafe(() -> client.customResource(customResource.getDefinition())
+                .watch(customResource.getMetadata().getNamespace(), customResource.getMetadata().getName(), null,
+                        (ListOptions) null, new Watcher<>() {
+                            final ObjectMapper objectMapper = new ObjectMapper();
+
+                            @Override
+                            public void eventReceived(Action action, String s) {
+                                final SerializedEntandoResource resource = ioSafe(
+                                        () -> objectMapper.readValue(s, SerializedEntandoResource.class));
+                                resource.setDefinition(customResource.getDefinition());
+                                final EntandoDeploymentPhase phase = resource.getStatus()
+                                        .getPhase();
+                                if (phase == EntandoDeploymentPhase.FAILED || phase == EntandoDeploymentPhase.SUCCESSFUL
+                                        || phase == EntandoDeploymentPhase.IGNORED) {
+                                    future.complete(resource);
+                                }
+                            }
+
+                            @Override
+                            public void onClose(WatcherException e) {
+                                future.completeExceptionally(e);
+                            }
+                        }))) {
+            return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
+        }
     }
 
     @Override

@@ -25,12 +25,12 @@ import static org.hamcrest.Matchers.nullValue;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.assertj.core.api.Assertions;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.fluentspi.TestResource;
@@ -47,7 +47,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     private final TestResource testResource = newTestResource();
 
     @Test
-    void shouldWaitForPreviouslyStartedPod() {
+    void shouldWaitForPreviouslyStartedPod() throws TimeoutException {
         //Given I have started a new Pod
         awaitDefaultToken(testResource.getMetadata().getNamespace());
         final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
@@ -65,14 +65,15 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endSpec()
                 .build());
         //When I wait for the pod
-        final Pod pod = getSimpleK8SClient().pods().waitForPod(testResource.getMetadata().getNamespace(), "pod-label", "123");
+        final Pod pod = getSimpleK8SClient().pods().waitForPod(testResource.getMetadata().getNamespace(), "pod-label", "123",
+                EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds());
         //Then the current thread only proceeds once the pod is ready
         assertThat(PodResult.of(pod).getState(), is(State.READY));
         assertThat(PodResult.of(pod).hasFailed(), is(false));
     }
 
     @Test
-    void shouldRemoveAndWait() {
+    void shouldRemoveAndWait() throws TimeoutException {
         awaitDefaultToken(testResource.getMetadata().getNamespace());
         //Given I have started a new Pod
         final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
@@ -90,7 +91,9 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endSpec()
                 .build());
         //When I wait for the pod
-        getSimpleK8SClient().pods().removeAndWait(testResource.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "123"));
+        getSimpleK8SClient().pods().removeAndWait(testResource.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "123"),
+                EntandoOperatorSpiConfig
+                        .getPodShutdownTimeoutSeconds());
         //Then the current thread only proceeds once the pod is ready
         assertThat(
                 getSimpleK8SClient().pods()
@@ -99,7 +102,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     }
 
     @Test
-    void shouldRemoveSuccessfullyCompletedPods() {
+    void shouldRemoveSuccessfullyCompletedPods() throws TimeoutException {
         awaitDefaultToken(testResource.getMetadata().getNamespace());
         //Given I have started a new Pod
         getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
@@ -118,7 +121,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endContainer()
                 .withRestartPolicy("Never")
                 .endSpec()
-                .build());
+                .build(), EntandoOperatorSpiConfig.getPodCompletionTimeoutSeconds());
         getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
                 .withNewMetadata()
                 .withName("failed-pod")
@@ -135,7 +138,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endContainer()
                 .withRestartPolicy("Never")
                 .endSpec()
-                .build());
+                .build(), EntandoOperatorSpiConfig.getPodCompletionTimeoutSeconds());
         //When I wait for the pod
         getSimpleK8SClient().pods()
                 .removeSuccessfullyCompletedPods(testResource.getMetadata().getNamespace(), Collections.singletonMap("label", "value"));
@@ -149,7 +152,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     }
 
     @Test
-    void shouldRunPodToCompletion() {
+    void shouldRunPodToCompletion() throws TimeoutException {
         awaitDefaultToken(testResource.getMetadata().getNamespace());
 
         //Given I have started a new Pod
@@ -170,7 +173,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
                 .endSpec()
                 .build();
         //When I wait for the pod
-        final Pod actual = getSimpleK8SClient().pods().runToCompletion(pod);
+        final Pod actual = getSimpleK8SClient().pods().runToCompletion(pod, EntandoOperatorSpiConfig.getPodCompletionTimeoutSeconds());
         //Then the current thread only proceeds once the pod has completed
         assertThat(PodResult.of(actual).getState(), is(State.COMPLETED));
         assertThat(PodResult.of(actual).hasFailed(), is(false));
@@ -178,7 +181,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Test
     @Disabled("Currently used for optimization only")
-    void testProbes() throws TimeoutException, IOException {
+    void testProbes() throws TimeoutException {
         awaitDefaultToken(testResource.getMetadata().getNamespace());
         step("Given I have started a new Pod");
         final Pod startedPod = this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())

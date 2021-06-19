@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.common;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
 import org.assertj.core.api.Assertions;
@@ -71,6 +72,15 @@ class EntandoOperatorConfigTest {
                 OperatorDeploymentType.HELM.getName());
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty(), "*");
         Assertions.assertThat(EntandoOperatorConfig.isClusterScopedDeployment()).isTrue();
+    }
+
+    @Test
+    void testAccessibleNamespaces() {
+        //The Helm deployment expects "*" for cluster scope
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty(), "namespace1, namespace2");
+        System.setProperty(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_OF_INTEREST.getJvmSystemProperty(), "namespace2, namespace3");
+        assertThat(EntandoOperatorConfig.getAllAccessibleNamespaces(), containsInAnyOrder("namespace1", "namespace2", "namespace3"));
+        assertThat(EntandoOperatorConfig.getAllAccessibleNamespaces().size(), is(3));
     }
 
     @Test

@@ -26,9 +26,10 @@ import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResu
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ServerStatus;
 import picocli.CommandLine;
 
-public class SsoAwareControllerFluent<N extends SsoAwareControllerFluent<N>> extends ExposingControllerFluent<N> {
+public class SsoAwareControllerFluent<N extends SsoAwareControllerFluent<N>> extends ControllerFluent<N> {
 
     private final CapabilityProvider capabilityProvider;
     private CapabilityRequirement ssoRequirement;
@@ -53,23 +54,26 @@ public class SsoAwareControllerFluent<N extends SsoAwareControllerFluent<N>> ext
 
     @Override
     public void run() {
-        final EntandoCustomResource resourceToProcess = k8sClient.resolveCustomResourceToProcess(Collections.singleton(supportedClass));
+        EntandoCustomResource resourceToProcess = k8sClient.resolveCustomResourceToProcess(Collections.singleton(supportedClass));
         try {
             k8sClient.updatePhase(resourceToProcess, EntandoDeploymentPhase.STARTED);
             final ProvidedSsoCapability ssoCapability = new ProvidedSsoCapability(
                     this.capabilityProvider.provideCapability(resourceToProcess, ssoRequirement, 30)
             );
             final DefaultExposedDeploymentResult result = deploymentProcessor
-                    .processDeployable(deployable.withSsoConnectionConfig(ssoCapability).withCustomResource(resourceToProcess),
+                    .processDeployable(deployable.withSsoConnectionInfo(ssoCapability)
+                                    .withCustomResource(resourceToProcess),
                             60);
-            k8sClient.updateStatus(resourceToProcess, result.getStatus());
-            k8sClient.updatePhase(resourceToProcess, EntandoDeploymentPhase.SUCCESSFUL);
+            resourceToProcess = k8sClient.updateStatus(resourceToProcess, result.getStatus());
+            k8sClient.deploymentEnded(resourceToProcess);
         } catch (Exception e) {
             e.printStackTrace();
             k8sClient.deploymentFailed(resourceToProcess, e, NameUtils.MAIN_QUALIFIER);
-            throw new CommandLine.ExecutionException(new CommandLine(this), e.getMessage());
         }
-
+        resourceToProcess.getStatus().findFailedServerStatus().flatMap(ServerStatus::getEntandoControllerFailure).ifPresent(f -> {
+                    throw new CommandLine.ExecutionException(new CommandLine(this), f.getDetailMessage());
+                }
+        );
     }
 
 }

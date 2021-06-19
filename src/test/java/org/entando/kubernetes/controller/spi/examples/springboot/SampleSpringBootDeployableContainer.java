@@ -28,10 +28,10 @@ import org.entando.kubernetes.controller.spi.container.DbAwareContainer;
 import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer;
-import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
-import org.entando.kubernetes.controller.spi.container.SsoConnectionInfo;
+import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
-import org.entando.kubernetes.controller.support.spibase.SsoAwareContainerBase;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
@@ -40,19 +40,21 @@ import org.entando.kubernetes.model.common.KeycloakAwareSpec;
 
 public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomResource<? extends KeycloakAwareSpec,
         EntandoCustomResourceStatus>> implements
-        SpringBootDeployableContainer, SsoAwareContainerBase,
+        SpringBootDeployableContainer, SsoAwareContainer,
         ParameterizableContainer, PersistentVolumeAwareContainer, ConfigurableResourceContainer {
 
     public static final String MY_IMAGE = "entando/entando-k8s-service";
     public static final String MY_WEB_CONTEXT = "/k8s";
     private final T customResource;
-    private final SsoConnectionInfo ssoConnectionInfo;
     private final List<DatabaseSchemaConnectionInfo> dbSchemaInfo;
+    private final SsoConnectionInfo ssoConnectionInfo;
+    private final SsoClientConfig ssoClientConfig;
 
-    public SampleSpringBootDeployableContainer(T customResource, SsoConnectionInfo ssoConnectionInfo,
-            DatabaseConnectionInfo databaseConnectionInfo) {
+    public SampleSpringBootDeployableContainer(T customResource, DatabaseConnectionInfo databaseConnectionInfo,
+            SsoConnectionInfo ssoConnectionInfo, SsoClientConfig ssoClientConfig) {
         this.customResource = customResource;
         this.ssoConnectionInfo = ssoConnectionInfo;
+        this.ssoClientConfig = ssoClientConfig;
         if (databaseConnectionInfo == null) {
             this.dbSchemaInfo = Collections.emptyList();
         } else {
@@ -97,18 +99,6 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     }
 
     @Override
-    public SsoConnectionInfo getSsoConnectionInfo() {
-        return this.ssoConnectionInfo;
-    }
-
-    @Override
-    public SsoClientConfig getSsoClientConfig() {
-        return new SsoClientConfig(getRealmToUse(),
-                customResource.getMetadata().getName() + "-" + getNameQualifier(),
-                customResource.getMetadata().getName() + "-" + getNameQualifier());
-    }
-
-    @Override
     public Optional<DatabaseSchemaConnectionInfo> getDatabaseSchema() {
         return Optional.of(this.dbSchemaInfo.get(0));
     }
@@ -116,6 +106,16 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     @Override
     public Optional<DbmsVendor> getDbms() {
         return dbSchemaInfo.stream().findFirst().map(i -> i.getDatabaseServiceResult().getVendor().getDbms());
+    }
+
+    @Override
+    public SsoClientConfig getSsoClientConfig() {
+        return this.ssoClientConfig;
+    }
+
+    @Override
+    public SsoConnectionInfo getSsoConnectionInfo() {
+        return this.ssoConnectionInfo;
     }
 
     @Override
@@ -129,12 +129,7 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
     }
 
     @Override
-    public KeycloakAwareSpec getKeycloakAwareSpec() {
-        return customResource.getSpec();
-    }
-
-    @Override
     public List<EnvVar> getEnvironmentVariableOverrides() {
-        return getKeycloakAwareSpec().getEnvironmentVariables();
+        return customResource.getSpec().getEnvironmentVariables();
     }
 }

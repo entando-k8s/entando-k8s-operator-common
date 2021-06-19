@@ -17,7 +17,7 @@
 package org.entando.kubernetes.test.componenttest.argumentcaptors;
 
 import java.util.List;
-import org.entando.kubernetes.controller.spi.container.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
 import org.mockito.Mockito;
 import org.mockito.internal.matchers.CapturingMatcher;
 import org.mockito.internal.util.Primitives;

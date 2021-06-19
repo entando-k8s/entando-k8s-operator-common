@@ -16,13 +16,14 @@
 
 package org.entando.kubernetes.fluentspi;
 
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 
-public class ExposingControllerFluent<N extends ExposingControllerFluent<N>> extends ControllerFluent<N> {
+public class ExposingControllerFluent<N extends ExposingControllerFluent<N>> extends SsoAwareControllerFluent<N> {
 
     public ExposingControllerFluent(KubernetesClientForControllers k8sClient,
-            DeploymentProcessor deploymentProcessor) {
-        super(k8sClient, deploymentProcessor);
+            DeploymentProcessor deploymentProcessor, CapabilityProvider capabilityProvider) {
+        super(k8sClient, deploymentProcessor, capabilityProvider);
     }
 }

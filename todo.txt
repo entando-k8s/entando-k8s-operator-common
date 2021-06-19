@@ -1,13 +1,6 @@
 To test:
 
-Capability Timeout
-
-ExternalService that uses IP address
-ExternalService with no delegating service
-One outer hexagon test
-Failed DB preparation
-Failed DeployCommand
-Capability request that times out
+ExternalService that uses IPv6 address
 Test an SSOClientConfig with permissions and roles
 Test SpringBoot container example
-
+DAtabase name too long
