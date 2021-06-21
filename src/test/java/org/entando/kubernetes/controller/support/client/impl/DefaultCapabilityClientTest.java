@@ -45,6 +45,7 @@ import org.assertj.core.api.ThrowableAssert;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.EntandoRbacRole;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
@@ -234,11 +235,11 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         }
         await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
                 .until(() -> getFabric8Client().secrets().inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
-                        .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "test-account")));
+                        .getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "test-account")));
         final List<Secret> items = getFabric8Client().secrets().inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
                 .getItems();
         final Secret tokenSecret = items.stream()
-                .filter(s -> isValidTokenSecret(s, "test-account")).findFirst().get();
+                .filter(s -> TestFixturePreparation.isValidTokenSecret(s, "test-account")).findFirst().get();
         String token = new String(Base64.getDecoder().decode(tokenSecret.getData().get("token")), StandardCharsets.UTF_8);
         Config config = new ConfigBuilder().build();
         System.setProperty(Config.KUBERNETES_DISABLE_AUTO_CONFIG_SYSTEM_PROPERTY, "true");

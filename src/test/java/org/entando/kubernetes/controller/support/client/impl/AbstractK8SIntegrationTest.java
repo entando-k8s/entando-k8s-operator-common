@@ -16,14 +16,12 @@
 
 package org.entando.kubernetes.controller.support.client.impl;
 
-import static java.util.Optional.ofNullable;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.qameta.allure.Allure;
@@ -55,7 +53,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
     protected void awaitDefaultToken(String namespace) {
         await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
                 .until(() -> getFabric8Client().secrets().inNamespace(namespace).list()
-                        .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default")));
+                        .getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "default")));
     }
 
     protected TestResource newTestResource() {
@@ -106,18 +104,8 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
         }
         for (String s : getNamespacesToUse()) {
             TestFixturePreparation.createNamespace(fabric8Client, s);
-            await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
-                    .until(() -> fabric8Client.secrets().inNamespace(s).list()
-                            .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default")));
         }
 
-    }
-
-    protected boolean isValidTokenSecret(Secret s, String serviceAccountName) {
-        return s.getType().equals("kubernetes.io/service-account-token") && s.getMetadata().getAnnotations() != null
-                && serviceAccountName.equals(s.getMetadata().getAnnotations().get("kubernetes.io/service-account.name"))
-                && s.getData() != null
-                && ofNullable(s.getData().get("token")).map(t -> t.length() > 0).orElse(false);
     }
 
     protected abstract String[] getNamespacesToUse();
