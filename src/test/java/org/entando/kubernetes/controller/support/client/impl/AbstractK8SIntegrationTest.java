@@ -94,17 +94,23 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
         fabric8Client = new SupportProducer().getKubernetesClient();
         for (String s : getNamespacesToUse()) {
-            fabric8Client.namespaces().withName(s).delete();
+            await().atMost(120, TimeUnit.SECONDS).ignoreExceptions()
+                    .until(() -> {
+                        if (fabric8Client.namespaces().withName(s).get() == null) {
+                            return true;
+                        } else {
+                            fabric8Client.namespaces().withName(s).delete();
+                            return false;
+                        }
+                    });
         }
         for (String s : getNamespacesToUse()) {
-            await().atMost(4, TimeUnit.MINUTES).ignoreExceptions().until(() -> {
-                TestFixturePreparation.createNamespace(fabric8Client, s);
-                await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
-                        .until(() -> getFabric8Client().secrets().inNamespace(s).list()
-                                .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default")));
-                return true;
-            });
+            TestFixturePreparation.createNamespace(fabric8Client, s);
+            await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
+                    .until(() -> fabric8Client.secrets().inNamespace(s).list()
+                            .getItems().stream().anyMatch(secret -> isValidTokenSecret(secret, "default")));
         }
+
     }
 
     protected boolean isValidTokenSecret(Secret s, String serviceAccountName) {
