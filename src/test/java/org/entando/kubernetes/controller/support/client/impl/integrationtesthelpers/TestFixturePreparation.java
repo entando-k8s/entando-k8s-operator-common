@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers;
 
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
@@ -130,5 +131,20 @@ public final class TestFixturePreparation {
         client.namespaces().create(new NamespaceBuilder().withNewMetadata().withName(namespace)
                 .addToLabels("testType", "end-to-end")
                 .endMetadata().build());
+        EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s -> {
+            client.secrets().inNamespace(namespace).create(new SecretBuilder().withNewMetadata()
+                    .withNamespace(namespace)
+                    .withName("redhat-registry")
+                    .endMetadata()
+                    .addToStringData(".dockerconfigjson", s)
+                    .withType("kubernetes.io/dockerconfigjson")
+                    .build());
+            client.serviceAccounts().inNamespace(namespace).withName("default").edit(serviceAccount -> {
+                serviceAccount.getImagePullSecrets().add(new LocalObjectReference(
+                        "redhat-registry"));
+                return serviceAccount;
+            });
+
+        });
     }
 }
