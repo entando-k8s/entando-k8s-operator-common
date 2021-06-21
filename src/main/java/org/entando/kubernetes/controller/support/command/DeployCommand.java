@@ -167,9 +167,11 @@ public class DeployCommand<T extends ServiceDeploymentResult<T>> {
             if (ingressCreator.requiresDelegatingService(serviceCreator.getService(), (IngressingDeployable<?>) deployable)) {
                 Service newDelegatingService = serviceCreator.newDelegatingService(k8sClient.services(),
                         (IngressingDeployable<?>) deployable);
-                ingressCreator.createIngress(k8sClient.ingresses(), (IngressingDeployable<?>) deployable, newDelegatingService);
+                ingressCreator
+                        .createIngress(k8sClient.ingresses(), (IngressingDeployable<?>) deployable, newDelegatingService, this.status);
             } else {
-                ingressCreator.createIngress(k8sClient.ingresses(), (IngressingDeployable<?>) deployable, serviceCreator.getService());
+                ingressCreator.createIngress(k8sClient.ingresses(), (IngressingDeployable<?>) deployable, serviceCreator.getService(),
+                        this.status);
             }
             status.setIngressName(ingressCreator.getIngress().getMetadata().getName());
             k8sClient.entandoResources().updateStatus(entandoCustomResource, status);

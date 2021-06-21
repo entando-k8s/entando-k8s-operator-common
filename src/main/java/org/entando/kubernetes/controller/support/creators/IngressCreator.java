@@ -43,6 +43,7 @@ import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.ServerStatus;
 
 public class IngressCreator extends AbstractK8SResourceCreator {
 
@@ -95,10 +96,10 @@ public class IngressCreator extends AbstractK8SResourceCreator {
     }
 
     public void createIngress(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable,
-            Service service) {
+            Service service, ServerStatus status) {
         this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(), ingressingDeployable.getIngressName());
         if (this.ingress == null) {
-            Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service),
+            Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service, status),
                     ingressingDeployable);
             this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress), () -> newIngress);
         } else {
@@ -112,7 +113,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
             List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
                     .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast).collect(Collectors.toList());
 
-            this.ingress = ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingContainers, ingress, service);
+            this.ingress = ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingContainers, ingress, service, status);
         }
     }
 

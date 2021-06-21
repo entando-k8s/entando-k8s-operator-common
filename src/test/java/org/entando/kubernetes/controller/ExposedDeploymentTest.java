@@ -76,7 +76,7 @@ import picocli.CommandLine;
         + "users")
 @Issue("ENG-2284")
 @SourceLink("SsoConsumerTest.java")
-class ExposedServiceTestTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
+class ExposedDeploymentTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels {
 
     public static final String GENERATED_SSO_CLIENT_SECRET = "SOME-ASDF-KEYCLOAK-SECRET";
 
@@ -207,7 +207,9 @@ class ExposedServiceTestTest extends ControllerTestBase implements VariableRefer
         step("When the controller processes a new TestResource", () -> {
             attachKubernetesResource("TestResource", entandoCustomResource);
             runControllerAgainstCustomResource(entandoCustomResource);
+            this.entandoCustomResource = getClient().entandoResources().reload(entandoCustomResource);
         });
+
         step("Then a Deployment was created with a single Container", () -> {
             final Deployment deployment = getClient().deployments()
                     .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
@@ -258,6 +260,10 @@ class ExposedServiceTestTest extends ControllerTestBase implements VariableRefer
                 () -> verifyThatAllVariablesAreMapped(entandoCustomResource, getClient(), getClient().deployments()
                         .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource))));
 
+        step("And the path is carried on the status of the CustomResource against the correct qualifier", () -> {
+            assertThat(entandoCustomResource.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getWebContexts())
+                    .containsEntry(NameUtils.DEFAULT_SERVER_QUALIFIER, "/my-app");
+        });
     }
 
     @Test
@@ -330,6 +336,8 @@ class ExposedServiceTestTest extends ControllerTestBase implements VariableRefer
                     container.withWebContextPath("/my-app").withHealthCheckPath("/my-app/health");
                     attachSpiResource("Container", container);
                     runControllerAgainstCustomResource(firstResource.get());
+                    firstResource.set(getClient().entandoResources().reload(firstResource.get()));
+
                 });
         step(format(
                 "When I deploy the second TestResource '%s' in namespace '%s' with the context path '/my-app2' and the health check path "
@@ -340,6 +348,7 @@ class ExposedServiceTestTest extends ControllerTestBase implements VariableRefer
                     attachSpiResource("Container", container);
                     attachKubernetesResource("TestResource", secondResource.get());
                     runControllerAgainstCustomResource(secondResource.get());
+                    secondResource.set(getClient().entandoResources().reload(secondResource.get()));
                 });
 
         step("Then a second Deployment was created with a single Container", () -> {
@@ -407,6 +416,13 @@ class ExposedServiceTestTest extends ControllerTestBase implements VariableRefer
                 assertThat(theHttpPath("/my-app2").on(ingress).getBackend().getServiceName())
                         .isEqualTo(delegateName);
             });
+        });
+
+        step("And both paths are represented on the status of the CustomResource", () -> {
+            assertThat(firstResource.get().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getWebContexts())
+                    .containsEntry(NameUtils.DEFAULT_SERVER_QUALIFIER, "/my-app");
+            assertThat(secondResource.get().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getWebContexts())
+                    .containsEntry(NameUtils.DEFAULT_SERVER_QUALIFIER, "/my-app2");
         });
 
     }
