@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.client.impl;
 
 import static io.smallrye.common.constraint.Assert.assertTrue;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -74,7 +75,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         TestResource app = newTestResource();
         Ingress myIngress = getTestIngress();
         myIngress.getSpec().getRules().get(0).getHttp().getPaths().clear();
-        final int total = 50;
+        final int total = 40;
         ExecutorService executor = Executors.newFixedThreadPool(total + 5);
         //When I create multiple ingresses at the same time with different paths
         for (int i = 0; i < total; i++) {
@@ -95,7 +96,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
             });
         }
         executor.shutdown();
-        executor.awaitTermination(120, TimeUnit.SECONDS);
+        await().atMost(10, TimeUnit.MINUTES).ignoreExceptions().until(() -> executor.awaitTermination(60, TimeUnit.SECONDS));
         Ingress actual = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName());
         //Then the paths should be consistent
         assertThat(actual.getSpec().getRules().get(0).getHttp().getPaths().size(), is(total));
