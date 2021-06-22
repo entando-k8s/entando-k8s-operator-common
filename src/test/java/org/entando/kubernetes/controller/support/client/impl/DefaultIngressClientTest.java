@@ -74,8 +74,8 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         TestResource app = newTestResource();
         Ingress myIngress = getTestIngress();
         myIngress.getSpec().getRules().get(0).getHttp().getPaths().clear();
-        final int total = 20;
-        ExecutorService executor = Executors.newFixedThreadPool(total);
+        final int total = 50;
+        ExecutorService executor = Executors.newFixedThreadPool(total + 5);
         //When I create multiple ingresses at the same time with different paths
         for (int i = 0; i < total; i++) {
             Ingress tmp = objectMapper.readValue(objectMapper.writeValueAsString(myIngress), Ingress.class);
@@ -86,7 +86,13 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
                     .withServicePort(new IntOrString(8080))
                     .endBackend()
                     .build());
-            executor.submit(() -> getSimpleK8SClient().ingresses().createIngress(app, tmp));
+            executor.submit(() -> {
+                try {
+                    getSimpleK8SClient().ingresses().createIngress(app, tmp);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         }
         executor.shutdown();
         executor.awaitTermination(120, TimeUnit.SECONDS);
