@@ -102,14 +102,10 @@ public class KubernetesResourceProcessor {
     @SuppressWarnings("unchecked")
     private <T extends HasMetadata> T clone(T newResourceState) {
         try {
-            CustomResourceDefinitionContext context = null;
-            if (newResourceState instanceof SerializedEntandoResource) {
-                context = ((SerializedEntandoResource) newResourceState).getDefinition();
-            }
             ObjectMapper objectMapper = new ObjectMapper();
             final T result = (T) objectMapper.readValue(objectMapper.writeValueAsString(newResourceState), newResourceState.getClass());
-            if (context != null) {
-                ((SerializedEntandoResource) result).setDefinition(context);
+            if (newResourceState instanceof SerializedEntandoResource) {
+                ((SerializedEntandoResource) result).setDefinition(((SerializedEntandoResource) newResourceState).getDefinition());
             }
             return result;
         } catch (IOException e) {

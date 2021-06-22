@@ -41,10 +41,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
@@ -70,6 +72,13 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     @Override
     public SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds)
             throws TimeoutException {
+        Predicate<EntandoCustomResource> predicate = resource -> Set
+                .of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED, EntandoDeploymentPhase.SUCCESSFUL)
+                .contains(resource.getStatus().getPhase());
+        final SerializedEntandoResource reloaded = reload(customResource);
+        if (predicate.test(reloaded)) {
+            return reloaded;
+        }
         final CompletableFuture<SerializedEntandoResource> future = new CompletableFuture<>();
         try (Watch ignore = ioSafe(() -> client.customResource(customResource.getDefinition())
                 .watch(customResource.getMetadata().getNamespace(), customResource.getMetadata().getName(), null,
@@ -83,8 +92,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
                                 resource.setDefinition(customResource.getDefinition());
                                 final EntandoDeploymentPhase phase = resource.getStatus()
                                         .getPhase();
-                                if (phase == EntandoDeploymentPhase.FAILED || phase == EntandoDeploymentPhase.SUCCESSFUL
-                                        || phase == EntandoDeploymentPhase.IGNORED) {
+                                if (predicate.test(resource)) {
                                     future.complete(resource);
                                 }
                             }

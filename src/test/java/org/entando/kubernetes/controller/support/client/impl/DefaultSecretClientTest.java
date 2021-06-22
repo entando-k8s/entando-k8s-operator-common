@@ -120,7 +120,7 @@ class DefaultSecretClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Override
     protected String[] getNamespacesToUse() {
-        return new String[]{MY_APP_NAMESPACE_1, "keycloak-namespace"};
+        return new String[]{MY_APP_NAMESPACE_1};
     }
 
 }

@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.client.doubles;
 
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,11 +38,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
@@ -50,6 +53,7 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 
 public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
 
@@ -108,11 +112,22 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     @Override
     public SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds)
             throws TimeoutException {
+        Predicate<EntandoCustomResource> predicate = resource -> Set
+                .of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED, EntandoDeploymentPhase.SUCCESSFUL)
+                .contains(resource.getStatus().getPhase());
+        final SerializedEntandoResource reloaded = reloadAsOpaqueResource(customResource);
+        if (predicate.test(getNamespace(customResource.getMetadata().getNamespace())
+                .getCustomResources(customResource.getKind())
+                .get(customResource.getMetadata().getName()))) {
+            return reloaded;
+        }
         CompletableFuture<SerializedEntandoResource> future = new CompletableFuture<>();
-        getCluster().getResourceProcessor().watch(new Watcher<SerializedEntandoResource>() {
+        getCluster().getResourceProcessor().watch(new Watcher<EntandoCustomResource>() {
             @Override
-            public void eventReceived(Action action, SerializedEntandoResource hasMetadata) {
-
+            public void eventReceived(Action action, EntandoCustomResource resource) {
+                if (predicate.test(resource)) {
+                    future.complete(reloadAsOpaqueResource(resource));
+                }
             }
 
             @Override
@@ -121,6 +136,20 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
             }
         }, customResource.getDefinition(), customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
         return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
+    }
+
+    private SerializedEntandoResource reloadAsOpaqueResource(EntandoCustomResource customResource) {
+        return ioSafe(() -> {
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final EntandoCustomResource currentState = getNamespace(customResource.getMetadata().getNamespace())
+                    .getCustomResources(customResource.getKind())
+                    .get(customResource.getMetadata().getName());
+            if (currentState instanceof SerializedEntandoResource) {
+                return (SerializedEntandoResource) currentState;
+            } else {
+                return objectMapper.readValue(objectMapper.writeValueAsString(currentState), SerializedEntandoResource.class);
+            }
+        });
     }
 
     @Override
