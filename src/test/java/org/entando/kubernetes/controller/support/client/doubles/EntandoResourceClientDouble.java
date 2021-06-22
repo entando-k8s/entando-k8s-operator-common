@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -114,7 +115,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
             throws TimeoutException {
         Predicate<EntandoCustomResource> predicate = resource -> Set
                 .of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED, EntandoDeploymentPhase.SUCCESSFUL)
-                .contains(resource.getStatus().getPhase());
+                .contains(Optional.ofNullable(resource.getStatus().getPhase()).orElse(EntandoDeploymentPhase.REQUESTED));
         final SerializedEntandoResource reloaded = reloadAsOpaqueResource(customResource);
         if (predicate.test(getNamespace(customResource.getMetadata().getNamespace())
                 .getCustomResources(customResource.getKind())

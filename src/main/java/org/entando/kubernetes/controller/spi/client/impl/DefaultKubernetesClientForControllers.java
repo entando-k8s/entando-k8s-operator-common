@@ -74,7 +74,7 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
             throws TimeoutException {
         Predicate<EntandoCustomResource> predicate = resource -> Set
                 .of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED, EntandoDeploymentPhase.SUCCESSFUL)
-                .contains(resource.getStatus().getPhase());
+                .contains(Optional.ofNullable(resource.getStatus().getPhase()).orElse(EntandoDeploymentPhase.REQUESTED));
         final SerializedEntandoResource reloaded = reload(customResource);
         if (predicate.test(reloaded)) {
             return reloaded;
