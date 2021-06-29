@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
@@ -60,6 +61,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
+/**
+ * This test focuses on the implementation of the CapabilityProvider interface.
+ * Scope:
+ *
+ * <p>From the interface  org.entando.kubernetes.controller.spi.capability.CapabilityProvider which will be used in the controllers
+ * consuming capabilities</p>
+ *
+ * <p>through the serialization layer which in future may involve spawning a process to execute a CLI,</p>
+ *
+ * <p>terminating in the org.entando.kubernetes.controller.support.command.ProvideCapabilityCommand</p>
+ *
+ * <p>And then we mock out the behaviour of the controller providing the capability</p>
+ */
+
 @ExtendWith(MockitoExtension.class)
 @Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure"), @Tag("pre-deployment")})
 @Feature("As a controller developer, I would like to have be able to resolve ProvidedCapabilities at different levels of scope so that we"
@@ -73,7 +88,7 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CustomResour
     private CapabilityRequirement theCapabilityRequirement;
     private final SimpleK8SClientDouble clientDouble = new SimpleK8SClientDouble();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
-    private final SerializingCapabilityProvider capabilityProvider = new SerializingCapabilityProvider(clientDouble.entandoResources(),
+    private final CapabilityProvider capabilityProvider = new SerializingCapabilityProvider(clientDouble.entandoResources(),
             new InProcessCommandStream(clientDouble, null));
     private CapabilityProvisioningResult capabilityResult;
 
@@ -530,6 +545,58 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CustomResour
             assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.NAMESPACE);
             assertTrue(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).flatMap(ServerStatus::getIngressName)
                     .isEmpty());
+        });
+    }
+
+    @Test
+    @Description("Should update a previously created Capability in the same namespace with essential changes")
+    void shouldUpdatePreviouslyCreatedCapabilityWithEssentialChanges() {
+
+        step("Given I have an TestResource", () -> {
+            this.forResource = clientDouble.entandoResources().createOrPatchEntandoResource(newTestResource());
+            attachKubernetesResource("TestResource", this.forResource);
+        });
+        step("And there is a controller to process requests for the SSO capability requested",
+                () -> doAnswer(withAnSsoCapabilityStatus("irrelevant.com", "my-realm")).when(getClient().capabilities())
+                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.SSO)), anyInt()));
+        step("And I have created a Capability to be usable by others in the same namespace", () -> {
+            this.theCapabilityRequirement = new CapabilityRequirementBuilder()
+                    .withCapability(StandardCapability.SSO)
+                    .withImplementation(StandardCapabilityImplementation.REDHAT_SSO)
+                    .withResolutionScopePreference(CapabilityScope.NAMESPACE)
+                    .withProvisioningStrategy(
+                            CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build();
+            attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
+            this.capabilityResult = this.capabilityProvider.provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+            attachSpiResource("CapabilityProvisioningResult", this.capabilityResult);
+        });
+        step("When I request for my CapabilityRequirement to be fulfilled at either Cluster or Namespace level, but with a new "
+                        + "ingressHostName, tlsSecretName",
+                () -> {
+                    this.theCapabilityRequirement = new CapabilityRequirementBuilder()
+                            .withCapability(StandardCapability.SSO)
+                            .withImplementation(StandardCapabilityImplementation.REDHAT_SSO)
+                            .withResolutionScopePreference(CapabilityScope.CLUSTER, CapabilityScope.NAMESPACE)
+                            .withProvisioningStrategy(
+                                    CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
+                            .withPreferredTlsSecretName("my-tls-secret")
+                            .withPreferredIngressHostName("my.ingress.host.com")
+                            .build();
+                    attachKubernetesResource("CapabilityRequirement", this.theCapabilityRequirement);
+                    this.capabilityResult = this.capabilityProvider
+                            .provideCapability(forResource, theCapabilityRequirement, TIMEOUT_SECONDS);
+                    attachSpiResource("CapabilityProvisioningResult", this.capabilityResult);
+                });
+        final ProvidedCapability providedCapability = capabilityResult.getProvidedCapability();
+        step("Then I receive a capability that meets my requirements", () -> {
+            assertThat(providedCapability).isNotNull();
+            assertThat(providedCapability.getSpec().getCapability()).isEqualTo(StandardCapability.SSO);
+            assertThat(providedCapability.getSpec().getImplementation()).contains(StandardCapabilityImplementation.REDHAT_SSO);
+            assertThat(providedCapability.getSpec().getResolutionScopePreference()).contains(CapabilityScope.NAMESPACE);
+        });
+        step("And it reflects the new tlsSecretName and ingressHostname", () -> {
+            assertThat(providedCapability.getSpec().getPreferredIngressHostName()).contains("my.ingress.host.com");
+            assertThat(providedCapability.getSpec().getPreferredTlsSecretName()).contains("my-tls-secret");
         });
     }
 

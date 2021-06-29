@@ -66,7 +66,11 @@ public class KubernetesResourceProcessor {
             Object existingSpec = null;
             Object newSpec = null;
             try {
+                final ObjectMapper objectMapper = new ObjectMapper();
                 final Method getSpec = newResourceState.getClass().getMethod("getSpec");
+                if (!newResourceState.getClass().isInstance(existingResource)) {
+                    System.out.println();
+                }
                 existingSpec = getSpec.invoke(existingResource);
                 newSpec = getSpec.invoke(newResourceState);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {

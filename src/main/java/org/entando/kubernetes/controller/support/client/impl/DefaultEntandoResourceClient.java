@@ -21,12 +21,18 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllers;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DefaultEntandoResourceClient extends DefaultKubernetesClientForControllers implements
         EntandoResourceClient {
 
     public DefaultEntandoResourceClient(KubernetesClient client) {
         super(client);
+    }
+
+    @Override
+    public <T extends EntandoCustomResource> T reload(T customResource) {
+        return super.reload(customResource);
     }
 
     @Override

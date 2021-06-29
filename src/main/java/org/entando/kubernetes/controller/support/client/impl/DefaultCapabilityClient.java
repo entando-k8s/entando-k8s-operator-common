@@ -17,7 +17,6 @@
 package org.entando.kubernetes.controller.support.client.impl;
 
 import static java.util.Optional.ofNullable;
-import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
@@ -27,23 +26,19 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.client.impl.EntandoResourceClientBase;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
-import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ServerStatus;
 
-public class DefaultCapabilityClient implements CapabilityClient {
-
-    private final KubernetesClient client;
+public class DefaultCapabilityClient extends EntandoResourceClientBase implements CapabilityClient {
 
     public DefaultCapabilityClient(KubernetesClient client) {
-        this.client = client;
+        super(client);
     }
 
     @Override
@@ -84,24 +79,13 @@ public class DefaultCapabilityClient implements CapabilityClient {
     }
 
     @Override
-    public ProvidedCapability createCapability(ProvidedCapability capability) {
-        return client.customResources(ProvidedCapability.class).inNamespace(capability.getMetadata().getNamespace())
-                .create(capability);
+    public ProvidedCapability createOrPatchCapability(ProvidedCapability capability) {
+        return super.createOrPatchEntandoResource(capability);
     }
 
     @Override
     public ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
-        return interruptionSafe(() -> client.customResources(ProvidedCapability.class)
-                .inNamespace(capability.getMetadata().getNamespace())
-                .withName(capability.getMetadata().getName())
-                .waitUntilCondition(providedCapability -> providedCapability.getStatus() != null
-                                && providedCapability.getStatus().getPhase() != null
-                                && Set.of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED,
-                        EntandoDeploymentPhase.SUCCESSFUL)
-                                .contains(providedCapability.getStatus().getPhase()),
-                        timeoutSeconds,
-                        TimeUnit.SECONDS));
-
+        return waitForCompletion(capability, timeoutSeconds);
     }
 
     @Override

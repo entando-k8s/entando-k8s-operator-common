@@ -35,8 +35,10 @@ import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
+import org.entando.kubernetes.model.capability.CapabilityRequirementBuilder;
 import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.capability.ProvidedCapabilityBuilder;
 import org.entando.kubernetes.model.common.ResourceReference;
 
 public class ProvideCapabilityCommand {
@@ -58,12 +60,27 @@ public class ProvideCapabilityCommand {
             final List<CapabilityScope> resolutionScopePreference = determineResolutionScopePreference(requirement);
             Optional<ProvidedCapability> match = findCapability(forResource, requirement, resolutionScopePreference);
             match.ifPresent(c -> validateCapabilityCriteria(requirement, resolutionScopePreference, c));
-            ProvidedCapability providedCapability = match.orElseGet(
+            ProvidedCapability providedCapability = match.map(pc -> syncIfRequired(pc, requirement)).orElseGet(
                     () -> makeNewCapabilityAvailable(forResource, requirement, resolutionScopePreference.get(0)));
             providedCapability = client.waitForCapabilityCompletion(providedCapability, timeoutSeconds);
             return loadProvisioningResult(providedCapability);
         } catch (Exception e) {
             return new SerializedCapabilityProvisioningResult(ExceptionUtils.failureOf(forResource, e));
+        }
+    }
+
+    private ProvidedCapability syncIfRequired(ProvidedCapability providedCapability, CapabilityRequirement requirement) {
+        final CapabilityRequirement requiredState = new CapabilityRequirementBuilder(providedCapability.getSpec())
+                .addAllToCapabilityParameters(requirement.getCapabilityParameters())
+                .withPreferredIngressHostName(requirement.getPreferredIngressHostName().orElse(null))
+                .withPreferredTlsSecretName(requirement.getPreferredTlsSecretName().orElse(null)).build();
+        if (providedCapability.getSpec().getCapabilityParameters().equals(requiredState.getCapabilityParameters())
+                && providedCapability.getSpec().getPreferredIngressHostName().equals(requiredState.getPreferredIngressHostName())
+                && providedCapability.getSpec().getPreferredTlsSecretName().equals(requiredState.getPreferredTlsSecretName())
+        ) {
+            return providedCapability;
+        } else {
+            return client.createOrPatchCapability(new ProvidedCapabilityBuilder(providedCapability).withSpec(requiredState).build());
         }
     }
 
@@ -165,7 +182,7 @@ public class ProvideCapabilityCommand {
     private ProvidedCapability makeNewCapabilityAvailable(HasMetadata forResource, CapabilityRequirement requiredCapability,
             CapabilityScope requirementScope) {
         final ProvidedCapability capabilityRequirement = buildProvidedCapabilityFor(forResource, requiredCapability);
-        client.createCapability(capabilityRequirement);
+        client.createOrPatchCapability(capabilityRequirement);
         return findCapability(forResource, requiredCapability, Collections.singletonList(requirementScope))
                 .orElseThrow(IllegalStateException::new);
     }

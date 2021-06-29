@@ -29,6 +29,7 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+import io.fabric8.kubernetes.client.CustomResource;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.PodResource;
@@ -106,28 +107,40 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     @Override
     @SuppressWarnings("unchecked")
     public <T extends EntandoCustomResource> T reload(T customResource) {
-        return (T) getNamespace(customResource.getMetadata().getNamespace()).getCustomResources(customResource.getKind())
-                .get(customResource.getMetadata().getName());
+        if (customResource instanceof SerializedEntandoResource) {
+            return (T) reloadAsOpaqueResource(customResource);
+        } else {
+            return (T) getNamespace(customResource.getMetadata().getNamespace()).getCustomResources(customResource.getKind())
+                    .get(customResource.getMetadata().getName());
+        }
     }
 
     @Override
-    public SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds)
+    @SuppressWarnings("unchecked")
+    public <T extends EntandoCustomResource> T waitForCompletion(T customResource, int timeoutSeconds)
             throws TimeoutException {
         Predicate<EntandoCustomResource> predicate = resource -> Set
                 .of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED, EntandoDeploymentPhase.SUCCESSFUL)
                 .contains(Optional.ofNullable(resource.getStatus().getPhase()).orElse(EntandoDeploymentPhase.REQUESTED));
-        final SerializedEntandoResource reloaded = reloadAsOpaqueResource(customResource);
-        if (predicate.test(getNamespace(customResource.getMetadata().getNamespace())
-                .getCustomResources(customResource.getKind())
-                .get(customResource.getMetadata().getName()))) {
+        final T reloaded = reload(customResource);
+        if (predicate.test(reloaded)) {
             return reloaded;
         }
-        CompletableFuture<SerializedEntandoResource> future = new CompletableFuture<>();
+        CompletableFuture<T> future = new CompletableFuture<>();
+        CustomResourceDefinitionContext definition;
+        if (customResource instanceof SerializedEntandoResource) {
+            definition = ((SerializedEntandoResource) customResource).getDefinition();
+        } else {
+            definition = CustomResourceDefinitionContext
+                    .fromCustomResourceType((Class<? extends CustomResource<?, ?>>) customResource.getClass());
+        }
         getCluster().getResourceProcessor().watch(new Watcher<EntandoCustomResource>() {
             @Override
             public void eventReceived(Action action, EntandoCustomResource resource) {
+                //NB we may not know which the type of 'resource' is here.
                 if (predicate.test(resource)) {
-                    future.complete(reloadAsOpaqueResource(resource));
+                    //but we need to reload it using the original type requested
+                    future.complete(reload(customResource));
                 }
             }
 
@@ -135,7 +148,7 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
             public void onClose(WatcherException e) {
 
             }
-        }, customResource.getDefinition(), customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
+        }, definition, customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
         return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
     }
 
@@ -208,8 +221,10 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public synchronized <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer) {
-        final T reloaded = reload(customResource);
+        final T reloaded = (T) getNamespace(customResource.getMetadata().getNamespace()).getCustomResources(customResource.getKind())
+                .get(customResource.getMetadata().getName());
         consumer.accept(reloaded);
         return getCluster().getResourceProcessor()
                 .processResource(getNamespace(customResource).getCustomResources(customResource.getKind()), reloaded);

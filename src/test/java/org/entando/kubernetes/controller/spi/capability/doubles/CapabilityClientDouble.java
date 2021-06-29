@@ -74,7 +74,7 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
     }
 
     @Override
-    public ProvidedCapability createCapability(ProvidedCapability providedCapability) {
+    public ProvidedCapability createOrPatchCapability(ProvidedCapability providedCapability) {
         return getCluster().getResourceProcessor()
                 .processResource(getNamespace(providedCapability).getCustomResources(providedCapability.getKind()), providedCapability);
     }

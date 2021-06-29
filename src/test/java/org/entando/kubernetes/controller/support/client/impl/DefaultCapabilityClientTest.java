@@ -341,7 +341,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
     void shouldCreateAProvidedCapabilityAndWaitForItsStatusToEnterACompletionPhase() {
         ValueHolder<ProvidedCapability> capability = new ValueHolder<>();
         step("Given I have created a ProvidedCapability", () -> {
-            capability.set(getClient().capabilities().createCapability(newCapability("my-capability")));
+            capability.set(getClient().capabilities().createOrPatchCapability(newCapability("my-capability")));
             attachResource("ProvidedCapability", capability.get());
         });
         step("And there is a background process such as a controller that updates the Phase on its Status to 'SUCCESSFUL'", () -> {
@@ -382,7 +382,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
     void shouldThrowTimeoutException() throws TimeoutException {
         ValueHolder<ProvidedCapability> capability = new ValueHolder<>();
         step("Given I have created a ProvidedCapability", () -> {
-            capability.set(getClient().capabilities().createCapability(newCapability("my-capability")));
+            capability.set(getClient().capabilities().createOrPatchCapability(newCapability("my-capability")));
             attachResource("ProvidedCapability", capability.get());
         });
         step("And there is no background process that updates the Phase on its Status");

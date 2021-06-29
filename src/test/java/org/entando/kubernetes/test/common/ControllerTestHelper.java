@@ -91,7 +91,7 @@ public interface ControllerTestHelper extends FluentTraversals, CustomResourceSt
             getScheduler().schedule(() -> runControllerAgainstCapabilityAndUpdateStatus(invocationOnMock.getArgument(0)), 200L,
                     TimeUnit.MILLISECONDS);
             return invocationOnMock.callRealMethod();
-        }).when(getClient().capabilities()).createCapability(argThat(matchesCapability(capability)));
+        }).when(getClient().capabilities()).createOrPatchCapability(argThat(matchesCapability(capability)));
         getCapabilityProvider().provideCapability(forResource, capabilityRequirement, 60);
     }
 

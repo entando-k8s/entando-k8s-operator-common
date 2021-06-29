@@ -62,7 +62,7 @@ public interface KubernetesClientForControllers {
 
     void prepareConfig();
 
-    SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds)
+    <T extends EntandoCustomResource> T waitForCompletion(T customResource, int timeoutSeconds)
             throws TimeoutException;
 
     String getNamespace();

@@ -16,94 +16,39 @@
 
 package org.entando.kubernetes.controller.spi.client.impl;
 
-import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
-import io.fabric8.kubernetes.api.model.ListOptions;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.Watch;
-import io.fabric8.kubernetes.client.Watcher;
-import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
-import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 
-public class DefaultKubernetesClientForControllers implements KubernetesClientForControllers {
-
-    protected final KubernetesClient client;
-    private ConfigMap crdNameMap;
+public class DefaultKubernetesClientForControllers extends EntandoResourceClientBase implements KubernetesClientForControllers {
 
     public DefaultKubernetesClientForControllers(KubernetesClient client) {
-        this.client = client;
+        super(client);
 
-    }
-
-    @Override
-    public SerializedEntandoResource waitForCompletion(SerializedEntandoResource customResource, int timeoutSeconds)
-            throws TimeoutException {
-        Predicate<EntandoCustomResource> predicate = resource -> Set
-                .of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED, EntandoDeploymentPhase.SUCCESSFUL)
-                .contains(Optional.ofNullable(resource.getStatus().getPhase()).orElse(EntandoDeploymentPhase.REQUESTED));
-        final SerializedEntandoResource reloaded = reload(customResource);
-        if (predicate.test(reloaded)) {
-            return reloaded;
-        }
-        final CompletableFuture<SerializedEntandoResource> future = new CompletableFuture<>();
-        try (Watch ignore = ioSafe(() -> client.customResource(customResource.getDefinition())
-                .watch(customResource.getMetadata().getNamespace(), customResource.getMetadata().getName(), null,
-                        (ListOptions) null, new Watcher<>() {
-                            final ObjectMapper objectMapper = new ObjectMapper();
-
-                            @Override
-                            public void eventReceived(Action action, String s) {
-                                final SerializedEntandoResource resource = ioSafe(
-                                        () -> objectMapper.readValue(s, SerializedEntandoResource.class));
-                                resource.setDefinition(customResource.getDefinition());
-                                final EntandoDeploymentPhase phase = resource.getStatus()
-                                        .getPhase();
-                                if (predicate.test(resource)) {
-                                    future.complete(resource);
-                                }
-                            }
-
-                            @Override
-                            public void onClose(WatcherException e) {
-                                future.completeExceptionally(e);
-                            }
-                        }))) {
-            return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
-        }
     }
 
     @Override
@@ -114,6 +59,21 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     @Override
     public Service loadControllerService(String name) {
         return client.services().inNamespace(client.getNamespace()).withName(name).get();
+    }
+
+    @Override
+    public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
+        return super.createOrPatchEntandoResource(r);
+    }
+
+    @Override
+    public <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName) {
+        return super.load(clzz, resourceNamespace, resourceName);
+    }
+
+    @Override
+    public SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
+        return super.loadCustomResource(apiVersion, kind, namespace, name);
     }
 
     @Override
@@ -138,29 +98,6 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
-        final MixedOperation<T, KubernetesResourceList<T>, Resource<T>> operations = getOperations((Class<T>) r.getClass());
-        if (operations.inNamespace(r.getMetadata().getNamespace()).withName(r.getMetadata().getName()).get() == null) {
-            return operations.inNamespace(r.getMetadata().getNamespace()).create(r);
-        } else {
-            return operations.inNamespace(r.getMetadata().getNamespace()).withName(r.getMetadata().getName()).patch(r);
-        }
-    }
-
-    public SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
-        return ioSafe(() -> {
-            final CustomResourceDefinitionContext context = resolveDefinitionContext(kind, apiVersion);
-            final Map<String, Object> crMap = client.customResource(context).get(namespace, name);
-            final ObjectMapper objectMapper = new ObjectMapper();
-            final SerializedEntandoResource serializedEntandoResource = objectMapper
-                    .readValue(objectMapper.writeValueAsString(crMap), SerializedEntandoResource.class);
-            serializedEntandoResource.setDefinition(context);
-            return serializedEntandoResource;
-        });
-    }
-
-    @Override
     public HasMetadata loadStandardResource(String kind, String namespace, String name) {
         return SupportedStandardResourceKind.resolveFromKind(kind)
                 .map(k -> k.getOperation(client)
@@ -175,28 +112,6 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
     @Override
     public List<Event> listEventsFor(EntandoCustomResource resource) {
         return client.v1().events().inAnyNamespace().withLabels(ResourceUtils.labelsFromResource(resource)).list().getItems();
-    }
-
-    public <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName) {
-        return getOperations(clzz).inNamespace(resourceNamespace).withName(resourceName).fromServer().get();
-    }
-
-    @SuppressWarnings("unchecked")
-    protected <T extends EntandoCustomResource> MixedOperation<T, KubernetesResourceList<T>, Resource<T>> getOperations(Class<T> c) {
-        return client.customResources((Class) c);
-    }
-
-    @SuppressWarnings({"unchecked"})
-    public <T extends EntandoCustomResource> T reload(T customResource) {
-        if (customResource instanceof SerializedEntandoResource) {
-            return (T) loadCustomResource(
-                    customResource.getApiVersion(),
-                    customResource.getKind(),
-                    customResource.getMetadata().getNamespace(),
-                    customResource.getMetadata().getName());
-        } else {
-            return (T) load(customResource.getClass(), customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
-        }
     }
 
     public <T extends EntandoCustomResource> void issueEvent(T customResource, Event event) {
@@ -239,34 +154,4 @@ public class DefaultKubernetesClientForControllers implements KubernetesClientFo
         }
     }
 
-    private CustomResourceDefinitionContext resolveDefinitionContext(String kind, String apiVersion) {
-        final String key = kind + "." + apiVersion.substring(0, apiVersion.indexOf("/"));
-        final String name = getCrdNameMap().getData().get(key);
-        return CustomResourceDefinitionContext.fromCrd(client.apiextensions().v1beta1().customResourceDefinitions()
-                .withName(name).get());
-    }
-
-    protected ConfigMap getCrdNameMap() {
-        crdNameMap = Objects.requireNonNullElseGet(crdNameMap,
-                () -> Objects.requireNonNullElseGet(
-                        client.configMaps().inNamespace(client.getNamespace()).withName(ENTANDO_CRD_NAMES_CONFIG_MAP).get(),
-                        () -> client.configMaps().inNamespace(client.getNamespace())
-                                .create(new ConfigMapBuilder()
-                                        .withNewMetadata()
-                                        .withNamespace(client.getNamespace())
-                                        .withName(ENTANDO_CRD_NAMES_CONFIG_MAP)
-                                        .endMetadata()
-                                        .addToData(client.apiextensions().v1beta1().customResourceDefinitions()
-                                                .withLabel(LabelNames.CRD_OF_INTEREST.getName())
-                                                .list()
-                                                .getItems()
-                                                .stream()
-                                                .collect(Collectors
-                                                        .toMap(crd -> crd.getSpec().getNames().getKind() + "." + crd.getSpec()
-                                                                        .getGroup(),
-                                                                crd -> crd.getMetadata().getName())))
-                                        .build())));
-
-        return crdNameMap;
-    }
 }
