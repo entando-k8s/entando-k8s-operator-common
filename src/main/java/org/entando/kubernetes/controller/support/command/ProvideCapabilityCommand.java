@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.command;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
@@ -60,7 +62,7 @@ public class ProvideCapabilityCommand {
             final List<CapabilityScope> resolutionScopePreference = determineResolutionScopePreference(requirement);
             Optional<ProvidedCapability> match = findCapability(forResource, requirement, resolutionScopePreference);
             match.ifPresent(c -> validateCapabilityCriteria(requirement, resolutionScopePreference, c));
-            ProvidedCapability providedCapability = match.map(pc -> syncIfRequired(pc, requirement)).orElseGet(
+            ProvidedCapability providedCapability = match.map(pc -> syncIfRequired(forResource, pc, requirement)).orElseGet(
                     () -> makeNewCapabilityAvailable(forResource, requirement, resolutionScopePreference.get(0)));
             providedCapability = client.waitForCapabilityCompletion(providedCapability, timeoutSeconds);
             return loadProvisioningResult(providedCapability);
@@ -69,19 +71,18 @@ public class ProvideCapabilityCommand {
         }
     }
 
-    private ProvidedCapability syncIfRequired(ProvidedCapability providedCapability, CapabilityRequirement requirement) {
-        final CapabilityRequirement requiredState = new CapabilityRequirementBuilder(providedCapability.getSpec())
-                .addAllToCapabilityParameters(requirement.getCapabilityParameters())
-                .withPreferredIngressHostName(requirement.getPreferredIngressHostName().orElse(null))
-                .withPreferredTlsSecretName(requirement.getPreferredTlsSecretName().orElse(null)).build();
-        if (providedCapability.getSpec().getCapabilityParameters().equals(requiredState.getCapabilityParameters())
-                && providedCapability.getSpec().getPreferredIngressHostName().equals(requiredState.getPreferredIngressHostName())
-                && providedCapability.getSpec().getPreferredTlsSecretName().equals(requiredState.getPreferredTlsSecretName())
-        ) {
-            return providedCapability;
-        } else {
-            return client.createOrPatchCapability(new ProvidedCapabilityBuilder(providedCapability).withSpec(requiredState).build());
+    private ProvidedCapability syncIfRequired(HasMetadata forResource, ProvidedCapability providedCapability,
+            CapabilityRequirement requirement) {
+        if (ofNullable(providedCapability.getMetadata().getAnnotations())
+                .map(m -> forResource.getMetadata().getUid().equals(m.get(CapabilityProvider.ORIGIN_UUID_ANNOTATION_NAME)))
+                .orElse(false)) {
+            final CapabilityRequirement requiredState = new CapabilityRequirementBuilder(providedCapability.getSpec())
+                    .addAllToCapabilityParameters(requirement.getCapabilityParameters()).build();
+            if (!providedCapability.getSpec().getCapabilityParameters().equals(requiredState.getCapabilityParameters())) {
+                return client.createOrPatchCapability(new ProvidedCapabilityBuilder(providedCapability).withSpec(requiredState).build());
+            }
         }
+        return providedCapability;
     }
 
     private List<CapabilityScope> determineResolutionScopePreference(CapabilityRequirement capabilityRequirement) {
@@ -219,7 +220,8 @@ public class ProvideCapabilityCommand {
                         .withName(calculateDefaultName(capabilityRequirement) + "-in-cluster");
         }
         metaBuilder.addToLabels(
-                determineCapabilityLabels(capabilityRequirement, determineResolutionScopePreference(capabilityRequirement).get(0)));
+                determineCapabilityLabels(capabilityRequirement, determineResolutionScopePreference(capabilityRequirement).get(0)))
+                .addToAnnotations(CapabilityProvider.ORIGIN_UUID_ANNOTATION_NAME, forResource.getMetadata().getUid());
         return new ProvidedCapability(metaBuilder.build(), capabilityRequirement);
     }
 

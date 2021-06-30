@@ -22,6 +22,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public interface CapabilityProvider {
 
+    String ORIGIN_UUID_ANNOTATION_NAME = "entando.org/origin-uuid";
+
     CapabilityProvisioningResult provideCapability(EntandoCustomResource forResource, CapabilityRequirement capabilityRequirement,
             int timeoutSeconds) throws TimeoutException;
 
