@@ -154,7 +154,7 @@ public class EntandoResourceClientBase {
         crdNameMap = Objects.requireNonNullElseGet(crdNameMap,
                 () -> Objects.requireNonNullElseGet(
                         client.configMaps().inNamespace(client.getNamespace()).withName(
-                                KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP).get(),
+                                KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP).fromServer().get(),
                         this::createConfigMap));
 
         return crdNameMap;
@@ -181,7 +181,7 @@ public class EntandoResourceClientBase {
         } catch (KubernetesClientException e) {
             if (e.getStatus().getCode() == HttpURLConnection.HTTP_CONFLICT) {
                 return client.configMaps().inNamespace(client.getNamespace()).withName(
-                        KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP).get();
+                        KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP).fromServer().get();
 
             }
             throw e;
