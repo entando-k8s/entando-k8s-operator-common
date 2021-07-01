@@ -26,12 +26,14 @@ import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.ListOptions;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -153,24 +155,37 @@ public class EntandoResourceClientBase {
                 () -> Objects.requireNonNullElseGet(
                         client.configMaps().inNamespace(client.getNamespace()).withName(
                                 KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP).get(),
-                        () -> client.configMaps().inNamespace(client.getNamespace())
-                                .create(new ConfigMapBuilder()
-                                        .withNewMetadata()
-                                        .withNamespace(client.getNamespace())
-                                        .withName(KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP)
-                                        .endMetadata()
-                                        .addToData(client.apiextensions().v1beta1().customResourceDefinitions()
-                                                .withLabel(LabelNames.CRD_OF_INTEREST.getName())
-                                                .list()
-                                                .getItems()
-                                                .stream()
-                                                .collect(Collectors
-                                                        .toMap(crd -> crd.getSpec().getNames().getKind() + "." + crd.getSpec()
-                                                                        .getGroup(),
-                                                                crd -> crd.getMetadata().getName())))
-                                        .build())));
+                        this::createConfigMap));
 
         return crdNameMap;
+    }
+
+    private ConfigMap createConfigMap() {
+        try {
+            return client.configMaps().inNamespace(client.getNamespace())
+                    .create(new ConfigMapBuilder()
+                            .withNewMetadata()
+                            .withNamespace(client.getNamespace())
+                            .withName(KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP)
+                            .endMetadata()
+                            .addToData(client.apiextensions().v1beta1().customResourceDefinitions()
+                                    .withLabel(LabelNames.CRD_OF_INTEREST.getName())
+                                    .list()
+                                    .getItems()
+                                    .stream()
+                                    .collect(Collectors
+                                            .toMap(crd -> crd.getSpec().getNames().getKind() + "." + crd.getSpec()
+                                                            .getGroup(),
+                                                    crd -> crd.getMetadata().getName())))
+                            .build());
+        } catch (KubernetesClientException e) {
+            if (e.getStatus().getCode() == HttpURLConnection.HTTP_CONFLICT) {
+                return client.configMaps().inNamespace(client.getNamespace()).withName(
+                        KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP).get();
+
+            }
+            throw e;
+        }
     }
 
     @SuppressWarnings("unchecked")
