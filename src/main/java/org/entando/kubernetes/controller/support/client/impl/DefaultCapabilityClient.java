@@ -33,6 +33,7 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ServerStatus;
 
 public class DefaultCapabilityClient extends EntandoResourceClientBase implements CapabilityClient {
@@ -81,6 +82,10 @@ public class DefaultCapabilityClient extends EntandoResourceClientBase implement
     @Override
     public ProvidedCapability createOrPatchCapability(ProvidedCapability capability) {
         return super.createOrPatchEntandoResource(capability);
+    }
+
+    public ProvidedCapability waitForCapabilityCommencement(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
+        return waitForPhase(capability, timeoutSeconds, EntandoDeploymentPhase.STARTED, EntandoDeploymentPhase.REQUESTED);
     }
 
     @Override

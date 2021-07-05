@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
@@ -48,6 +50,7 @@ import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoControllerFailure;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ResourceReference;
 import org.entando.kubernetes.model.common.ServerStatus;
 import org.entando.kubernetes.test.common.CustomResourceStatusEmulator;
@@ -62,8 +65,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 /**
- * This test focuses on the implementation of the CapabilityProvider interface.
- * Scope:
+ * This test focuses on the implementation of the CapabilityProvider interface. Scope:
  *
  * <p>From the interface  org.entando.kubernetes.controller.spi.capability.CapabilityProvider which will be used in the controllers
  * consuming capabilities</p>
@@ -557,8 +559,15 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CustomResour
             attachKubernetesResource("TestResource", this.forResource);
         });
         step("And there is a controller to process requests for the SSO capability requested",
-                () -> doAnswer(withAnSsoCapabilityStatus("irrelevant.com", "my-realm")).when(getClient().capabilities())
-                        .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.SSO)), anyInt()));
+                () -> {
+                    when(getClient().capabilities()
+                            .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.SSO)), anyInt()))
+                            .thenAnswer(withAnSsoCapabilityStatus("irrelevant.com", "my-realm"));
+                    when(getClient().capabilities()
+                            .waitForCapabilityCommencement(argThat(matchesCapability(StandardCapability.SSO)), anyInt()))
+                            .thenAnswer(withAStartedCapability());
+
+                });
         step("And I have created a Capability to be usable by others in the same namespace", () -> {
             this.theCapabilityRequirement = new CapabilityRequirementBuilder()
                     .withCapability(StandardCapability.SSO)
@@ -598,6 +607,18 @@ class AdvancedCapabilityProvisionTest implements InProcessTestData, CustomResour
             assertThat(providedCapability.getSpec().getPreferredIngressHostName()).contains("my.ingress.host.com");
             assertThat(providedCapability.getSpec().getPreferredTlsSecretName()).contains("my-tls-secret");
         });
+    }
+
+    private Answer<Object> withAStartedCapability() {
+        return invocationOnMock -> {
+            getScheduler().schedule(() -> {
+                ProvidedCapability pc = invocationOnMock.getArgument(0);
+                pc.getStatus()
+                        .updateDeploymentPhase(EntandoDeploymentPhase.REQUESTED, pc.getMetadata().getGeneration());
+                getClient().capabilities().createOrPatchCapability(pc);
+            }, 300L, TimeUnit.MILLISECONDS);
+            return invocationOnMock.callRealMethod();
+        };
     }
 
     @Test

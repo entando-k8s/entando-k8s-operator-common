@@ -59,11 +59,15 @@ public class EntandoResourceClientBase {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T waitForCompletion(T customResource, int timeoutSeconds)
+    public <T extends EntandoCustomResource> T waitForCompletion(T customResource, int timeoutSeconds) throws TimeoutException {
+        return waitForPhase(customResource, timeoutSeconds, EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED,
+                EntandoDeploymentPhase.SUCCESSFUL);
+    }
+
+    protected <T extends EntandoCustomResource> T waitForPhase(T customResource, int timeoutSeconds, EntandoDeploymentPhase... phases)
             throws TimeoutException {
-        Predicate<EntandoCustomResource> predicate = resource -> Set
-                .of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED, EntandoDeploymentPhase.SUCCESSFUL)
-                .contains(Optional.ofNullable(resource.getStatus().getPhase()).orElse(EntandoDeploymentPhase.REQUESTED));
+        Predicate<EntandoCustomResource> predicate = resource -> resource.getStatus().getPhase() != null && Set
+                .of(phases).contains(resource.getStatus().getPhase());
         final T reloaded = reload(customResource);
         if (predicate.test(reloaded)) {
             return reloaded;

@@ -39,12 +39,14 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.client.CapabilityClient;
 import org.entando.kubernetes.controller.support.client.doubles.AbstractK8SClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.ClusterDouble;
+import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
+import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDoubleBase;
 import org.entando.kubernetes.controller.support.client.doubles.NamespaceDouble;
 import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ServerStatus;
 
-public class CapabilityClientDouble extends AbstractK8SClientDouble implements CapabilityClient {
+public class CapabilityClientDouble extends EntandoResourceClientDoubleBase implements CapabilityClient {
 
     public CapabilityClientDouble(ConcurrentHashMap<String, NamespaceDouble> namespaces, ClusterDouble cluster) {
         super(namespaces, cluster);
@@ -82,35 +84,15 @@ public class CapabilityClientDouble extends AbstractK8SClientDouble implements C
     @Override
     public ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
         if (capability != null) {
-            CompletableFuture<ProvidedCapability> future = new CompletableFuture<>();
-            getCluster().getResourceProcessor().watch(new Watcher<ProvidedCapability>() {
-                @Override
-                public void eventReceived(Action action, ProvidedCapability resource) {
-                    if (resource.getStatus() != null && (resource.getStatus().getPhase() == EntandoDeploymentPhase.FAILED
-                            || resource.getStatus().getPhase() == EntandoDeploymentPhase.SUCCESSFUL)) {
-                        future.complete(resource);
-                    }
-                }
+            return super.waitForCompletion(capability, timeoutSeconds);
+        }
+        return null;
+    }
 
-                @Override
-                public void onClose(WatcherException cause) {
-
-                }
-            }, capability.getMetadata().getNamespace(), capability.getMetadata().getName());
-            getCluster().getResourceProcessor()
-                    .processResource(getNamespace(capability).getCustomResources(ProvidedCapability.class), capability);
-            try {
-                return future.get(timeoutSeconds, TimeUnit.SECONDS);
-            } catch (TimeoutException e) {
-                throw new TimeoutException(
-                        format("Timed out waiting for ProvidedCapability. Please check the logs of the controller that processes the "
-                                        + "capability '%s.capability.org'",
-                                (capability.getSpec().getImplementation().map(i -> i.name() + ".").orElse("") + capability.getSpec()
-                                        .getCapability().name()).toLowerCase(Locale.ROOT)));
-
-            } catch (InterruptedException | ExecutionException e) {
-                throw new IllegalStateException(e);
-            }
+    @Override
+    public ProvidedCapability waitForCapabilityCommencement(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
+        if (capability != null) {
+            return super.waitForPhase(capability, timeoutSeconds, EntandoDeploymentPhase.REQUESTED, EntandoDeploymentPhase.STARTED);
         }
         return null;
     }

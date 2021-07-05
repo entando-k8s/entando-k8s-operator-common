@@ -57,7 +57,7 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 
-public class EntandoResourceClientDouble extends AbstractK8SClientDouble implements EntandoResourceClient {
+public class EntandoResourceClientDouble extends EntandoResourceClientDoubleBase implements EntandoResourceClient {
 
     private ConfigMap crdNameMap;
 
@@ -102,68 +102,6 @@ public class EntandoResourceClientDouble extends AbstractK8SClientDouble impleme
     @Override
     public void prepareConfig() {
         EntandoOperatorConfigBase.setConfigMap(loadOperatorConfig());
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T reload(T customResource) {
-        if (customResource instanceof SerializedEntandoResource) {
-            return (T) reloadAsOpaqueResource(customResource);
-        } else {
-            return (T) getNamespace(customResource.getMetadata().getNamespace()).getCustomResources(customResource.getKind())
-                    .get(customResource.getMetadata().getName());
-        }
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T waitForCompletion(T customResource, int timeoutSeconds)
-            throws TimeoutException {
-        Predicate<EntandoCustomResource> predicate = resource -> Set
-                .of(EntandoDeploymentPhase.IGNORED, EntandoDeploymentPhase.FAILED, EntandoDeploymentPhase.SUCCESSFUL)
-                .contains(Optional.ofNullable(resource.getStatus().getPhase()).orElse(EntandoDeploymentPhase.REQUESTED));
-        final T reloaded = reload(customResource);
-        if (predicate.test(reloaded)) {
-            return reloaded;
-        }
-        CompletableFuture<T> future = new CompletableFuture<>();
-        CustomResourceDefinitionContext definition;
-        if (customResource instanceof SerializedEntandoResource) {
-            definition = ((SerializedEntandoResource) customResource).getDefinition();
-        } else {
-            definition = CustomResourceDefinitionContext
-                    .fromCustomResourceType((Class<? extends CustomResource<?, ?>>) customResource.getClass());
-        }
-        getCluster().getResourceProcessor().watch(new Watcher<EntandoCustomResource>() {
-            @Override
-            public void eventReceived(Action action, EntandoCustomResource resource) {
-                //NB we may not know which the type of 'resource' is here.
-                if (predicate.test(resource)) {
-                    //but we need to reload it using the original type requested
-                    future.complete(reload(customResource));
-                }
-            }
-
-            @Override
-            public void onClose(WatcherException e) {
-
-            }
-        }, definition, customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
-        return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
-    }
-
-    private SerializedEntandoResource reloadAsOpaqueResource(EntandoCustomResource customResource) {
-        return ioSafe(() -> {
-            final ObjectMapper objectMapper = new ObjectMapper();
-            final EntandoCustomResource currentState = getNamespace(customResource.getMetadata().getNamespace())
-                    .getCustomResources(customResource.getKind())
-                    .get(customResource.getMetadata().getName());
-            if (currentState instanceof SerializedEntandoResource) {
-                return (SerializedEntandoResource) currentState;
-            } else {
-                return objectMapper.readValue(objectMapper.writeValueAsString(currentState), SerializedEntandoResource.class);
-            }
-        });
     }
 
     @Override

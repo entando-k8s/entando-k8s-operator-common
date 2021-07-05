@@ -34,6 +34,8 @@ public interface CapabilityClient {
 
     ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException;
 
+    ProvidedCapability waitForCapabilityCommencement(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException;
+
     String getNamespace();
 
     SerializedCapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability);

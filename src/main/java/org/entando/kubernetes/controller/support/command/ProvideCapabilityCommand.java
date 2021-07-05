@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
@@ -79,7 +80,13 @@ public class ProvideCapabilityCommand {
             final CapabilityRequirement requiredState = new CapabilityRequirementBuilder(providedCapability.getSpec())
                     .addAllToCapabilityParameters(requirement.getCapabilityParameters()).build();
             if (!providedCapability.getSpec().getCapabilityParameters().equals(requiredState.getCapabilityParameters())) {
-                return client.createOrPatchCapability(new ProvidedCapabilityBuilder(providedCapability).withSpec(requiredState).build());
+                ProvidedCapability newCapability = client
+                        .createOrPatchCapability(new ProvidedCapabilityBuilder(providedCapability).withSpec(requiredState).build());
+                try {
+                    return client.waitForCapabilityCommencement(newCapability, 3);
+                } catch (TimeoutException e) {
+                    throw new EntandoControllerException(newCapability, e);
+                }
             }
         }
         return providedCapability;
