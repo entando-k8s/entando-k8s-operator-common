@@ -74,6 +74,7 @@ public interface KubernetesClientForControllers {
     <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
     default EntandoCustomResource resolveCustomResourceToProcess(Collection<Class<? extends EntandoCustomResource>> supportedTypes) {
+        prepareConfig();
         String resourceName = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME);
         String resourceNamespace = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE);
         String kind = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND);
