@@ -270,21 +270,23 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
     //Because having a negative in an if statement reduces readability
     @SuppressWarnings("squid:S1155")
     private void updateClientWithId(SsoClientConfig config, String id) {
+        //NB!! don't get confused: SsoClientConfig.getCode == RoleRepresentation.getName
+        //  SsoClientConfig.getName == RoleRepresentation.getDescription
         RealmResource realmResource = keycloak.realm(config.getRealm());
         ClientResource clientResource = realmResource.clients().get(id);
         List<ExpectedRole> desiredRoles = config.getRoles().stream().filter(distinctByKey(ExpectedRole::getCode))
                 .collect(Collectors.toList());
         List<RoleRepresentation> currentRoles = clientResource.roles().list();
-        Set<String> desiredRoleNames = desiredRoles.stream()
-                .map(ExpectedRole::getName)
+        Set<String> desiredRoleCodes = desiredRoles.stream()
+                .map(ExpectedRole::getCode)
                 .collect(Collectors.toSet());
         List<String> currentRoleNames = currentRoles.stream()
                 .map(RoleRepresentation::getName)
                 .collect(Collectors.toList());
         currentRoleNames.stream()
-                .filter(roleName -> !desiredRoleNames.contains(roleName))
+                .filter(roleName -> !desiredRoleCodes.contains(roleName))
                 .forEach(clientResource.roles()::deleteRole);
-        desiredRoles.stream().filter(role -> !currentRoleNames.contains(role.getName()))
+        desiredRoles.stream().filter(role -> !currentRoleNames.contains(role.getCode()))
                 .map(DefaultKeycloakClient::toRoleRepresentation)
                 .forEach(clientResource.roles()::create);
         config.getPermissions().forEach(role -> assignServiceAccountRole(realmResource, clientResource, role));
@@ -318,7 +320,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
                     return null;
                 }, e -> e instanceof ClientErrorException
                         && ((ClientErrorException) e).getResponse().getStatus() == HttpURLConnection.HTTP_NOT_FOUND,
-                5
+                6
         );
 
     }

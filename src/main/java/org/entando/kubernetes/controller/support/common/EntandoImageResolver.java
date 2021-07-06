@@ -27,7 +27,7 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class EntandoImageResolver {
 
-    public static final String IMAGE_OVERRIDE_ANNOTATION_PREFIX = "entando.org/image-override/";
+    public static final String IMAGE_OVERRIDE_ANNOTATION_PREFIX = "image-override.entando.org/";
     private final ConfigMap imageVersionsConfigMap;
     private final EntandoCustomResource resourceOfInterest;
 
@@ -45,18 +45,21 @@ public class EntandoImageResolver {
     }
 
     public String determineImageUri(DockerImageInfo dockerImageInfo) {
-        //The environment variable injected by the OLM takes precedence over everything
-        Optional<String> injectedImageUri = EntandoOperatorConfigBase.lookupProperty(relateImage(dockerImageInfo.getRepository()))
-                .or(() -> EntandoOperatorConfigBase.lookupProperty(relateImage(dockerImageInfo.getOrganizationAwareRepository())));
-        //Then we look at the annotations in the resource (for testing purposes)
+        //First we look at the annotations in the resource (for testing purposes)
+        // Is this a security risk? no, it is 100% in control of the deployer user.
         if (resourceOfInterest != null && resourceOfInterest.getMetadata().getAnnotations() != null) {
-            injectedImageUri = injectedImageUri.or(() -> resourceOfInterest.getMetadata().getAnnotations().entrySet().stream()
+            Optional<String> debugImageOverride = resourceOfInterest.getMetadata().getAnnotations().entrySet().stream()
                     .filter(entry -> entry.getKey().equals(IMAGE_OVERRIDE_ANNOTATION_PREFIX + dockerImageInfo.getRepository())
                             || entry.getKey().equals(IMAGE_OVERRIDE_ANNOTATION_PREFIX + dockerImageInfo.getOrganizationAwareRepository()))
                     .map(Entry::getValue)
-                    .findFirst());
-
+                    .findFirst();
+            if (debugImageOverride.isPresent()) {
+                return debugImageOverride.get();
+            }
         }
+        //The environment variable injected by the OLM takes precedence over everything
+        Optional<String> injectedImageUri = EntandoOperatorConfigBase.lookupProperty(relateImage(dockerImageInfo.getRepository()))
+                .or(() -> EntandoOperatorConfigBase.lookupProperty(relateImage(dockerImageInfo.getOrganizationAwareRepository())));
         return injectedImageUri.orElse(format("%s/%s/%s:%s",
                 determineDockerRegistry(dockerImageInfo),
                 determineOrganization(dockerImageInfo),
