@@ -60,19 +60,23 @@ public class ResourceUtils {
         return labels;
     }
 
-    public static void addCapabilityLabels(ProvidedCapability providedCapability) {
+    public static boolean addCapabilityLabels(ProvidedCapability providedCapability) {
+        boolean changed = false;
         if (providedCapability.getMetadata().getLabels() == null) {
             providedCapability.getMetadata().setLabels(new HashMap<>());
         }
         Map<String, String> labels = providedCapability.getMetadata().getLabels();
         CapabilityRequirement spec = providedCapability.getSpec();
         if (!labels.containsKey(LabelNames.CAPABILITY.getName())) {
+            changed = true;
             labels.put(LabelNames.CAPABILITY.getName(), spec.getCapability().getCamelCaseName());
             spec.getImplementation().ifPresent(standardCapabilityImplementation -> labels
                     .put(LabelNames.CAPABILITY_IMPLEMENTATION.getName(), standardCapabilityImplementation.getCamelCaseName()));
         }
         if (!(labels.containsKey(LabelNames.CAPABILITY_PROVISION_SCOPE.getName()) || spec.getResolutionScopePreference().isEmpty())) {
+            changed = true;
             labels.put(LabelNames.CAPABILITY_PROVISION_SCOPE.getName(), spec.getResolutionScopePreference().get(0).getCamelCaseName());
         }
+        return changed;
     }
 }
