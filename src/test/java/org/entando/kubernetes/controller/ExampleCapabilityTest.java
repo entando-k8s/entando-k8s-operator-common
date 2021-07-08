@@ -18,10 +18,13 @@ import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.command.SerializationHelper;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
+import org.entando.kubernetes.fluentspi.BasicDeploymentSpec;
+import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.fluentspi.TestResourceController;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
@@ -31,6 +34,7 @@ import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.test.common.CommonLabels;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -56,7 +60,7 @@ class ExampleCapabilityTest extends ControllerTestBase {
 
     @Test
     @Description("Should translate the ProvidedCapability received to a TestResource and deploy it")
-    void shouldDeployCorrectPostgresqlImageWithDefaultSettings() {
+    void shouldTranslateProvidedCapabilityToTestResource() {
         step("Given I have an example Controller that responds to DBMS CapabilityRequirements");
         step("And I have created the ProvidedCapability CRD", () -> {
             getClient().entandoResources().registerCustomResourceDefinition("crd/providedcapabilities.entando.org.crd.yaml");
@@ -146,6 +150,59 @@ class ExampleCapabilityTest extends ControllerTestBase {
                     ));
         });
 
+        step("And the resulting DatabaseServiceResult reflects the correct information to connect to the deployed DBMS service", () -> {
+            DatabaseConnectionInfo connectionInfo = new ProvidedDatabaseCapability(
+                    getClient().entandoResources()
+                            .loadCapabilityProvisioningResult(
+                                    providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get()));
+            Allure.attachment("DatabaseServiceResult", SerializationHelper.serialize(connectionInfo));
+            assertThat(connectionInfo.getDatabaseName()).isEqualTo("default_postgresql_dbms_in_namespace");
+            assertThat(connectionInfo.getPort()).isEqualTo("5432");
+            assertThat(connectionInfo.getInternalServiceHostname())
+                    .isEqualTo("default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local");
+            assertThat(connectionInfo.getVendor()).isEqualTo(DbmsVendorConfig.POSTGRESQL);
+        });
+        attachKubernetesState();
+    }
+
+    @Test
+    @Description("Should translate the TestResource to a  ProvidedCapability and deploy it")
+    void shouldTranslateTestResourceToProvidedCapability() {
+        step("Given I have an example Controller that responds to DBMS CapabilityRequirements");
+        step("And I have created the ProvidedCapability CRD", () -> {
+            getClient().entandoResources().registerCustomResourceDefinition("crd/providedcapabilities.entando.org.crd.yaml");
+        });
+
+        step("When I request a namespace scoped, PostgreSQL DBMS Capability for direct deployment",
+                () -> runControllerAgainstCustomResource(new TestResource().withNames(MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE).withSpec(
+                        new BasicDeploymentSpecBuilder().withDbms(DbmsVendor.POSTGRESQL)
+                                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build())));
+        ProvidedCapability providedCapability = getClient().entandoResources()
+                .load(ProvidedCapability.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);
+        TestResource testResource = getClient().entandoResources().load(TestResource.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);
+        step("Then an ProvidedCapability was created:", () -> {
+            step("using the DeployDirectly provisioningStrategy",
+                    () -> assertThat(providedCapability.getSpec().getProvisioningStrategy())
+                            .contains(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY));
+            step("a PostgreSQL database",
+                    () -> assertThat(providedCapability.getSpec().getImplementation())
+                            .contains(StandardCapabilityImplementation.POSTGRESQL));
+            step("and it is owned by the TestResource to ensure only changes from the TestResource will change the "
+                            + "implementing Kubernetes resources",
+                    () -> assertThat(ResourceUtils.customResourceOwns(testResource, providedCapability)));
+            step("and it has the correct labels",
+                    () -> {
+                        assertThat(providedCapability.getMetadata().getLabels())
+                                .containsEntry(LabelNames.CAPABILITY.getName(), StandardCapability.DBMS.getCamelCaseName());
+                        assertThat(providedCapability.getMetadata().getLabels())
+                                .containsEntry(LabelNames.CAPABILITY_IMPLEMENTATION.getName(),
+                                        StandardCapabilityImplementation.POSTGRESQL.getCamelCaseName());
+                        assertThat(providedCapability.getMetadata().getLabels())
+                                .containsEntry(LabelNames.CAPABILITY_PROVISION_SCOPE.getName(),
+                                        CapabilityScope.NAMESPACE.getCamelCaseName());
+                    });
+            attachKubernetesResource("TestResource", providedCapability);
+        });
         step("And the resulting DatabaseServiceResult reflects the correct information to connect to the deployed DBMS service", () -> {
             DatabaseConnectionInfo connectionInfo = new ProvidedDatabaseCapability(
                     getClient().entandoResources()

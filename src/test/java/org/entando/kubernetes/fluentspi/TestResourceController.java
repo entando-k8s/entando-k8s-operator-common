@@ -22,6 +22,7 @@ import org.entando.kubernetes.controller.spi.client.KubernetesClientForControlle
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
 import org.entando.kubernetes.model.capability.CapabilityScope;
 import org.entando.kubernetes.model.capability.ExternallyProvidedService;
@@ -90,6 +91,7 @@ public class TestResourceController implements Runnable {
                         .withProvisioningStrategy(testResource.getSpec().getProvisioningStrategy())
                         .withResolutionScopePreference(CapabilityScope.NAMESPACE)
                         .endSpec().build();
+                ResourceUtils.addCapabilityLabels(providedCapability);
                 providedCapability = k8sClient.createOrPatchEntandoResource(providedCapability);
             }
             final TestResourceDeploymentResult result = deploymentProcessor

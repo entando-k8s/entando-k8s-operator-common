@@ -107,7 +107,13 @@ public class EntandoResourceClientDouble extends EntandoResourceClientDoubleBase
     @Override
     public <T extends EntandoCustomResource> T load(Class<T> clzz, String namespace, String name) {
         Map<String, T> customResources = getNamespace(namespace).getCustomResources(clzz);
-        return customResources.get(name);
+        T t = customResources.get(name);
+        if (clzz.isInstance(t)) {
+            return t;
+        } else {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return ioSafe(() -> objectMapper.readValue(objectMapper.writeValueAsString(t), clzz));
+        }
     }
 
     @Override
