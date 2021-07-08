@@ -17,14 +17,14 @@
 package org.entando.kubernetes.controller.spi.common;
 
 public enum LabelNames {
-    RESOURCE_KIND("EntandoResourceKind"),
-    RESOURCE_NAMESPACE("EntandoResourceNamespace"),
-    JOB_KIND("jobKind"),
-    DEPLOYMENT_QUALIFIER("deploymentQualifier"),
-    DEPLOYMENT("deployment"),
+    RESOURCE_KIND("entando.org/entando-resource-kind"),
+    RESOURCE_NAMESPACE("entando.org/entando-resource-namespace"),
+    JOB_KIND("entando.org/job-kind"),
+    DEPLOYMENT_QUALIFIER("entando.org/deployment-qualifier"),
+    DEPLOYMENT("entando.org/deployment"),
     CAPABILITY("entando.org/capability"),
     CAPABILITY_IMPLEMENTATION("entando.org/capability-implementation"),
-    CAPABILITY_PROVISION_SCOPE("capabilityProvisionScope"),
+    CAPABILITY_PROVISION_SCOPE("entando.org/capability-provision-scope"),
     CRD_OF_INTEREST("entando.org/crd-of-interest"),
     JOB_KIND_DB_PREPARATION("db-preparation-job");
 

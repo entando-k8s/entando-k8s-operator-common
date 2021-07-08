@@ -144,9 +144,9 @@ class ExampleCapabilityTest extends ControllerTestBase {
                     () -> assertThat(service.getSpec().getPorts().get(0).getTargetPort().getIntVal()).isEqualTo(5432));
             step("And with a label selector matching the labels of the Pod Template on the  Deployment",
                     () -> assertThat(service.getSpec().getSelector()).containsAllEntriesOf(
-                            Map.of("EntandoResourceKind", "TestResource", "TestResource",
+                            Map.of(LabelNames.RESOURCE_KIND.getName(), "TestResource", "TestResource",
                                     testResource.getMetadata().getName(),
-                                    "deployment", testResource.getMetadata().getName())
+                                    LabelNames.DEPLOYMENT.getName(), testResource.getMetadata().getName())
                     ));
         });
 
