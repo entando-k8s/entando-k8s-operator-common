@@ -92,7 +92,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
         fabric8Client = new SupportProducer().getKubernetesClient();
         for (String s : getNamespacesToUse()) {
-            await().atMost(180, TimeUnit.SECONDS).ignoreExceptions()
+            await().atMost(240, TimeUnit.SECONDS).ignoreExceptions()
                     .until(() -> {
                         if (fabric8Client.namespaces().withName(s).get() == null) {
                             return true;
