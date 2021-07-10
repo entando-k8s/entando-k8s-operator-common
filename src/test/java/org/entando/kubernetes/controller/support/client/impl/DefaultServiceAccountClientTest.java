@@ -104,7 +104,17 @@ class DefaultServiceAccountClientTest extends AbstractSupportK8SIntegrationTest 
                 .editOrNewMetadata()
                 .withName("my-role-binding")
                 .addToAnnotations("created", "second")
-                .endMetadata().build());
+                .endMetadata()
+                .withNewRoleRef()
+                .withKind("Role")
+                .withName("my-role")
+                .endRoleRef()
+                .addNewSubject()
+                .withName("my-serviceaccount")
+                .withKind("ServiceAccount")
+                .withNamespace(testResource.getMetadata().getNamespace())
+                .endSubject()
+                .build());
         //Then it has left the previous role unchanged
         assertThat(getSimpleK8SClient().serviceAccounts().loadRoleBinding(testResource, "my-role-binding").getMetadata().getAnnotations()
                         .get("created"),
