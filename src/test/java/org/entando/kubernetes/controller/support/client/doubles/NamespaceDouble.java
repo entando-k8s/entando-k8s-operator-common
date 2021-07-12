@@ -87,6 +87,10 @@ public class NamespaceDouble {
         return deployments.get(name);
     }
 
+    public Map<String, Deployment> getDeployments() {
+        return deployments;
+    }
+
     public Pod getPod(String name) {
         return this.pods.get(name);
     }
@@ -107,6 +111,10 @@ public class NamespaceDouble {
         return persistentVolumeClaims.get(name);
     }
 
+    public Map<String, PersistentVolumeClaim> getPersistentVolumeClaims() {
+        return persistentVolumeClaims;
+    }
+
     public void putEndpoints(Endpoints endpoints) {
         this.endpointsMap.put(endpoints.getMetadata().getName(), endpoints);
 
@@ -124,12 +132,20 @@ public class NamespaceDouble {
         return this.secrets.get(secretName);
     }
 
+    public Map<String, Secret> getSecrets() {
+        return secrets;
+    }
+
     public void putServiceAccount(ServiceAccount serviceAccount) {
         this.serviceAccounts.put(serviceAccount.getMetadata().getName(), serviceAccount);
     }
 
     public ServiceAccount getServiceAccount(String name) {
         return this.serviceAccounts.get(name);
+    }
+
+    public Map<String, ServiceAccount> getServiceAccounts() {
+        return serviceAccounts;
     }
 
     public void putRole(Role role) {
@@ -140,12 +156,20 @@ public class NamespaceDouble {
         return this.roles.get(name);
     }
 
+    public Map<String, Role> getRoles() {
+        return roles;
+    }
+
     public void putRoleBinding(RoleBinding roleBinding) {
         this.roleBindings.put(roleBinding.getMetadata().getName(), roleBinding);
     }
 
     public RoleBinding getRoleBinding(String name) {
         return this.roleBindings.get(name);
+    }
+
+    public Map<String, RoleBinding> getRoleBindings() {
+        return roleBindings;
     }
 
     @SuppressWarnings("unchecked")
