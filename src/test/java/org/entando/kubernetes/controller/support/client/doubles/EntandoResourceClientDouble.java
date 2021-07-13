@@ -75,9 +75,9 @@ public class EntandoResourceClientDouble extends EntandoResourceClientDoubleBase
 
     public <T extends EntandoCustomResource> T createOrPatchEntandoResource(T r) {
         if (r != null) {
-            this.getCluster().getResourceProcessor().processResource(getNamespace(r).getCustomResources(r.getKind()), r);
+            return this.getCluster().getResourceProcessor().processResource(getNamespace(r).getCustomResources(r.getKind()), r);
         }
-        return r;
+        return null;
     }
 
     @Override

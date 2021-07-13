@@ -43,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
 import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
@@ -83,33 +85,44 @@ public interface ControllerTestHelper extends FluentTraversals, CustomResourceSt
 
     default void runControllerAgainstCapabilityRequirement(EntandoCustomResource forResource, CapabilityRequirement capabilityRequirement)
             throws TimeoutException {
-        attachKubernetesResource("Resource Requesting Capability", forResource);
-        getClient().entandoResources().createOrPatchEntandoResource(forResource);
-        attachKubernetesResource("Capability Requirement", capabilityRequirement);
-        final StandardCapability capability = capabilityRequirement.getCapability();
-        doAnswer(invocationOnMock -> {
-            getScheduler().schedule(() -> runControllerAgainstCapabilityAndUpdateStatus(invocationOnMock.getArgument(0)), 200L,
-                    TimeUnit.MILLISECONDS);
-            return invocationOnMock.callRealMethod();
-        }).when(getClient().capabilities()).createOrPatchCapability(argThat(matchesCapability(capability)));
-        getCapabilityProvider().provideCapability(forResource, capabilityRequirement, 60);
+        try {
+            attachKubernetesResource("Resource Requesting Capability", forResource);
+            getClient().entandoResources().createOrPatchEntandoResource(forResource);
+            attachKubernetesResource("Capability Requirement", capabilityRequirement);
+            final StandardCapability capability = capabilityRequirement.getCapability();
+            doAnswer(invocationOnMock -> {
+                getScheduler().schedule(() -> runControllerAgainstCapabilityAndUpdateStatus(invocationOnMock.getArgument(0)), 200L,
+                        TimeUnit.MILLISECONDS);
+                return invocationOnMock.callRealMethod();
+            }).when(getClient().capabilities()).createOrPatchCapability(argThat(matchesCapability(capability)));
+            getCapabilityProvider().provideCapability(forResource, capabilityRequirement, 60);
+        } catch (RuntimeException e) {
+            Logger.getLogger(getClass().getName()).log(Level.WARNING, e, e::getMessage);
+            throw e;
+        }
     }
 
     default void runControllerAgainstCustomResource(EntandoCustomResource entandoCustomResource) {
-        attachKubernetesResource(entandoCustomResource.getKind(), entandoCustomResource);
-        System.setProperty(ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
-        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
-                entandoCustomResource.getMetadata().getName());
-        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
-                entandoCustomResource.getMetadata().getNamespace());
-        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND.getJvmSystemProperty(), entandoCustomResource.getKind());
-        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
-        getClient().entandoResources().createOrPatchEntandoResource(entandoCustomResource);
-        final SimpleKeycloakClient keycloakClient = this.getKeycloakClient().orElse(null);
-        final AllureAttachingCommandStream commandStream = new AllureAttachingCommandStream(getClient(), keycloakClient);
-        Runnable controller = createController(getClient().entandoResources(),
-                new SerializingDeploymentProcessor(getClient().entandoResources(), commandStream), getCapabilityProvider());
-        controller.run();
+        try {
+            attachKubernetesResource(entandoCustomResource.getKind(), entandoCustomResource);
+            System.setProperty(ENTANDO_RESOURCE_ACTION, Action.ADDED.name());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME.getJvmSystemProperty(),
+                    entandoCustomResource.getMetadata().getName());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE.getJvmSystemProperty(),
+                    entandoCustomResource.getMetadata().getNamespace());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND.getJvmSystemProperty(),
+                    entandoCustomResource.getKind());
+            System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
+            getClient().entandoResources().createOrPatchEntandoResource(entandoCustomResource);
+            final SimpleKeycloakClient keycloakClient = this.getKeycloakClient().orElse(null);
+            final AllureAttachingCommandStream commandStream = new AllureAttachingCommandStream(getClient(), keycloakClient);
+            Runnable controller = createController(getClient().entandoResources(),
+                    new SerializingDeploymentProcessor(getClient().entandoResources(), commandStream), getCapabilityProvider());
+            controller.run();
+        } catch (RuntimeException e) {
+            Logger.getLogger(getClass().getName()).log(Level.WARNING, e, e::getMessage);
+            throw e;
+        }
     }
 
     default SerializingCapabilityProvider getCapabilityProvider() {
