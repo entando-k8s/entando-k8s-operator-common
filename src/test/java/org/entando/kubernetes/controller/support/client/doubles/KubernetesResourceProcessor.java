@@ -48,8 +48,7 @@ public class KubernetesResourceProcessor {
     public <T extends HasMetadata> T processResource(Map<String, T> existingMap, T newResourceState) {
         populateUid(newResourceState);
         updateGeneration(existingMap, newResourceState);
-        validateResourceVersion(existingMap, newResourceState);
-        T clone = clone(newResourceState);
+        T clone = validateResourceVersion(existingMap, newResourceState);
         putClone(existingMap, clone);
         fireEvents(newResourceState, clone);
         return clone;
@@ -117,7 +116,7 @@ public class KubernetesResourceProcessor {
         }
     }
 
-    private <T extends HasMetadata> void validateResourceVersion(Map<String, T> existingMap, T newResourceState) {
+    private <T extends HasMetadata> T validateResourceVersion(Map<String, T> existingMap, T newResourceState) {
         HasMetadata existingResource = existingMap.get(newResourceState.getMetadata().getName());
         if (existingResource != null && existingResource != newResourceState) {
             if (!existingResource.getMetadata().getResourceVersion().equals(newResourceState.getMetadata().getResourceVersion())) {
@@ -130,7 +129,9 @@ public class KubernetesResourceProcessor {
                                 existingResource.getMetadata().getResourceVersion()));
             }
         }
-        newResourceState.getMetadata().setResourceVersion(String.valueOf((long) (Math.random() * 10000000L)));
+        T clone = clone(newResourceState);
+        clone.getMetadata().setResourceVersion(String.valueOf((long) (Math.random() * 10000000L)));
+        return clone;
 
     }
 
