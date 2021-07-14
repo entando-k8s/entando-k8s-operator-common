@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.spi.common;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -37,6 +38,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.net.ssl.TrustManager;
@@ -73,17 +75,19 @@ public final class TrustStoreHelper {
     }
 
     public static void trustCertificateAuthoritiesIn(Secret secret) {
-        safely(() -> {
-            char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();
-            KeyStore keyStore = buildKeystoreFrom(secret.getData());
-            Path tempFile = Files.createTempFile(Path.of(EntandoOperatorSpiConfig.getSafeTempFileDirectory()), "trust-store", ".jks");
-            try (OutputStream stream = Files.newOutputStream(tempFile)) {
-                keyStore.store(stream, trustStorePassword);
-            }
-            System.setProperty("javax.net.ssl.trustStore", tempFile.normalize().toAbsolutePath().toString());
-            System.setProperty("javax.net.ssl.trustStorePassword", new String(trustStorePassword));
-            return null;
-        });
+        ofNullable(secret).flatMap(present -> ofNullable(present.getData())).ifPresent(data ->
+                safely(() -> {
+                    char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();
+                    KeyStore keyStore = buildKeystoreFrom(data);
+                    Path tempFile = Files
+                            .createTempFile(Path.of(EntandoOperatorSpiConfig.getSafeTempFileDirectory()), "trust-store", ".jks");
+                    try (OutputStream stream = Files.newOutputStream(tempFile)) {
+                        keyStore.store(stream, trustStorePassword);
+                    }
+                    System.setProperty("javax.net.ssl.trustStore", tempFile.normalize().toAbsolutePath().toString());
+                    System.setProperty("javax.net.ssl.trustStorePassword", new String(trustStorePassword));
+                    return null;
+                }));
     }
 
     private static <T> T safely(ExceptionSafe<T> t) {
