@@ -49,7 +49,8 @@ public class DefaultDatabaseSchemaConnectionInfo implements DatabaseSchemaConnec
                 .buildJdbcConnectionString();
     }
 
-    public String getDatabase() {
+    @Override
+    public String getDatabaseNameToUse() {
         if (getDatabaseServiceResult().getVendor().schemaIsDatabase()) {
             return getSchemaName();
         } else {

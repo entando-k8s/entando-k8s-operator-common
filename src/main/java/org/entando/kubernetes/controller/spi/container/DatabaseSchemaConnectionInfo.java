@@ -32,6 +32,8 @@ public interface DatabaseSchemaConnectionInfo {
 
     EnvVarSource getUsernameRef();
 
+    String getDatabaseNameToUse();
+
     DatabaseConnectionInfo getDatabaseServiceResult();
 
     Secret getSchemaSecret();
