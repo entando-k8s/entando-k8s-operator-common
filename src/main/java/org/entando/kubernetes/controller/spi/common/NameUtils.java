@@ -45,8 +45,12 @@ public class NameUtils {
      * Useful for labelvalues and container names.
      */
     public static String shortenTo63Chars(String s) {
-        if (s.length() > 63) {
-            s = s.substring(0, 63 - 4) + randomNumeric(4);
+        return shortenTo(s, 63);
+    }
+
+    public static String shortenTo(String s, int maxLength) {
+        if (s.length() > maxLength) {
+            s = s.substring(0, maxLength - 4) + randomNumeric(4);
         }
         return s;
     }

@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingPathOnPort;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
@@ -75,7 +76,8 @@ public class IngressPathCreator {
     }
 
     private String pathAnnotationName(String qualifier) {
-        return "entando.org/" + entandoCustomResource.getMetadata().getName() + "-" + qualifier + "-path";
+        String suffix = "-" + qualifier + "-path";
+        return "entando.org/" + NameUtils.shortenTo(entandoCustomResource.getMetadata().getName(), 63 - suffix.length()) + suffix;
     }
 
     private HTTPIngressPath newHttpPath(IngressingPathOnPort ingressingPathOnPort, Service service) {
