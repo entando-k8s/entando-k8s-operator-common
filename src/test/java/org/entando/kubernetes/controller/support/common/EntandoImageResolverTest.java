@@ -112,6 +112,20 @@ class EntandoImageResolverTest {
     }
 
     @Test
+    void testResolutionFromCofigmapWithDifferentRepository() {
+        //Given I have information in the Configmap against a key reflecting the repository only
+        ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()
+                .addToData("test-image-6-3",
+                        "{\"registry\":\"test.io\",\"organization\":\"test-entando\",\"version\":\"6.3.3\", \"repository\":\"test-image\"}")
+                .build();
+
+        //when I resolve the image
+        String imageUri = new EntandoImageResolver(imageVersionsConfigMap).determineImageUri("test-image-6-3");
+        //then it reflects the injected value
+        assertThat(imageUri, is("test.io/test-entando/test-image:6.3.3"));
+    }
+
+    @Test
     void testResolutionFromAnnotations() {
         //Given I have information in the Configmap against a key reflecting the repository and org
         ConfigMap imageVersionsConfigMap = new ConfigMapBuilder()

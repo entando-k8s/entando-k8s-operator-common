@@ -63,9 +63,19 @@ public class EntandoImageResolver {
         return injectedImageUri.orElse(format("%s/%s/%s:%s",
                 determineDockerRegistry(dockerImageInfo),
                 determineOrganization(dockerImageInfo),
-                dockerImageInfo.getRepository(),
+                determineRepository(dockerImageInfo),
                 //Have to append "latest" here to allow for optional version resolution
                 determineVersion(dockerImageInfo).orElse("latest")));
+    }
+
+    private String determineRepository(DockerImageInfo dockerImageInfo) {
+        return new PropertyResolution(this.imageVersionsConfigMap, dockerImageInfo)
+                .withOverridingPropertyName(EntandoOperatorConfigProperty.NULL_PROPERTY)
+                .withConfigMapKey("repository")
+                .withProvidedValue(dockerImageInfo.getRepository())
+                .withFallbackPropertyName(EntandoOperatorConfigProperty.NULL_PROPERTY)
+                .withDefaultValue(dockerImageInfo.getRepository())
+                .resolvePropertyValue();
     }
 
     private String relateImage(String repository) {
