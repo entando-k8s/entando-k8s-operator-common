@@ -42,7 +42,7 @@ public class EntandoResourceClientDoubleBase extends AbstractK8SClientDouble {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntandoCustomResource> T reload(T customResource) {
+    public synchronized  <T extends EntandoCustomResource> T reload(T customResource) {
         if (customResource instanceof SerializedEntandoResource) {
             return (T) reloadAsOpaqueResource(customResource);
         } else {

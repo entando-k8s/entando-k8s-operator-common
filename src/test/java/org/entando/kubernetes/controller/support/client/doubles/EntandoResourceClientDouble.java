@@ -105,7 +105,7 @@ public class EntandoResourceClientDouble extends EntandoResourceClientDoubleBase
     }
 
     @Override
-    public <T extends EntandoCustomResource> T load(Class<T> clzz, String namespace, String name) {
+    public synchronized  <T extends EntandoCustomResource> T load(Class<T> clzz, String namespace, String name) {
         Map<String, T> customResources = getNamespace(namespace).getCustomResources(clzz);
         T t = customResources.get(name);
         if (clzz.isInstance(t)) {
@@ -128,7 +128,7 @@ public class EntandoResourceClientDouble extends EntandoResourceClientDoubleBase
     }
 
     @Override
-    public SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
+    public synchronized  SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
             final SerializedEntandoResource resource = objectMapper
