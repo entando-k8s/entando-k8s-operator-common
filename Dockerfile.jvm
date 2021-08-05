@@ -1,4 +1,4 @@
-FROM entando/entando-ubi8-java11-base:6.3.7
+FROM entando/entando-ubi8-java11-base:6.4.0
 ARG VERSION
 LABEL name="Entando K8S Oerator Common" \
       vendor="Entando" \
