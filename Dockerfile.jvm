@@ -9,6 +9,6 @@ LABEL name="Entando K8S Oerator Common" \
 COPY target/generated-resources/licenses /licenses
 COPY target/quarkus-app/lib /deployments/lib
 USER root
-RUN chmod ug+rw -R /deployments/ && chown 1001:root -R /deployments/
-USER 1001
+RUN chmod ug+rw -R /deployments/ && chown 185:root -R /deployments/
+USER 185
 ENTRYPOINT [ "/deployments/run-java.sh" ]
