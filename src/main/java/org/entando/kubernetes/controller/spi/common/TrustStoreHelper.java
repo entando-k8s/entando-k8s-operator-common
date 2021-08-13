@@ -114,7 +114,8 @@ public final class TrustStoreHelper {
 
     private static KeyStore buildKeystoreFrom(Map<String, String> certs)
             throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        //NB!!! this keystore is accessed across different JVM versions and platforms. JKS has proven to be the most portable.
+        KeyStore keyStore = KeyStore.getInstance("jks");
         keyStore.load(null, null);
         certs.entrySet().forEach(cert -> importCert(keyStore, cert));
         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
@@ -127,11 +128,11 @@ public final class TrustStoreHelper {
         return keyStore;
     }
 
-    private static void importCert(KeyStore keyStore, Entry<String, String> certPath) {
+    private static void importCert(KeyStore keyStore, Entry<String, String> entry) {
         safely(() -> {
-            try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(certPath.getValue()))) {
+            try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(entry.getValue()))) {
                 for (Certificate cert : CertificateFactory.getInstance("x.509").generateCertificates(stream)) {
-                    keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectX500Principal().getName(), cert);
+                    keyStore.setCertificateEntry(entry.getKey(), cert);
                 }
             }
             return null;
