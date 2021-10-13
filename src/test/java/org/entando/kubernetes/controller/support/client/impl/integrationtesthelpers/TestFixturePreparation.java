@@ -135,11 +135,19 @@ public final class TestFixturePreparation {
         client.namespaces().create(new NamespaceBuilder().withNewMetadata().withName(namespace)
                 .addToLabels("testType", "end-to-end")
                 .endMetadata().build());
+                
         await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
-                .until(() -> client.secrets().inNamespace(namespace).list()
-                        .getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "default")));
+                .until(() -> {
+                    for (Secret secret : client.secrets().inNamespace(namespace).list().getItems()) {
+                        if (TestFixturePreparation.isValidTokenSecret(secret, "default")) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+                        
         EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s -> {
-            client.secrets().inNamespace(namespace).create(new SecretBuilder().withNewMetadata()
+            client.secrets().inNamespace(namespace).createOrReplace(new SecretBuilder().withNewMetadata()
                     .withNamespace(namespace)
                     .withName("redhat-registry")
                     .endMetadata()
