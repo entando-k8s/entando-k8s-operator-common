@@ -98,6 +98,8 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
                         if (fabric8Client.namespaces().withName(s).get() == null) {
                             return true;
                         } else {
+                            fabric8Client.pods().inNamespace(s).delete();
+                            fabric8Client.secrets().inNamespace(s).delete();
                             fabric8Client.namespaces().withName(s).delete();
                             return false;
                         }
