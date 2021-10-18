@@ -115,8 +115,9 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             final List<Event> events = getKubernetesClientForControllers().listEventsFor(testResource);
             attachResources("Events", events);
             assertThat(events).allMatch(event -> event.getInvolvedObject().getName().equals(testResource.getMetadata().getName()));
-            assertThat(events).allMatch(event -> event.getRelated().getName().equals(TEST_CONTROLLER_POD));
-            assertThat(events).allMatch(event -> event.getRelated().getNamespace().equals(clientForControllers.getNamespace()));
+            assertThat(events).allMatch(event -> event.getRelated() == null || event.getRelated().getName().equals(TEST_CONTROLLER_POD));
+            assertThat(events).allMatch(
+                    event -> event.getRelated() == null || event.getRelated().getNamespace().equals(clientForControllers.getNamespace()));
             assertThat(events).anyMatch(event -> event.getAction().equals("FAILED"));
         });
 
@@ -213,11 +214,8 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                     CustomResourceDefinitionContext.fromCustomResourceType(TestResource.class));
             attachResource("Opaque Resource", serializedEntandoResource);
         });
-        step("And I will update its status phase to 'SUCCESSFUL' within 300 milliseconds", () -> {
-            getScheduler().schedule(
-                    () -> getKubernetesClientForControllers().updatePhase(serializedEntandoResource, EntandoDeploymentPhase.SUCCESSFUL),
-                    300,
-                    TimeUnit.MILLISECONDS);
+        step("And I will update its status phase to 'SUCCESSFUL'", () -> {
+            getKubernetesClientForControllers().updatePhase(serializedEntandoResource, EntandoDeploymentPhase.SUCCESSFUL);
         });
         final long start = System.currentTimeMillis();
         final ValueHolder<SerializedEntandoResource> value = new ValueHolder<>();
@@ -263,7 +261,10 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
 
     @Test
     @Description("Should retrieve standard Kubernetes resources generically without needing to know the implementation class")
-    void shouldRetrieveStandardResourceGenerically() {
+    void shouldRetrieveStandardResourceGenerically() throws InterruptedException {
+        this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod").delete();
+        this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
+                .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
         step("Given I have created an instance of a Pod", () -> {
             awaitDefaultToken(MY_APP_NAMESPACE_1);
             final Pod startedPod = this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())
@@ -303,11 +304,12 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
 
     @Test
     @Description("Should execute commands against pods and reflect the correct result code")
-    void shouldExecuteCommandOnPodAndWait() throws IOException, InterruptedException, TimeoutException {
+    void shouldExecuteCommandOnPodAndWait() {
+        this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod").delete();
         step("Given I have started a new Pod", () -> {
             awaitDefaultToken(MY_APP_NAMESPACE_1);
             this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
-                    .waitUntilCondition(Objects::isNull, 20L, TimeUnit.SECONDS);
+                    .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
             final Pod startedPod = this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())
                     .create(new PodBuilder()
                             .withNewMetadata()
