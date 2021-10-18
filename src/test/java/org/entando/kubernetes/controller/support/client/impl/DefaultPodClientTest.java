@@ -109,7 +109,12 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     }
 
     @Test
-    void shouldRemoveSuccessfullyCompletedPods() throws TimeoutException {
+    void shouldRemoveSuccessfullyCompletedPods() throws TimeoutException, InterruptedException {
+        for (String s : new String[]{"successful-pod", "failed-pod"}) {
+            this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName(s).delete();
+            this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName(s)
+                    .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
+        }
         awaitDefaultToken(testResource.getMetadata().getNamespace());
         //Given I have started a new Pod
         getSimpleK8SClient().pods().runToCompletion(new PodBuilder()
