@@ -31,6 +31,7 @@ import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
@@ -114,7 +115,10 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
     @Test
     @Description("Should create a delegate Service/Endpoints pair that delegate to a service in another namespace to be exposed on an "
             + "Ingress in this namespace. (Required for Openshift)")
-    void shouldCreateADelegateServiceAndEndpoints() {
+    void shouldCreateADelegateServiceAndEndpoints() throws InterruptedException {
+        this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod").delete();
+        this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
+                .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
         TestResource testResource1 = newTestResource();
         TestResource testResource2 = newTestResource()
                 .withNames(testResource1.getMetadata().getNamespace() + "2", testResource1.getMetadata().getName() + "2");
