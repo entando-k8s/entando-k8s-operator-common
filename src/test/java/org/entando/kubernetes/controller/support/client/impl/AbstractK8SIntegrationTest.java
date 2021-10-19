@@ -40,7 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
-    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test1";
+    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test99";
     public static final String MY_APP_NAMESPACE_2 = MY_APP_NAMESPACE_1 + "2";
     public static final String TEST_CONTROLLER_POD = "test-controller-pod";
     protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
