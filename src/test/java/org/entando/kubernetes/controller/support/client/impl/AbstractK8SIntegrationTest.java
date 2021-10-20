@@ -93,12 +93,6 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
         fabric8Client = new SupportProducer().getKubernetesClient();
 
         for (String s : getNamespacesToUse()) {
-            System.err.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-            System.err.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-            System.err.println("> " + s);
-            System.err.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-            System.err.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-
             await().atMost(240, TimeUnit.SECONDS).ignoreExceptions()
                     .until(() -> {
                         if (fabric8Client.namespaces().withName(s).get() == null) {

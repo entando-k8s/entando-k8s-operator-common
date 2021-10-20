@@ -53,7 +53,8 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         TestResource app = newTestResource();
         Ingress myIngress = getTestIngress();
         myIngress.getMetadata().setNamespace(app.getMetadata().getNamespace());
-        this.getFabric8Client().extensions().ingresses().inNamespace(app.getMetadata().getNamespace()).withName(myIngress.getMetadata().getName()).delete();
+        this.getFabric8Client().extensions().ingresses().inNamespace(app.getMetadata().getNamespace())
+                .withName(myIngress.getMetadata().getName()).delete();
         Ingress deployedIngress = this.getSimpleK8SClient().ingresses().createIngress(app, myIngress);
 
         Assertions.assertTrue(() -> deployedIngress.getSpec().getRules().get(0).getHttp().getPaths().size() == 2);
@@ -75,7 +76,8 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
     void shouldRemainConsistentWithManyThreads() throws JsonProcessingException, InterruptedException {
         TestResource app = newTestResource();
         Ingress myIngress = getTestIngress();
-        this.getFabric8Client().extensions().ingresses().inNamespace(app.getMetadata().getNamespace()).withName(myIngress.getMetadata().getName()).delete();
+        this.getFabric8Client().extensions().ingresses().inNamespace(app.getMetadata().getNamespace())
+                .withName(myIngress.getMetadata().getName()).delete();
         this.getSimpleK8SClient().ingresses().createIngress(app, myIngress);
         myIngress.getSpec().getRules().get(0).getHttp().getPaths().clear();
         final int total = 5;
@@ -110,7 +112,8 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         Ingress myIngress = getTestIngress();
         final TestResource app = newTestResource();
         myIngress.getMetadata().setNamespace(app.getMetadata().getNamespace());
-        this.getFabric8Client().extensions().ingresses().inNamespace(app.getMetadata().getNamespace()).withName(myIngress.getMetadata().getName()).delete();
+        this.getFabric8Client().extensions().ingresses().inNamespace(app.getMetadata().getNamespace())
+                .withName(myIngress.getMetadata().getName()).delete();
         Ingress deployedIngress = this.getSimpleK8SClient().ingresses().createIngress(app, myIngress);
         //When I add the path '/new-path' to it
         getSimpleK8SClient().ingresses().addHttpPath(deployedIngress, new HTTPIngressPathBuilder()
