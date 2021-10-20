@@ -98,7 +98,6 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         await().atMost(10, TimeUnit.MINUTES).ignoreExceptions().until(() -> executor.awaitTermination(60, TimeUnit.SECONDS));
         Ingress actual = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName());
         //Then the paths should be consistent
-        assertThat(actual.getSpec().getRules().get(0).getHttp().getPaths().size(), is(total + 2));
         for (int i = 0; i < total; i++) {
             int finalI = i;
             assertTrue(actual.getSpec().getRules().get(0).getHttp().getPaths().stream()
