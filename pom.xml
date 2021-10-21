@@ -65,9 +65,10 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
-        <entando-k8s-custom-model.version>6.4.0</entando-k8s-custom-model.version>
+        <entando-k8s-custom-model.version>6.4.1</entando-k8s-custom-model.version>
         <preDeploymentTestGroups>pre-deployment</preDeploymentTestGroups>
         <postDeploymentTestGroups>none</postDeploymentTestGroups>
+        <owaspSuppressionFileLocation>${project.basedir}/owasp-dependency-check-suppression.xml</owaspSuppressionFileLocation>
     </properties>
     <issueManagement>
         <system>Github</system>
@@ -210,6 +211,22 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>6.1.6</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <suppressionFile>${owaspSuppressionFileLocation}</suppressionFile>
+                    <failOnError>false</failOnError>
+                </configuration>
             </plugin>
         </plugins>
     </build>
