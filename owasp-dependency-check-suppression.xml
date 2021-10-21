@@ -31,6 +31,9 @@
         <cve>CVE-2019-11250</cve>
         <cve>CVE-2020-8557</cve>
         <cve>CVE-2020-8570</cve>
+    </suppress>
+    <suppress>
+        <cpe>cpe:2.3:a:kubernetes:java</cpe>
         <cve>CVE-2021-25738</cve>
     </suppress>
     <suppress>
