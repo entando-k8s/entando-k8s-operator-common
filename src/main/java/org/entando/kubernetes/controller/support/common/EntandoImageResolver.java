@@ -28,6 +28,8 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 public class EntandoImageResolver {
 
     public static final String IMAGE_OVERRIDE_ANNOTATION_PREFIX = "image-override.entando.org/";
+    private static final String DEFAULT_REGISTRY = "registry.hub.docker.com";
+    private static final String DEFAULT_ORG = "entando";
     private final ConfigMap imageVersionsConfigMap;
     private final EntandoCustomResource resourceOfInterest;
 
@@ -88,7 +90,7 @@ public class EntandoImageResolver {
                 .withConfigMapKey("registry")
                 .withProvidedValue(dockerImageInfo.getRegistry().orElse(null))
                 .withFallbackPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK)
-                .withDefaultValue("docker.io").resolvePropertyValue();
+                .withDefaultValue(DEFAULT_REGISTRY).resolvePropertyValue();
     }
 
     private String determineOrganization(DockerImageInfo dockerImageInfo) {
@@ -97,7 +99,7 @@ public class EntandoImageResolver {
                 .withConfigMapKey("organization")
                 .withProvidedValue(dockerImageInfo.getOrganization().orElse(null))
                 .withFallbackPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK)
-                .withDefaultValue("entando").resolvePropertyValue();
+                .withDefaultValue(DEFAULT_ORG).resolvePropertyValue();
     }
 
     private Optional<String> determineVersion(DockerImageInfo dockerImageInfo) {

@@ -120,7 +120,7 @@ public enum DbmsDockerVendorStrategy {
 
     public enum DockerRegistry {
         REGISTRY_REDHAT_IO("registry.redhat.io"),
-        DOCKER_IO("docker.io");
+        DOCKER_IO("registry.hub.docker.com");
         private String registry;
 
         DockerRegistry(String registry) {
