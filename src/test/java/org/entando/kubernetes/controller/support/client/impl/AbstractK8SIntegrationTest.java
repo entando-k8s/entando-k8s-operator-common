@@ -40,7 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
-    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test1";
+    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test99";
     public static final String MY_APP_NAMESPACE_2 = MY_APP_NAMESPACE_1 + "2";
     public static final String TEST_CONTROLLER_POD = "test-controller-pod";
     protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -91,6 +91,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
     public void setup() {
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
         fabric8Client = new SupportProducer().getKubernetesClient();
+
         for (String s : getNamespacesToUse()) {
             await().atMost(240, TimeUnit.SECONDS).ignoreExceptions()
                     .until(() -> {
