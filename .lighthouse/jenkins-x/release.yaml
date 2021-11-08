@@ -26,7 +26,7 @@ spec:
           - echo $(jx-release-version) > VERSION
           command:
           - /bin/sh
-          image: ghcr.io/jenkins-x-labs-private/jxl:0.0.136
+          image: ghcr.io/jenkins-x/jx:3.2.213
           name: next-version
           resources: {}
         - args:
@@ -34,7 +34,7 @@ spec:
           - mvn versions:set -DnewVersion=$(cat VERSION)
           command:
           - /bin/sh
-          image: ghcr.io/jenkins-x-labs-private/jxl:0.0.136
+          image: ghcr.io/jenkins-x/jx:3.2.213
           name: set-version
           resources: {}
         - args:
@@ -42,7 +42,7 @@ spec:
           - jx step tag --version $(cat VERSION)
           command:
           - /bin/sh
-          image: ghcr.io/jenkins-x-labs-private/jxl:0.0.136
+          image: ghcr.io/jenkins-x/jx:3.2.213
           name: tag-version
           resources: {}
         - args:
