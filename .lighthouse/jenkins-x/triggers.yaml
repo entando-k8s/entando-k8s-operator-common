@@ -6,7 +6,7 @@ spec:
     context: "pr"
     always_run: true
     optional: false
-    trigger: "/test pr"
+    trigger: "/test"
     rerun_command: "/retest"
     source: "pullrequest.yaml"
   postsubmits:
