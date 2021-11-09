@@ -1,0 +1,5 @@
+---
+capability: "dbms"
+resolutionScopePreference:
+- "Namespace"
+provisioningStrategy: "DeployDirectly"

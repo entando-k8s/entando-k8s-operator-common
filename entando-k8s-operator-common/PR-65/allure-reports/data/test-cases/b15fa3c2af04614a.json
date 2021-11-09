@@ -1,0 +1,195 @@
+{
+  "uid" : "b15fa3c2af04614a",
+  "name" : "shouldCreateADelegateServiceAndEndpoints()",
+  "fullName" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest.shouldCreateADelegateServiceAndEndpoints",
+  "historyId" : "436764575089832a7e3f08496551ec6b",
+  "time" : {
+    "start" : 1636474037091,
+    "stop" : 1636474073117,
+    "duration" : 36026
+  },
+  "description" : "Should create a delegate Service/Endpoints pair that delegate to a service in another namespace to be exposed on an Ingress in this namespace. (Required for Openshift)",
+  "descriptionHtml" : "<p>Should create a delegate Service/Endpoints pair that delegate to a service in another namespace to be exposed on an Ingress in this namespace. (Required for Openshift)</p>\n",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "setup",
+    "time" : {
+      "start" : 1636474037092,
+      "stop" : 1636474048027,
+      "duration" : 10935
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "testStage" : {
+    "description" : "Should create a delegate Service/Endpoints pair that delegate to a service in another namespace to be exposed on an Ingress in this namespace. (Required for Openshift)",
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have started a new NGINX Pod with the label 'pod-label: 123'",
+      "time" : {
+        "start" : 1636474048037,
+        "stop" : 1636474072669,
+        "duration" : 24632
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "b3b06bf148b76232",
+        "name" : "Pod",
+        "source" : "b3b06bf148b76232.txt",
+        "type" : "text/plain",
+        "size" : 4326
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "And I have created a service to expose it internally",
+      "time" : {
+        "start" : 1636474072669,
+        "stop" : 1636474072776,
+        "duration" : 107
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "2603e53f674f0685",
+        "name" : "First Service",
+        "source" : "2603e53f674f0685.txt",
+        "type" : "text/plain",
+        "size" : 1054
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "When I create a second Service/Endpoints pair in another namespace pointing to the IP address of the first service",
+      "time" : {
+        "start" : 1636474072778,
+        "stop" : 1636474072831,
+        "duration" : 53
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "d4692ad381d4952c",
+        "name" : "Second Service",
+        "source" : "d4692ad381d4952c.txt",
+        "type" : "text/plain",
+        "size" : 850
+      }, {
+        "uid" : "201d2da4315d4187",
+        "name" : "Second Endpoints",
+        "source" : "201d2da4315d4187.txt",
+        "type" : "text/plain",
+        "size" : 534
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 2,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "Then I can successfully expose the delegate service on an ingress in the second namespace",
+      "time" : {
+        "start" : 1636474072835,
+        "stop" : 1636474073117,
+        "duration" : 282
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 4,
+    "attachmentsCount" : 4,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  },
+  "afterStages" : [ {
+    "name" : "teardown",
+    "time" : {
+      "start" : 1636474073117,
+      "stop" : 1636474073117,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "adapter"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "integration"
+  }, {
+    "name" : "feature",
+    "value" : "As a support developer, I would like perform common operations on Services and Endpoints resources through a simple interface to reduce the learning curve"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-65-pr-p6v4f-from-build-pack-gl-djpj8"
+  }, {
+    "name" : "thread",
+    "value" : "93@ndo-k8s-operator-common-pr-65-pr-p6v4f-from-build-pack-gl-djpj8.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldCreateADelegateServiceAndEndpoints"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "adapter", "integration", "pre-deployment" ]
+  },
+  "source" : "b15fa3c2af04614a.json",
+  "parameterValues" : [ ]
+}

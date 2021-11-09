@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultCapabilityClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.client.impl</a> &gt; <span class="el_source">DefaultCapabilityClient.java</span></div><h1>DefaultCapabilityClient.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.client.impl;
+
+import static java.util.Optional.ofNullable;
+
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import java.net.HttpURLConnection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.client.impl.EntandoResourceClientBase;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.support.client.CapabilityClient;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ServerStatus;
+
+public class DefaultCapabilityClient extends EntandoResourceClientBase implements CapabilityClient {
+
+    public DefaultCapabilityClient(KubernetesClient client) {
+<span class="fc" id="L42">        super(client);</span>
+<span class="fc" id="L43">    }</span>
+
+    @Override
+    public Optional&lt;ProvidedCapability&gt; providedCapabilityByName(String namespace, String name) {
+<span class="nc" id="L47">        return ofNullable(client.customResources(ProvidedCapability.class).inNamespace(namespace).withName(name).fromServer().get());</span>
+    }
+
+    @Override
+    public Optional&lt;ProvidedCapability&gt; providedCapabilityByLabels(Map&lt;String, String&gt; labels) {
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (EntandoOperatorConfig.isClusterScopedDeployment()) {</span>
+<span class="nc" id="L53">            return client.customResources(ProvidedCapability.class).inAnyNamespace().withLabels(labels).list().getItems().stream()</span>
+<span class="nc" id="L54">                    .findFirst();</span>
+        } else {
+<span class="nc bnc" id="L56" title="All 2 branches missed.">            for (String namespace : EntandoOperatorConfig.getAllAccessibleNamespaces()) {</span>
+                try {
+<span class="nc" id="L58">                    final Optional&lt;ProvidedCapability&gt; providedCapability = client.customResources(ProvidedCapability.class)</span>
+<span class="nc" id="L59">                            .inNamespace(namespace)</span>
+<span class="nc" id="L60">                            .withLabels(labels).list().getItems().stream()</span>
+<span class="nc" id="L61">                            .findFirst();</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">                    if (providedCapability.isPresent()) {</span>
+<span class="nc" id="L63">                        return providedCapability;</span>
+                    }
+<span class="nc" id="L65">                } catch (KubernetesClientException e) {</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">                    if (e.getCode() != HttpURLConnection.HTTP_FORBIDDEN) {</span>
+<span class="nc" id="L67">                        throw e;</span>
+                    }
+<span class="nc" id="L69">                }</span>
+<span class="nc" id="L70">            }</span>
+
+        }
+<span class="nc" id="L73">        return Optional.empty();</span>
+    }
+
+    @Override
+    public Optional&lt;ProvidedCapability&gt; providedCapabilityByLabels(String namespace, Map&lt;String, String&gt; labels) {
+<span class="nc" id="L78">        return client.customResources(ProvidedCapability.class).inNamespace(namespace).withLabels(labels).list().getItems().stream()</span>
+<span class="nc" id="L79">                .findFirst();</span>
+    }
+
+    @Override
+    public ProvidedCapability createOrPatchCapability(ProvidedCapability capability) {
+<span class="nc" id="L84">        return super.createOrPatchEntandoResource(capability);</span>
+    }
+
+    public ProvidedCapability waitForCapabilityCommencement(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
+<span class="nc" id="L88">        return waitForPhase(capability, timeoutSeconds, EntandoDeploymentPhase.STARTED, EntandoDeploymentPhase.REQUESTED);</span>
+    }
+
+    @Override
+    public ProvidedCapability waitForCapabilityCompletion(ProvidedCapability capability, int timeoutSeconds) throws TimeoutException {
+<span class="nc" id="L93">        return waitForCompletion(capability, timeoutSeconds);</span>
+    }
+
+    @Override
+    public String getNamespace() {
+<span class="nc" id="L98">        return client.getNamespace();</span>
+    }
+
+    @Override
+    public SerializedCapabilityProvisioningResult buildCapabilityProvisioningResult(ProvidedCapability providedCapability) {
+<span class="nc" id="L103">        final ServerStatus serverStatus = providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)</span>
+<span class="nc" id="L104">                .orElseThrow(IllegalStateException::new);</span>
+<span class="nc" id="L105">        Service service = serverStatus.getServiceName()</span>
+<span class="nc" id="L106">                .map(s -&gt; client.services().inNamespace(providedCapability.getMetadata().getNamespace())</span>
+<span class="nc" id="L107">                        .withName(s).get()).orElse(null);</span>
+<span class="nc" id="L108">        Secret adminSecret = serverStatus.getAdminSecretName()</span>
+<span class="nc" id="L109">                .map(s -&gt; client.secrets().inNamespace(providedCapability.getMetadata().getNamespace()).withName(s).get())</span>
+<span class="nc" id="L110">                .orElse(null);</span>
+<span class="nc" id="L111">        Ingress ingress = serverStatus.getIngressName()</span>
+<span class="nc" id="L112">                .map(s -&gt; client.extensions().ingresses().inNamespace(providedCapability.getMetadata().getNamespace())</span>
+<span class="nc" id="L113">                        .withName(s).get()).orElse(null);</span>
+<span class="nc" id="L114">        return new SerializedCapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

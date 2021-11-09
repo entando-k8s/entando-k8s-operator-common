@@ -1,0 +1,49 @@
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  annotations:
+    test: "123"
+  creationTimestamp: "2021-11-09T16:07:52Z"
+  managedFields:
+  - apiVersion: "v1"
+    fieldsType: "FieldsV1"
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          ".": {}
+          f:test: {}
+      f:spec:
+        f:ports:
+          ".": {}
+          k:{"port":8080,"protocol":"TCP"}:
+            ".": {}
+            f:port: {}
+            f:protocol: {}
+            f:targetPort: {}
+        f:selector:
+          ".": {}
+          f:pod-label: {}
+        f:sessionAffinity: {}
+        f:type: {}
+    manager: "okhttp"
+    operation: "Update"
+    time: "2021-11-09T16:07:52Z"
+  name: "my-service"
+  namespace: "entando-k8s-operator-common-cmpr65-test99"
+  resourceVersion: "2574017"
+  uid: "351de4f7-26ed-4b36-8f3b-97bd9f8ce40a"
+spec:
+  clusterIP: "10.0.233.63"
+  clusterIPs:
+  - "10.0.233.63"
+  ports:
+  - port: 8080
+    protocol: "TCP"
+    targetPort: 8080
+  selector:
+    pod-label: "123"
+  sessionAffinity: "None"
+  type: "ClusterIP"
+status:
+  loadBalancer: {}

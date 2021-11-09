@@ -1,0 +1,198 @@
+{
+  "uid" : "4b4757e66a1912dae1a509f688f20b0f",
+  "name" : "categories",
+  "children" : [ {
+    "name" : "Test defects",
+    "children" : [ {
+      "name" : "Failure executing: POST at: https://10.0.0.1/apis/entando.org/v1/namespaces/entando-k8s-operator-common-cmpr65-test99/providedcapabilities. Message: 404 page not found\n.",
+      "children" : [ {
+        "name" : "shouldNotResolveProvidedCapabilityFromUninterestingNamespaces()",
+        "uid" : "2c19cdc6e1d8eff1",
+        "parentUid" : "ae110b206f6bbcef32f7620cf82921a8",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473233659,
+          "stop" : 1636473245513,
+          "duration" : 11854
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateAProvidedCapabilityAndWaitForItsStatusToEnterACompletionPhase()",
+        "uid" : "9314ee482d5ea19e",
+        "parentUid" : "ae110b206f6bbcef32f7620cf82921a8",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473245539,
+          "stop" : 1636473256453,
+          "duration" : 10914
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolveFromClusterByLabels()",
+        "uid" : "a53accf248035f8e",
+        "parentUid" : "ae110b206f6bbcef32f7620cf82921a8",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473256481,
+          "stop" : 1636473268257,
+          "duration" : 11776
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolveByNameAndNamespace()",
+        "uid" : "66d605ce09e7ce70",
+        "parentUid" : "ae110b206f6bbcef32f7620cf82921a8",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473268266,
+          "stop" : 1636473279829,
+          "duration" : 11563
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolveFromNamespaceByLabels()",
+        "uid" : "625f0a6f4680b2ee",
+        "parentUid" : "ae110b206f6bbcef32f7620cf82921a8",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473279845,
+          "stop" : 1636473291428,
+          "duration" : 11583
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldBuildACapabilityResult()",
+        "uid" : "d66a46c82afbd34c",
+        "parentUid" : "ae110b206f6bbcef32f7620cf82921a8",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473291443,
+          "stop" : 1636473303237,
+          "duration" : 11794
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolveProvidedCapabilityFromAccessibleNamespaces()",
+        "uid" : "f779c9ec9d16e330",
+        "parentUid" : "ae110b206f6bbcef32f7620cf82921a8",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473303245,
+          "stop" : 1636473314868,
+          "duration" : 11623
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "ae110b206f6bbcef32f7620cf82921a8"
+    }, {
+      "name" : "java.lang.IllegalStateException",
+      "children" : [ {
+        "name" : "testPrepareClientWithPermissions()",
+        "uid" : "d701ddaa0df8fa69",
+        "parentUid" : "e249a6c6996c0e6d5708f1318b1d1a80",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473397696,
+          "stop" : 1636473539339,
+          "duration" : 141643
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testAssignRoleToServiceAccount()",
+        "uid" : "cb79d34d54236d0c",
+        "parentUid" : "e249a6c6996c0e6d5708f1318b1d1a80",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473539414,
+          "stop" : 1636473679885,
+          "duration" : 140471
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testCreatePublicClient()",
+        "uid" : "af5b0f0869550b76",
+        "parentUid" : "e249a6c6996c0e6d5708f1318b1d1a80",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473679890,
+          "stop" : 1636473820187,
+          "duration" : 140297
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testCreatePublicClientTwice()",
+        "uid" : "5e755157117fd4b8",
+        "parentUid" : "e249a6c6996c0e6d5708f1318b1d1a80",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636473820195,
+          "stop" : 1636473960442,
+          "duration" : 140247
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "e249a6c6996c0e6d5708f1318b1d1a80"
+    }, {
+      "name" : "Failure executing: POST at: https://10.0.0.1/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions. Message: CustomResourceDefinition.apiextensions.k8s.io \"testresources.test.org\" is invalid: spec.validation.openAPIV3Schema.type: Required value: must not be empty at the root. Received status: Status(apiVersion=v1, code=422, details=StatusDetails(causes=[StatusCause(field=spec.validation.openAPIV3Schema.type, message=Required value: must not be empty at the root, reason=FieldValueRequired, additionalProperties={})], group=apiextensions.k8s.io, kind=CustomResourceDefinition, name=testresources.test.org, retryAfterSeconds=null, uid=null, additionalProperties={}), kind=Status, message=CustomResourceDefinition.apiextensions.k8s.io \"testresources.test.org\" is invalid: spec.validation.openAPIV3Schema.type: Required value: must not be empty at the root, metadata=ListMeta(_continue=null, remainingItemCount=null, resourceVersion=null, selfLink=null, additionalProperties={}), reason=Invalid, status=Failure, additionalProperties={}).",
+      "children" : [ {
+        "name" : "DefaultKubernetesClientForControllersTest",
+        "uid" : "4b7e3ed773067b3b",
+        "parentUid" : "e142ca20d11cfd223459cb7d81ee55e5",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636474102735,
+          "stop" : 1636474102736,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "e142ca20d11cfd223459cb7d81ee55e5"
+    } ],
+    "uid" : "bdbf199525818fae7a8651db9eafe741"
+  }, {
+    "name" : "Product defects",
+    "children" : [ {
+      "name" : "expected: <false> but was: <true>",
+      "children" : [ {
+        "name" : "shouldRemovePathFromIngress()",
+        "uid" : "b8ac825c19d19405",
+        "parentUid" : "c90596964ef741fb1dcdbdecc98d55d4",
+        "status" : "failed",
+        "time" : {
+          "start" : 1636474031683,
+          "stop" : 1636474037068,
+          "duration" : 5385
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "c90596964ef741fb1dcdbdecc98d55d4"
+    } ],
+    "uid" : "8fb3a91ba5aaf9de24cc8a92edc82b5d"
+  } ]
+}

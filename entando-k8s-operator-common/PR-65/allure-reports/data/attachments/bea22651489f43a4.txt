@@ -1,0 +1,9 @@
+---
+apiVersion: "v1"
+kind: "Secret"
+metadata:
+  name: "my-existing-dbms-admin-secret"
+  namespace: "my-namespace"
+data:
+  username: "someuser"
+  password: "somepassword"

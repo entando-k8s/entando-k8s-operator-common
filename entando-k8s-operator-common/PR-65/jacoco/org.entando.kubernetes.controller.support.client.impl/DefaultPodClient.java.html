@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultPodClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.client.impl</a> &gt; <span class="el_source">DefaultPodClient.java</span></div><h1>DefaultPodClient.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.client.impl;
+
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
+
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.internal.KubernetesDeserializer;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.PodResult;
+import org.entando.kubernetes.controller.spi.common.PodResult.State;
+import org.entando.kubernetes.controller.support.client.PodClient;
+
+public class DefaultPodClient implements PodClient {
+
+    private final KubernetesClient client;
+
+<span class="fc" id="L38">    public DefaultPodClient(KubernetesClient client) {</span>
+<span class="fc" id="L39">        this.client = client;</span>
+        //HACK for GraalVM
+<span class="fc" id="L41">        KubernetesDeserializer.registerCustomKind(&quot;v1&quot;, &quot;Pod&quot;, Pod.class);</span>
+<span class="fc" id="L42">    }</span>
+
+    @Override
+    public void removeSuccessfullyCompletedPods(String namespace, Map&lt;String, String&gt; labels) {
+<span class="fc" id="L46">        client.pods().inNamespace(namespace).withLabels(labels).list().getItems().stream()</span>
+<span class="pc bpc" id="L47" title="1 of 4 branches missed.">                .filter(pod -&gt; PodResult.of(pod).getState() == State.COMPLETED &amp;&amp; !PodResult.of(pod).hasFailed())</span>
+<span class="fc" id="L48">                .forEach(client.pods().inNamespace(namespace)::delete);</span>
+<span class="fc" id="L49">    }</span>
+
+    @Override
+    public void removeAndWait(String namespace, Map&lt;String, String&gt; labels, int timeoutSeconds) throws TimeoutException {
+<span class="fc" id="L53">        interruptionSafe(() -&gt; {</span>
+<span class="fc" id="L54">            FilterWatchListDeletable&lt;Pod, PodList&gt; podResource = client.pods().inNamespace(namespace).withLabels(labels);</span>
+<span class="fc" id="L55">            podResource.delete();</span>
+<span class="fc" id="L56">            return podResource.waitUntilCondition(pod -&gt; podResource.list().getItems().isEmpty(),</span>
+                    timeoutSeconds,
+                    TimeUnit.SECONDS);
+        });
+<span class="fc" id="L60">    }</span>
+
+    @Override
+    public Pod runToCompletion(Pod pod, int timeoutSeconds) throws TimeoutException {
+<span class="fc" id="L64">        return interruptionSafe(() -&gt; {</span>
+<span class="fc" id="L65">            this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);</span>
+<span class="fc" id="L66">            return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName())</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">                    .waitUntilCondition(got -&gt; PodResult.of(got).getState() == State.COMPLETED,</span>
+                            timeoutSeconds, TimeUnit.SECONDS);
+        });
+    }
+
+    @Override
+    public void deletePod(Pod pod) {
+<span class="nc" id="L74">        this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName()).delete();</span>
+<span class="nc" id="L75">    }</span>
+
+    @Override
+    public Pod start(Pod pod) {
+<span class="fc" id="L79">        return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);</span>
+    }
+
+    @Override
+    public Pod waitForPod(String namespace, String labelName, String labelValue, int timeoutSeconds) throws TimeoutException {
+<span class="fc" id="L84">        return interruptionSafe(() -&gt;</span>
+<span class="fc" id="L85">                client.pods().inNamespace(namespace).withLabel(labelName, labelValue).waitUntilCondition(</span>
+<span class="pc bpc" id="L86" title="1 of 6 branches missed.">                        got -&gt; got != null &amp;&amp; got.getStatus() != null &amp;&amp; (PodResult.of(got).getState() == State.READY</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">                                || PodResult.of(got).getState() == State.COMPLETED),</span>
+<span class="fc" id="L88">                        EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds(),</span>
+                        TimeUnit.SECONDS));
+
+    }
+
+    @Override
+    public Pod loadPod(String namespace, Map&lt;String, String&gt; labels) {
+<span class="fc" id="L95">        return client.pods().inNamespace(namespace).withLabels(labels).list().getItems().stream().findFirst().orElse(null);</span>
+    }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

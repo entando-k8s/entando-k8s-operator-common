@@ -1,0 +1,137 @@
+---
+mixins:
+- "Deployable"
+- "DbAwareDeployable"
+- "Secretive"
+defaultServiceAccountName: "default"
+replicas: 1
+expectingDatabaseSchemas: true
+customResource:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  metadata:
+    name: "my-app"
+    namespace: "my-namespace"
+  isCustomResource: true
+containers:
+- memoryLimitMebibytes: 256
+  dockerImageInfo:
+    organization: "test"
+    repository: "my-spring-boot-image"
+    tag: "6.3.2"
+  namesOfSecretsToMount: []
+  additionalPorts: []
+  databasePopulator:
+    mixins:
+    - "DatabasePopulator"
+    environmentVariables:
+    - name: "SPRING_DATASOURCE_USERNAME"
+      valueFrom:
+        secretKeyRef:
+          key: "username"
+          name: "my-app-server-secret"
+          optional: false
+    - name: "SPRING_DATASOURCE_PASSWORD"
+      valueFrom:
+        secretKeyRef:
+          key: "password"
+          name: "my-app-server-secret"
+          optional: false
+    - name: "SPRING_DATASOURCE_URL"
+      value: "jdbc:postgresql://default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local:5432/my_db?connectionTimeout=300"
+    - name: "SPRING_JPA_DATABASE_PLATFORM"
+      value: "org.hibernate.dialect.PostgreSQLDialect"
+    dockerImageInfo:
+      organization: "test"
+      repository: "my-spring-boot-image"
+      tag: "6.3.2"
+    command:
+    - "java"
+    - "-jar"
+    - "/deployments/myapp.jar"
+    - "--prepare-db"
+  storageLimitMebibytes: 0
+  primaryPort: 8081
+  mixins:
+  - "PersistentVolumeAwareContainer"
+  - "DeployableContainer"
+  - "DbAwareContainer"
+  databaseConnectionVariables:
+  - name: "SPRING_DATASOURCE_USERNAME"
+    valueFrom:
+      secretKeyRef:
+        key: "username"
+        name: "my-app-server-secret"
+        optional: false
+  - name: "SPRING_DATASOURCE_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        key: "password"
+        name: "my-app-server-secret"
+        optional: false
+  - name: "SPRING_DATASOURCE_URL"
+    value: "jdbc:postgresql://default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local:5432/my_db?connectionTimeout=300"
+  - name: "SPRING_JPA_DATABASE_PLATFORM"
+    value: "org.hibernate.dialect.PostgreSQLDialect"
+  kubernetesPermissions: []
+  environmentVariables: []
+  schemaConnectionInfo:
+  - schemaSecret:
+      apiVersion: "v1"
+      kind: "Secret"
+      metadata:
+        labels:
+          TestResource: "my-app"
+        name: "my-app-server-secret"
+        ownerReferences:
+        - apiVersion: "test.org/v1"
+          kind: "TestResource"
+          blockOwnerDeletion: true
+          controller: true
+          name: "my-app"
+          uid: "a5c01b38-8522-4e20-9222-ae3d63f28c08"
+      stringData:
+        username: "my_app_server"
+        password: "ccf4772dd0d946df"
+    mixins:
+    - "DatabaseSchemaConnectionInfo"
+    passwordRef:
+      secretKeyRef:
+        key: "password"
+        name: "my-app-server-secret"
+        optional: false
+    databaseNameToUse: "my_db"
+    usernameRef:
+      secretKeyRef:
+        key: "username"
+        name: "my-app-server-secret"
+        optional: false
+    jdbcUrl: "jdbc:postgresql://default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local:5432/my_db?connectionTimeout=300"
+    schemaName: "my_app_server"
+    databaseServiceResult:
+      internalServiceHostname: "default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local"
+      mixins:
+      - "DatabaseConnectionInfo"
+      - "ServiceResult"
+      databaseName: "my_db"
+      jdbcParameters:
+        connectionTimeout: "300"
+      port: "5432"
+      vendor: "POSTGRESQL"
+      adminSecretName: "default-postgresql-dbms-in-namespace-admin-secret"
+      service:
+        apiVersion: "v1"
+        kind: "Service"
+        metadata:
+          name: "default-postgresql-dbms-in-namespace-service"
+          namespace: "my-namespace"
+        spec:
+          clusterIP: "10.0.0.-52"
+          ports:
+          - port: 5432
+    schemaSecretName: "my-app-server-secret"
+  nameQualifier: "server"
+  secretsToMount: []
+  cpuLimitMillicores: 500
+secrets: []
+serviceAccountToUse: "default"

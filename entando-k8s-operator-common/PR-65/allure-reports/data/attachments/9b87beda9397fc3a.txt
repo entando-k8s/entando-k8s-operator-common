@@ -1,0 +1,34 @@
+---
+apiVersion: "v1"
+kind: "Event"
+metadata:
+  labels:
+    entando.org/entando-resource-namespace: "my-namespace"
+    TestResource: "my-app"
+    entando.org/entando-resource-kind: "TestResource"
+  name: "my-app-29561431"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "test.org/v1"
+    kind: "TestResource"
+    blockOwnerDeletion: true
+    controller: true
+    name: "my-app"
+    uid: "59f3c8c0-1e85-4fe8-a52f-f0862d20c40c"
+action: "PHASE_CHANGE"
+count: 1
+firstTimestamp: "2021-11-09T16:08:31Z"
+involvedObject:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  fieldPath: "status"
+  name: "my-app"
+  namespace: "my-namespace"
+  resourceVersion: "519796"
+  uid: "59f3c8c0-1e85-4fe8-a52f-f0862d20c40c"
+lastTimestamp: "2021-11-09T16:08:31Z"
+message: "The deployment of TestResource  my-namespace/my-app was updated  to FAILED"
+reason: "PhaseUpdated"
+source:
+  component: "entando-k8s-ource-controller"
+type: "Normal"

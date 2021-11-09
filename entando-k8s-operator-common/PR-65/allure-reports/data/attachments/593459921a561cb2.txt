@@ -1,0 +1,10 @@
+---
+capability: "sso"
+implementation: "redhat-sso"
+resolutionScopePreference:
+- "Cluster"
+- "Namespace"
+provisioningStrategy: "DeployDirectly"
+capabilityParameters:
+  preferredTlsSecretName: "my-tls-secret"
+  preferredIngressHostName: "my.ingress.host.com"

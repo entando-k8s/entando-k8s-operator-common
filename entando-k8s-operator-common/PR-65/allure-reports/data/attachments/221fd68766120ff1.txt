@@ -1,0 +1,45 @@
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  annotations:
+    test: "234"
+  creationTimestamp: "2021-11-09T16:08:21Z"
+  managedFields:
+  - apiVersion: "v1"
+    fieldsType: "FieldsV1"
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          ".": {}
+          f:test: {}
+      f:spec:
+        f:externalName: {}
+        f:ports:
+          ".": {}
+          k:{"port":80,"protocol":"TCP"}:
+            ".": {}
+            f:port: {}
+            f:protocol: {}
+            f:targetPort: {}
+        f:sessionAffinity: {}
+        f:type: {}
+    manager: "okhttp"
+    operation: "Update"
+    time: "2021-11-09T16:08:21Z"
+  name: "my-service"
+  namespace: "entando-k8s-operator-common-cmpr65-test99"
+  uid: "65db94d1-9a0e-439f-b266-e9dfedb0e5d1"
+spec:
+  clusterIP: "10.0.1.32"
+  clusterIPs:
+  - "10.0.1.32"
+  externalName: "google.com"
+  ports:
+  - port: 80
+    protocol: "TCP"
+    targetPort: 80
+  sessionAffinity: "None"
+  type: "ClusterIP"
+status:
+  loadBalancer: {}

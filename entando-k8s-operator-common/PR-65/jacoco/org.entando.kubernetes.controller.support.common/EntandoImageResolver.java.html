@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EntandoImageResolver.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.common</a> &gt; <span class="el_source">EntandoImageResolver.java</span></div><h1>EntandoImageResolver.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.common;
+
+import static java.lang.String.format;
+
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import java.util.Map.Entry;
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.spi.container.DockerImageInfo;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+
+public class EntandoImageResolver {
+
+    public static final String IMAGE_OVERRIDE_ANNOTATION_PREFIX = &quot;image-override.entando.org/&quot;;
+    private static final String DEFAULT_REGISTRY = &quot;registry.hub.docker.com&quot;;
+    private static final String DEFAULT_ORG = &quot;entando&quot;;
+    private final ConfigMap imageVersionsConfigMap;
+    private final EntandoCustomResource resourceOfInterest;
+
+    public EntandoImageResolver(ConfigMap imageVersionsConfigMap) {
+<span class="fc" id="L37">        this(imageVersionsConfigMap, null);</span>
+<span class="fc" id="L38">    }</span>
+
+<span class="fc" id="L40">    public EntandoImageResolver(ConfigMap imageVersionsConfigMap, EntandoCustomResource resourceOfInterest) {</span>
+<span class="fc" id="L41">        this.imageVersionsConfigMap = imageVersionsConfigMap;</span>
+<span class="fc" id="L42">        this.resourceOfInterest = resourceOfInterest;</span>
+<span class="fc" id="L43">    }</span>
+
+    public String determineImageUri(String imageUri) {
+<span class="fc" id="L46">        return determineImageUri(new DockerImageInfo(imageUri));</span>
+    }
+
+    public String determineImageUri(DockerImageInfo dockerImageInfo) {
+        //First we look at the annotations in the resource (for testing purposes)
+        // Is this a security risk? no, it is 100% in control of the deployer user.
+<span class="fc bfc" id="L52" title="All 4 branches covered.">        if (resourceOfInterest != null &amp;&amp; resourceOfInterest.getMetadata().getAnnotations() != null) {</span>
+<span class="fc" id="L53">            Optional&lt;String&gt; debugImageOverride = resourceOfInterest.getMetadata().getAnnotations().entrySet().stream()</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">                    .filter(entry -&gt; entry.getKey().equals(IMAGE_OVERRIDE_ANNOTATION_PREFIX + dockerImageInfo.getRepository())</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">                            || entry.getKey().equals(IMAGE_OVERRIDE_ANNOTATION_PREFIX + dockerImageInfo.getOrganizationAwareRepository()))</span>
+<span class="fc" id="L56">                    .map(Entry::getValue)</span>
+<span class="fc" id="L57">                    .findFirst();</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">            if (debugImageOverride.isPresent()) {</span>
+<span class="fc" id="L59">                return debugImageOverride.get();</span>
+            }
+        }
+        //The environment variable injected by the OLM takes precedence over everything
+<span class="fc" id="L63">        Optional&lt;String&gt; injectedImageUri = EntandoOperatorConfigBase.lookupProperty(relateImage(dockerImageInfo.getRepository()))</span>
+<span class="fc" id="L64">                .or(() -&gt; EntandoOperatorConfigBase.lookupProperty(relateImage(dockerImageInfo.getOrganizationAwareRepository())));</span>
+<span class="fc" id="L65">        return injectedImageUri.orElse(format(&quot;%s/%s/%s:%s&quot;,</span>
+<span class="fc" id="L66">                determineDockerRegistry(dockerImageInfo),</span>
+<span class="fc" id="L67">                determineOrganization(dockerImageInfo),</span>
+<span class="fc" id="L68">                determineRepository(dockerImageInfo),</span>
+                //Have to append &quot;latest&quot; here to allow for optional version resolution
+<span class="fc" id="L70">                determineVersion(dockerImageInfo).orElse(&quot;latest&quot;)));</span>
+    }
+
+    private String determineRepository(DockerImageInfo dockerImageInfo) {
+<span class="fc" id="L74">        return new PropertyResolution(this.imageVersionsConfigMap, dockerImageInfo)</span>
+<span class="fc" id="L75">                .withOverridingPropertyName(EntandoOperatorConfigProperty.NULL_PROPERTY)</span>
+<span class="fc" id="L76">                .withConfigMapKey(&quot;repository&quot;)</span>
+<span class="fc" id="L77">                .withProvidedValue(dockerImageInfo.getRepository())</span>
+<span class="fc" id="L78">                .withFallbackPropertyName(EntandoOperatorConfigProperty.NULL_PROPERTY)</span>
+<span class="fc" id="L79">                .withDefaultValue(dockerImageInfo.getRepository())</span>
+<span class="fc" id="L80">                .resolvePropertyValue();</span>
+    }
+
+    private String relateImage(String repository) {
+<span class="fc" id="L84">        return &quot;related.image.&quot; + repository;</span>
+    }
+
+    private String determineDockerRegistry(DockerImageInfo dockerImageInfo) {
+<span class="fc" id="L88">        return new PropertyResolution(this.imageVersionsConfigMap, dockerImageInfo)</span>
+<span class="fc" id="L89">                .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_OVERRIDE)</span>
+<span class="fc" id="L90">                .withConfigMapKey(&quot;registry&quot;)</span>
+<span class="fc" id="L91">                .withProvidedValue(dockerImageInfo.getRegistry().orElse(null))</span>
+<span class="fc" id="L92">                .withFallbackPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_REGISTRY_FALLBACK)</span>
+<span class="fc" id="L93">                .withDefaultValue(DEFAULT_REGISTRY).resolvePropertyValue();</span>
+    }
+
+    private String determineOrganization(DockerImageInfo dockerImageInfo) {
+<span class="fc" id="L97">        return new PropertyResolution(this.imageVersionsConfigMap, dockerImageInfo)</span>
+<span class="fc" id="L98">                .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE)</span>
+<span class="fc" id="L99">                .withConfigMapKey(&quot;organization&quot;)</span>
+<span class="fc" id="L100">                .withProvidedValue(dockerImageInfo.getOrganization().orElse(null))</span>
+<span class="fc" id="L101">                .withFallbackPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_ORG_FALLBACK)</span>
+<span class="fc" id="L102">                .withDefaultValue(DEFAULT_ORG).resolvePropertyValue();</span>
+    }
+
+    private Optional&lt;String&gt; determineVersion(DockerImageInfo dockerImageInfo) {
+        //For the version, we allow the dockerImageInfo to override it primarily for testing purposes
+        //It is extremely unlikely that any version will be provided for any context other than testing
+<span class="fc" id="L108">        return Optional.ofNullable(dockerImageInfo.getVersion().orElse(new PropertyResolution(this.imageVersionsConfigMap, dockerImageInfo)</span>
+<span class="fc" id="L109">                .withOverridingPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE)</span>
+<span class="fc" id="L110">                .withConfigMapKey(&quot;version&quot;)</span>
+<span class="fc" id="L111">                .withProvidedValue(null)</span>
+<span class="fc" id="L112">                .withFallbackPropertyName(EntandoOperatorConfigProperty.ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK)</span>
+<span class="fc" id="L113">                .withDefaultValue(null).resolvePropertyValue()));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KubernetesClientForControllers.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.client</a> &gt; <span class="el_source">KubernetesClientForControllers.java</span></div><h1>KubernetesClientForControllers.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.client;
+
+import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
+
+import io.fabric8.kubernetes.api.model.Event;
+import io.fabric8.kubernetes.api.model.EventBuilder;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import java.io.ByteArrayInputStream;
+import java.net.HttpURLConnection;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
+import org.entando.kubernetes.controller.spi.common.ExceptionUtils;
+import org.entando.kubernetes.controller.spi.common.FormatUtils;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.ResourceUtils;
+import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
+import org.entando.kubernetes.model.common.ServerStatus;
+
+public interface KubernetesClientForControllers {
+
+    String ENTANDO_CRD_NAMES_CONFIG_MAP = &quot;entando-crd-names&quot;;
+    String ENTANDO_OPERATOR_CONFIG_CONFIGMAP_NAME = &quot;entando-operator-config&quot;;
+
+    void prepareConfig();
+
+    &lt;T extends EntandoCustomResource&gt; T waitForCompletion(T customResource, int timeoutSeconds)
+            throws TimeoutException;
+
+    String getNamespace();
+
+    Service loadControllerService(String name);
+
+    &lt;T extends EntandoCustomResource&gt; T createOrPatchEntandoResource(T r);
+
+    &lt;T extends EntandoCustomResource&gt; T load(Class&lt;T&gt; clzz, String resourceNamespace, String resourceName);
+
+    default EntandoCustomResource resolveCustomResourceToProcess(Collection&lt;Class&lt;? extends EntandoCustomResource&gt;&gt; supportedTypes) {
+<span class="fc" id="L77">        prepareConfig();</span>
+<span class="fc" id="L78">        String resourceName = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME);</span>
+<span class="fc" id="L79">        String resourceNamespace = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE);</span>
+<span class="fc" id="L80">        String kind = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND);</span>
+<span class="fc" id="L81">        return load(supportedTypes.stream().filter(c -&gt; c.getSimpleName().equals(kind)).findAny().orElseThrow(() -&gt;</span>
+<span class="nc" id="L82">                        new IllegalArgumentException(format(&quot;The resourceKind %s was not found in the list of supported types&quot;, kind))),</span>
+                resourceNamespace, resourceName);
+
+    }
+
+    private String resolveProperty(EntandoOperatorSpiConfigProperty name) {
+<span class="fc" id="L88">        return EntandoOperatorConfigBase.lookupProperty(name)</span>
+<span class="pc" id="L89">                .orElseThrow(() -&gt; new IllegalStateException(</span>
+<span class="nc" id="L90">                        format(&quot;No %s specified. Please set either the Environment Variable %s or the System Property %s&quot;, name</span>
+<span class="nc" id="L91">                                .getCamelCaseName(), name.name(), name.getJvmSystemProperty())));</span>
+    }
+
+    SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name);
+
+    HasMetadata loadStandardResource(String kind, String namespace, String name);
+
+    @SuppressWarnings({&quot;java:S106&quot;})
+    default ExecutionResult executeAndWait(PodResource&lt;Pod&gt; podResource, String containerName, int timeoutSeconds,
+            String... script) throws TimeoutException {
+<span class="nc" id="L101">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        for (String s : script) {</span>
+<span class="nc" id="L103">            sb.append(s);</span>
+<span class="nc" id="L104">            sb.append(&quot; || exit $?\n&quot;);</span>
+        }
+<span class="nc" id="L106">        sb.append(&quot;exit $?\n&quot;);</span>
+<span class="nc" id="L107">        ByteArrayInputStream in = new ByteArrayInputStream(sb.toString().getBytes());</span>
+<span class="nc" id="L108">        final CompletableFuture&lt;ExecutionResult&gt; future = new CompletableFuture&lt;&gt;();</span>
+<span class="nc" id="L109">        ExecutionResult listener = new ExecutionResult(future);</span>
+<span class="nc" id="L110">        podResource.inContainer(containerName)</span>
+<span class="nc" id="L111">                .readingInput(in)</span>
+<span class="nc" id="L112">                .writingOutput(listener.getOutput())</span>
+<span class="nc" id="L113">                .writingError(listener.getOutput())</span>
+<span class="nc" id="L114">                .writingErrorChannel(listener.getErrorChannel())</span>
+<span class="nc" id="L115">                .withTTY()</span>
+<span class="nc" id="L116">                .usingListener(listener).exec();</span>
+<span class="nc" id="L117">        return interruptionSafe(() -&gt; future.get(timeoutSeconds, TimeUnit.SECONDS));</span>
+    }
+
+    default &lt;T extends EntandoCustomResource&gt; Event populateEvent(T customResource, UnaryOperator&lt;EventBuilder&gt; eventPopulator) {
+<span class="fc" id="L121">        final EventBuilder doneableEvent = new EventBuilder()</span>
+<span class="fc" id="L122">                .withNewMetadata()</span>
+<span class="fc" id="L123">                .withNamespace(customResource.getMetadata().getNamespace())</span>
+<span class="fc" id="L124">                .withName(customResource.getMetadata().getName() + &quot;-&quot; + NameUtils.randomNumeric(8))</span>
+<span class="fc" id="L125">                .withLabels(ResourceUtils.labelsFromResource(customResource))</span>
+<span class="fc" id="L126">                .withOwnerReferences(ResourceUtils.buildOwnerReference(customResource))</span>
+<span class="fc" id="L127">                .endMetadata()</span>
+<span class="fc" id="L128">                .withCount(1)</span>
+<span class="fc" id="L129">                .withFirstTimestamp(FormatUtils.format(LocalDateTime.now()))</span>
+<span class="fc" id="L130">                .withLastTimestamp(FormatUtils.format(LocalDateTime.now()))</span>
+<span class="fc" id="L131">                .withNewSource(NameUtils.controllerNameOf(customResource), null)</span>
+<span class="fc" id="L132">                .withNewInvolvedObject()</span>
+<span class="fc" id="L133">                .withApiVersion(customResource.getApiVersion())</span>
+<span class="fc" id="L134">                .withKind(customResource.getKind())</span>
+<span class="fc" id="L135">                .withNamespace(customResource.getMetadata().getNamespace())</span>
+<span class="fc" id="L136">                .withName(customResource.getMetadata().getName())</span>
+<span class="fc" id="L137">                .withUid(customResource.getMetadata().getUid())</span>
+<span class="fc" id="L138">                .withResourceVersion(customResource.getMetadata().getResourceVersion())</span>
+<span class="fc" id="L139">                .withFieldPath(&quot;status&quot;)</span>
+<span class="fc" id="L140">                .endInvolvedObject();</span>
+<span class="fc" id="L141">        return eventPopulator.apply(doneableEvent).build();</span>
+    }
+
+    default &lt;T extends EntandoCustomResource&gt; T issueEventAndPerformStatusUpdate(T customResource, Consumer&lt;T&gt; consumer,
+            UnaryOperator&lt;EventBuilder&gt; eventPopulator) {
+<span class="fc" id="L146">        final Event event = populateEvent(customResource, eventPopulator);</span>
+<span class="fc" id="L147">        issueEvent(customResource, event);</span>
+        //Could be updating the status concurrently from multiple Deployables
+<span class="fc" id="L149">        return retry(() -&gt; performStatusUpdate(customResource, consumer),</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">                e -&gt; e instanceof KubernetesClientException</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">                        &amp;&amp; ((KubernetesClientException) e).getCode() == HttpURLConnection.HTTP_CONFLICT,</span>
+                4);
+    }
+
+    &lt;T extends EntandoCustomResource&gt; T performStatusUpdate(T customResource, Consumer&lt;T&gt; consumer);
+
+    default &lt;T extends EntandoCustomResource&gt; T updateStatus(T customResource, ServerStatus status) {
+<span class="fc" id="L158">        return issueEventAndPerformStatusUpdate(customResource,</span>
+<span class="fc" id="L159">                t -&gt; t.getStatus().putServerStatus(status),</span>
+<span class="fc" id="L160">                e -&gt; e.withType(&quot;Normal&quot;)</span>
+<span class="fc" id="L161">                        .withNewRelated()</span>
+<span class="fc" id="L162">                        .withApiVersion(&quot;v1&quot;)</span>
+<span class="fc" id="L163">                        .withKind(&quot;Pod&quot;)</span>
+<span class="fc" id="L164">                        .withNamespace(status.getOriginatingControllerPod().getNamespace().orElse(getNamespace()))</span>
+<span class="fc" id="L165">                        .withName(status.getOriginatingControllerPod().getName())</span>
+<span class="fc" id="L166">                        .endRelated()</span>
+<span class="fc" id="L167">                        .withReason(&quot;StatusUpdate&quot;)</span>
+<span class="fc" id="L168">                        .withMessage(format(&quot;The %s  %s/%s received status update for %s &quot;,</span>
+<span class="fc" id="L169">                                customResource.getKind(),</span>
+<span class="fc" id="L170">                                customResource.getMetadata().getNamespace(),</span>
+<span class="fc" id="L171">                                customResource.getMetadata().getName(),</span>
+<span class="fc" id="L172">                                status.getQualifier()))</span>
+<span class="fc" id="L173">                        .withAction(&quot;STATUS_CHANGE&quot;)</span>
+        );
+    }
+
+    default &lt;T extends EntandoCustomResource&gt; T deploymentStarted(T customResource) {
+<span class="fc" id="L178">        return updatePhase(customResource, EntandoDeploymentPhase.STARTED);</span>
+    }
+
+    default &lt;T extends EntandoCustomResource&gt; T deploymentEnded(T customResource) {
+<span class="fc" id="L182">        return issueEventAndPerformStatusUpdate(customResource,</span>
+<span class="fc" id="L183">                t -&gt; t.getStatus().updateDeploymentPhase(t.getStatus().calculateFinalPhase(), t.getMetadata().getGeneration()),</span>
+<span class="fc" id="L184">                e -&gt; e.withType(&quot;Normal&quot;)</span>
+<span class="fc" id="L185">                        .withReason(&quot;PhaseUpdated&quot;)</span>
+<span class="fc" id="L186">                        .withMessage(format(&quot;The deployment of %s  %s/%s was updated  to %s&quot;,</span>
+<span class="fc" id="L187">                                customResource.getKind(),</span>
+<span class="fc" id="L188">                                customResource.getMetadata().getNamespace(),</span>
+<span class="fc" id="L189">                                customResource.getMetadata().getName(),</span>
+<span class="fc" id="L190">                                customResource.getStatus().calculateFinalPhase().name()))</span>
+<span class="fc" id="L191">                        .withAction(&quot;PHASE_CHANGE&quot;)</span>
+        );
+    }
+
+    default &lt;T extends EntandoCustomResource&gt; T updatePhase(T customResource, EntandoDeploymentPhase phase) {
+<span class="fc" id="L196">        return issueEventAndPerformStatusUpdate(customResource,</span>
+                t -&gt; {
+<span class="fc" id="L198">                    t.getStatus().updateDeploymentPhase(phase, t.getMetadata().getGeneration());</span>
+<span class="pc bpc" id="L199" title="1 of 4 branches missed.">                    if (phase == EntandoDeploymentPhase.STARTED &amp;&amp; t.getStatus().hasFailed()) {</span>
+<span class="nc" id="L200">                        t.getStatus().getServerStatuses().forEach(s -&gt; s.setEntandoControllerFailure(null));</span>
+                    }
+<span class="fc" id="L202">                },</span>
+<span class="fc" id="L203">                e -&gt; e.withType(&quot;Normal&quot;)</span>
+<span class="fc" id="L204">                        .withReason(&quot;PhaseUpdated&quot;)</span>
+<span class="fc" id="L205">                        .withMessage(format(&quot;The deployment of %s  %s/%s was updated  to %s&quot;,</span>
+<span class="fc" id="L206">                                customResource.getKind(),</span>
+<span class="fc" id="L207">                                customResource.getMetadata().getNamespace(),</span>
+<span class="fc" id="L208">                                customResource.getMetadata().getName(),</span>
+<span class="fc" id="L209">                                phase.name()))</span>
+<span class="fc" id="L210">                        .withAction(&quot;PHASE_CHANGE&quot;)</span>
+        );
+    }
+
+    default &lt;T extends EntandoCustomResource&gt; T deploymentFailed(T customResource, Exception cause, String serverQualifier) {
+<span class="fc" id="L215">        final EntandoControllerFailure entandoControllerFailure = ExceptionUtils.failureOf(customResource, cause);</span>
+<span class="fc" id="L216">        return issueEventAndPerformStatusUpdate(customResource,</span>
+                t -&gt; {
+<span class="fc" id="L218">                    String qualifierToUse = ofNullable(serverQualifier).orElse(NameUtils.MAIN_QUALIFIER);</span>
+<span class="pc bpc" id="L219" title="1 of 2 branches missed.">                    if (t.getStatus().getServerStatus(qualifierToUse).isEmpty()) {</span>
+<span class="nc" id="L220">                        t.getStatus().putServerStatus(new ServerStatus(qualifierToUse));</span>
+                    }
+                    //Never overwrite existing exceptions. Exceptions are cleared on start event.
+                    //More specific exceptions should be set in the commands and creators.
+                    //This is more for use from the Controllers
+<span class="pc bpc" id="L225" title="1 of 2 branches missed.">                    t.getStatus().getServerStatus(qualifierToUse).filter(status -&gt; !status.hasFailed())</span>
+<span class="fc" id="L226">                            .ifPresent(</span>
+<span class="fc" id="L227">                                    newStatus -&gt; newStatus.finishWith(entandoControllerFailure));</span>
+<span class="fc" id="L228">                    t.getStatus().updateDeploymentPhase(EntandoDeploymentPhase.FAILED, t.getMetadata().getGeneration());</span>
+<span class="fc" id="L229">                },</span>
+<span class="fc" id="L230">                e -&gt; e.withType(&quot;Error&quot;)</span>
+<span class="fc" id="L231">                        .withReason(&quot;Failed&quot;)</span>
+<span class="fc" id="L232">                        .withMessage(</span>
+<span class="fc" id="L233">                                format(&quot;The deployment of %s %s/%s failed due to %s. Fix the root cause and then trigger a &quot;</span>
+                                                + &quot;redeployment &quot;
+                                                + &quot;by adding the annotation 'entando.org/processing-instruction: force'&quot;,
+<span class="fc" id="L236">                                        customResource.getKind(),</span>
+<span class="fc" id="L237">                                        customResource.getMetadata().getNamespace(),</span>
+<span class="fc" id="L238">                                        customResource.getMetadata().getName(),</span>
+<span class="fc" id="L239">                                        cause.getMessage()))</span>
+<span class="fc" id="L240">                        .withAction(&quot;FAILED&quot;)</span>
+<span class="fc" id="L241">                        .withNewRelated()</span>
+<span class="fc" id="L242">                        .withApiVersion(&quot;v1&quot;)</span>
+<span class="fc" id="L243">                        .withKind(&quot;Pod&quot;)</span>
+<span class="fc" id="L244">                        .withNamespace(getNamespace())</span>
+<span class="fc" id="L245">                        .withName(EntandoOperatorSpiConfig.getControllerPodName())</span>
+<span class="fc" id="L246">                        .endRelated()</span>
+
+        );
+    }
+
+    default CapabilityProvisioningResult loadCapabilityProvisioningResult(ServerStatus serverStatus) {
+<span class="fc" id="L252">        final String capabilityNamespace = serverStatus.getOriginatingCustomResource().getNamespace()</span>
+<span class="fc" id="L253">                .orElseThrow(IllegalArgumentException::new);</span>
+<span class="fc" id="L254">        Service service = serverStatus.getServiceName().map(s -&gt; (Service) loadStandardResource(&quot;Service&quot;, capabilityNamespace, s))</span>
+<span class="fc" id="L255">                .orElse(null);</span>
+<span class="fc" id="L256">        Secret adminSecret = serverStatus.getAdminSecretName()</span>
+<span class="fc" id="L257">                .map(s -&gt; (Secret) loadStandardResource(&quot;Secret&quot;, capabilityNamespace, s))</span>
+<span class="fc" id="L258">                .orElse(null);</span>
+<span class="fc" id="L259">        Ingress ingress = serverStatus.getIngressName()</span>
+<span class="fc" id="L260">                .map(i -&gt; (Ingress) loadStandardResource(&quot;Ingress&quot;, capabilityNamespace, i))</span>
+<span class="fc" id="L261">                .orElse(null);</span>
+<span class="fc" id="L262">        ProvidedCapability providedCapability = load(ProvidedCapability.class, capabilityNamespace,</span>
+<span class="fc" id="L263">                serverStatus.getOriginatingCustomResource().getName());</span>
+<span class="fc" id="L264">        return new SerializedCapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);</span>
+
+    }
+
+    &lt;T extends EntandoCustomResource&gt; void issueEvent(T customResource, Event event);
+
+    List&lt;Event&gt; listEventsFor(EntandoCustomResource resource);
+
+    ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) throws TimeoutException;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

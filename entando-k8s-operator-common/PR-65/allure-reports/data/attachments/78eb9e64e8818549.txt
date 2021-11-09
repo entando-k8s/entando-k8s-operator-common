@@ -1,0 +1,17 @@
+---
+mixins:
+- "CapabilityForResource"
+resourceInNeed:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  metadata:
+    name: "my-app2"
+    namespace: "my-namespace2"
+  isCustomResource: true
+capabilityRequirement:
+  capability: "sso"
+  implementation: "keycloak"
+  resolutionScopePreference:
+  - "Namespace"
+  capabilityParameters:
+    defaultRealm: "my-realm"

@@ -1,0 +1,9 @@
+---
+mixins: []
+capability: "DBMS"
+implementation: "MYSQL"
+capabilityParameters: {}
+resolutionScopePreference:
+- "SPECIFIED"
+selector: {}
+provisioningStrategy: "DEPLOY_DIRECTLY"

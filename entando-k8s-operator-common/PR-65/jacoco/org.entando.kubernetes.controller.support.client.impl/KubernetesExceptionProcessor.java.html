@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KubernetesExceptionProcessor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.client.impl</a> &gt; <span class="el_source">KubernetesExceptionProcessor.java</span></div><h1>KubernetesExceptionProcessor.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.client.impl;
+
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import org.entando.kubernetes.controller.support.client.DuplicateExcepion;
+import org.entando.kubernetes.controller.support.client.UnauthorizedExcepion;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+
+public final class KubernetesExceptionProcessor {
+
+    private static final int UNAUTHORIZED = 403;
+    private static final int CONFLICT = 409;
+
+    private KubernetesExceptionProcessor() {
+    }
+
+    public static &lt;T extends HasMetadata&gt; T verifyDuplicateExceptionOnCreate(String controllerNamespace, T resource,
+            KubernetesClientException e) {
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (e.getCode() == UNAUTHORIZED) {</span>
+<span class="nc" id="L36">            throw new UnauthorizedExcepion(String.format(</span>
+                    &quot;Could not create a %s in namespace %s. If you are running the Entando controllers in STRICT security mode, please &quot;
+                            + &quot;check  that you have associated the entando-operator ServiceAccount with a Role that allows the 'CREATE' &quot;
+                            + &quot;verb against resources of kind %s &quot;,
+<span class="nc" id="L40">                    resource.getKind(), controllerNamespace, resource.getKind()), e);</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        } else if (e.getCode() == CONFLICT) {</span>
+<span class="nc" id="L42">            throw new DuplicateExcepion(String.format(</span>
+                    &quot;Could not create a %s named '%s'in namespace %s because it already exists. This could be because it has already &quot;
+                            + &quot;been created as part of the setup. Please verify that the Kubernetes infrastructure represented &quot;
+                            + &quot;by this specific %s is in tact. If not, please delete the existing %s and run the command again.&quot;,
+<span class="nc" id="L46">                    resource.getKind(), resource.getMetadata().getName(), controllerNamespace, resource.getKind(), resource.getKind()), e);</span>
+        } else {
+<span class="nc" id="L48">            throw e;</span>
+        }
+    }
+
+    public static String squashDuplicateExceptionOnCreate(EntandoCustomResource peerInNamespace, HasMetadata resource,
+            KubernetesClientException e) {
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (e.getCode() == UNAUTHORIZED) {</span>
+<span class="nc" id="L55">            throw new UnauthorizedExcepion(String.format(</span>
+                    &quot;Could not create a %s in namespace %s. If you are running the Entando controllers in STRICT security mode,  please &quot;
+                            + &quot;check that you have associated the entando-operator ServiceAccount with a Role that allows the 'CREATE' &quot;
+                            + &quot;verb against resources of kind %s &quot;,
+<span class="nc" id="L59">                    resource.getKind(), peerInNamespace.getMetadata().getNamespace(), resource.getKind()), e);</span>
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">        } else if (e.getCode() == CONFLICT) {</span>
+            //We're generally interested in its name here. 409 guarantees the name already exists, and it is safe to bind to.
+            //The client code should not return this object if assumptions have been made about its state
+<span class="fc" id="L63">            return resource.getMetadata().getName();</span>
+        } else {
+<span class="nc" id="L65">            throw e;</span>
+        }
+    }
+
+    public static RuntimeException processExceptionOnLoad(EntandoCustomResource peerInNamespace, KubernetesClientException e, String kind,
+            String name) {
+<span class="nc" id="L71">        return processExceptionOnLoad(e, kind, peerInNamespace.getMetadata().getNamespace(), name);</span>
+    }
+
+    public static RuntimeException processExceptionOnLoad(KubernetesClientException e, String kind, String namespace, String name) {
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (e.getCode() == UNAUTHORIZED) {</span>
+<span class="nc" id="L76">            return new UnauthorizedExcepion(String.format(</span>
+                    &quot;Could not load %s named %s in namespace %s. If you are running the Entando controllers in STRICT security mode, &quot;
+                            + &quot;please check  that you have associated the entando-operator ServiceAccount with a Role that allows the &quot;
+                            + &quot;'GET' verb against resources of kind %s &quot;,
+                    kind, name, namespace, kind), e);
+        } else {
+<span class="nc" id="L82">            return e;</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

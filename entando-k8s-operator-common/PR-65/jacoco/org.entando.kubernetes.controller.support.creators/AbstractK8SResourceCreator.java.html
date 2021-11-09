@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractK8SResourceCreator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.creators</a> &gt; <span class="el_source">AbstractK8SResourceCreator.java</span></div><h1>AbstractK8SResourceCreator.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.creators;
+
+import com.google.common.base.Strings;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
+import java.util.Map;
+import org.entando.kubernetes.controller.spi.common.LabelNames;
+import org.entando.kubernetes.controller.spi.common.ResourceUtils;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+
+public class AbstractK8SResourceCreator {
+
+    protected final EntandoCustomResource entandoCustomResource;
+
+<span class="fc" id="L31">    public AbstractK8SResourceCreator(EntandoCustomResource entandoCustomResource) {</span>
+<span class="fc" id="L32">        this.entandoCustomResource = entandoCustomResource;</span>
+<span class="fc" id="L33">    }</span>
+
+    protected String resolveName(String nameQualifier, String suffix) {
+<span class="fc" id="L36">        StringBuilder sb = new StringBuilder(entandoCustomResource.getMetadata().getName());</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if (!Strings.isNullOrEmpty(nameQualifier)) {</span>
+<span class="fc" id="L38">            sb.append(&quot;-&quot;).append(nameQualifier);</span>
+        }
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if (!Strings.isNullOrEmpty(suffix)) {</span>
+<span class="fc" id="L41">            sb.append(&quot;-&quot;).append(suffix);</span>
+        }
+<span class="fc" id="L43">        return sb.toString();</span>
+    }
+
+    protected ObjectMeta fromCustomResource(boolean ownedByCustomResource, String name, String nameQualifier) {
+<span class="fc" id="L47">        ObjectMetaBuilder metaBuilder = new ObjectMetaBuilder()</span>
+<span class="fc" id="L48">                .withName(name)</span>
+<span class="fc" id="L49">                .withNamespace(this.entandoCustomResource.getMetadata().getNamespace())</span>
+<span class="fc" id="L50">                .withLabels(labelsFromResource(nameQualifier));</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (ownedByCustomResource) {</span>
+<span class="fc" id="L52">            metaBuilder = metaBuilder.withOwnerReferences(ResourceUtils.buildOwnerReference(this.entandoCustomResource));</span>
+        }
+<span class="fc" id="L54">        return metaBuilder.build();</span>
+    }
+
+    protected ObjectMeta fromCustomResource(String name) {
+<span class="fc" id="L58">        return new ObjectMetaBuilder()</span>
+<span class="fc" id="L59">                .withName(name)</span>
+<span class="fc" id="L60">                .withNamespace(this.entandoCustomResource.getMetadata().getNamespace())</span>
+<span class="fc" id="L61">                .withLabels(labelsFromResource()).addToOwnerReferences(ResourceUtils.buildOwnerReference(this.entandoCustomResource))</span>
+<span class="fc" id="L62">                .build();</span>
+    }
+
+    protected Map&lt;String, String&gt; labelsFromResource(String nameQualifier) {
+<span class="fc" id="L66">        Map&lt;String, String&gt; labels = labelsFromResource();</span>
+<span class="fc" id="L67">        labels.put(LabelNames.DEPLOYMENT.getName(), resolveName(nameQualifier, null));</span>
+<span class="fc" id="L68">        return labels;</span>
+    }
+
+    protected Map&lt;String, String&gt; labelsFromResource() {
+<span class="fc" id="L72">        return ResourceUtils.labelsFromResource(this.entandoCustomResource);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

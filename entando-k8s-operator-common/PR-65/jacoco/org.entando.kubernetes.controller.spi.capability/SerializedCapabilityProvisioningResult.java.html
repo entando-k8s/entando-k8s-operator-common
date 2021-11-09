@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SerializedCapabilityProvisioningResult.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.capability</a> &gt; <span class="el_source">SerializedCapabilityProvisioningResult.java</span></div><h1>SerializedCapabilityProvisioningResult.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.capability;
+
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import java.util.Optional;
+import org.entando.kubernetes.model.capability.ProvidedCapability;
+import org.entando.kubernetes.model.common.EntandoControllerFailure;
+import org.entando.kubernetes.model.common.ServerStatus;
+
+public class SerializedCapabilityProvisioningResult implements CapabilityProvisioningResult {
+
+    private ProvidedCapability providedCapability;
+    private Service service;
+    private Ingress ingress;
+    private Secret adminSecret;
+    private EntandoControllerFailure controllerFailure;
+
+    public SerializedCapabilityProvisioningResult(ProvidedCapability providedCapability, Service service, Ingress ingress,
+<span class="fc" id="L36">            Secret adminSecret) {</span>
+<span class="fc" id="L37">        this.providedCapability = providedCapability;</span>
+<span class="fc" id="L38">        this.service = service;</span>
+<span class="fc" id="L39">        this.ingress = ingress;</span>
+<span class="fc" id="L40">        this.adminSecret = adminSecret;</span>
+<span class="fc" id="L41">    }</span>
+
+<span class="fc" id="L43">    public SerializedCapabilityProvisioningResult(EntandoControllerFailure controllerFailure) {</span>
+<span class="fc" id="L44">        this.controllerFailure = controllerFailure;</span>
+<span class="fc" id="L45">    }</span>
+
+    @Override
+    public ProvidedCapability getProvidedCapability() {
+<span class="fc" id="L49">        return providedCapability;</span>
+    }
+
+    @Override
+    public Service getService() {
+<span class="fc" id="L54">        return service;</span>
+    }
+
+    @Override
+    public Optional&lt;Ingress&gt; getIngress() {
+<span class="fc" id="L59">        return Optional.ofNullable(ingress);</span>
+    }
+
+    @Override
+    public Optional&lt;Secret&gt; getAdminSecret() {
+<span class="fc" id="L64">        return Optional.ofNullable(adminSecret);</span>
+    }
+
+    @Override
+    public Optional&lt;EntandoControllerFailure&gt; getControllerFailure() {
+<span class="fc" id="L69">        return Optional.ofNullable(controllerFailure)</span>
+<span class="fc" id="L70">                .or(() -&gt; providedCapability.getStatus().findFailedServerStatus().flatMap(ServerStatus::getEntandoControllerFailure));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

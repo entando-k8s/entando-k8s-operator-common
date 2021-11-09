@@ -1,0 +1,257 @@
+{
+  "uid" : "6918324bfb9cd609",
+  "name" : "shouldProvideDedicatedCapabilityWithIngress()",
+  "fullName" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest.shouldProvideDedicatedCapabilityWithIngress",
+  "historyId" : "88b03ff30bac390191b41b765ade066d",
+  "time" : {
+    "start" : 1636474115442,
+    "stop" : 1636474115698,
+    "duration" : 256
+  },
+  "description" : "Capabilities could also have an Ingress to expose it to consumers outside of the cluster",
+  "descriptionHtml" : "<p>Capabilities could also have an Ingress to expose it to consumers outside of the cluster</p>\n",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "beforeEach",
+    "time" : {
+      "start" : 1636474115442,
+      "stop" : 1636474115458,
+      "duration" : 16
+    },
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'",
+      "time" : {
+        "start" : 1636474115442,
+        "stop" : 1636474115458,
+        "duration" : 16
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 1,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  } ],
+  "testStage" : {
+    "description" : "Capabilities could also have an Ingress to expose it to consumers outside of the cluster",
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have an TestResource",
+      "time" : {
+        "start" : 1636474115458,
+        "stop" : 1636474115462,
+        "duration" : 4
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "add402777ee0b25d",
+        "name" : "TestResource",
+        "source" : "add402777ee0b25d.txt",
+        "type" : "text/plain",
+        "size" : 263
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "And I have a requirement for the Keycloak SSO capability",
+      "time" : {
+        "start" : 1636474115462,
+        "stop" : 1636474115463,
+        "duration" : 1
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "abc94dd1960ebd46",
+        "name" : "CapabilityRequirement",
+        "source" : "abc94dd1960ebd46.txt",
+        "type" : "text/plain",
+        "size" : 129
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "And there is a controller to process requests for the SSO capability requested",
+      "time" : {
+        "start" : 1636474115463,
+        "stop" : 1636474115463,
+        "duration" : 0
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "When I request for my CapabilityRequirement to be fulfilled",
+      "time" : {
+        "start" : 1636474115464,
+        "stop" : 1636474115694,
+        "duration" : 230
+      },
+      "status" : "passed",
+      "steps" : [ {
+        "name" : "with the SSO service 'my-app-sso-service'",
+        "time" : {
+          "start" : 1636474115674,
+          "stop" : 1636474115675,
+          "duration" : 1
+        },
+        "status" : "passed",
+        "steps" : [ ],
+        "attachments" : [ {
+          "uid" : "55e1564d71f27313",
+          "name" : "SSO Service",
+          "source" : "55e1564d71f27313.txt",
+          "type" : "text/plain",
+          "size" : 164
+        } ],
+        "parameters" : [ ],
+        "stepsCount" : 0,
+        "attachmentsCount" : 1,
+        "shouldDisplayMessage" : false,
+        "hasContent" : true
+      }, {
+        "name" : "and the admin secret 'my-app-sso-admin-secret'",
+        "time" : {
+          "start" : 1636474115675,
+          "stop" : 1636474115676,
+          "duration" : 1
+        },
+        "status" : "passed",
+        "steps" : [ ],
+        "attachments" : [ {
+          "uid" : "250ebcf84880c26b",
+          "name" : "Admin Secret",
+          "source" : "250ebcf84880c26b.txt",
+          "type" : "text/plain",
+          "size" : 168
+        } ],
+        "parameters" : [ ],
+        "stepsCount" : 0,
+        "attachmentsCount" : 1,
+        "shouldDisplayMessage" : false,
+        "hasContent" : true
+      } ],
+      "attachments" : [ {
+        "uid" : "4a402dc94a5beecc",
+        "name" : "CapabilityProvisioningResult",
+        "source" : "4a402dc94a5beecc.txt",
+        "type" : "text/plain",
+        "size" : 690
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 2,
+      "attachmentsCount" : 3,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "Then the resulting ProvidedCapability has an Ingress named 'my-app-sso-ingress'",
+      "time" : {
+        "start" : 1636474115695,
+        "stop" : 1636474115698,
+        "duration" : 3
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 7,
+    "attachmentsCount" : 5,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  },
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "inner-hexagon"
+  }, {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "allure"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "feature",
+    "value" : "As a controller developer, I would like to have be able to resolve ProvidedCapabilities at different levels of scope so that we can find the optimal balance of reuse of our Capabilities"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-65-pr-p6v4f-from-build-pack-gl-djpj8"
+  }, {
+    "name" : "thread",
+    "value" : "93@ndo-k8s-operator-common-pr-65-pr-p6v4f-from-build-pack-gl-djpj8.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldProvideDedicatedCapabilityWithIngress"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ {
+    "name" : "AdvancedCapabilityProvisionTest.java",
+    "url" : "https://github.com/entando-k8s/entando-k8s-operator-common/tree/ENG-2284_removing_cluster_infrastructure/src/test/java/org/entando/kubernetes/controller/AdvancedCapabilityProvisionTest.java",
+    "type" : "source"
+  }, {
+    "name" : "ENG-2284",
+    "url" : "https://entando.myjetbrains.com/youtrack/issue/ENG-2284",
+    "type" : "issue"
+  } ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "inner-hexagon", "pre-deployment", "allure", "in-process" ]
+  },
+  "source" : "6918324bfb9cd609.json",
+  "parameterValues" : [ ]
+}

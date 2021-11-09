@@ -1,0 +1,317 @@
+{
+  "uid" : "d3a521bb1789de92",
+  "name" : "shouldProvideClusterScopeCapability()",
+  "fullName" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest.shouldProvideClusterScopeCapability",
+  "historyId" : "f26279dd8c53e750d96d805155a81056",
+  "time" : {
+    "start" : 1636474114350,
+    "stop" : 1636474114610,
+    "duration" : 260
+  },
+  "description" : "Should provide a MySQL DBMS capability at cluster scope",
+  "descriptionHtml" : "<p>Should provide a MySQL DBMS capability at cluster scope</p>\n",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "beforeEach",
+    "time" : {
+      "start" : 1636474114351,
+      "stop" : 1636474114360,
+      "duration" : 9
+    },
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'",
+      "time" : {
+        "start" : 1636474114351,
+        "stop" : 1636474114359,
+        "duration" : 8
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 1,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  } ],
+  "testStage" : {
+    "description" : "Should provide a MySQL DBMS capability at cluster scope",
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have an TestResource",
+      "time" : {
+        "start" : 1636474114360,
+        "stop" : 1636474114367,
+        "duration" : 7
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "e5ea02f455899141",
+        "name" : "TestResource",
+        "source" : "e5ea02f455899141.txt",
+        "type" : "text/plain",
+        "size" : 264
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "And it requires a MySQL DBMS Capability at the Cluster level",
+      "time" : {
+        "start" : 1636474114368,
+        "stop" : 1636474114368,
+        "duration" : 0
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "And there is a controller to process requests for the DBMS capability requested",
+      "time" : {
+        "start" : 1636474114368,
+        "stop" : 1636474114372,
+        "duration" : 4
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "When I request for the CapabilityRequirement to be fulfilled",
+      "time" : {
+        "start" : 1636474114373,
+        "stop" : 1636474114598,
+        "duration" : 225
+      },
+      "status" : "passed",
+      "steps" : [ {
+        "name" : "with the DBMS service 'default-mysql-dbms-in-cluster-service'",
+        "time" : {
+          "start" : 1636474114583,
+          "stop" : 1636474114584,
+          "duration" : 1
+        },
+        "status" : "passed",
+        "steps" : [ ],
+        "attachments" : [ {
+          "uid" : "72b98b2279d6164f",
+          "name" : "DBMS Service",
+          "source" : "72b98b2279d6164f.txt",
+          "type" : "text/plain",
+          "size" : 187
+        } ],
+        "parameters" : [ ],
+        "stepsCount" : 0,
+        "attachmentsCount" : 1,
+        "shouldDisplayMessage" : false,
+        "hasContent" : true
+      }, {
+        "name" : "and the admin secret 'default-mysql-dbms-in-cluster-admin-secret'",
+        "time" : {
+          "start" : 1636474114584,
+          "stop" : 1636474114585,
+          "duration" : 1
+        },
+        "status" : "passed",
+        "steps" : [ ],
+        "attachments" : [ {
+          "uid" : "a33c41d7ffba3df0",
+          "name" : "Admin Secret",
+          "source" : "a33c41d7ffba3df0.txt",
+          "type" : "text/plain",
+          "size" : 191
+        } ],
+        "parameters" : [ ],
+        "stepsCount" : 0,
+        "attachmentsCount" : 1,
+        "shouldDisplayMessage" : false,
+        "hasContent" : true
+      } ],
+      "attachments" : [ {
+        "uid" : "ffd55527b4d20814",
+        "name" : "CapabilityProvisioningResult",
+        "source" : "ffd55527b4d20814.txt",
+        "type" : "text/plain",
+        "size" : 594
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 2,
+      "attachmentsCount" : 3,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "Then the resulting capability matching my requirements is created in the controller's namespace",
+      "time" : {
+        "start" : 1636474114599,
+        "stop" : 1636474114599,
+        "duration" : 0
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "And its name 'default-mysql-dbms-in-cluster' reflects the fact that it is the default MySQL DBMS capability in the cluster",
+      "time" : {
+        "start" : 1636474114599,
+        "stop" : 1636474114599,
+        "duration" : 0
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "And the associated Service has the same name but with the suffix '-service'",
+      "time" : {
+        "start" : 1636474114600,
+        "stop" : 1636474114600,
+        "duration" : 0
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "And the associated admin Secret has the same name but with the suffix '-admin-secret'",
+      "time" : {
+        "start" : 1636474114600,
+        "stop" : 1636474114601,
+        "duration" : 1
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "And subsequent requests for a DBMS Capability at the Cluster level without specifying the implementation result in the same ProvidedCapability",
+      "time" : {
+        "start" : 1636474114601,
+        "stop" : 1636474114609,
+        "duration" : 8
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "913c3e4a352819fc",
+        "name" : "Capability Requirement",
+        "source" : "913c3e4a352819fc.txt",
+        "type" : "text/plain",
+        "size" : 101
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 11,
+    "attachmentsCount" : 5,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  },
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "inner-hexagon"
+  }, {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "allure"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "feature",
+    "value" : "As a controller developer, I would like to have be able to resolve ProvidedCapabilities at different levels of scope so that we can find the optimal balance of reuse of our Capabilities"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-65-pr-p6v4f-from-build-pack-gl-djpj8"
+  }, {
+    "name" : "thread",
+    "value" : "93@ndo-k8s-operator-common-pr-65-pr-p6v4f-from-build-pack-gl-djpj8.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldProvideClusterScopeCapability"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ {
+    "name" : "ENG-2284",
+    "url" : "https://entando.myjetbrains.com/youtrack/issue/ENG-2284",
+    "type" : "issue"
+  }, {
+    "name" : "AdvancedCapabilityProvisionTest.java",
+    "url" : "https://github.com/entando-k8s/entando-k8s-operator-common/tree/ENG-2284_removing_cluster_infrastructure/src/test/java/org/entando/kubernetes/controller/AdvancedCapabilityProvisionTest.java",
+    "type" : "source"
+  } ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "inner-hexagon", "pre-deployment", "allure", "in-process" ]
+  },
+  "source" : "d3a521bb1789de92.json",
+  "parameterValues" : [ ]
+}

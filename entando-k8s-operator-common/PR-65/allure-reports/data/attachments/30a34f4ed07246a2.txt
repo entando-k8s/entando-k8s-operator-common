@@ -1,0 +1,15 @@
+---
+capability: "dbms"
+implementation: "mysql"
+resolutionScopePreference:
+- "Specified"
+provisioningStrategy: "UseExternal"
+capabilityParameters:
+  jdbc-disconnectOnExpiredPasswords: "true"
+specifiedCapability:
+  namespace: "my-namespace"
+  name: "specified-dbms"
+externallyProvidedService:
+  host: "pg.apps.serv.run"
+  port: 3307
+  adminSecretName: "my-existing-dbms-admin-secret"

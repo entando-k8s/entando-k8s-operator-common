@@ -1,0 +1,10 @@
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "my-db-service"
+  namespace: "my-db-namespace"
+spec:
+  clusterIP: "10.0.0.30"
+  ports:
+  - port: 3306

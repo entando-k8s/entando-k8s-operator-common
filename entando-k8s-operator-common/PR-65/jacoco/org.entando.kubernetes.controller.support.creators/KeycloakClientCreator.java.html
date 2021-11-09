@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KeycloakClientCreator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.creators</a> &gt; <span class="el_source">KeycloakClientCreator.java</span></div><h1>KeycloakClientCreator.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.creators;
+
+import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
+import static org.entando.kubernetes.controller.support.creators.IngressCreator.getIngressServerUrl;
+
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.ResourceUtils;
+import org.entando.kubernetes.controller.spi.container.HasWebContext;
+import org.entando.kubernetes.controller.spi.container.KeycloakName;
+import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
+import org.entando.kubernetes.controller.spi.deployable.SsoAwareDeployable;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
+import org.entando.kubernetes.controller.support.client.SecretClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+
+public class KeycloakClientCreator {
+
+    private final EntandoCustomResource entandoCustomResource;
+    private String realm;
+    private String ssoClientId;
+
+<span class="fc" id="L43">    public KeycloakClientCreator(EntandoCustomResource entandoCustomResource) {</span>
+<span class="fc" id="L44">        this.entandoCustomResource = entandoCustomResource;</span>
+<span class="fc" id="L45">    }</span>
+
+    public void createKeycloakClients(SecretClient secrets, SimpleKeycloakClient keycloak, SsoAwareDeployable&lt;?&gt; deployable,
+            Ingress ingress) {
+<span class="fc" id="L49">        login(keycloak, deployable);</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        if (deployable instanceof PublicIngressingDeployable) {</span>
+            //Create a public keycloak client
+<span class="fc" id="L52">            PublicIngressingDeployable&lt;?&gt; publicIngressingDeployable = (PublicIngressingDeployable&lt;?&gt;) deployable;</span>
+<span class="fc" id="L53">            keycloak.createPublicClient(publicIngressingDeployable.getSsoClientConfig().getRealm(),</span>
+<span class="fc" id="L54">                    publicIngressingDeployable.getPublicClientId().orElse(KeycloakName.PUBLIC_CLIENT_ID),</span>
+<span class="fc" id="L55">                    getIngressServerUrl(ingress));</span>
+
+        }
+<span class="fc" id="L58">        createClient(secrets, keycloak, deployable, ingress);</span>
+<span class="fc" id="L59">    }</span>
+
+    private void login(SimpleKeycloakClient client, SsoAwareDeployable&lt;?&gt; deployable) {
+<span class="fc" id="L62">        client.login(deployable.getSsoConnectionInfo().getBaseUrlToUse(), deployable.getSsoConnectionInfo().getUsername(),</span>
+<span class="fc" id="L63">                deployable.getSsoConnectionInfo().getPassword());</span>
+<span class="fc" id="L64">    }</span>
+
+    private void createClient(SecretClient secrets, SimpleKeycloakClient client, SsoAwareDeployable&lt;?&gt; deployable,
+            Ingress optionalIngress) {
+<span class="fc" id="L68">        SsoClientConfig ssoClientConfig = ofNullable(optionalIngress)</span>
+<span class="fc" id="L69">                .map(ingress -&gt; augmentClientConfigWithExternalUris(deployable, ingress))</span>
+<span class="fc" id="L70">                .orElse(deployable.getSsoClientConfig());</span>
+<span class="fc" id="L71">        String keycloakClientSecret = client.prepareClientAndReturnSecret(ssoClientConfig);</span>
+<span class="fc" id="L72">        String secretName = KeycloakName.forTheClientSecret(ssoClientConfig);</span>
+<span class="fc" id="L73">        final Secret builtSecret = new SecretBuilder()</span>
+<span class="fc" id="L74">                .withNewMetadata()</span>
+<span class="fc" id="L75">                .withOwnerReferences(ResourceUtils.buildOwnerReference(entandoCustomResource))</span>
+<span class="fc" id="L76">                .withName(secretName)</span>
+<span class="fc" id="L77">                .endMetadata()</span>
+<span class="fc" id="L78">                .addToStringData(KeycloakName.CLIENT_ID_KEY, ssoClientConfig.getClientId())</span>
+<span class="fc" id="L79">                .addToStringData(KeycloakName.CLIENT_SECRET_KEY, keycloakClientSecret)</span>
+<span class="fc" id="L80">                .build();</span>
+<span class="fc" id="L81">        ssoClientId = ssoClientConfig.getClientId();</span>
+        //TODO there can only be one realm per deployment. This needs to be carried at the deployable level
+        //In fact, the entire ssoClientConfig should probably be at the deployable level.
+<span class="fc" id="L84">        this.realm = ssoClientConfig.getRealm();</span>
+<span class="fc" id="L85">        withDiagnostics(() -&gt; {</span>
+<span class="fc" id="L86">            secrets.createSecretIfAbsent(entandoCustomResource, builtSecret);</span>
+<span class="fc" id="L87">            return null;</span>
+<span class="nc" id="L88">        }, () -&gt; builtSecret);</span>
+<span class="fc" id="L89">    }</span>
+
+    private SsoClientConfig augmentClientConfigWithExternalUris(SsoAwareDeployable&lt;?&gt; deployable, Ingress ingress) {
+<span class="fc" id="L92">        SsoClientConfig ssoClientConfig = deployable.getSsoClientConfig();</span>
+<span class="fc" id="L93">        for (HasWebContext container : deployable.getContainers().stream()</span>
+<span class="fc" id="L94">                .filter(HasWebContext.class::isInstance)</span>
+<span class="fc" id="L95">                .map(HasWebContext.class::cast)</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">                .collect(Collectors.toList())) {</span>
+<span class="fc" id="L97">            ssoClientConfig = ssoClientConfig</span>
+<span class="fc" id="L98">                    .withRedirectUri(getIngressServerUrl(ingress) + container.getWebContextPath() + &quot;/*&quot;);</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">            if (ingress.getSpec().getTls().size() == 1) {</span>
+                //Also support redirecting to http for http services that don't have knowledge that they are exposed as https
+                //TODO revisit this. This could be a Java only problem that we may be able to fix with X-Forwarded-* headers
+<span class="fc" id="L102">                ssoClientConfig = ssoClientConfig.withRedirectUri(</span>
+<span class="fc" id="L103">                        &quot;http://&quot; + ingress.getSpec().getRules().get(0).getHost() + container.getWebContextPath() + &quot;/*&quot;);</span>
+            }
+<span class="fc" id="L105">        }</span>
+<span class="fc" id="L106">        return ssoClientConfig.withWebOrigin(getIngressServerUrl(ingress));</span>
+
+    }
+
+    public String getRealm() {
+<span class="fc" id="L111">        return realm;</span>
+    }
+
+    public String getSsoClientId() {
+<span class="fc" id="L115">        return this.ssoClientId;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

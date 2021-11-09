@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SupportedStandardResourceKind.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.client.impl</a> &gt; <span class="el_source">SupportedStandardResourceKind.java</span></div><h1>SupportedStandardResourceKind.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.client.impl;
+
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaimList;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretList;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceList;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentList;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.extensions.IngressList;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
+import io.fabric8.kubernetes.client.dsl.ServiceResource;
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+
+<span class="fc" id="L42">public enum SupportedStandardResourceKind {</span>
+<span class="fc" id="L43">    SERVICE {</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+        @Override
+        public MixedOperation&lt;
+                Service,
+                ServiceList,
+                ServiceResource&lt;Service&gt;
+                &gt; getOperation(KubernetesClient client) {
+<span class="nc" id="L51">            return client.services();</span>
+        }
+    },
+<span class="fc" id="L54">    DEPLOYMENT {</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+        @Override
+        public MixedOperation&lt;
+                Deployment,
+                DeploymentList,
+                RollableScalableResource&lt;Deployment&gt;
+                &gt; getOperation(KubernetesClient client) {
+<span class="nc" id="L62">            return client.apps().deployments();</span>
+        }
+    },
+<span class="fc" id="L65">    POD {</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+        @Override
+        public MixedOperation&lt;
+                Pod,
+                PodList,
+                PodResource&lt;Pod&gt;
+                &gt; getOperation(KubernetesClient client) {
+<span class="nc" id="L73">            return client.pods();</span>
+        }
+    },
+<span class="fc" id="L76">    INGRESS {</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+        @Override
+        public MixedOperation&lt;
+                Ingress,
+                IngressList,
+                Resource&lt;Ingress&gt;
+                &gt; getOperation(KubernetesClient client) {
+<span class="nc" id="L84">            return client.extensions().ingresses();</span>
+        }
+    },
+<span class="fc" id="L87">    SECRET {</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+        @Override
+        public MixedOperation&lt;
+                Secret,
+                SecretList,
+                Resource&lt;Secret&gt;
+                &gt; getOperation(KubernetesClient client) {
+<span class="nc" id="L95">            return client.secrets();</span>
+        }
+    },
+<span class="fc" id="L98">    PERSISTENT_VOLUME_CLAIM {</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+        @Override
+        public MixedOperation&lt;
+                PersistentVolumeClaim,
+                PersistentVolumeClaimList,
+                Resource&lt;PersistentVolumeClaim&gt;
+                &gt; getOperation(KubernetesClient client) {
+<span class="nc" id="L106">            return client.persistentVolumeClaims();</span>
+        }
+    };
+
+    SupportedStandardResourceKind() {
+
+    }
+
+    @SuppressWarnings(&quot;java:S1172&quot;)
+    //Because it should have been an abstract method but Java doesn't support that here.
+    public &lt;T extends HasMetadata,
+            L extends KubernetesResourceList&lt;T&gt;,
+            R extends Resource&lt;T&gt;
+            &gt; MixedOperation&lt;T, L, R&gt; getOperation(KubernetesClient client) {
+<span class="nc" id="L120">        return null;</span>
+    }
+
+    public static Optional&lt;SupportedStandardResourceKind&gt; resolveFromKind(String kind) {
+        try {
+<span class="fc" id="L125">            return Optional.of(valueOf(NameUtils.upperSnakeCaseOf(kind)));</span>
+<span class="nc" id="L126">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L127">            return Optional.empty();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

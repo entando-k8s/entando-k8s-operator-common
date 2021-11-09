@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EntandoOperatorConfigProperty.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.common</a> &gt; <span class="el_source">EntandoOperatorConfigProperty.java</span></div><h1>EntandoOperatorConfigProperty.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.common;
+
+import org.entando.kubernetes.controller.spi.common.ConfigProperty;
+
+<span class="fc" id="L21">public enum EntandoOperatorConfigProperty implements ConfigProperty {</span>
+    /*
+    Config to resolve Entando Docker Images
+     */
+<span class="fc" id="L25">    ENTANDO_DOCKER_IMAGE_VERSION_FALLBACK,</span>
+<span class="fc" id="L26">    ENTANDO_DOCKER_IMAGE_VERSION_OVERRIDE,</span>
+<span class="fc" id="L27">    ENTANDO_DOCKER_REGISTRY_FALLBACK,</span>
+<span class="fc" id="L28">    ENTANDO_DOCKER_REGISTRY_OVERRIDE,</span>
+<span class="fc" id="L29">    ENTANDO_DOCKER_IMAGE_ORG_FALLBACK,</span>
+<span class="fc" id="L30">    ENTANDO_DOCKER_IMAGE_ORG_OVERRIDE,</span>
+<span class="fc" id="L31">    ENTANDO_DOCKER_IMAGE_INFO_CONFIGMAP,</span>
+<span class="fc" id="L32">    ENTANDO_DOCKER_IMAGE_INFO_NAMESPACE,</span>
+
+    /*
+    K8S Operator operational config
+     */
+<span class="fc" id="L37">    ENTANDO_K8S_OPERATOR_GC_CONTROLLER_PODS,</span>
+<span class="fc" id="L38">    ENTANDO_K8S_OPERATOR_SECURITY_MODE,</span>
+<span class="fc" id="L39">    ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS,</span>
+<span class="fc" id="L40">    ENTANDO_K8S_OPERATOR_DISABLE_PVC_GARBAGE_COLLECTION,</span>
+<span class="fc" id="L41">    ENTANDO_K8S_OPERATOR_SERVICEACCOUNT,</span>
+<span class="fc" id="L42">    ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS,</span>
+<span class="fc" id="L43">    ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO,</span>
+<span class="fc" id="L44">    ENTANDO_K8S_OPERATOR_FORCE_DB_PASSWORD_RESET,</span>
+<span class="fc" id="L45">    ENTANDO_K8S_OPERATOR_PULL_POLICY_OVERRIDE,</span>
+
+    /*
+    TLS config
+     */
+<span class="fc" id="L50">    ENTANDO_TLS_SECRET_NAME,</span>
+<span class="fc" id="L51">    ENTANDO_ASSUME_EXTERNAL_HTTPS_PROVIDER,</span>
+<span class="fc" id="L52">    ENTANDO_USE_AUTO_CERT_GENERATION,</span>
+<span class="fc" id="L53">    ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT,</span>
+    /*
+    Misc config
+     */
+    // creates a dns mapping from the specified hostname *.*.*.*.nip.io to the corresponding ip *.*.*.* . typically it should point to
+    // hosting machine ip address (https://nip.io/)
+<span class="fc" id="L59">    ENTANDO_DEFAULT_ROUTING_SUFFIX,</span>
+<span class="fc" id="L60">    ENTANDO_CLUSTER_INFRASTRUCTURE_SECRET_NAME,</span>
+<span class="fc" id="L61">    ENTANDO_REQUIRES_FILESYSTEM_GROUP_OVERRIDE,</span>
+<span class="fc" id="L62">    ENTANDO_INGRESS_CLASS,</span>
+<span class="fc" id="L63">    ENTANDO_FORCE_EXTERNAL_ACCESS_TO_KEYCLOAK,</span>
+<span class="fc" id="L64">    ENTANDO_NAMESPACES_TO_OBSERVE,</span>
+<span class="fc" id="L65">    ENTANDO_NAMESPACES_OF_INTEREST,</span>
+<span class="fc" id="L66">    ENTANDO_K8S_OPERATOR_DEPLOYMENT_TYPE,</span>
+<span class="fc" id="L67">    ENTANDO_NUMBER_OF_READINESS_FAILURES,</span>
+<span class="fc" id="L68">    NULL_PROPERTY;</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

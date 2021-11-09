@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DockerImageInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.container</a> &gt; <span class="el_source">DockerImageInfo.java</span></div><h1>DockerImageInfo.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.container;
+
+import static java.lang.String.format;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
+
+@JsonSerialize
+@JsonDeserialize
+@JsonInclude(Include.NON_NULL)
+@JsonAutoDetect(
+        fieldVisibility = Visibility.ANY,
+        isGetterVisibility = Visibility.NONE,
+        getterVisibility = Visibility.NONE,
+        setterVisibility = Visibility.NONE
+)
+public class DockerImageInfo {
+
+    private final String registryHost;
+    private final String organization;
+    private final String repository;
+    private final String tag;
+    private final Integer registryPort;
+
+    @JsonCreator
+    public DockerImageInfo(
+            @JsonProperty(&quot;registryHost&quot;) String registryHost,
+            @JsonProperty(&quot;registryPort&quot;) Integer registryPort,
+            @JsonProperty(&quot;organization&quot;) String organization,
+            @JsonProperty(&quot;repository&quot;) String repository,
+<span class="fc" id="L55">            @JsonProperty(&quot;tag&quot;) String tag) {</span>
+<span class="fc" id="L56">        this.registryHost = registryHost;</span>
+<span class="fc" id="L57">        this.organization = organization;</span>
+<span class="fc" id="L58">        this.repository = repository;</span>
+<span class="fc" id="L59">        this.tag = tag;</span>
+<span class="fc" id="L60">        this.registryPort = registryPort;</span>
+<span class="fc" id="L61">    }</span>
+
+    public DockerImageInfo(DbmsDockerVendorStrategy dockerVendorStrategy) {
+        //'latest' because these are vendor provided images and the versions of both the DB and OS is in the image name
+<span class="fc" id="L65">        this(</span>
+<span class="fc" id="L66">                dockerVendorStrategy.getRegistry(),</span>
+                null,
+<span class="fc" id="L68">                dockerVendorStrategy.getOrganization(),</span>
+<span class="fc" id="L69">                dockerVendorStrategy.getImageRepository(),</span>
+                &quot;latest&quot;);
+<span class="fc" id="L71">    }</span>
+
+<span class="fc" id="L73">    public DockerImageInfo(String imageUri) {</span>
+<span class="fc" id="L74">        String[] segments = imageUri.split(&quot;/&quot;);</span>
+<span class="fc" id="L75">        String[] repositorySegments = segments[segments.length - 1].split(&quot;:&quot;);</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (repositorySegments.length == 1) {</span>
+<span class="fc" id="L77">            repository = repositorySegments[0];</span>
+<span class="fc" id="L78">            tag = null;</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        } else if (repositorySegments.length == 2) {</span>
+<span class="fc" id="L80">            repository = repositorySegments[0];</span>
+<span class="fc" id="L81">            tag = repositorySegments[1];</span>
+        } else {
+<span class="fc" id="L83">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L84">                    format(&quot;The repository '%s' is not supported. At most one colon (:) allowed.&quot;, segments[segments.length - 1]));</span>
+        }
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (segments.length == 4) {</span>
+<span class="fc" id="L87">            organization = segments[segments.length - 3] + &quot;/&quot; + segments[segments.length - 2];</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        } else if (segments.length &gt;= 2) {</span>
+<span class="fc" id="L89">            organization = segments[segments.length - 2];</span>
+        } else {
+<span class="fc" id="L91">            organization = null;</span>
+        }
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (segments.length &gt;= 3) {</span>
+<span class="fc" id="L94">            String[] hostSegments = segments[0].split(&quot;:&quot;);</span>
+<span class="fc" id="L95">            registryHost = hostSegments[0];</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">            if (hostSegments.length == 1) {</span>
+<span class="fc" id="L97">                registryPort = null;</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">            } else if (hostSegments.length == 2) {</span>
+<span class="fc" id="L99">                registryPort = Integer.valueOf(hostSegments[1]);</span>
+            } else {
+<span class="fc" id="L101">                throw new IllegalArgumentException(</span>
+<span class="fc" id="L102">                        format(&quot;The registry '%s' is not supported. At most one colon (:) allowed.&quot;, segments[0]));</span>
+            }
+<span class="fc" id="L104">        } else {</span>
+<span class="fc" id="L105">            registryPort = null;</span>
+<span class="fc" id="L106">            registryHost = null;</span>
+        }
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        if (segments.length &gt; 4) {</span>
+<span class="fc" id="L109">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L110">                    format(&quot;The imageUri '%s' is not supported. Paths on the image name may not contain more than 3 segments&quot;, imageUri));</span>
+
+        }
+<span class="fc" id="L113">    }</span>
+
+    public Optional&lt;String&gt; getRegistryHost() {
+<span class="fc" id="L116">        return Optional.ofNullable(registryHost);</span>
+    }
+
+    public Optional&lt;String&gt; getOrganization() {
+<span class="fc" id="L120">        return Optional.ofNullable(organization);</span>
+    }
+
+    public String getRepository() {
+<span class="fc" id="L124">        return repository;</span>
+    }
+
+    public Optional&lt;String&gt; getVersion() {
+<span class="fc" id="L128">        return Optional.ofNullable(tag);</span>
+    }
+
+    public Optional&lt;Integer&gt; getRegistryPort() {
+<span class="fc" id="L132">        return Optional.ofNullable(registryPort);</span>
+    }
+
+    public Optional&lt;String&gt; getRegistry() {
+<span class="fc" id="L136">        return getRegistryHost().map(s -&gt; s + getRegistryPort().map(integer -&gt; &quot;:&quot; + integer).orElse(&quot;&quot;));</span>
+    }
+
+    public String getOrganizationAwareRepository() {
+<span class="fc" id="L140">        return getOrganization().map(s -&gt; s.replace(&quot;/&quot;, &quot;-&quot;) + &quot;-&quot;).orElse(&quot;&quot;) + getRepository();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

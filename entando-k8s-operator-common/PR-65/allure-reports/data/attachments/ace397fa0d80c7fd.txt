@@ -1,0 +1,97 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  labels:
+    entando.org/entando-resource-namespace: "my-namespace"
+    entando.org/deployment: "default-postgresql-dbms-in-namespace"
+    TestResource: "default-postgresql-dbms-in-namespace"
+    entando.org/entando-resource-kind: "TestResource"
+  name: "default-postgresql-dbms-in-namespace-deployment"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "test.org/v1"
+    kind: "TestResource"
+    blockOwnerDeletion: true
+    controller: true
+    name: "default-postgresql-dbms-in-namespace"
+    uid: "d91aaef7-e893-4abf-bc6b-21b1b041d66c"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      entando.org/entando-resource-namespace: "my-namespace"
+      entando.org/deployment: "default-postgresql-dbms-in-namespace"
+      TestResource: "default-postgresql-dbms-in-namespace"
+      entando.org/entando-resource-kind: "TestResource"
+  template:
+    metadata:
+      labels:
+        entando.org/entando-resource-namespace: "my-namespace"
+        entando.org/deployment: "default-postgresql-dbms-in-namespace"
+        TestResource: "default-postgresql-dbms-in-namespace"
+        entando.org/entando-resource-kind: "TestResource"
+      name: "default-postgresql-dbms-in-namespace-pod"
+    spec:
+      containers:
+      - env:
+        - name: "CONNECTION_CONFIG_ROOT"
+          value: "/etc/entando/secrets"
+        - name: "DB_ADMIN"
+          value: "postgres"
+        image: "registry.hub.docker.com/centos/postgresql-12-centos7:latest"
+        imagePullPolicy: "IfNotPresent"
+        livenessProbe:
+          exec:
+            command:
+            - "/bin/sh"
+            - "-i"
+            - "-c"
+            - "/usr/libexec/check-container"
+          failureThreshold: 1
+          periodSeconds: 10
+          timeoutSeconds: 3
+        name: "db-container"
+        ports:
+        - containerPort: 5432
+          name: "db-port"
+          protocol: "TCP"
+        readinessProbe:
+          exec:
+            command:
+            - "/bin/sh"
+            - "-i"
+            - "-c"
+            - "/usr/libexec/check-container"
+          failureThreshold: 1
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "125m"
+        startupProbe:
+          exec:
+            command:
+            - "/bin/sh"
+            - "-i"
+            - "-c"
+            - "/usr/libexec/check-container"
+          failureThreshold: 11
+          periodSeconds: 12
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: "/var/lib/pgsql/data"
+          name: "default-postgresql-dbms-in-namespace-db-volume"
+          readOnly: false
+      dnsPolicy: "ClusterFirst"
+      restartPolicy: "Always"
+      serviceAccountName: "default"
+      volumes:
+      - name: "default-postgresql-dbms-in-namespace-db-volume"
+        persistentVolumeClaim:
+          claimName: "default-postgresql-dbms-in-namespace-db-pvc"
+          readOnly: false

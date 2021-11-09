@@ -1,0 +1,25 @@
+---
+mixins:
+- "Deployable"
+- "SsoAwareDeployable"
+- "Secretive"
+defaultServiceAccountName: "default"
+replicas: 1
+customResource:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  metadata:
+    name: "my-app"
+    namespace: "my-namespace"
+  isCustomResource: true
+containers: []
+secrets: []
+serviceAccountToUse: "default"
+ssoClientConfig:
+  realm: "my-realm"
+  clientId: "my-client"
+  clientName: "my-client"
+  roles: []
+  permissions: []
+  redirectUri: []
+  webOrigins: []

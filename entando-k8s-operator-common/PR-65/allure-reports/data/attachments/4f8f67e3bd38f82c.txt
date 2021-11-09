@@ -1,0 +1,36 @@
+---
+apiVersion: "test.org/v1"
+kind: "TestResource"
+metadata:
+  generation: 1
+  name: "specified-dbms"
+  namespace: "my-namespace"
+  resourceVersion: "1966893"
+  uid: "91a947ce-574c-4f17-8ac1-aaf207a2387a"
+spec:
+  replicas: 1
+  provisioningStrategy: "UseExternal"
+  dbms: "mysql"
+  externalHostName: "pg.apps.serv.run"
+  adminSecretName: "my-existing-dbms-admin-secret"
+status:
+  serverStatuses:
+    main:
+      type: "WebServerStatus"
+      qualifier: "main"
+      started: "2021-11-09T15:53:51+0000"
+      originatingCustomResource:
+        apiVersion: "test.org/v1"
+        kind: "TestResource"
+        namespace: "my-namespace"
+        name: "specified-dbms"
+      originatingControllerPod:
+        namespace: "controller-namespace"
+        name: "test-controller-pod"
+      finished: "2021-11-09T15:53:51+0000"
+      serviceName: "specified-dbms-service"
+      adminSecretName: "my-existing-dbms-admin-secret"
+      derivedDeploymentParameters:
+        databaseName: "specified_dbms"
+        dbmsVendor: "mysql"
+crdName: "testresources.test.org"

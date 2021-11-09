@@ -1,0 +1,1 @@
+ENTANDO_NAMESPACES_OF_INTEREST=entando-k8s-operator-common-cmpr65-test992

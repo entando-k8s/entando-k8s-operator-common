@@ -1,0 +1,12 @@
+---
+apiVersion: "rbac.authorization.k8s.io/v1"
+kind: "RoleBinding"
+metadata:
+  name: "default-pod-viewer"
+roleRef:
+  kind: "ClusterRole"
+  name: "pod-viewer"
+subjects:
+- kind: "ServiceAccount"
+  name: "default"
+  namespace: "my-namespace"

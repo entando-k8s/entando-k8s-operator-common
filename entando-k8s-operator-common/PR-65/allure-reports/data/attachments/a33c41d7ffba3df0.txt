@@ -1,0 +1,9 @@
+---
+apiVersion: "v1"
+kind: "Secret"
+metadata:
+  name: "default-mysql-dbms-in-cluster-admin-secret"
+  namespace: "controller-namespace"
+stringData:
+  username: "jon"
+  password: "password123"

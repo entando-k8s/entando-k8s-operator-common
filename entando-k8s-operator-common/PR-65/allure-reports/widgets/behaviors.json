@@ -1,0 +1,103 @@
+{
+  "total" : 94,
+  "items" : [ {
+    "uid" : "d5a0891eefaea69858330b48d3919a9d",
+    "name" : "As a support developer, I would like perform common operations on the ProvidedCapability resources through a simple interface to reduce the learning curve",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 7,
+      "skipped" : 2,
+      "passed" : 0,
+      "unknown" : 0,
+      "total" : 9
+    }
+  }, {
+    "uid" : "230b742fa31be62fd70fff3298dad8bf",
+    "name" : "As a controller developer, I would like perform common operations on the relevant Kubernetes resources through a simple interface to reduce the learning curve",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 1,
+      "skipped" : 0,
+      "passed" : 0,
+      "unknown" : 0,
+      "total" : 1
+    }
+  }, {
+    "uid" : "26c18bbabb12b73eacb39b104c192050",
+    "name" : "As a controller developer, I would like to have be able to resolve ProvidedCapabilities at different levels of scope so that we can find the optimal balance of reuse of our Capabilities",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 14,
+      "unknown" : 0,
+      "total" : 14
+    }
+  }, {
+    "uid" : "502c741ed72c74715bfa4a57b937caf6",
+    "name" : "As a controller developer, I would like to specify how my image gets deployed providing only the essential configuration so that  I can focus on my development tasks",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 1,
+      "passed" : 5,
+      "unknown" : 0,
+      "total" : 6
+    }
+  }, {
+    "uid" : "9a9659e61d4022fa5e94a29efb363f12",
+    "name" : "As a controller developer, I would like to implement a controller that responds to CapabilityRequirements so that I can extendKubernetes with my own controllers",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 4,
+      "unknown" : 0,
+      "total" : 4
+    }
+  }, {
+    "uid" : "db0434017edf07263b483e549bb70321",
+    "name" : "As a controller developer, I would like to request the OIDC capability so that I can use it to provide single sign on to my users",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 3,
+      "unknown" : 0,
+      "total" : 3
+    }
+  }, {
+    "uid" : "38ca4e058653c6d6bd564789841f6987",
+    "name" : "As a support developer, I would like perform common operations on Services and Endpoints resources through a simple interface to reduce the learning curve",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 3,
+      "unknown" : 0,
+      "total" : 3
+    }
+  }, {
+    "uid" : "f03036b11aed22f02da3a8efc77b3676",
+    "name" : "As a controller developer, I would like to request the Database capability so that I can deploy containers that use the database",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 2,
+      "unknown" : 0,
+      "total" : 2
+    }
+  }, {
+    "uid" : "aa9c813957ad01965af86ac3955a4835",
+    "name" : "As a controller developer, I would like to mount persistent storage in the deployed container so that I can store files that persist beyond pod restarts",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 1,
+      "passed" : 1,
+      "unknown" : 0,
+      "total" : 2
+    }
+  } ]
+}

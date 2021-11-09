@@ -1,0 +1,35 @@
+---
+mixins:
+- "Deployable"
+fileSystemUserAndGroupId: 1001
+defaultServiceAccountName: "default"
+replicas: 1
+customResource:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  metadata:
+    name: "my-app"
+    namespace: "my-namespace"
+  isCustomResource: true
+containers:
+- memoryLimitMebibytes: 256
+  dockerImageInfo:
+    organization: "test"
+    repository: "my-image"
+    tag: "6.3.2"
+  volumeMountPath: "/my-data"
+  namesOfSecretsToMount: []
+  additionalPorts: []
+  storageLimitMebibytes: 500
+  primaryPort: 8081
+  accessMode: "ReadWriteMany"
+  mixins:
+  - "PersistentVolumeAwareContainer"
+  - "DeployableContainer"
+  storageClass: "gluster"
+  kubernetesPermissions: []
+  environmentVariables: []
+  nameQualifier: "server"
+  secretsToMount: []
+  cpuLimitMillicores: 500
+serviceAccountToUse: "default"

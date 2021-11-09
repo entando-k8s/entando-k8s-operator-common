@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultServiceClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.client.impl</a> &gt; <span class="el_source">DefaultServiceClient.java</span></div><h1>DefaultServiceClient.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.client.impl;
+
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
+
+import io.fabric8.kubernetes.api.model.Endpoints;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import org.entando.kubernetes.controller.support.client.ServiceClient;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+
+public class DefaultServiceClient implements ServiceClient {
+
+    private final KubernetesClient client;
+
+<span class="fc" id="L35">    public DefaultServiceClient(KubernetesClient client) {</span>
+<span class="fc" id="L36">        this.client = client;</span>
+<span class="fc" id="L37">    }</span>
+
+    @Override
+    public Endpoints createOrReplaceEndpoints(EntandoCustomResource peerInNamespace, Endpoints endpoints) {
+<span class="fc" id="L41">        return createOrReplace(peerInNamespace, endpoints, client.endpoints());</span>
+    }
+
+    @Override
+    public Endpoints createOrReplaceDelegateEndpoints(Endpoints endpoints) {
+<span class="fc" id="L46">        return createOrReplace(endpoints, client.endpoints());</span>
+    }
+
+    @Override
+    public Endpoints loadEndpoints(EntandoCustomResource peerInNamespace, String endpointsName) {
+<span class="fc" id="L51">        return client.endpoints().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(endpointsName).fromServer().get();</span>
+    }
+
+    @Override
+    public Service createOrReplaceDelegateService(Service service) {
+<span class="fc" id="L56">        return createOrReplace(service, client.services());</span>
+    }
+
+    @Override
+    public Service loadService(EntandoCustomResource peerInNamespace, String name) {
+<span class="fc" id="L61">        return client.services().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();</span>
+    }
+
+    @Override
+    public Service loadControllerService(String name) {
+<span class="nc" id="L66">        return client.services().inNamespace(client.getNamespace()).withName(name).fromServer().get();</span>
+    }
+
+    @Override
+    public Service createOrReplaceService(EntandoCustomResource peerInNamespace, Service service) {
+<span class="fc" id="L71">        return createOrReplace(peerInNamespace, service, client.services());</span>
+    }
+
+    private &lt;T extends HasMetadata, L extends KubernetesResourceList&lt;T&gt;, R extends Resource&lt;T&gt;&gt; T createOrReplace(
+            EntandoCustomResource peerInNamespace, T resource,
+            MixedOperation&lt;T, L, R&gt; oper) {
+<span class="fc" id="L77">        resource.getMetadata().setNamespace(peerInNamespace.getMetadata().getNamespace());</span>
+<span class="fc" id="L78">        return createOrReplace(resource, oper);</span>
+    }
+
+    private &lt;T extends HasMetadata, L extends KubernetesResourceList&lt;T&gt;, R extends Resource&lt;T&gt;&gt; T createOrReplace(T resource,
+            MixedOperation&lt;T, L, R&gt; oper) {
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (oper.inNamespace(resource.getMetadata().getNamespace()).withName(resource.getMetadata().getName()).get() != null) {</span>
+<span class="fc" id="L84">            oper.inNamespace(resource.getMetadata().getNamespace()).withName(resource.getMetadata().getName()).delete();</span>
+        }
+<span class="fc" id="L86">        resource.getMetadata().setResourceVersion(null);</span>
+        //retry because it may still be in the process of being deleted
+<span class="fc" id="L88">        return retry(() -&gt; oper.inNamespace(resource.getMetadata().getNamespace()).create(resource), KubernetesClient.class::isInstance, 5);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

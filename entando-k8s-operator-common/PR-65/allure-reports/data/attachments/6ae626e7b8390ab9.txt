@@ -1,0 +1,6 @@
+---
+capability: "sso"
+implementation: "redhat-sso"
+resolutionScopePreference:
+- "Namespace"
+provisioningStrategy: "DeployDirectly"

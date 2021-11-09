@@ -1,0 +1,48 @@
+---
+apiVersion: "test.org/v1"
+kind: "TestResource"
+metadata:
+  generation: 1
+  name: "my-app"
+  namespace: "my-namespace"
+  resourceVersion: "5710794"
+  uid: "59f3c8c0-1e85-4fe8-a52f-f0862d20c40c"
+spec:
+  replicas: 1
+status:
+  serverStatuses:
+    main:
+      type: "WebServerStatus"
+      qualifier: "main"
+      started: "2021-11-09T16:08:31+0000"
+      originatingCustomResource:
+        apiVersion: "test.org/v1"
+        kind: "TestResource"
+        namespace: "my-namespace"
+        name: "my-app"
+      originatingControllerPod:
+        namespace: "controller-namespace"
+        name: "test-controller-pod"
+      finished: "2021-11-09T16:08:31+0000"
+      deploymentName: "my-app-deployment"
+      podPhases:
+        my-app-deployment: "Failed"
+      entandoControllerFailure:
+        failedObjectApiVersion: "v1"
+        failedObjectKind: "Pod"
+        failedObjectNamespace: "my-namespace"
+        failedObjectName: "my-app-deployment"
+        message: "Deployment failed. Please inspect the logs of the pod my-namespace/my-app-deployment"
+        detailMessage: "org.entando.kubernetes.controller.spi.common.EntandoControllerException:\
+          \ Deployment failed. Please inspect the logs of the pod my-namespace/my-app-deployment\n\
+          \tat org.entando.kubernetes.controller.support.command.DeployCommand.waitForPod(DeployCommand.java:196)\n\
+          \tat org.entando.kubernetes.controller.support.command.DeployCommand.deployServiceInternally(DeployCommand.java:152)\n\
+          \tat org.entando.kubernetes.controller.support.command.DeployCommand.lambda$execute$0(DeployCommand.java:108)\n\
+          \tat java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)\n\
+          \tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\n\
+          \tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\n\
+          \tat java.base/java.lang.Thread.run(Thread.java:834)\n"
+  observedGeneration: 1
+  phase: "failed"
+  entandoDeploymentPhase: "failed"
+crdName: "testresources.test.org"

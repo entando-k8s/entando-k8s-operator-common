@@ -1,0 +1,5 @@
+---
+capability: "dbms"
+resolutionScopePreference:
+- "Dedicated"
+provisioningStrategy: "DeployDirectly"

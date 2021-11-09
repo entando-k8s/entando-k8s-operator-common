@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SupportProducer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.client.impl</a> &gt; <span class="el_source">SupportProducer.java</span></div><h1>SupportProducer.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.client.impl;
+
+import io.fabric8.kubernetes.client.ConfigBuilder;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.HttpClientAware;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
+import okhttp3.logging.HttpLoggingInterceptor;
+import okhttp3.logging.HttpLoggingInterceptor.Level;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvider;
+import org.entando.kubernetes.controller.spi.capability.SerializingCapabilityProvider;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
+import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
+import org.entando.kubernetes.controller.spi.command.SerializingDeploymentProcessor;
+import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
+import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
+import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
+
+@ApplicationScoped
+<span class="fc" id="L38">public class SupportProducer {</span>
+
+    private KubernetesClient kubernetesClient;
+    private SimpleK8SClient&lt;EntandoResourceClient&gt; simpleK8SClient;
+
+    @Produces
+    public KubernetesClient getKubernetesClient() {
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (kubernetesClient == null) {</span>
+<span class="fc" id="L46">            ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withRequestTimeout(30000).withConnectionTimeout(30000);</span>
+<span class="fc" id="L47">            kubernetesClient = new DefaultKubernetesClient(configBuilder.build());</span>
+            //Somehow when using the default JBoss Logging config in Quarkus HttpLoggingInterceptor ends up logging at trace level.
+            //Rather fix this programmatically than try to figure out how to control logging in all the different dev and runtime
+            // environments
+<span class="fc" id="L51">            ((HttpClientAware) kubernetesClient).getHttpClient().networkInterceptors().stream()</span>
+<span class="fc" id="L52">                    .filter(HttpLoggingInterceptor.class::isInstance)</span>
+<span class="fc" id="L53">                    .map(HttpLoggingInterceptor.class::cast)</span>
+<span class="fc" id="L54">                    .findFirst()</span>
+<span class="pc" id="L55">                    .ifPresent(interceptor -&gt; interceptor.setLevel(Level.NONE));</span>
+        }
+<span class="fc" id="L57">        return kubernetesClient;</span>
+    }
+
+    @Produces
+    public KubernetesClientForControllers entandoResourceClient() {
+<span class="nc" id="L62">        return getSimpleKubernetesClient().entandoResources();</span>
+    }
+
+    @Produces
+    public DeploymentProcessor deploymentProcessor() {
+<span class="nc" id="L67">        return new SerializingDeploymentProcessor(entandoResourceClient(),</span>
+<span class="nc" id="L68">                new InProcessCommandStream(getSimpleKubernetesClient(), keycloakClient()));</span>
+    }
+
+    @Produces
+    public CapabilityProvider capabilityProvider() {
+<span class="nc" id="L73">        return new SerializingCapabilityProvider(entandoResourceClient(),</span>
+<span class="nc" id="L74">                new InProcessCommandStream(getSimpleKubernetesClient(), new DefaultKeycloakClient()));</span>
+    }
+
+    @Produces
+    public SimpleKeycloakClient keycloakClient() {
+<span class="nc" id="L79">        return new DefaultKeycloakClient();</span>
+    }
+
+    private SimpleK8SClient&lt;EntandoResourceClient&gt; getSimpleKubernetesClient() {
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (simpleK8SClient == null) {</span>
+<span class="nc" id="L84">            simpleK8SClient = new DefaultSimpleK8SClient(getKubernetesClient());</span>
+        }
+<span class="nc" id="L86">        return simpleK8SClient;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

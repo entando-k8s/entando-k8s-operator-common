@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SerializationHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.command</a> &gt; <span class="el_source">SerializationHelper.java</span></div><h1>SerializationHelper.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.command;
+
+import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.entando.kubernetes.controller.spi.common.SerializeByReference;
+
+public class SerializationHelper {
+
+    private SerializationHelper() {
+
+    }
+
+    public static String serialize(Object deployable) {
+<span class="fc" id="L50">        return ioSafe(() -&gt; {</span>
+<span class="fc" id="L51">            Map&lt;String, Object&gt; map = toJsonFriendlyMap(deployable);</span>
+<span class="fc" id="L52">            return new ObjectMapper(new YAMLFactory()).writerWithDefaultPrettyPrinter().writeValueAsString(map);</span>
+        });
+    }
+
+    private static Map&lt;String, Object&gt; toJsonFriendlyMap(Object nonSerializableObject) {
+<span class="fc" id="L57">        Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L58">        map.put(&quot;mixins&quot;, Arrays.stream(getAllImplementedInterfaces(nonSerializableObject.getClass()))</span>
+<span class="fc" id="L59">                .filter(ReflectionUtil.KNOWN_INTERFACES::contains)</span>
+<span class="fc" id="L60">                .map(Class::getSimpleName)</span>
+<span class="fc" id="L61">                .collect(Collectors.toList()));</span>
+<span class="fc" id="L62">        Arrays.stream(nonSerializableObject.getClass().getMethods())</span>
+<span class="fc bfc" id="L63" title="All 4 branches covered.">                .filter(method -&gt; (method.getName().startsWith(&quot;get&quot;) || method.getName().startsWith(&quot;is&quot;))</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">                        &amp;&amp; method.getReturnType() != void.class</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">                        &amp;&amp; method.getParameterCount() == 0)</span>
+<span class="fc" id="L66">                .map(method -&gt; processGetter(nonSerializableObject, method))</span>
+<span class="fc" id="L67">                .filter(Objects::nonNull)</span>
+<span class="fc" id="L68">                .forEach(stringObjectPair -&gt; map.put(stringObjectPair.getKey(), stringObjectPair.getValue()));</span>
+<span class="fc" id="L69">        return map;</span>
+    }
+
+    private static Class&lt;?&gt;[] getAllImplementedInterfaces(Class&lt;?&gt; clazz) {
+<span class="fc" id="L73">        Set&lt;Class&lt;?&gt;&gt; result = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L74" title="All 4 branches covered.">        while (clazz != null &amp;&amp; clazz != Object.class) {</span>
+<span class="fc" id="L75">            result.addAll(Arrays.asList(clazz.getInterfaces()));</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">            for (Class&lt;?&gt; intf : clazz.getInterfaces()) {</span>
+<span class="fc" id="L77">                result.addAll(List.of(getAllImplementedInterfaces(intf)));</span>
+            }
+<span class="fc" id="L79">            clazz = clazz.getSuperclass();</span>
+        }
+<span class="fc" id="L81">        return result.toArray(Class[]::new);</span>
+    }
+
+    private static Pair&lt;String, Object&gt; processGetter(Object nonSerializableObject, Method method) {
+        try {
+<span class="fc" id="L86">            Object value = method.invoke(nonSerializableObject);</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">            if (value instanceof Optional) {</span>
+<span class="fc" id="L88">                value = ((Optional&lt;?&gt;) value).orElse(null);</span>
+            }
+<span class="fc bfc" id="L90" title="All 2 branches covered.">            if (value != null) {</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">                if (ReflectionUtil.getAnnotation(nonSerializableObject.getClass(), method.getName(), SerializeByReference.class) != null) {</span>
+<span class="fc" id="L92">                    return new ImmutablePair&lt;&gt;(ReflectionUtil.propertyName(method), new ResourceReference((HasMetadata) value));</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">                } else if (ReflectionUtil.getAnnotation(nonSerializableObject.getClass(), method.getName(), JsonIgnore.class) == null) {</span>
+<span class="fc" id="L94">                    return ofNullable(toJsonSafeValue(value))</span>
+<span class="fc" id="L95">                            .map(jsonSafeValue -&gt; new ImmutablePair&lt;&gt;(ReflectionUtil.propertyName(method), jsonSafeValue))</span>
+<span class="fc" id="L96">                            .orElse(null);</span>
+                }
+            }
+<span class="fc" id="L99">            return null;</span>
+<span class="nc" id="L100">        } catch (IllegalAccessException e) {</span>
+<span class="nc" id="L101">            throw new IllegalStateException(e);</span>
+<span class="nc" id="L102">        } catch (InvocationTargetException e) {</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">            if (e.getTargetException() instanceof RuntimeException) {</span>
+<span class="nc" id="L104">                throw (RuntimeException) e.getTargetException();</span>
+            } else {
+<span class="nc" id="L106">                throw new IllegalStateException(e.getTargetException());</span>
+            }
+        }
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private static Object toJsonSafeValue(Object value) {
+<span class="fc bfc" id="L113" title="All 6 branches covered.">        if (value instanceof Number || value instanceof Boolean || value instanceof String) {</span>
+<span class="fc" id="L114">            return value;</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        } else if (value instanceof Enum) {</span>
+<span class="fc" id="L116">            return ((Enum&lt;?&gt;) value).name().toUpperCase(Locale.ROOT);</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">        } else if (value instanceof Optional) {</span>
+<span class="nc" id="L118">            return ((Optional&lt;?&gt;) value).map(SerializationHelper::toJsonSafeValue).orElse(null);</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        } else if (value instanceof List) {</span>
+<span class="fc" id="L120">            List&lt;?&gt; list = (List&lt;?&gt;) value;</span>
+<span class="fc" id="L121">            return list.stream().map(SerializationHelper::toJsonSafeValue).collect(Collectors.toList());</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">        } else if (value instanceof Map) {</span>
+<span class="fc" id="L123">            Map&lt;String, ?&gt; map = (Map&lt;String, ?&gt;) value;</span>
+<span class="fc" id="L124">            return map.entrySet().stream()</span>
+<span class="fc" id="L125">                    .collect(Collectors.toMap(Map.Entry::getKey, entry -&gt; ofNullable(toJsonSafeValue(entry.getValue())).orElse(&quot;&quot;)));</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        } else if (value != null) {</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">            if (value.getClass().getAnnotation(JsonDeserialize.class) != null) {</span>
+                //We know how to serialize this
+<span class="fc" id="L129">                return value;</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">            } else if (ReflectionUtil.implementsKnownInterface(value)) {</span>
+                //Can't serialize, but is known, so translate to map
+<span class="fc" id="L132">                return toJsonFriendlyMap(value);</span>
+            }
+        }
+<span class="fc" id="L135">        return null;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

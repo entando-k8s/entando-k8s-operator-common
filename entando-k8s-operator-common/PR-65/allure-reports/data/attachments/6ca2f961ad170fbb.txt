@@ -1,0 +1,21 @@
+---
+memoryLimitMebibytes: 256
+dockerImageInfo:
+  organization: "test"
+  repository: "my-spring-boot-image"
+  tag: "6.3.2"
+namesOfSecretsToMount: []
+additionalPorts: []
+storageLimitMebibytes: 0
+primaryPort: 8081
+mixins:
+- "PersistentVolumeAwareContainer"
+- "DeployableContainer"
+- "DbAwareContainer"
+databaseConnectionVariables: []
+kubernetesPermissions: []
+environmentVariables: []
+schemaConnectionInfo: []
+nameQualifier: "server"
+secretsToMount: []
+cpuLimitMillicores: 500

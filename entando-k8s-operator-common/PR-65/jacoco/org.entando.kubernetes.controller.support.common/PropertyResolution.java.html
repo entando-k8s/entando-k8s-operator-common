@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PropertyResolution.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.common</a> &gt; <span class="el_source">PropertyResolution.java</span></div><h1>PropertyResolution.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.common;
+
+import static java.util.Optional.ofNullable;
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import java.util.Map;
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.spi.container.DockerImageInfo;
+
+public class PropertyResolution {
+
+    private final ConfigMap imageVersionsConfigMap;
+    private final String organizationAwareKey;
+    private final String imageRepostory;
+    private EntandoOperatorConfigProperty overridingPropertyName;
+    private String configMapKey;
+    private EntandoOperatorConfigProperty fallbackPropertyName;
+    private String defaultValue;
+    private String providedValue;
+
+<span class="fc" id="L40">    public PropertyResolution(ConfigMap imageVersionsConfigMap, DockerImageInfo dockerImageInfo) {</span>
+<span class="fc" id="L41">        this.imageVersionsConfigMap = imageVersionsConfigMap;</span>
+<span class="fc" id="L42">        this.organizationAwareKey = dockerImageInfo.getOrganizationAwareRepository();</span>
+<span class="fc" id="L43">        this.imageRepostory = dockerImageInfo.getRepository();</span>
+<span class="fc" id="L44">    }</span>
+
+    public PropertyResolution withOverridingPropertyName(EntandoOperatorConfigProperty overridingPropertyName) {
+<span class="fc" id="L47">        this.overridingPropertyName = overridingPropertyName;</span>
+<span class="fc" id="L48">        return this;</span>
+    }
+
+    public PropertyResolution withProvidedValue(String providedValue) {
+<span class="fc" id="L52">        this.providedValue = providedValue;</span>
+<span class="fc" id="L53">        return this;</span>
+    }
+
+    public PropertyResolution withConfigMapKey(String configMapKey) {
+<span class="fc" id="L57">        this.configMapKey = configMapKey;</span>
+<span class="fc" id="L58">        return this;</span>
+    }
+
+    public PropertyResolution withFallbackPropertyName(EntandoOperatorConfigProperty fallbackPropertyName) {
+<span class="fc" id="L62">        this.fallbackPropertyName = fallbackPropertyName;</span>
+<span class="fc" id="L63">        return this;</span>
+    }
+
+    public PropertyResolution withDefaultValue(String defaultValue) {
+<span class="fc" id="L67">        this.defaultValue = defaultValue;</span>
+<span class="fc" id="L68">        return this;</span>
+    }
+
+    public String resolvePropertyValue() {
+<span class="fc" id="L72">        return overridingPropertyValue()</span>
+<span class="fc" id="L73">                .orElse(valueFromConfigMap()</span>
+<span class="fc" id="L74">                        .orElse(ofNullable(providedValue)</span>
+<span class="fc" id="L75">                                .orElse(fallbackPropertyValue().orElse(defaultValue))));</span>
+    }
+
+    private Optional&lt;String&gt; fallbackPropertyValue() {
+<span class="fc" id="L79">        return EntandoOperatorConfigBase.lookupProperty(fallbackPropertyName);</span>
+    }
+
+    private Optional&lt;String&gt; overridingPropertyValue() {
+<span class="fc" id="L83">        return EntandoOperatorConfigBase.lookupProperty(overridingPropertyName);</span>
+    }
+
+    private Optional&lt;String&gt; valueFromConfigMap() {
+<span class="fc" id="L87">        return resolveDockerImageInfoFromConfigmapData(imageRepostory)</span>
+<span class="fc" id="L88">                .or(() -&gt; resolveDockerImageInfoFromConfigmapData(organizationAwareKey))</span>
+<span class="fc" id="L89">                .flatMap(this::extractValueFromContent);</span>
+
+    }
+
+    private Optional&lt;String&gt; resolveDockerImageInfoFromConfigmapData(String imageKey) {
+<span class="fc" id="L94">        return ofNullable(imageVersionsConfigMap).map(ConfigMap::getData).map(data -&gt; data.get(imageKey));</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private Optional&lt;String&gt; extractValueFromContent(String content) {
+<span class="fc" id="L99">        return ioSafe(() -&gt; {</span>
+<span class="fc" id="L100">            ObjectMapper mapper = new ObjectMapper();</span>
+<span class="fc" id="L101">            Map&lt;String, String&gt; imageConfig = mapper.readValue(content, Map.class);</span>
+<span class="fc" id="L102">            return ofNullable(imageConfig.get(configMapKey));</span>
+        });
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

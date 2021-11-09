@@ -1,0 +1,11 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  generation: 2
+  name: "entando-crd-names"
+  namespace: "controller-namespace"
+  resourceVersion: "4434032"
+  uid: "2908dc7d-e8e2-4c2c-9513-ad5ca3654aba"
+data:
+  TestResource.test.org: "testresources.test.org"

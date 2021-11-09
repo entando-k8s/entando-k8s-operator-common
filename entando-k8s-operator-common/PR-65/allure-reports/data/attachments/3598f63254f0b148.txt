@@ -1,0 +1,31 @@
+---
+mixins:
+- "SerializableDeploymentResult"
+- "ServiceResult"
+- "ServiceDeploymentResult"
+pod:
+  apiVersion: "v1"
+  kind: "Pod"
+  metadata:
+    name: "my-app-deployment"
+    namespace: "my-namespace"
+  isCustomResource: false
+status:
+  type: "WebServerStatus"
+  qualifier: "main"
+  started: "2021-11-09T16:08:29+0000"
+  originatingCustomResource:
+    apiVersion: "test.org/v1"
+    kind: "TestResource"
+    namespace: "my-namespace"
+    name: "my-app"
+  originatingControllerPod:
+    namespace: "controller-namespace"
+    name: "test-controller-pod"
+  finished: "2021-11-09T16:08:29+0000"
+  deploymentName: "my-app-deployment"
+  podPhases:
+    my-app-dbprep-8252: "Complete"
+    my-app-deployment: "Running"
+  persistentVolumeClaimPhases:
+    my-app-server-pvc: "Pending"

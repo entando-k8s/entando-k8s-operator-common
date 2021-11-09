@@ -1,0 +1,28 @@
+---
+internalServiceHostname: "specified-dbms-service.my-namespace.svc.cluster.local"
+mixins:
+- "SerializableDeploymentResult"
+- "ServiceResult"
+- "ServiceDeploymentResult"
+port: "3307"
+service:
+  apiVersion: "v1"
+  kind: "Service"
+  metadata:
+    name: "specified-dbms-service"
+    namespace: "my-namespace"
+  isCustomResource: false
+status:
+  type: "WebServerStatus"
+  qualifier: "main"
+  started: "2021-11-09T15:53:50+0000"
+  originatingCustomResource:
+    apiVersion: "test.org/v1"
+    kind: "TestResource"
+    namespace: "my-namespace"
+    name: "specified-dbms"
+  originatingControllerPod:
+    namespace: "controller-namespace"
+    name: "test-controller-pod"
+  finished: "2021-11-09T15:53:50+0000"
+  serviceName: "specified-dbms-service"

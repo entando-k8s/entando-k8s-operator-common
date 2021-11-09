@@ -1,0 +1,9 @@
+---
+capability: "dbms"
+implementation: "mysql"
+resolutionScopePreference:
+- "Specified"
+provisioningStrategy: "DeployDirectly"
+specifiedCapability:
+  namespace: "my-app-namespace"
+  name: "my-db"

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DeployableContainer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.container</a> &gt; <span class="el_source">DeployableContainer.java</span></div><h1>DeployableContainer.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.container;
+
+import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+public interface DeployableContainer {
+
+    String ENTANDO_SECRET_MOUNTS_ROOT = &quot;/etc/entando/secrets&quot;;
+
+    String getNameQualifier();
+
+    int getPrimaryPort();
+
+    List&lt;EnvVar&gt; getEnvironmentVariables();
+
+    default DockerImageInfo getDockerImageInfo() {
+<span class="fc" id="L36">        return new DockerImageInfo(determineImageToUse());</span>
+    }
+
+    default String determineImageToUse() {
+<span class="nc" id="L40">        return &quot;busybox&quot;;</span>
+    }
+
+    default Optional&lt;Integer&gt; getMaximumStartupTimeSeconds() {
+<span class="fc" id="L44">        return Optional.empty();</span>
+    }
+
+    default List&lt;PortSpec&gt; getAdditionalPorts() {
+<span class="fc" id="L48">        return Collections.emptyList();</span>
+    }
+
+    default int getMemoryLimitMebibytes() {
+<span class="fc" id="L52">        return 256;</span>
+    }
+
+    default int getCpuLimitMillicores() {
+<span class="fc" id="L56">        return 500;</span>
+    }
+
+    default List&lt;String&gt; getNamesOfSecretsToMount() {
+<span class="fc" id="L60">        return Collections.emptyList();</span>
+    }
+
+    default List&lt;SecretToMount&gt; getSecretsToMount() {
+<span class="fc" id="L64">        return getNamesOfSecretsToMount().stream().map(s -&gt; new SecretToMount(s, ENTANDO_SECRET_MOUNTS_ROOT + &quot;/&quot; + s))</span>
+<span class="fc" id="L65">                .collect(Collectors.toList());</span>
+    }
+
+    default List&lt;KubernetesPermission&gt; getKubernetesPermissions() {
+<span class="fc" id="L69">        return Collections.emptyList();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

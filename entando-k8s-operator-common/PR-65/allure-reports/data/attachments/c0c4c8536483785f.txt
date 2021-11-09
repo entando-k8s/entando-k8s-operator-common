@@ -1,0 +1,17 @@
+---
+mixins:
+- "CapabilityProvisioningResult"
+providedCapability:
+  apiVersion: "entando.org/v1"
+  kind: "ProvidedCapability"
+  metadata:
+    name: "default-postgresql-dbms-in-namespace"
+    namespace: "my-namespace"
+  isCustomResource: true
+service:
+  apiVersion: "v1"
+  kind: "Service"
+  metadata:
+    name: "default-postgresql-dbms-in-namespace-service"
+    namespace: "my-namespace"
+  isCustomResource: false
