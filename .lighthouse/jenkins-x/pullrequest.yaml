@@ -88,7 +88,7 @@ spec:
               secretKeyRef:
                 key: executable.type
                 name: entando-jx-common-secret
-          image: entando-jx-maven
+          image: entando/entando-jx-maven-java11:0.0.83
           name: build-set-version
           resources: {}
         - args:
@@ -119,7 +119,7 @@ spec:
               secretKeyRef:
                 key: executable.type
                 name: entando-jx-common-secret
-          image: entando-jx-maven
+          image: entando/entando-jx-maven-java11:0.0.83
           name: build-fix-git-for-sonar
           resources: {}
         - args:
@@ -150,7 +150,7 @@ spec:
               secretKeyRef:
                 key: executable.type
                 name: entando-jx-common-secret
-          image: entando-jx-maven
+          image: entando/entando-jx-maven-java11:0.0.83
           name: build-mvn-verify-pr
           resources: {}
         - args:
@@ -181,7 +181,7 @@ spec:
               secretKeyRef:
                 key: executable.type
                 name: entando-jx-common-secret
-          image: entando-jx-maven
+          image: entando/entando-jx-maven-java11:0.0.83
           name: build-container-build
           resources: {}
         volumes:

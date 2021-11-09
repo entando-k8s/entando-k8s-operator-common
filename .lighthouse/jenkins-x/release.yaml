@@ -112,7 +112,7 @@ spec:
               secretKeyRef:
                 key: executable.type
                 name: entando-jx-common-secret
-          image: entando-jx-maven
+          image: entando/entando-jx-maven-java11:0.0.83
           name: build-fetch-history-for-sonar
           resources: {}
         - args:
@@ -143,7 +143,7 @@ spec:
               secretKeyRef:
                 key: executable.type
                 name: entando-jx-common-secret
-          image: entando-jx-maven
+          image: entando/entando-jx-maven-java11:0.0.83
           name: build-mvn-deploy-release
           resources: {}
         - args:
@@ -174,7 +174,7 @@ spec:
               secretKeyRef:
                 key: executable.type
                 name: entando-jx-common-secret
-          image: entando-jx-maven
+          image: entando/entando-jx-maven-java11:0.0.83
           name: build-container-build
           resources: {}
         - args:
@@ -205,7 +205,7 @@ spec:
               secretKeyRef:
                 key: executable.type
                 name: entando-jx-common-secret
-          image: entando-jx-maven
+          image: entando/entando-jx-maven-java11:0.0.83
           name: promote-changelog
           resources: {}
         volumes:
