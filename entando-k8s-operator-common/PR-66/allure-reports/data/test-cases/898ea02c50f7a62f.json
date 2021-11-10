@@ -1,0 +1,96 @@
+{
+  "uid" : "898ea02c50f7a62f",
+  "name" : "shouldCreateDeploymentWithStartupProbeOnK8S16()",
+  "fullName" : "org.entando.kubernetes.controller.support.creators.DeploymentCreatorTest.shouldCreateDeploymentWithStartupProbeOnK8S16",
+  "historyId" : "2d5c615440549d7fbe0dd30211ec5399",
+  "time" : {
+    "start" : 1636542801357,
+    "stop" : 1636542801421,
+    "duration" : 64
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "cleanUp",
+    "time" : {
+      "start" : 1636542801357,
+      "stop" : 1636542801357,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "cleanUp",
+    "time" : {
+      "start" : 1636542801420,
+      "stop" : 1636542801421,
+      "duration" : 1
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.creators.DeploymentCreatorTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.creators.DeploymentCreatorTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldCreateDeploymentWithStartupProbeOnK8S16"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.creators.DeploymentCreatorTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "898ea02c50f7a62f.json",
+  "parameterValues" : [ ]
+}

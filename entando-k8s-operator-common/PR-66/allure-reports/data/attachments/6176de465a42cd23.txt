@@ -1,0 +1,5 @@
+---
+metadata:
+  name: "my-app"
+  namespace: "my-namespace"
+kind: "TestResource"

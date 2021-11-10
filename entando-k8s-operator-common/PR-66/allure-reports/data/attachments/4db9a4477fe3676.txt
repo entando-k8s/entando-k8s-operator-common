@@ -1,0 +1,6 @@
+---
+capability: "dbms"
+implementation: "postgresql"
+resolutionScopePreference:
+- "Namespace"
+provisioningStrategy: "DeployDirectly"

@@ -1,0 +1,7 @@
+---
+mixins:
+- "Deployable"
+defaultServiceAccountName: "default"
+replicas: 1
+containers: []
+serviceAccountToUse: "default"

@@ -1,0 +1,91 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  labels:
+    entando.org/entando-resource-namespace: "my-namespace"
+    entando.org/deployment: "my-app"
+    TestResource: "my-app"
+    entando.org/entando-resource-kind: "TestResource"
+  name: "my-app-deployment"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "test.org/v1"
+    kind: "TestResource"
+    blockOwnerDeletion: true
+    controller: true
+    name: "my-app"
+    uid: "a09a3019-a008-497b-ac85-cdfb8733eb66"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      entando.org/entando-resource-namespace: "my-namespace"
+      entando.org/deployment: "my-app"
+      TestResource: "my-app"
+      entando.org/entando-resource-kind: "TestResource"
+  template:
+    metadata:
+      labels:
+        entando.org/entando-resource-namespace: "my-namespace"
+        entando.org/deployment: "my-app"
+        TestResource: "my-app"
+        entando.org/entando-resource-kind: "TestResource"
+      name: "my-app-pod"
+    spec:
+      containers:
+      - env:
+        - name: "CONNECTION_CONFIG_ROOT"
+          value: "/etc/entando/secrets"
+        - name: "MY_VAR"
+          value: "my-val"
+        - name: "MY_SECRET_VAR"
+          valueFrom:
+            secretKeyRef:
+              key: "my.secret.key"
+              name: "my-secret"
+              optional: false
+        - name: "MY_CONFIG_VAR"
+          valueFrom:
+            configMapKeyRef:
+              key: "my.config.key"
+              name: "my-config"
+              optional: false
+        image: "registry.hub.docker.com/test/my-image:6.3.2"
+        imagePullPolicy: "IfNotPresent"
+        livenessProbe:
+          failureThreshold: 1
+          periodSeconds: 10
+          tcpSocket:
+            host: "localhost"
+            port: 8081
+          timeoutSeconds: 3
+        name: "server-container"
+        ports:
+        - containerPort: 8081
+          name: "server-port"
+          protocol: "TCP"
+        readinessProbe:
+          failureThreshold: 1
+          periodSeconds: 10
+          tcpSocket:
+            host: "localhost"
+            port: 8081
+          timeoutSeconds: 5
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "125m"
+        startupProbe:
+          failureThreshold: 11
+          periodSeconds: 12
+          tcpSocket:
+            host: "localhost"
+            port: 8081
+          timeoutSeconds: 5
+      dnsPolicy: "ClusterFirst"
+      restartPolicy: "Always"
+      serviceAccountName: "default"

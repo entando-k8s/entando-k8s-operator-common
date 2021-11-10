@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DbAwareContainer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.container</a> &gt; <span class="el_source">DbAwareContainer.java</span></div><h1>DbAwareContainer.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.container;
+
+import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+
+public interface DbAwareContainer extends DeployableContainer {
+
+    default Optional&lt;DatabasePopulator&gt; getDatabasePopulator() {
+<span class="nc" id="L31">        return Optional.empty();</span>
+    }
+
+    List&lt;EnvVar&gt; getDatabaseConnectionVariables();
+
+    List&lt;DatabaseSchemaConnectionInfo&gt; getSchemaConnectionInfo();
+
+    static List&lt;DatabaseSchemaConnectionInfo&gt; buildDatabaseSchemaConnectionInfo(
+            EntandoCustomResource entandoBaseCustomResource,
+            DatabaseConnectionInfo databaseConnectionInfo,
+            List&lt;String&gt; schemaQualifiers) {
+<span class="fc" id="L42">        return schemaQualifiers.stream()</span>
+<span class="fc" id="L43">                .map(schemaQualifier -&gt; {</span>
+<span class="fc" id="L44">                    String schemaName = NameUtils.databaseCompliantName(</span>
+                            entandoBaseCustomResource,
+                            schemaQualifier,
+<span class="fc" id="L47">                            databaseConnectionInfo.getVendor()</span>
+                    );
+<span class="fc" id="L49">                    return new DefaultDatabaseSchemaConnectionInfo(databaseConnectionInfo,</span>
+                            schemaName,
+<span class="fc" id="L51">                            SecretUtils.generateSecret(</span>
+                                    entandoBaseCustomResource,
+<span class="fc" id="L53">                                    entandoBaseCustomResource.getMetadata().getName() + &quot;-&quot; + schemaQualifier + &quot;-secret&quot;,</span>
+                                    schemaName
+                            )
+                    );
+<span class="fc" id="L57">                }).collect(Collectors.toList());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

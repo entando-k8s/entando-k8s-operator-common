@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LabelNames.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.common</a> &gt; <span class="el_source">LabelNames.java</span></div><h1>LabelNames.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.common;
+
+<span class="fc" id="L19">public enum LabelNames {</span>
+<span class="fc" id="L20">    RESOURCE_KIND(&quot;entando.org/entando-resource-kind&quot;),</span>
+<span class="fc" id="L21">    RESOURCE_NAMESPACE(&quot;entando.org/entando-resource-namespace&quot;),</span>
+<span class="fc" id="L22">    JOB_KIND(&quot;entando.org/job-kind&quot;),</span>
+<span class="fc" id="L23">    DEPLOYMENT_QUALIFIER(&quot;entando.org/deployment-qualifier&quot;),</span>
+<span class="fc" id="L24">    DEPLOYMENT(&quot;entando.org/deployment&quot;),</span>
+<span class="fc" id="L25">    CAPABILITY(&quot;entando.org/capability&quot;),</span>
+<span class="fc" id="L26">    CAPABILITY_IMPLEMENTATION(&quot;entando.org/capability-implementation&quot;),</span>
+<span class="fc" id="L27">    CAPABILITY_PROVISION_SCOPE(&quot;entando.org/capability-provision-scope&quot;),</span>
+<span class="fc" id="L28">    CRD_OF_INTEREST(&quot;entando.org/crd-of-interest&quot;),</span>
+<span class="fc" id="L29">    JOB_KIND_DB_PREPARATION(&quot;db-preparation-job&quot;);</span>
+
+    private final String labelName;
+
+<span class="fc" id="L33">    LabelNames(String labelName) {</span>
+<span class="fc" id="L34">        this.labelName = labelName;</span>
+<span class="fc" id="L35">    }</span>
+
+    public java.lang.String getName() {
+<span class="fc" id="L38">        return labelName;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

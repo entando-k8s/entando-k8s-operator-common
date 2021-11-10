@@ -1,0 +1,24 @@
+---
+mixins:
+- "CapabilityProvisioningResult"
+providedCapability:
+  apiVersion: "entando.org/v1"
+  kind: "ProvidedCapability"
+  metadata:
+    name: "default-mysql-dbms-in-cluster"
+    namespace: "controller-namespace"
+  isCustomResource: true
+service:
+  apiVersion: "v1"
+  kind: "Service"
+  metadata:
+    name: "default-mysql-dbms-in-cluster-service"
+    namespace: "controller-namespace"
+  isCustomResource: false
+adminSecret:
+  apiVersion: "v1"
+  kind: "Secret"
+  metadata:
+    name: "default-mysql-dbms-in-cluster-admin-secret"
+    namespace: "controller-namespace"
+  isCustomResource: false

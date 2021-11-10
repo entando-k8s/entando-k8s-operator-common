@@ -1,0 +1,18 @@
+---
+apiVersion: "extensions/v1beta1"
+kind: "Ingress"
+metadata:
+  name: "default-redhat-sso-sso-in-namespace-ingress"
+  namespace: "my-app-namespace"
+spec:
+  rules:
+  - host: "irrelevant.com"
+    http:
+      paths:
+      - backend:
+          serviceName: "default-redhat-sso-sso-in-namespace-service"
+          servicePort: 8080
+        path: "/auth"
+  tls:
+  - hosts:
+    - "irrelevant.com"

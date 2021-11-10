@@ -1,0 +1,114 @@
+{
+  "total" : 34,
+  "items" : [ {
+    "uid" : "e7cef4dfa0850ae04828e810ad283092",
+    "name" : "org.entando.kubernetes.controller.support.client.impl.DefaultCapabilityClientTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 7,
+      "skipped" : 2,
+      "passed" : 0,
+      "unknown" : 0,
+      "total" : 9
+    }
+  }, {
+    "uid" : "cf55255fe7409d1c5756e5c0930d98fc",
+    "name" : "org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClientTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 4,
+      "skipped" : 0,
+      "passed" : 0,
+      "unknown" : 0,
+      "total" : 4
+    }
+  }, {
+    "uid" : "a994a864b60ed11c474f220ab145bd06",
+    "name" : "org.entando.kubernetes.controller.support.client.impl.DefaultIngressClientTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 2,
+      "skipped" : 1,
+      "passed" : 0,
+      "unknown" : 0,
+      "total" : 3
+    }
+  }, {
+    "uid" : "dcbd427945fb93485aa2feb98d094d72",
+    "name" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 1,
+      "skipped" : 0,
+      "passed" : 2,
+      "unknown" : 0,
+      "total" : 3
+    }
+  }, {
+    "uid" : "979262f6092f344d650e4b637d35916e",
+    "name" : "org.entando.kubernetes.controller.spi.client.impl.DefaultKubernetesClientForControllersTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 1,
+      "skipped" : 0,
+      "passed" : 0,
+      "unknown" : 0,
+      "total" : 1
+    }
+  }, {
+    "uid" : "3be7b8fb8c6d882ec102438faee12edf",
+    "name" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 20,
+      "unknown" : 0,
+      "total" : 20
+    }
+  }, {
+    "uid" : "1a3456bf4323bad99692b41d5c3da9e7",
+    "name" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 14,
+      "unknown" : 0,
+      "total" : 14
+    }
+  }, {
+    "uid" : "f10f936895d7b1c6479870552cc487bd",
+    "name" : "org.entando.kubernetes.controller.MinimalDeploymentTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 1,
+      "passed" : 5,
+      "unknown" : 0,
+      "total" : 6
+    }
+  }, {
+    "uid" : "df9252b86758164982a493decba52e09",
+    "name" : "org.entando.kubernetes.controller.support.creators.ConfigurableResourceCalculatorTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 5,
+      "unknown" : 0,
+      "total" : 5
+    }
+  }, {
+    "uid" : "f36f5d974313fd59d6570c3df8d3a642",
+    "name" : "org.entando.kubernetes.controller.support.creators.ConfigurableStorageCalculatorTest",
+    "statistic" : {
+      "failed" : 0,
+      "broken" : 0,
+      "skipped" : 0,
+      "passed" : 5,
+      "unknown" : 0,
+      "total" : 5
+    }
+  } ]
+}

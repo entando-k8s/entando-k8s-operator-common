@@ -1,0 +1,66 @@
+{
+  "uid" : "7600f4d53b6299c5",
+  "name" : "testShortenTo63Chars()",
+  "fullName" : "org.entando.kubernetes.controller.spi.common.NameUtilsTest.testShortenTo63Chars",
+  "historyId" : "b4e501acb595f1bb50d724009b628a5",
+  "time" : {
+    "start" : 1636542801974,
+    "stop" : 1636542801978,
+    "duration" : 4
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.spi.common.NameUtilsTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.spi.common.NameUtilsTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "testShortenTo63Chars"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.spi.common.NameUtilsTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "7600f4d53b6299c5.json",
+  "parameterValues" : [ ]
+}

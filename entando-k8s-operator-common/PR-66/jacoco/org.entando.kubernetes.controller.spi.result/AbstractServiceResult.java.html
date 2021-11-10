@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractServiceResult.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.result</a> &gt; <span class="el_source">AbstractServiceResult.java</span></div><h1>AbstractServiceResult.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.result;
+
+import io.fabric8.kubernetes.api.model.Service;
+
+public abstract class AbstractServiceResult implements ServiceResult {
+
+    protected final Service service;
+    protected String adminSecretName;
+
+    protected AbstractServiceResult(Service service) {
+<span class="fc" id="L27">        this(service, null);</span>
+<span class="fc" id="L28">    }</span>
+
+<span class="fc" id="L30">    protected AbstractServiceResult(Service service, String adminSecretName) {</span>
+<span class="fc" id="L31">        this.service = service;</span>
+<span class="fc" id="L32">        this.adminSecretName = adminSecretName;</span>
+<span class="fc" id="L33">    }</span>
+
+    @Override
+    public String getAdminSecretName() {
+<span class="fc" id="L37">        return adminSecretName;</span>
+    }
+
+    @Override
+    public String getInternalServiceHostname() {
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (service == null) {</span>
+<span class="fc" id="L43">            return null;</span>
+        }
+<span class="fc" id="L45">        return service.getMetadata().getName() + &quot;.&quot; + service.getMetadata().getNamespace() + &quot;.svc.cluster.local&quot;;</span>
+    }
+
+    @Override
+    public String getPort() {
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        if (service == null) {</span>
+<span class="fc" id="L51">            return null;</span>
+        }
+<span class="fc" id="L53">        return service.getSpec().getPorts().get(0).getPort().toString();</span>
+    }
+
+    @Override
+    public Service getService() {
+<span class="fc" id="L58">        return service;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

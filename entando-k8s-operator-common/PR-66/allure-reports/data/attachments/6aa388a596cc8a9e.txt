@@ -1,0 +1,12 @@
+---
+apiVersion: "rbac.authorization.k8s.io/v1"
+kind: "RoleBinding"
+metadata:
+  name: "default-entando-editor"
+roleRef:
+  kind: "ClusterRole"
+  name: "entando-editor"
+subjects:
+- kind: "ServiceAccount"
+  name: "default"
+  namespace: "my-namespace"

@@ -1,0 +1,168 @@
+{
+  "uid" : "a76211109e6a2cda",
+  "name" : "shouldCreateOrReplaceService()",
+  "fullName" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest.shouldCreateOrReplaceService",
+  "historyId" : "ffb6aae436e74b5886635656adc383ee",
+  "time" : {
+    "start" : 1636542789170,
+    "stop" : 1636542800883,
+    "duration" : 11713
+  },
+  "description" : "Should create or replace an existing Service with the new value without generating duplicate exceptions",
+  "descriptionHtml" : "<p>Should create or replace an existing Service with the new value without generating duplicate exceptions</p>\n",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "setup",
+    "time" : {
+      "start" : 1636542789171,
+      "stop" : 1636542800713,
+      "duration" : 11542
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "testStage" : {
+    "description" : "Should create or replace an existing Service with the new value without generating duplicate exceptions",
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have an existing service with the annotation 'test: 123'",
+      "time" : {
+        "start" : 1636542800714,
+        "stop" : 1636542800782,
+        "duration" : 68
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "bb4f2c4868a0fedd",
+        "name" : "First Service",
+        "source" : "bb4f2c4868a0fedd.txt",
+        "type" : "text/plain",
+        "size" : 1009
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "When I attempt to createOrReplaceService a service with the same name but with the annotation 'test: 234'",
+      "time" : {
+        "start" : 1636542800782,
+        "stop" : 1636542800876,
+        "duration" : 94
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "6c94161658fbd787",
+        "name" : "Second Service",
+        "source" : "6c94161658fbd787.txt",
+        "type" : "text/plain",
+        "size" : 980
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "Then it has reflects the new annotation",
+      "time" : {
+        "start" : 1636542800877,
+        "stop" : 1636542800883,
+        "duration" : 6
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 3,
+    "attachmentsCount" : 2,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  },
+  "afterStages" : [ {
+    "name" : "teardown",
+    "time" : {
+      "start" : 1636542800883,
+      "stop" : 1636542800883,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "adapter"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "integration"
+  }, {
+    "name" : "feature",
+    "value" : "As a support developer, I would like perform common operations on Services and Endpoints resources through a simple interface to reduce the learning curve"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldCreateOrReplaceService"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "adapter", "integration", "pre-deployment" ]
+  },
+  "source" : "a76211109e6a2cda.json",
+  "parameterValues" : [ ]
+}

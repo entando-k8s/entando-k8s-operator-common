@@ -1,0 +1,96 @@
+{
+  "uid" : "67da2e8c5dc5e1fc",
+  "name" : "shouldNotReplacePreviouslyCreatedRole()",
+  "fullName" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceAccountClientTest.shouldNotReplacePreviouslyCreatedRole",
+  "historyId" : "36c71ab0119cde4d70e4da1e2b9bb266",
+  "time" : {
+    "start" : 1636542702605,
+    "stop" : 1636542714028,
+    "duration" : 11423
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "setup",
+    "time" : {
+      "start" : 1636542702608,
+      "stop" : 1636542713957,
+      "duration" : 11349
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "teardown",
+    "time" : {
+      "start" : 1636542714027,
+      "stop" : 1636542714028,
+      "duration" : 1
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "adapter"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "integration"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceAccountClientTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceAccountClientTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldNotReplacePreviouslyCreatedRole"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceAccountClientTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "adapter", "integration", "pre-deployment" ]
+  },
+  "source" : "67da2e8c5dc5e1fc.json",
+  "parameterValues" : [ ]
+}

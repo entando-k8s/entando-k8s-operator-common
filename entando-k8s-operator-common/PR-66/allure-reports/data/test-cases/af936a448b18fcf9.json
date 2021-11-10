@@ -1,0 +1,96 @@
+{
+  "uid" : "af936a448b18fcf9",
+  "name" : "shouldOverwriteControllerSecret()",
+  "fullName" : "org.entando.kubernetes.controller.support.client.impl.DefaultSecretClientTest.shouldOverwriteControllerSecret",
+  "historyId" : "4a6681bc9f0300cc51c230d9413fb494",
+  "time" : {
+    "start" : 1636542674172,
+    "stop" : 1636542679501,
+    "duration" : 5329
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "setup",
+    "time" : {
+      "start" : 1636542674173,
+      "stop" : 1636542679456,
+      "duration" : 5283
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "teardown",
+    "time" : {
+      "start" : 1636542679501,
+      "stop" : 1636542679501,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "adapter"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "integration"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultSecretClientTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultSecretClientTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldOverwriteControllerSecret"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultSecretClientTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "adapter", "integration", "pre-deployment" ]
+  },
+  "source" : "af936a448b18fcf9.json",
+  "parameterValues" : [ ]
+}

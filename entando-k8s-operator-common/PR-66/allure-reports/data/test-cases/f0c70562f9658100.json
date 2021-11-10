@@ -1,0 +1,96 @@
+{
+  "uid" : "f0c70562f9658100",
+  "name" : "[2] registry.hub.docker.com:50/library/mysql:5:3",
+  "fullName" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest.testInvalidImageUris",
+  "historyId" : "28b63b16399574a1f614d08bb9345545",
+  "time" : {
+    "start" : 1636542801760,
+    "stop" : 1636542801763,
+    "duration" : 3
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "backupSystemProperties",
+    "time" : {
+      "start" : 1636542801761,
+      "stop" : 1636542801761,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "restoreSystemProperties",
+    "time" : {
+      "start" : 1636542801762,
+      "stop" : 1636542801762,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "testInvalidImageUris"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "f0c70562f9658100.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SerializedEntandoResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.client</a> &gt; <span class="el_source">SerializedEntandoResource.java</span></div><h1>SerializedEntandoResource.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.client;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import io.quarkus.runtime.annotations.RegisterForReflection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
+
+@JsonSerialize
+@JsonDeserialize
+@JsonInclude(Include.NON_NULL)
+@JsonAutoDetect(
+        fieldVisibility = Visibility.ANY,
+        isGetterVisibility = Visibility.NONE,
+        getterVisibility = Visibility.NONE,
+        setterVisibility = Visibility.NONE
+)
+@RegisterForReflection
+@JsonIgnoreProperties(
+        ignoreUnknown = true
+)
+
+<span class="fc" id="L51">public class SerializedEntandoResource implements EntandoCustomResource {</span>
+
+    private EntandoCustomResourceStatus status;
+    private ObjectMeta metadata;
+    private String kind;
+    @SuppressWarnings(&quot;java:S1948&quot;)
+    //because it is serializable but can't control the implementation class
+    private Map&lt;String, Object&gt; spec;
+    @JsonIgnore
+    private transient CustomResourceDefinitionContext definition;
+    private String apiVersion;
+
+    public void setDefinition(CustomResourceDefinitionContext definition) {
+<span class="fc" id="L64">        this.definition = definition;</span>
+<span class="fc" id="L65">        this.kind = definition.getKind();</span>
+<span class="fc" id="L66">    }</span>
+
+    public CustomResourceDefinitionContext getDefinition() {
+<span class="fc" id="L69">        return definition;</span>
+    }
+
+    @Override
+    public EntandoCustomResourceStatus getStatus() {
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (this.status == null) {</span>
+<span class="nc" id="L75">            this.status = new EntandoCustomResourceStatus();</span>
+        }
+<span class="nc" id="L77">        return this.status;</span>
+    }
+
+    public Map&lt;String, Object&gt; getSpec() {
+<span class="nc" id="L81">        return Collections.unmodifiableMap(Objects.requireNonNullElse(spec, Collections.emptyMap()));</span>
+    }
+
+    @Override
+    public void setStatus(EntandoCustomResourceStatus status) {
+<span class="nc" id="L86">        this.status = status;</span>
+<span class="nc" id="L87">    }</span>
+
+    @Override
+    public String getDefinitionName() {
+<span class="nc" id="L91">        return null;</span>
+    }
+
+    @Override
+    public ObjectMeta getMetadata() {
+<span class="fc" id="L96">        return metadata;</span>
+    }
+
+    @Override
+    public String getApiVersion() {
+<span class="fc" id="L101">        return Optional.ofNullable(definition).map(d -&gt; d.getGroup() + &quot;/&quot; + d.getVersion()).orElse(apiVersion);</span>
+    }
+
+    @Override
+    public String getKind() {
+<span class="fc" id="L106">        return kind;</span>
+    }
+
+    @Override
+    public void setMetadata(ObjectMeta metadata) {
+<span class="fc" id="L111">        this.metadata = metadata;</span>
+<span class="fc" id="L112">    }</span>
+
+    @Override
+    public void setApiVersion(String version) {
+<span class="nc" id="L116">        this.apiVersion = version;</span>
+<span class="nc" id="L117">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

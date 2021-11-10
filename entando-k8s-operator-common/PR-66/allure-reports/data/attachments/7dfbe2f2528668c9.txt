@@ -1,0 +1,18 @@
+---
+mixins:
+- "CapabilityForResource"
+resourceInNeed:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  metadata:
+    name: "my-app"
+    namespace: "my-namespace"
+  isCustomResource: true
+capabilityRequirement:
+  capability: "dbms"
+  implementation: "postgresql"
+  resolutionScopePreference:
+  - "Namespace"
+  capabilityParameters:
+    databaseName: "my_db"
+    jdbc-connectionTimeout: "300"

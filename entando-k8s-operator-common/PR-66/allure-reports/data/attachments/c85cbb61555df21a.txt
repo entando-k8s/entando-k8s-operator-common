@@ -1,0 +1,30 @@
+---
+mixins:
+- "DeployableContainer"
+memoryLimitMebibytes: 256
+kubernetesPermissions: []
+environmentVariables:
+- name: "MY_VAR"
+  value: "my-val"
+- name: "MY_SECRET_VAR"
+  valueFrom:
+    secretKeyRef:
+      key: "my.secret.key"
+      name: "my-secret"
+      optional: false
+- name: "MY_CONFIG_VAR"
+  valueFrom:
+    configMapKeyRef:
+      key: "my.config.key"
+      name: "my-config"
+      optional: false
+dockerImageInfo:
+  organization: "test"
+  repository: "my-image"
+  tag: "6.3.2"
+namesOfSecretsToMount: []
+nameQualifier: "server"
+additionalPorts: []
+primaryPort: 8081
+secretsToMount: []
+cpuLimitMillicores: 500

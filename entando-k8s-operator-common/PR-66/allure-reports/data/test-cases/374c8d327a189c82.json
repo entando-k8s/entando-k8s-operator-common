@@ -1,0 +1,96 @@
+{
+  "uid" : "374c8d327a189c82",
+  "name" : "shouldCreatePersistentVolumeClaimIfAbsent()",
+  "fullName" : "org.entando.kubernetes.controller.support.client.impl.DefaultPersistentVolumentClaimClientTest.shouldCreatePersistentVolumeClaimIfAbsent",
+  "historyId" : "ce0917fb787c85bbb323e13b469cf9a9",
+  "time" : {
+    "start" : 1636541949153,
+    "stop" : 1636541950412,
+    "duration" : 1259
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "setup",
+    "time" : {
+      "start" : 1636541949158,
+      "stop" : 1636541950298,
+      "duration" : 1140
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "teardown",
+    "time" : {
+      "start" : 1636541950409,
+      "stop" : 1636541950409,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "adapter"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "integration"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultPersistentVolumentClaimClientTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultPersistentVolumentClaimClientTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldCreatePersistentVolumeClaimIfAbsent"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultPersistentVolumentClaimClientTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "adapter", "integration", "pre-deployment" ]
+  },
+  "source" : "374c8d327a189c82.json",
+  "parameterValues" : [ ]
+}

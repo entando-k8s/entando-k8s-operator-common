@@ -1,0 +1,107 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  labels:
+    entando.org/entando-resource-namespace: "my-namespace"
+    entando.org/deployment: "my-app"
+    TestResource: "my-app"
+    entando.org/entando-resource-kind: "TestResource"
+  name: "my-app-deployment"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "test.org/v1"
+    kind: "TestResource"
+    blockOwnerDeletion: true
+    controller: true
+    name: "my-app"
+    uid: "107e414b-7539-4335-b6e6-114fd8964f5c"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      entando.org/entando-resource-namespace: "my-namespace"
+      entando.org/deployment: "my-app"
+      TestResource: "my-app"
+      entando.org/entando-resource-kind: "TestResource"
+  template:
+    metadata:
+      labels:
+        entando.org/entando-resource-namespace: "my-namespace"
+        entando.org/deployment: "my-app"
+        TestResource: "my-app"
+        entando.org/entando-resource-kind: "TestResource"
+      name: "my-app-pod"
+    spec:
+      containers:
+      - env:
+        - name: "SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI"
+          value: "https://mykeycloak.com/auth/realms/my-realm"
+        - name: "SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET"
+          valueFrom:
+            secretKeyRef:
+              key: "clientSecret"
+              name: "my-client-secret"
+              optional: false
+        - name: "SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID"
+          valueFrom:
+            secretKeyRef:
+              key: "clientId"
+              name: "my-client-secret"
+              optional: false
+        - name: "SERVER_SERVLET_CONTEXT_PATH"
+          value: "/my-app"
+        - name: "JAVA_TOOL_OPTIONS"
+          valueFrom:
+            secretKeyRef:
+              key: "TRUSTSTORE_SETTINGS"
+              name: "entando-default-truststore"
+              optional: false
+        - name: "CONNECTION_CONFIG_ROOT"
+          value: "/etc/entando/secrets"
+        image: "registry.hub.docker.com/test/my-image:6.3.2"
+        imagePullPolicy: "IfNotPresent"
+        livenessProbe:
+          failureThreshold: 1
+          httpGet:
+            path: "/my-app/health"
+            port: 8081
+          periodSeconds: 10
+          timeoutSeconds: 3
+        name: "server-container"
+        ports:
+        - containerPort: 8081
+          name: "server-port"
+          protocol: "TCP"
+        readinessProbe:
+          failureThreshold: 1
+          httpGet:
+            path: "/my-app/health"
+            port: 8081
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "125m"
+        startupProbe:
+          failureThreshold: 11
+          httpGet:
+            path: "/my-app/health"
+            port: 8081
+          periodSeconds: 12
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: "/etc/entando/certs/entando-default-truststore"
+          name: "entando-default-truststore-volume"
+          readOnly: true
+      dnsPolicy: "ClusterFirst"
+      restartPolicy: "Always"
+      serviceAccountName: "default"
+      volumes:
+      - name: "entando-default-truststore-volume"
+        secret:
+          secretName: "entando-default-truststore"

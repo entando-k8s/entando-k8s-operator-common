@@ -1,0 +1,40 @@
+---
+apiVersion: "v1"
+kind: "Event"
+metadata:
+  labels:
+    entando.org/entando-resource-namespace: "my-namespace"
+    TestResource: "default-postgresql-dbms-in-namespace"
+    entando.org/entando-resource-kind: "TestResource"
+  name: "default-postgresql-dbms-in-namespace-39858103"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "test.org/v1"
+    kind: "TestResource"
+    blockOwnerDeletion: true
+    controller: true
+    name: "default-postgresql-dbms-in-namespace"
+    uid: "06c6d2b0-78b0-4c4f-8e34-d5f433e004c6"
+action: "STATUS_CHANGE"
+count: 1
+firstTimestamp: "2021-11-10T10:59:08Z"
+involvedObject:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  fieldPath: "status"
+  name: "default-postgresql-dbms-in-namespace"
+  namespace: "my-namespace"
+  resourceVersion: "9019478"
+  uid: "06c6d2b0-78b0-4c4f-8e34-d5f433e004c6"
+lastTimestamp: "2021-11-10T10:59:08Z"
+message: "The TestResource  my-namespace/default-postgresql-dbms-in-namespace received\
+  \ status update for main "
+reason: "StatusUpdate"
+related:
+  apiVersion: "v1"
+  kind: "Pod"
+  name: "test-controller-pod"
+  namespace: "controller-namespace"
+source:
+  component: "entando-k8s-ource-controller"
+type: "Normal"

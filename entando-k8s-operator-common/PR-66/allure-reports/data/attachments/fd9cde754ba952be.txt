@@ -1,0 +1,10 @@
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "default-mysql-dbms-in-cluster-service"
+  namespace: "controller-namespace"
+spec:
+  clusterIP: "10.0.0.72"
+  ports:
+  - port: 3306

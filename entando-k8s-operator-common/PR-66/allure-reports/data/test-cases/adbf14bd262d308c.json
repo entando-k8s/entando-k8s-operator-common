@@ -1,0 +1,168 @@
+{
+  "uid" : "adbf14bd262d308c",
+  "name" : "shouldCreateOrReplaceEndpoints()",
+  "fullName" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest.shouldCreateOrReplaceEndpoints",
+  "historyId" : "6207fd3d136e1394548e5df29e5119eb",
+  "time" : {
+    "start" : 1636542771680,
+    "stop" : 1636542789165,
+    "duration" : 17485
+  },
+  "description" : "Should create or replace an existing Endpoints with the new value without generating duplicate exceptions",
+  "descriptionHtml" : "<p>Should create or replace an existing Endpoints with the new value without generating duplicate exceptions</p>\n",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "setup",
+    "time" : {
+      "start" : 1636542771680,
+      "stop" : 1636542789096,
+      "duration" : 17416
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "testStage" : {
+    "description" : "Should create or replace an existing Endpoints with the new value without generating duplicate exceptions",
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have an EndPoints with that is exposed on port 80",
+      "time" : {
+        "start" : 1636542789097,
+        "stop" : 1636542789114,
+        "duration" : 17
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "bdb2eb0674f9e44",
+        "name" : "First Endpoints",
+        "source" : "bdb2eb0674f9e44.txt",
+        "type" : "text/plain",
+        "size" : 642
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "When I attempt to createOrReplaceEndpoints an endpoints with the same name but with the port 81",
+      "time" : {
+        "start" : 1636542789114,
+        "stop" : 1636542789138,
+        "duration" : 24
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "Then the new Endpoints  the new port",
+      "time" : {
+        "start" : 1636542789140,
+        "stop" : 1636542789149,
+        "duration" : 9
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "491cfc0ef681ceba",
+        "name" : "Second Endpoints",
+        "source" : "491cfc0ef681ceba.txt",
+        "type" : "text/plain",
+        "size" : 642
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 3,
+    "attachmentsCount" : 2,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  },
+  "afterStages" : [ {
+    "name" : "teardown",
+    "time" : {
+      "start" : 1636542789165,
+      "stop" : 1636542789165,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "adapter"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "integration"
+  }, {
+    "name" : "feature",
+    "value" : "As a support developer, I would like perform common operations on Services and Endpoints resources through a simple interface to reduce the learning curve"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldCreateOrReplaceEndpoints"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.client.impl.DefaultServiceClientTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "adapter", "integration", "pre-deployment" ]
+  },
+  "source" : "adbf14bd262d308c.json",
+  "parameterValues" : [ ]
+}

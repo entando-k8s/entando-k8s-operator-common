@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SpringBootDeployableContainer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.container</a> &gt; <span class="el_source">SpringBootDeployableContainer.java</span></div><h1>SpringBootDeployableContainer.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.container;
+
+import static java.util.Optional.ofNullable;
+
+import io.fabric8.kubernetes.api.model.EnvVar;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
+import org.entando.kubernetes.controller.spi.common.ForInternalUseOnly;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
+import org.entando.kubernetes.model.common.DbmsVendor;
+
+public interface SpringBootDeployableContainer extends DbAwareContainer, SsoAwareContainer, IngressingContainer,
+        TrustStoreAwareContainer {
+
+    Optional&lt;DatabaseSchemaConnectionInfo&gt; getDatabaseSchema();
+
+    @Override
+    default int getCpuLimitMillicores() {
+<span class="fc" id="L40">        return 1000;</span>
+    }
+
+    @Override
+    default int getMemoryLimitMebibytes() {
+<span class="fc" id="L45">        return 1024;</span>
+    }
+
+    @Override
+    default List&lt;EnvVar&gt; getDatabaseConnectionVariables() {
+<span class="fc" id="L50">        List&lt;EnvVar&gt; vars = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L51">        getDatabaseSchema().ifPresent(databaseSchema -&gt; {</span>
+<span class="fc" id="L52">            vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_USERNAME.name(), null, databaseSchema.getUsernameRef()));</span>
+<span class="fc" id="L53">            vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_PASSWORD.name(), null, databaseSchema.getPasswordRef()));</span>
+<span class="fc" id="L54">            vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_URL.name(), databaseSchema.getJdbcUrl(), null));</span>
+<span class="fc" id="L55">            vars.add(new EnvVar(SpringProperty.SPRING_JPA_DATABASE_PLATFORM.name(),</span>
+<span class="fc" id="L56">                    databaseSchema.getDatabaseServiceResult().getVendor().getHibernateDialect(), null));</span>
+            /*
+            TODO: Set SPRING_JPA_PROPERTIES_HIBERNATE_ID_NEW_GENERATOR_MAPPINGS to 'false' if we ever run into issues with ID Generation
+            */
+<span class="fc" id="L60">        });</span>
+<span class="pc bpc" id="L61" title="3 of 4 branches missed.">        if (getDatabaseSchema().isEmpty() &amp;&amp; getDbms().orElse(DbmsVendor.NONE) == DbmsVendor.EMBEDDED) {</span>
+<span class="nc" id="L62">            DbmsVendorConfig defaultEmbeddedVendor = DbmsVendorConfig.H2;</span>
+
+<span class="nc" id="L64">            vars.add(new EnvVar(SpringProperty.SPRING_JPA_DATABASE_PLATFORM.name(), defaultEmbeddedVendor.getHibernateDialect(), null));</span>
+<span class="nc" id="L65">            vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_USERNAME.name(), defaultEmbeddedVendor.getDefaultAdminUsername(), null));</span>
+<span class="nc" id="L66">            vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_PASSWORD.name(), defaultEmbeddedVendor.getDefaultAdminPassword(), null));</span>
+<span class="nc" id="L67">            String rootFolder = &quot;/entando-data&quot;;</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            if (this instanceof PersistentVolumeAwareContainer) {</span>
+<span class="nc" id="L69">                rootFolder = ((PersistentVolumeAwareContainer) this).getVolumeMountPath();</span>
+            }
+<span class="nc" id="L71">            vars.add(new EnvVar(SpringProperty.SPRING_DATASOURCE_URL.name(), defaultEmbeddedVendor.getConnectionStringBuilder()</span>
+<span class="nc" id="L72">                    .inFolder(rootFolder + &quot;/databases&quot;)</span>
+<span class="nc" id="L73">                    .usingDatabase(NameUtils.snakeCaseOf(getNameQualifier()) + &quot;.db&quot;)</span>
+<span class="nc" id="L74">                    .buildConnectionString(), null));</span>
+        }
+<span class="fc" id="L76">        return vars;</span>
+    }
+
+    Optional&lt;DbmsVendor&gt; getDbms();
+
+    @Override
+    default List&lt;EnvVar&gt; getSsoVariables() {
+<span class="fc" id="L83">        List&lt;EnvVar&gt; vars = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L84">        ofNullable(getSsoConnectionInfo()).ifPresent(info -&gt;</span>
+<span class="fc" id="L85">                vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI.name(),</span>
+<span class="fc" id="L86">                        info.getExternalBaseUrl() + &quot;/realms/&quot; + getSsoClientConfig().getRealm(),</span>
+                        null)));
+
+<span class="fc" id="L89">        String keycloakSecretName = KeycloakName.forTheClientSecret(getSsoClientConfig());</span>
+<span class="fc" id="L90">        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET.name(), null,</span>
+<span class="fc" id="L91">                SecretUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_SECRET_KEY)));</span>
+<span class="fc" id="L92">        vars.add(new EnvVar(SpringProperty.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID.name(), null,</span>
+<span class="fc" id="L93">                SecretUtils.secretKeyRef(keycloakSecretName, KeycloakName.CLIENT_ID_KEY)));</span>
+<span class="fc" id="L94">        return vars;</span>
+    }
+
+    @ForInternalUseOnly
+    SsoClientConfig getSsoClientConfig();
+
+    @ForInternalUseOnly
+    SsoConnectionInfo getSsoConnectionInfo();
+
+<span class="fc" id="L103">    enum SpringProperty {</span>
+<span class="fc" id="L104">        SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI,</span>
+<span class="fc" id="L105">        SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET,</span>
+<span class="fc" id="L106">        SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID,</span>
+<span class="fc" id="L107">        SPRING_DATASOURCE_USERNAME,</span>
+<span class="fc" id="L108">        SPRING_DATASOURCE_PASSWORD,</span>
+<span class="fc" id="L109">        SPRING_DATASOURCE_URL,</span>
+<span class="fc" id="L110">        SPRING_JPA_DATABASE_PLATFORM;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

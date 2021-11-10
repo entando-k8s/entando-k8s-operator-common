@@ -1,0 +1,13 @@
+---
+apiVersion: "test.org/v1"
+kind: "TestResource"
+metadata:
+  name: "default-postgresql-dbms-in-namespace"
+  namespace: "my-namespace"
+spec:
+  replicas: 1
+  provisioningStrategy: "DeployDirectly"
+  dbms: "postgresql"
+status:
+  serverStatuses: {}
+crdName: "testresources.test.org"

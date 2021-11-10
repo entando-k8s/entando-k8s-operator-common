@@ -1,0 +1,81 @@
+{
+  "uid" : "8639594ce3c1b67e",
+  "name" : "testIsClusterScope()",
+  "fullName" : "org.entando.kubernetes.controller.support.common.EntandoOperatorConfigTest.testIsClusterScope",
+  "historyId" : "ff25439ddadc286f21e9c06200235b85",
+  "time" : {
+    "start" : 1636542801783,
+    "stop" : 1636542801788,
+    "duration" : 5
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ {
+    "name" : "resetPropertiesTested",
+    "time" : {
+      "start" : 1636542801788,
+      "stop" : 1636542801788,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoOperatorConfigTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoOperatorConfigTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "testIsClusterScope"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoOperatorConfigTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "8639594ce3c1b67e.json",
+  "parameterValues" : [ ]
+}

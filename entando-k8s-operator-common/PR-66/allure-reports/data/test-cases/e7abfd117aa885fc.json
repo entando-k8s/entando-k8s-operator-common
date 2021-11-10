@@ -1,0 +1,96 @@
+{
+  "uid" : "e7abfd117aa885fc",
+  "name" : "createPersistentVolumeClaimWithGarbageCollection()",
+  "fullName" : "org.entando.kubernetes.controller.support.creators.PersistentVolumeClaimCreatorTest.createPersistentVolumeClaimWithGarbageCollection",
+  "historyId" : "d6a94369eff4a0c129c70740e0d539ed",
+  "time" : {
+    "start" : 1636542801557,
+    "stop" : 1636542801559,
+    "duration" : 2
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "cleanUp",
+    "time" : {
+      "start" : 1636542801558,
+      "stop" : 1636542801558,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "cleanUp",
+    "time" : {
+      "start" : 1636542801559,
+      "stop" : 1636542801559,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.creators.PersistentVolumeClaimCreatorTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.creators.PersistentVolumeClaimCreatorTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "createPersistentVolumeClaimWithGarbageCollection"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.creators.PersistentVolumeClaimCreatorTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "e7abfd117aa885fc.json",
+  "parameterValues" : [ ]
+}

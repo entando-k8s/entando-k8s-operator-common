@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SerializingDeploymentProcessor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.command</a> &gt; <span class="el_source">SerializingDeploymentProcessor.java</span></div><h1>SerializingDeploymentProcessor.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.command;
+
+import java.util.concurrent.TimeoutException;
+import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.spi.result.ServiceDeploymentResult;
+
+public class SerializingDeploymentProcessor implements DeploymentProcessor {
+
+    private final KubernetesClientForControllers entandoResourceClient;
+    private final CommandStream commandStream;
+
+<span class="fc" id="L29">    public SerializingDeploymentProcessor(KubernetesClientForControllers entandoResourceClient, CommandStream commandStream) {</span>
+<span class="fc" id="L30">        this.entandoResourceClient = entandoResourceClient;</span>
+<span class="fc" id="L31">        this.commandStream = commandStream;</span>
+<span class="fc" id="L32">    }</span>
+
+    @Override
+    public &lt;T extends ServiceDeploymentResult&lt;T&gt;&gt; T processDeployable(Deployable&lt;T&gt; deployable, int timeoutSeconds)
+            throws TimeoutException {
+<span class="fc" id="L37">        String result = commandStream.process(</span>
+                SupportedCommand.PROCESS_DEPLOYABLE,
+<span class="fc" id="L39">                SerializationHelper.serialize(deployable),</span>
+                timeoutSeconds);
+<span class="fc" id="L41">        SerializableDeploymentResult&lt;?&gt; serializedResult = DeserializationHelper.deserialize(entandoResourceClient, result);</span>
+<span class="fc" id="L42">        return deployable.createResult(serializedResult.getDeployment(), serializedResult.getService(), serializedResult.getIngress(),</span>
+<span class="fc" id="L43">                serializedResult.getPod())</span>
+<span class="fc" id="L44">                .withStatus(serializedResult.getStatus());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

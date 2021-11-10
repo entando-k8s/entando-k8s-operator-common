@@ -1,0 +1,96 @@
+{
+  "uid" : "f9eb87d3d2b6ab71",
+  "name" : "testCustomPermissions()",
+  "fullName" : "org.entando.kubernetes.controller.support.creators.ServiceAcountCreatorTest.testCustomPermissions",
+  "historyId" : "6b45e0c70fafcce57593c13d855ca932",
+  "time" : {
+    "start" : 1636542801181,
+    "stop" : 1636542801217,
+    "duration" : 36
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "cleanUp",
+    "time" : {
+      "start" : 1636542801181,
+      "stop" : 1636542801181,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "cleanUp",
+    "time" : {
+      "start" : 1636542801217,
+      "stop" : 1636542801217,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.creators.ServiceAcountCreatorTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.creators.ServiceAcountCreatorTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "testCustomPermissions"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.creators.ServiceAcountCreatorTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "f9eb87d3d2b6ab71.json",
+  "parameterValues" : [ ]
+}

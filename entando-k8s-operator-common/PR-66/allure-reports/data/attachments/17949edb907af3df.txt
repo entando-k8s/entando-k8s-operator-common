@@ -1,0 +1,1 @@
+ENTANDO_NAMESPACES_TO_OBSERVE=entando-k8s-operator-common-cmpr66-test99

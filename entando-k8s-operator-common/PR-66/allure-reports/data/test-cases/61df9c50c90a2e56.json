@@ -1,0 +1,96 @@
+{
+  "uid" : "61df9c50c90a2e56",
+  "name" : "testResolutionFromCofigmapWithOrganizationAwareRepositoryKeyAndPort()",
+  "fullName" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest.testResolutionFromCofigmapWithOrganizationAwareRepositoryKeyAndPort",
+  "historyId" : "da481011a63b4b746aaa8512f5df661b",
+  "time" : {
+    "start" : 1636542801636,
+    "stop" : 1636542801640,
+    "duration" : 4
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "backupSystemProperties",
+    "time" : {
+      "start" : 1636542801636,
+      "stop" : 1636542801636,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "restoreSystemProperties",
+    "time" : {
+      "start" : 1636542801640,
+      "stop" : 1636542801640,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "testResolutionFromCofigmapWithOrganizationAwareRepositoryKeyAndPort"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "61df9c50c90a2e56.json",
+  "parameterValues" : [ ]
+}

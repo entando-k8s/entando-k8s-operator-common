@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultIngressClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.client.impl</a> &gt; <span class="el_source">DefaultIngressClient.java</span></div><h1>DefaultIngressClient.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.client.impl;
+
+import io.fabric8.kubernetes.api.model.Node;
+import io.fabric8.kubernetes.api.model.NodeAddress;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import java.net.HttpURLConnection;
+import java.util.Map;
+import java.util.Optional;
+import org.entando.kubernetes.controller.support.client.DoneableIngress;
+import org.entando.kubernetes.controller.support.client.IngressClient;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+
+public class DefaultIngressClient implements IngressClient {
+
+    private final KubernetesClient client;
+
+<span class="fc" id="L37">    public DefaultIngressClient(KubernetesClient client) {</span>
+<span class="fc" id="L38">        this.client = client;</span>
+<span class="fc" id="L39">    }</span>
+
+    public static String resolveMasterHostname(KubernetesClient client) {
+<span class="nc" id="L42">        String host = client.getMasterUrl().getHost();</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        if (&quot;127.0.0.1&quot;.equals(host)) {</span>
+            //This will only happen on single node installations. Generally it will return some ip/domain name that resolves to the master
+            // Retrieve IP from node API and discard local IP
+<span class="nc" id="L46">            Node masterNode = client.nodes().list().getItems().get(0);</span>
+<span class="nc" id="L47">            Optional&lt;NodeAddress&gt; masterNodeAddress = masterNode.getStatus().getAddresses().stream()</span>
+<span class="nc" id="L48">                    .filter(na -&gt; na.getType().equalsIgnoreCase(&quot;InternalIP&quot;)).findFirst();</span>
+<span class="nc" id="L49">            host = masterNodeAddress.orElseThrow(() -&gt; new RuntimeException(&quot;Impossible to retrieve node internal IP address&quot;))</span>
+<span class="nc" id="L50">                    .getAddress();</span>
+        }
+<span class="nc" id="L52">        return host;</span>
+    }
+
+    @Override
+    public Ingress addHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath, Map&lt;String, String&gt; annotations) {
+<span class="nc" id="L57">        return edit(ingress.getMetadata(), ingress.getMetadata().getName())</span>
+<span class="nc" id="L58">                .editSpec().editFirstRule().editHttp()</span>
+<span class="nc" id="L59">                .addNewPathLike(httpIngressPath)</span>
+<span class="nc" id="L60">                .endPath().endHttp().endRule().endSpec()</span>
+<span class="nc" id="L61">                .editMetadata().addToAnnotations(annotations).endMetadata()</span>
+<span class="nc" id="L62">                .done();</span>
+    }
+
+    private DoneableIngress edit(ObjectMeta metadata, String name) {
+<span class="nc" id="L66">        return new DoneableIngress(client.extensions().ingresses().inNamespace(metadata.getNamespace())</span>
+<span class="nc" id="L67">                .withName(name).fromServer().get(), client.extensions().ingresses().inNamespace(metadata.getNamespace())</span>
+<span class="nc" id="L68">                .withName(name)::patch);</span>
+    }
+
+    @Override
+    public Ingress removeHttpPath(Ingress ingress, HTTPIngressPath path) {
+<span class="nc" id="L73">        return edit(ingress.getMetadata(), ingress.getMetadata().getName())</span>
+<span class="nc" id="L74">                .editSpec().editFirstRule().editHttp()</span>
+<span class="nc" id="L75">                .removeFromPaths(path)</span>
+<span class="nc" id="L76">                .endHttp()</span>
+<span class="nc" id="L77">                .endRule()</span>
+<span class="nc" id="L78">                .endSpec()</span>
+<span class="nc" id="L79">                .done();</span>
+
+    }
+
+    @Override
+    public String getMasterUrlHost() {
+<span class="nc" id="L85">        return resolveMasterHostname(this.client);</span>
+    }
+
+    @Override
+    public Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
+        try {
+<span class="nc" id="L91">            return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(ingress);</span>
+<span class="fc" id="L92">        } catch (KubernetesClientException e) {</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">            if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {</span>
+<span class="nc" id="L94">                return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace())</span>
+<span class="nc" id="L95">                        .withName(ingress.getMetadata().getName())</span>
+<span class="nc" id="L96">                        .edit(existing -&gt; {</span>
+<span class="nc" id="L97">                            existing.getSpec().getRules().get(0).getHttp().getPaths()</span>
+<span class="nc" id="L98">                                    .addAll(ingress.getSpec().getRules().get(0).getHttp().getPaths());</span>
+<span class="nc" id="L99">                            return existing;</span>
+                        });
+            } else {
+<span class="fc" id="L102">                throw e;</span>
+            }
+        }
+    }
+
+    @Override
+    public DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
+<span class="nc" id="L109">        return edit(peerInNamespace.getMetadata(), name);</span>
+    }
+
+    @Override
+    public Ingress loadIngress(String namespace, String name) {
+<span class="nc" id="L114">        return client.extensions().ingresses().inNamespace(namespace).withName(name).get();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

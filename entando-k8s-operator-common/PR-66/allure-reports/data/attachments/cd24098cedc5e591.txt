@@ -1,0 +1,54 @@
+---
+mixins:
+- "Deployable"
+- "Secretive"
+defaultServiceAccountName: "default"
+replicas: 1
+customResource:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  metadata:
+    name: "default-postgresql-dbms-in-namespace"
+    namespace: "my-namespace"
+  isCustomResource: true
+containers:
+- memoryLimitMebibytes: 256
+  dockerImageInfo:
+    organization: "centos"
+    repository: "postgresql-12-centos7"
+  volumeMountPath: "/var/lib/pgsql/data"
+  namesOfSecretsToMount: []
+  additionalPorts: []
+  primaryPort: 5432
+  storageLimitMebibytes: 2048
+  mixins:
+  - "HasHealthCommand"
+  - "ServiceBackingContainer"
+  - "PersistentVolumeAwareContainer"
+  - "DeployableContainer"
+  healthCheckCommand: "/usr/libexec/check-container"
+  kubernetesPermissions: []
+  environmentVariables:
+  - name: "DB_ADMIN"
+    value: "postgres"
+  nameQualifier: "db"
+  secretsToMount: []
+  cpuLimitMillicores: 500
+serviceAccountToUse: "default"
+secrets:
+- apiVersion: "v1"
+  kind: "Secret"
+  metadata:
+    labels:
+      TestResource: "default-postgresql-dbms-in-namespace"
+    name: "default-postgresql-dbms-in-namespace-admin-secret"
+    ownerReferences:
+    - apiVersion: "test.org/v1"
+      kind: "TestResource"
+      blockOwnerDeletion: true
+      controller: true
+      name: "default-postgresql-dbms-in-namespace"
+      uid: "06c6d2b0-78b0-4c4f-8e34-d5f433e004c6"
+  stringData:
+    username: "postgres"
+    password: "2e1331a8691c431d"

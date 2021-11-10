@@ -1,0 +1,140 @@
+---
+apiVersion: "apiextensions.k8s.io/v1beta1"
+kind: "CustomResourceDefinition"
+metadata:
+  generation: 1
+  labels:
+    entando.org/crd-of-interest: "ProvidedCapability"
+  name: "providedcapabilities.entando.org"
+  resourceVersion: "8230737"
+  uid: "b776345c-9295-45a1-b096-41ba7e69f162"
+spec:
+  additionalPrinterColumns:
+  - JSONPath: ".status.phase"
+    name: "Phase"
+    type: "string"
+  - JSONPath: ".status.observedGeneration"
+    name: "Observed Generation"
+    type: "number"
+  - JSONPath: ".metadata.creationTimestamp"
+    name: "Age"
+    type: "date"
+  group: "entando.org"
+  names:
+    kind: "ProvidedCapability"
+    plural: "providedcapabilities"
+    shortNames:
+    - "pcs"
+  scope: "Namespaced"
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            capability:
+              description: "The type of capability to create, e.g. 'sso' or 'dbms'\n"
+              pattern: "^(sso|dbms)$"
+              type: "string"
+            implementation:
+              description: "The chosen implementation of the selected capability.\
+                \ The available values depend on the capability in question. For instance,\
+                \ for 'sso' the valid values are 'keycloak' and 'redhat-sso'\n"
+              pattern: "^(mysql|oracle|postgresql|redhat-sso|keycloak)$"
+              type: "string"
+            scope:
+              description: "The scope that this capability will be made available\
+                \ to. Valid values are: 1. Dedicated: Capability requirements are\
+                \ matched using EntandoCustomResource.metadata.name + \"-\" + standardCapbility.suffix\
+                \ 2. Specified: Matched using requiredCapability.specifiedCapability\
+                \ 3. Namespace: Matched using the first capability found in the same\
+                \ namespace with a matching implementation and scope 4. Labeled: Matched\
+                \ using the first capability found in the cluster with the matching\
+                \ labels and a matching implementation 5. Cluster: Matched using the\
+                \ first capability found in the cluster with a matching implementation\
+                \ and operatorId Each of these values would require a certain selection\
+                \ of fields that will be clarified further.\n"
+              pattern: "^(Dedicated|Specified|Namespace|Labeled|Cluster)$"
+              type: "string"
+            provisioningStrategy:
+              description: "The mechanism used to provision the capability if required\
+                \ at al Valid values are: 1. UseExternal: Provide the host, port and\
+                \ credentials in the ProvidedCapability.spec.externallyProvideService\
+                \ to connect an existing external service 2. DeployDirectly: Attempt\
+                \ to deploy this capability directly with known controllers 3. DelegateToOperator:\
+                \ Delegate the provisioning of this capability to the vendor's own\
+                \ Kubernetes Operator\n"
+              pattern: "^(UseExternal|DeployDirectly|DelegateToOperator)$"
+              type: "string"
+            selector:
+              description: "The names and values of labels to match when resolving\
+                \ ProvidedCapabilities. This is used when the 'ProvidedCapability.spec.scope'\
+                \ is 'Labeled'\n"
+              type: "object"
+              x-kubernetes-preserve-unknown-fields: true
+            capabilityParameters:
+              description: "Additional name/value pairs that are passed to the controller\
+                \ providing the capability in question\n"
+              type: "object"
+              x-kubernetes-preserve-unknown-fields: true
+            specifiedCapability:
+              description: "The properties of this object configure exactly which\
+                \ ProvidedCapability will be used, specified by name and namespace.\
+                \ Provide the details of the ProvidedCapability to use or create when\
+                \ the 'ProvidedCapability.spec.scope' is 'Specified'.\n"
+              properties:
+                name:
+                  description: "The name of the ProvidedCapability to use. This field\
+                    \ is required.\n"
+                  type: "string"
+                namespace:
+                  description: "The Namespace of the ProvidedCapability to use. If\
+                    \ no namespace is provided, but a name was provided, the Entando\
+                    \ Operator will then look for the ProvidedCapability with the\
+                    \ name specified in the same Namespace as the requesting EntandoCustomResource\
+                    \ and use it.\n"
+                  type: "string"
+              type: "object"
+            externallyProvidedService:
+              description: "The properties of this object configure allow the Entando\
+                \ Operator to deploy the correct networking indirection: either an\
+                \ ExternalName service for a domain name, EndPoints based routing\
+                \ for an IP address. Provide the details of the ProvidedCapability\
+                \ to use or create when the 'ProvidedCapability.spec.provisioningStrategy'\
+                \ is 'UseExternal'.\n"
+              properties:
+                host:
+                  description: "The host the externally provided capability can be\
+                    \ reached on. When it is standard DNS name, an ExternalName service\
+                    \ will be created. If t is an IP address, Endpoints will be used\
+                    \ to route it to the external service.\n"
+                  type: "string"
+                port:
+                  description: "The port that the externally provided capability is\
+                    \ hosted on\n"
+                  type: "integer"
+                adminSecretName:
+                  description: "The name of the Kubernetes Secret, assumed to be in\
+                    \ the same namespace as the ProvidedCapability, that can be used\
+                    \ to connect to the service in question. This secret needs to\
+                    \ declare exactly two fields: 'username' and 'password'. Generally\
+                    \ this user will have the necessary credentials on the service\
+                    \ in question to provision resources as and when required.\n"
+                  type: "string"
+              type: "object"
+          type: "object"
+        status:
+          properties:
+            observedGeneration:
+              type: "number"
+            phase:
+              type: "string"
+            serverStatuses:
+              type: "object"
+              x-kubernetes-preserve-unknown-fields: true
+          type: "object"
+  versions:
+  - name: "v1"
+    served: true
+    storage: true

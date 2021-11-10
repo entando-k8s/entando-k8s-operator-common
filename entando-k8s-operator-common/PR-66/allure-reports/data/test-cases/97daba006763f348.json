@@ -1,0 +1,96 @@
+{
+  "uid" : "97daba006763f348",
+  "name" : "testResolutionFromOverridingPropertiesWhenThereAreFallbackProperties()",
+  "fullName" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest.testResolutionFromOverridingPropertiesWhenThereAreFallbackProperties",
+  "historyId" : "f5cbd5cf8f43f338f6a237de4df2af94",
+  "time" : {
+    "start" : 1636542801598,
+    "stop" : 1636542801600,
+    "duration" : 2
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "backupSystemProperties",
+    "time" : {
+      "start" : 1636542801598,
+      "stop" : 1636542801598,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "restoreSystemProperties",
+    "time" : {
+      "start" : 1636542801600,
+      "stop" : 1636542801600,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "testResolutionFromOverridingPropertiesWhenThereAreFallbackProperties"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.common.EntandoImageResolverTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "97daba006763f348.json",
+  "parameterValues" : [ ]
+}

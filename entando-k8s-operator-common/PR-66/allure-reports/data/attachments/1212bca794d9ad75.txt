@@ -1,0 +1,38 @@
+---
+apiVersion: "v1"
+kind: "Event"
+metadata:
+  labels:
+    entando.org/entando-resource-namespace: "my-namespace"
+    entando.org/capability: "Sso"
+    ProvidedCapability: "default-keycloak-sso-in-namespace"
+    entando.org/capability-implementation: "Keycloak"
+    entando.org/entando-resource-kind: "ProvidedCapability"
+    entando.org/capability-provision-scope: "Namespace"
+  name: "default-keycloak-sso-in-namespace-47879854"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "entando.org/v1"
+    kind: "ProvidedCapability"
+    blockOwnerDeletion: true
+    controller: true
+    name: "default-keycloak-sso-in-namespace"
+    uid: "30317d77-b1c7-4adf-b400-5250422eaf97"
+action: "PHASE_CHANGE"
+count: 1
+firstTimestamp: "2021-11-10T11:13:28Z"
+involvedObject:
+  apiVersion: "entando.org/v1"
+  kind: "ProvidedCapability"
+  fieldPath: "status"
+  name: "default-keycloak-sso-in-namespace"
+  namespace: "my-namespace"
+  resourceVersion: "172800"
+  uid: "30317d77-b1c7-4adf-b400-5250422eaf97"
+lastTimestamp: "2021-11-10T11:13:28Z"
+message: "The deployment of ProvidedCapability  my-namespace/default-keycloak-sso-in-namespace\
+  \ was updated  to SUCCESSFUL"
+reason: "PhaseUpdated"
+source:
+  component: "entando-k8s-d-capability-controller"
+type: "Normal"

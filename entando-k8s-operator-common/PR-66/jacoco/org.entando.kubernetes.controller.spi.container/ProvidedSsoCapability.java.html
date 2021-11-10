@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProvidedSsoCapability.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.container</a> &gt; <span class="el_source">ProvidedSsoCapability.java</span></div><h1>ProvidedSsoCapability.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.container;
+
+import static java.util.Optional.of;
+import static java.util.Optional.ofNullable;
+
+import io.fabric8.kubernetes.api.model.Secret;
+import java.util.Optional;
+import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
+import org.entando.kubernetes.controller.spi.result.ExposedService;
+import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
+import org.entando.kubernetes.model.common.ServerStatus;
+
+public class ProvidedSsoCapability implements SsoConnectionInfo {
+
+    public static final String DEFAULT_REALM_PARAMETER = &quot;defaultRealm&quot;;
+
+    private final CapabilityProvisioningResult capabilityResult;
+    private final ExposedService exposedService;
+
+    public ProvidedSsoCapability(CapabilityProvisioningResult capabilityResult) {
+<span class="fc" id="L40">        super();</span>
+<span class="fc" id="L41">        this.capabilityResult = capabilityResult;</span>
+<span class="fc" id="L42">        this.exposedService = new ExposedService(capabilityResult.getService(), capabilityResult.getIngress().orElse(null));</span>
+<span class="fc" id="L43">    }</span>
+
+    @Override
+    public Secret getAdminSecret() {
+<span class="fc" id="L47">        return capabilityResult.getAdminSecret().orElseThrow(IllegalStateException::new);</span>
+    }
+
+    @Override
+    public String getBaseUrlToUse() {
+<span class="pc bpc" id="L52" title="2 of 4 branches missed.">        if (useExternalService() || EntandoOperatorSpiConfig.forceExternalAccessToKeycloak()) {</span>
+<span class="nc" id="L53">            return getExternalBaseUrl();</span>
+        } else {
+<span class="fc" id="L55">            return exposedService.getInternalBaseUrl();</span>
+        }
+    }
+
+    private boolean useExternalService() {
+<span class="fc" id="L60">        return capabilityResult.getProvidedCapability().getSpec().getProvisioningStrategy()</span>
+<span class="fc" id="L61">                .map(CapabilityProvisioningStrategy.USE_EXTERNAL::equals)</span>
+<span class="fc" id="L62">                .orElse(false);</span>
+    }
+
+    @Override
+    public String getExternalBaseUrl() {
+<span class="fc" id="L67">        return capabilityResult.getProvidedCapability().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)</span>
+<span class="fc" id="L68">                .flatMap(ServerStatus::getExternalBaseUrl).orElseThrow(IllegalStateException::new);</span>
+    }
+
+    @Override
+    public Optional&lt;String&gt; getDefaultRealm() {
+<span class="fc" id="L73">        return ofNullable(</span>
+<span class="fc" id="L74">                capabilityResult.getProvidedCapability().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)</span>
+<span class="fc" id="L75">                        .orElseThrow(IllegalStateException::new)</span>
+<span class="fc" id="L76">                        .getDerivedDeploymentParameters()).flatMap(map -&gt; ofNullable(map.get(DEFAULT_REALM_PARAMETER)));</span>
+    }
+
+    @Override
+    public Optional&lt;String&gt; getInternalBaseUrl() {
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (exposedService.getService() == null) {</span>
+<span class="nc" id="L82">            return Optional.empty();</span>
+        } else {
+<span class="fc" id="L84">            return of(exposedService.getInternalBaseUrl());</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

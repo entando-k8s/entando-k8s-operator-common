@@ -1,0 +1,272 @@
+{
+  "uid" : "88ef64e188d2003b",
+  "name" : "shouldProvideDedicatedCapability()",
+  "fullName" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest.shouldProvideDedicatedCapability",
+  "historyId" : "eb822de62b51878e7db1852e7a810b22",
+  "time" : {
+    "start" : 1636542815887,
+    "stop" : 1636542816207,
+    "duration" : 320
+  },
+  "description" : "Should provide a Capability that is dedicated to the resource on whose behalf it was requested",
+  "descriptionHtml" : "<p>Should provide a Capability that is dedicated to the resource on whose behalf it was requested</p>\n",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "beforeEach",
+    "time" : {
+      "start" : 1636542815887,
+      "stop" : 1636542815913,
+      "duration" : 26
+    },
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'",
+      "time" : {
+        "start" : 1636542815887,
+        "stop" : 1636542815913,
+        "duration" : 26
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 1,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  } ],
+  "testStage" : {
+    "description" : "Should provide a Capability that is dedicated to the resource on whose behalf it was requested",
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have an TestResource",
+      "time" : {
+        "start" : 1636542815913,
+        "stop" : 1636542815926,
+        "duration" : 13
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "6e49286f4563e2fb",
+        "name" : "TestResource",
+        "source" : "6e49286f4563e2fb.txt",
+        "type" : "text/plain",
+        "size" : 262
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "And there is a controller to process requests for the DBMS capability requested",
+      "time" : {
+        "start" : 1636542815926,
+        "stop" : 1636542815927,
+        "duration" : 1
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "When I request for my CapabilityRequirement to be fulfilled",
+      "time" : {
+        "start" : 1636542815927,
+        "stop" : 1636542816177,
+        "duration" : 250
+      },
+      "status" : "passed",
+      "steps" : [ {
+        "name" : "with the DBMS service 'my-app-db-service'",
+        "time" : {
+          "start" : 1636542816146,
+          "stop" : 1636542816149,
+          "duration" : 3
+        },
+        "status" : "passed",
+        "steps" : [ ],
+        "attachments" : [ {
+          "uid" : "590452647aaa4c5f",
+          "name" : "DBMS Service",
+          "source" : "590452647aaa4c5f.txt",
+          "type" : "text/plain",
+          "size" : 163
+        } ],
+        "parameters" : [ ],
+        "stepsCount" : 0,
+        "attachmentsCount" : 1,
+        "shouldDisplayMessage" : false,
+        "hasContent" : true
+      }, {
+        "name" : "and the admin secret 'my-app-db-admin-secret'",
+        "time" : {
+          "start" : 1636542816149,
+          "stop" : 1636542816150,
+          "duration" : 1
+        },
+        "status" : "passed",
+        "steps" : [ ],
+        "attachments" : [ {
+          "uid" : "21ff9f494f310f6",
+          "name" : "Admin Secret",
+          "source" : "21ff9f494f310f6.txt",
+          "type" : "text/plain",
+          "size" : 167
+        } ],
+        "parameters" : [ ],
+        "stepsCount" : 0,
+        "attachmentsCount" : 1,
+        "shouldDisplayMessage" : false,
+        "hasContent" : true
+      } ],
+      "attachments" : [ {
+        "uid" : "161176ab95d9d947",
+        "name" : "CapabilityProvisioningResult",
+        "source" : "161176ab95d9d947.txt",
+        "type" : "text/plain",
+        "size" : 522
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 2,
+      "attachmentsCount" : 3,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "Then I receive a capability that meets my requirements",
+      "time" : {
+        "start" : 1636542816178,
+        "stop" : 1636542816178,
+        "duration" : 0
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "With the name 'my-app-db' indicating that it is the MySQL DBMS dedicated to the TestResource 'my-app' in the same namespace",
+      "time" : {
+        "start" : 1636542816178,
+        "stop" : 1636542816178,
+        "duration" : 0
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "And subsequent requests for a DBMS Capability dedicated to the TestResource in question without specifying the implementation result in the same ProvidedCapability",
+      "time" : {
+        "start" : 1636542816178,
+        "stop" : 1636542816207,
+        "duration" : 29
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "4bbb9fb4f5d45ea6",
+        "name" : "Capability Requirement",
+        "source" : "4bbb9fb4f5d45ea6.txt",
+        "type" : "text/plain",
+        "size" : 103
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 8,
+    "attachmentsCount" : 5,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  },
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "inner-hexagon"
+  }, {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "allure"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "feature",
+    "value" : "As a controller developer, I would like to have be able to resolve ProvidedCapabilities at different levels of scope so that we can find the optimal balance of reuse of our Capabilities"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldProvideDedicatedCapability"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ {
+    "name" : "ENG-2284",
+    "url" : "https://entando.myjetbrains.com/youtrack/issue/ENG-2284",
+    "type" : "issue"
+  }, {
+    "name" : "AdvancedCapabilityProvisionTest.java",
+    "url" : "https://github.com/entando-k8s/entando-k8s-operator-common/tree/ENG-2284_removing_cluster_infrastructure/src/test/java/org/entando/kubernetes/controller/AdvancedCapabilityProvisionTest.java",
+    "type" : "source"
+  } ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "inner-hexagon", "pre-deployment", "allure", "in-process" ]
+  },
+  "source" : "88ef64e188d2003b.json",
+  "parameterValues" : [ ]
+}

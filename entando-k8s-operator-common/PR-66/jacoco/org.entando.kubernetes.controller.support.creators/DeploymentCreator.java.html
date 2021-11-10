@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DeploymentCreator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.support.creators</a> &gt; <span class="el_source">DeploymentCreator.java</span></div><h1>DeploymentCreator.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.support.creators;
+
+import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
+
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.PodSecurityContext;
+import io.fabric8.kubernetes.api.model.PodSecurityContextBuilder;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ProbeBuilder;
+import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
+import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
+import org.entando.kubernetes.controller.spi.container.DbAwareContainer;
+import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.entando.kubernetes.controller.spi.container.HasHealthCommand;
+import org.entando.kubernetes.controller.spi.container.HasWebContext;
+import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
+import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
+import org.entando.kubernetes.controller.spi.container.SecretToMount;
+import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
+import org.entando.kubernetes.controller.spi.container.TrustStoreAwareContainer;
+import org.entando.kubernetes.controller.spi.deployable.Deployable;
+import org.entando.kubernetes.controller.support.client.DeploymentClient;
+import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
+
+public class DeploymentCreator extends AbstractK8SResourceCreator {
+
+    public static final String VOLUME_SUFFIX = &quot;volume&quot;;
+    public static final String CONTAINER_SUFFIX = &quot;container&quot;;
+    public static final String PORT_SUFFIX = &quot;port&quot;;
+    public static final int DEFAULT_STARTUP_TIME = 120;
+    private Deployment deployment;
+
+    public DeploymentCreator(EntandoCustomResource entandoCustomResource) {
+<span class="fc" id="L72">        super(entandoCustomResource);</span>
+<span class="fc" id="L73">    }</span>
+
+    public Deployment createDeployment(EntandoImageResolver imageResolver, DeploymentClient deploymentClient, Deployable&lt;?&gt; deployable) {
+<span class="fc" id="L76">        final Deployment builtDeployment = newDeployment(imageResolver, deployable, deploymentClient.supportsStartupProbes());</span>
+<span class="fc" id="L77">        this.deployment = withDiagnostics(</span>
+<span class="fc" id="L78">                () -&gt; deploymentClient.createOrPatchDeployment(entandoCustomResource, builtDeployment,</span>
+<span class="fc" id="L79">                        EntandoOperatorSpiConfig.getPodShutdownTimeoutSeconds()),</span>
+<span class="nc" id="L80">                () -&gt; builtDeployment);</span>
+<span class="fc" id="L81">        return this.deployment;</span>
+    }
+
+    public Deployment getDeployment() {
+<span class="fc" id="L85">        return deployment;</span>
+    }
+
+    private DeploymentSpec buildDeploymentSpec(EntandoImageResolver imageResolver, Deployable&lt;?&gt; deployable, boolean supportStartupProbe) {
+<span class="fc" id="L89">        final String nameQualifier = deployable.getQualifier().orElse(null);</span>
+<span class="fc" id="L90">        return new DeploymentBuilder()</span>
+<span class="fc" id="L91">                .withNewSpec()</span>
+<span class="fc" id="L92">                .withNewSelector()</span>
+<span class="fc" id="L93">                .withMatchLabels(labelsFromResource(nameQualifier))</span>
+<span class="fc" id="L94">                .endSelector()</span>
+                //We don't support 0 because we will be waiting for a pod after this
+<span class="fc" id="L96">                .withReplicas(Math.max(1, deployable.getReplicas()))</span>
+<span class="fc" id="L97">                .withNewTemplate()</span>
+<span class="fc" id="L98">                .withNewMetadata()</span>
+<span class="fc" id="L99">                .withName(resolveName(nameQualifier, &quot;pod&quot;))</span>
+<span class="fc" id="L100">                .withLabels(labelsFromResource(nameQualifier))</span>
+<span class="fc" id="L101">                .endMetadata()</span>
+<span class="fc" id="L102">                .withNewSpec()</span>
+<span class="fc" id="L103">                .withSecurityContext(buildSecurityContext(deployable))</span>
+<span class="fc" id="L104">                .withContainers(buildContainers(imageResolver, deployable, supportStartupProbe))</span>
+<span class="fc" id="L105">                .withDnsPolicy(&quot;ClusterFirst&quot;)</span>
+<span class="fc" id="L106">                .withRestartPolicy(&quot;Always&quot;)</span>
+<span class="fc" id="L107">                .withServiceAccountName(deployable.getServiceAccountToUse())</span>
+<span class="fc" id="L108">                .withVolumes(buildVolumesForDeployable(deployable)).endSpec()</span>
+<span class="fc" id="L109">                .endTemplate()</span>
+<span class="fc" id="L110">                .endSpec().buildSpec();</span>
+    }
+
+    private PodSecurityContext buildSecurityContext(Deployable&lt;?&gt; deployable) {
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        if (EntandoOperatorConfig.requiresFilesystemGroupOverride()) {</span>
+<span class="fc" id="L115">            return deployable.getFileSystemUserAndGroupId()</span>
+<span class="fc" id="L116">                    .map(useAndGroupId -&gt; new PodSecurityContextBuilder().withFsGroup(useAndGroupId).build()).orElse(null);</span>
+        }
+<span class="fc" id="L118">        return null;</span>
+    }
+
+    private List&lt;Volume&gt; buildVolumesForDeployable(Deployable&lt;?&gt; deployable) {
+<span class="fc" id="L122">        List&lt;Volume&gt; volumeList = deployable.getContainers().stream()</span>
+<span class="fc" id="L123">                .map(this::buildVolumesForContainer)</span>
+<span class="fc" id="L124">                .flatMap(Collection::stream)</span>
+<span class="fc" id="L125">                .collect(Collectors.toList());</span>
+
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (deployable.getContainers().stream().anyMatch(TrustStoreAwareContainer.class::isInstance) &amp;&amp; EntandoOperatorSpiConfig</span>
+<span class="fc bfc" id="L128" title="All 2 branches covered.">                .getCertificateAuthoritySecretName().isPresent()) {</span>
+<span class="fc" id="L129">            volumeList.add(newSecretVolume(TrustStoreAwareContainer.DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT));</span>
+        }
+<span class="fc" id="L131">        return volumeList;</span>
+    }
+
+    private List&lt;Volume&gt; buildVolumesForContainer(DeployableContainer container) {
+<span class="fc" id="L135">        List&lt;Volume&gt; volumes = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (container instanceof PersistentVolumeAwareContainer) {</span>
+<span class="fc" id="L137">            volumes.add(new VolumeBuilder()</span>
+<span class="fc" id="L138">                    .withName(volumeName(container))</span>
+<span class="fc" id="L139">                    .withNewPersistentVolumeClaim(</span>
+<span class="fc" id="L140">                            NameUtils.standardPersistentVolumeClaim(entandoCustomResource, container.getNameQualifier()), false)</span>
+<span class="fc" id="L141">                    .build());</span>
+        }
+<span class="fc" id="L143">        volumes.addAll(container.getSecretsToMount().stream()</span>
+<span class="fc" id="L144">                .map(this::newSecretVolume)</span>
+<span class="fc" id="L145">                .collect(Collectors.toList()));</span>
+<span class="fc" id="L146">        return volumes;</span>
+    }
+
+    private Volume newSecretVolume(SecretToMount secretToMount) {
+<span class="fc" id="L150">        return new VolumeBuilder()</span>
+<span class="fc" id="L151">                .withName(secretToMount.getSecretName() + &quot;-&quot; + VOLUME_SUFFIX)</span>
+<span class="fc" id="L152">                .withNewSecret()</span>
+<span class="fc" id="L153">                .withSecretName(secretToMount.getSecretName())</span>
+<span class="fc" id="L154">                .endSecret()</span>
+<span class="fc" id="L155">                .build();</span>
+    }
+
+    private List&lt;Container&gt; buildContainers(EntandoImageResolver imageResolver, Deployable&lt;?&gt; deployable, boolean supportStartupProbes) {
+<span class="fc" id="L159">        return deployable.getContainers().stream()</span>
+<span class="fc" id="L160">                .map(deployableContainer -&gt; this.newContainer(imageResolver, deployableContainer, supportStartupProbes))</span>
+<span class="fc" id="L161">                .collect(Collectors.toList());</span>
+    }
+
+    private Container newContainer(EntandoImageResolver imageResolver, DeployableContainer deployableContainer,
+            boolean supportStartupProbes) {
+<span class="fc" id="L166">        return new ContainerBuilder().withName(deployableContainer.getNameQualifier() + &quot;-&quot; + CONTAINER_SUFFIX)</span>
+<span class="fc" id="L167">                .withImage(imageResolver.determineImageUri(deployableContainer.getDockerImageInfo()))</span>
+<span class="fc" id="L168">                .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse(&quot;IfNotPresent&quot;))</span>
+<span class="fc" id="L169">                .withPorts(buildPorts(deployableContainer))</span>
+<span class="fc" id="L170">                .withReadinessProbe(buildReadinessProbe(deployableContainer, supportStartupProbes))</span>
+<span class="fc" id="L171">                .withLivenessProbe(buildLivenessProbe(deployableContainer, supportStartupProbes))</span>
+<span class="fc" id="L172">                .withStartupProbe(buildStartupProbe(deployableContainer, supportStartupProbes))</span>
+<span class="fc" id="L173">                .withVolumeMounts(buildVolumeMounts(deployableContainer))</span>
+<span class="fc" id="L174">                .withEnv(determineEnvironmentVariables(deployableContainer))</span>
+<span class="fc" id="L175">                .withNewResources()</span>
+<span class="fc" id="L176">                .addToLimits(buildResourceLimits(deployableContainer))</span>
+<span class="fc" id="L177">                .addToRequests(buildResourceRequests(deployableContainer))</span>
+<span class="fc" id="L178">                .endResources()</span>
+<span class="fc" id="L179">                .build();</span>
+    }
+
+    private List&lt;ContainerPort&gt; buildPorts(DeployableContainer deployableContainer) {
+<span class="fc" id="L183">        List&lt;ContainerPort&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L184">        result.add(new ContainerPortBuilder().withName(deployableContainer.getNameQualifier() + &quot;-&quot; + PORT_SUFFIX)</span>
+<span class="fc" id="L185">                .withContainerPort(deployableContainer.getPrimaryPort()).withProtocol(&quot;TCP&quot;).build());</span>
+<span class="fc" id="L186">        result.addAll(deployableContainer.getAdditionalPorts().stream()</span>
+<span class="fc" id="L187">                .map(portSpec -&gt; new ContainerPortBuilder()</span>
+<span class="nc" id="L188">                        .withName(portSpec.getName())</span>
+<span class="nc" id="L189">                        .withContainerPort(portSpec.getPort())</span>
+<span class="nc" id="L190">                        .withProtocol(&quot;TCP&quot;)</span>
+<span class="nc" id="L191">                        .build())</span>
+<span class="fc" id="L192">                .collect(Collectors.toList()));</span>
+<span class="fc" id="L193">        return result;</span>
+    }
+
+    private Map&lt;String, Quantity&gt; buildResourceRequests(DeployableContainer deployableContainer) {
+<span class="fc" id="L197">        Map&lt;String, Quantity&gt; result = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">        if (EntandoOperatorConfig.imposeResourceLimits()) {</span>
+<span class="fc" id="L199">            ResourceCalculator resourceCalculator = buildResourceCalculator(deployableContainer);</span>
+<span class="fc" id="L200">            result.put(&quot;memory&quot;, new Quantity(resourceCalculator.getMemoryRequest()));</span>
+<span class="fc" id="L201">            result.put(&quot;cpu&quot;, new Quantity(resourceCalculator.getCpuRequest()));</span>
+        }
+<span class="fc" id="L203">        return result;</span>
+    }
+
+    private ResourceCalculator buildResourceCalculator(DeployableContainer deployableContainer) {
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        return deployableContainer instanceof ConfigurableResourceContainer</span>
+<span class="fc" id="L208">                ? new ConfigurableResourceCalculator((ConfigurableResourceContainer) deployableContainer)</span>
+<span class="fc" id="L209">                : new ResourceCalculator(deployableContainer);</span>
+
+    }
+
+    private Map&lt;String, Quantity&gt; buildResourceLimits(DeployableContainer deployableContainer) {
+<span class="fc" id="L214">        Map&lt;String, Quantity&gt; result = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        if (EntandoOperatorConfig.imposeResourceLimits()) {</span>
+<span class="fc" id="L216">            ResourceCalculator resourceCalculator = buildResourceCalculator(deployableContainer);</span>
+<span class="fc" id="L217">            result.put(&quot;memory&quot;, new Quantity(resourceCalculator.getMemoryLimit()));</span>
+<span class="fc" id="L218">            result.put(&quot;cpu&quot;, new Quantity(resourceCalculator.getCpuLimit()));</span>
+        }
+<span class="fc" id="L220">        return result;</span>
+    }
+
+    private List&lt;VolumeMount&gt; buildVolumeMounts(DeployableContainer deployableContainer) {
+<span class="fc" id="L224">        List&lt;VolumeMount&gt; volumeMounts = new ArrayList&lt;&gt;(</span>
+<span class="fc" id="L225">                deployableContainer.getSecretsToMount().stream()</span>
+<span class="fc" id="L226">                        .map(this::newSecretVolumeMount)</span>
+<span class="fc" id="L227">                        .collect(Collectors.toList()));</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">        if (deployableContainer instanceof TrustStoreAwareContainer &amp;&amp; EntandoOperatorSpiConfig.getCertificateAuthoritySecretName()</span>
+<span class="fc bfc" id="L229" title="All 2 branches covered.">                .isPresent()) {</span>
+
+<span class="fc" id="L231">            volumeMounts.add(newSecretVolumeMount(TrustStoreAwareContainer.DEFAULT_TRUSTSTORE_SECRET_TO_MOUNT));</span>
+        }
+<span class="fc bfc" id="L233" title="All 2 branches covered.">        if (deployableContainer instanceof PersistentVolumeAwareContainer) {</span>
+<span class="fc" id="L234">            String volumeMountPath = ((PersistentVolumeAwareContainer) deployableContainer).getVolumeMountPath();</span>
+<span class="fc" id="L235">            volumeMounts.add(</span>
+                    new VolumeMountBuilder()
+<span class="fc" id="L237">                            .withMountPath(volumeMountPath)</span>
+<span class="fc" id="L238">                            .withName(volumeName(deployableContainer))</span>
+<span class="fc" id="L239">                            .withReadOnly(false).build());</span>
+        }
+<span class="fc" id="L241">        return volumeMounts;</span>
+
+    }
+
+    private VolumeMount newSecretVolumeMount(SecretToMount s) {
+<span class="fc" id="L246">        return new VolumeMountBuilder()</span>
+<span class="fc" id="L247">                .withName(s.getSecretName() + &quot;-&quot; + VOLUME_SUFFIX)</span>
+<span class="fc" id="L248">                .withMountPath(s.getMountPath()).withReadOnly(true).build();</span>
+    }
+
+    private Probe buildReadinessProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
+<span class="fc" id="L252">        int maximumStartupTimeSeconds = calculateMaximumStartupTimeSeconds(deployableContainer);</span>
+<span class="fc" id="L253">        ProbeBuilder builder = buildHealthProbe(deployableContainer);</span>
+<span class="fc bfc" id="L254" title="All 2 branches covered.">        if (assumeStartupProbe) {</span>
+            //No delay, only allow one failure for accuracy, check every 10 seconds
+<span class="fc" id="L256">            builder = builder.withPeriodSeconds(10).withFailureThreshold(1);</span>
+        } else {
+            //Delay for a 6th of the maximum allowed startup time
+            //allow for 5 failures that are spaced out enough time for the
+            //container only to fail after the maximum startup time
+<span class="fc" id="L261">            final Integer numberOfFailures = EntandoOperatorConfig.getNumberOfReadinessFailures().orElse(6);</span>
+<span class="fc" id="L262">            builder = builder.withInitialDelaySeconds(maximumStartupTimeSeconds / numberOfFailures)</span>
+<span class="fc" id="L263">                    .withPeriodSeconds(maximumStartupTimeSeconds / numberOfFailures)</span>
+<span class="fc" id="L264">                    .withFailureThreshold(numberOfFailures - 1);</span>
+        }
+        //Liveness checks should be fast but we can be a bit forgiving for readiness probes
+<span class="fc" id="L267">        return builder.withTimeoutSeconds(5).build();</span>
+    }
+
+    private Integer calculateMaximumStartupTimeSeconds(DeployableContainer deployableContainer) {
+<span class="fc" id="L271">        return Math.round(deployableContainer.getMaximumStartupTimeSeconds().orElse(DEFAULT_STARTUP_TIME)</span>
+<span class="fc" id="L272">                * EntandoOperatorSpiConfig.getTimeoutAdjustmentRatio());</span>
+    }
+
+    private Probe buildLivenessProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
+<span class="fc" id="L276">        int maximumStartupTimeSeconds = calculateMaximumStartupTimeSeconds(deployableContainer);</span>
+<span class="fc" id="L277">        ProbeBuilder builder = buildHealthProbe(deployableContainer).withPeriodSeconds(10).withFailureThreshold(1).withTimeoutSeconds(3);</span>
+<span class="fc bfc" id="L278" title="All 2 branches covered.">        if (!assumeStartupProbe) {</span>
+            //Delay the entire maximum allowed startup time and a bit. We don't want the container to get caught in a crash loop
+<span class="fc" id="L280">            builder = builder.withInitialDelaySeconds(Math.round(maximumStartupTimeSeconds * 1.2F));</span>
+        }
+<span class="fc" id="L282">        return builder.build();</span>
+    }
+
+    private Probe buildStartupProbe(DeployableContainer deployableContainer, boolean assumeStartupProbe) {
+<span class="fc bfc" id="L286" title="All 2 branches covered.">        if (assumeStartupProbe) {</span>
+<span class="fc" id="L287">            int maximumStartupTimeSeconds = calculateMaximumStartupTimeSeconds(deployableContainer);</span>
+<span class="fc" id="L288">            ProbeBuilder builder = buildHealthProbe(deployableContainer);</span>
+            //Stretch out the periodSeconds to allow for 10 attempts during startup
+<span class="fc" id="L290">            builder = builder.withPeriodSeconds(maximumStartupTimeSeconds / 10)</span>
+                    //Allow for one extra failure after the maximumStartupTime
+<span class="fc" id="L292">                    .withFailureThreshold(11);</span>
+<span class="fc" id="L293">            return builder.withTimeoutSeconds(5).build();</span>
+        } else {
+<span class="fc" id="L295">            return null;</span>
+        }
+    }
+
+    private ProbeBuilder buildHealthProbe(DeployableContainer deployableContainer) {
+<span class="fc" id="L300">        ProbeBuilder builder = null;</span>
+<span class="fc bfc" id="L301" title="All 2 branches covered.">        if (deployableContainer instanceof HasHealthCommand) {</span>
+<span class="fc" id="L302">            builder = new ProbeBuilder().withNewExec().addToCommand(&quot;/bin/sh&quot;, &quot;-i&quot;, &quot;-c&quot;,</span>
+<span class="fc" id="L303">                    ((HasHealthCommand) deployableContainer).getHealthCheckCommand()).endExec();</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">        } else if (deployableContainer instanceof HasWebContext) {</span>
+<span class="fc" id="L305">            Optional&lt;String&gt; healthCheckPath = ((HasWebContext) deployableContainer).getHealthCheckPath();</span>
+<span class="pc bpc" id="L306" title="1 of 2 branches missed.">            if (healthCheckPath.isPresent()) {</span>
+<span class="fc" id="L307">                builder = new ProbeBuilder().withNewHttpGet().withNewPort(deployableContainer.getPrimaryPort())</span>
+<span class="fc" id="L308">                        .withPath(healthCheckPath.get()).endHttpGet();</span>
+            }
+        }
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        if (builder == null) {</span>
+<span class="fc" id="L312">            builder = new ProbeBuilder().withNewTcpSocket().withNewPort(deployableContainer.getPrimaryPort())</span>
+<span class="fc" id="L313">                    .withHost(&quot;localhost&quot;).endTcpSocket();</span>
+        }
+<span class="fc" id="L315">        return builder;</span>
+    }
+
+    private List&lt;EnvVar&gt; determineEnvironmentVariables(DeployableContainer container) {
+<span class="fc" id="L319">        ArrayList&lt;EnvVar&gt; vars = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L320" title="All 2 branches covered.">        if (container instanceof SsoAwareContainer) {</span>
+<span class="fc" id="L321">            SsoAwareContainer keycloakAware = (SsoAwareContainer) container;</span>
+<span class="fc" id="L322">            vars.addAll(keycloakAware.getSsoVariables());</span>
+        }
+<span class="fc bfc" id="L324" title="All 2 branches covered.">        if (container instanceof DbAwareContainer) {</span>
+<span class="fc" id="L325">            vars.addAll(((DbAwareContainer) container).getDatabaseConnectionVariables());</span>
+        }
+<span class="fc bfc" id="L327" title="All 2 branches covered.">        if (container instanceof HasWebContext) {</span>
+<span class="fc" id="L328">            vars.add(new EnvVar(&quot;SERVER_SERVLET_CONTEXT_PATH&quot;, ((HasWebContext) container).getWebContextPath(), null));</span>
+        }
+<span class="fc bfc" id="L330" title="All 4 branches covered.">        if (container instanceof TrustStoreAwareContainer &amp;&amp; EntandoOperatorSpiConfig.getCertificateAuthoritySecretName().isPresent()) {</span>
+<span class="fc" id="L331">            vars.addAll(((TrustStoreAwareContainer) container).getTrustStoreVariables());</span>
+        }
+<span class="fc" id="L333">        vars.add(new EnvVar(&quot;CONNECTION_CONFIG_ROOT&quot;, DeployableContainer.ENTANDO_SECRET_MOUNTS_ROOT, null));</span>
+<span class="fc" id="L334">        vars.addAll(container.getEnvironmentVariables());</span>
+<span class="fc bfc" id="L335" title="All 2 branches covered.">        if (container instanceof ParameterizableContainer) {</span>
+<span class="fc" id="L336">            ParameterizableContainer parameterizableContainer = (ParameterizableContainer) container;</span>
+<span class="fc" id="L337">            overrideFromCustomResource(vars, parameterizableContainer.getEnvironmentVariableOverrides());</span>
+        }
+<span class="fc" id="L339">        return vars;</span>
+    }
+
+    private void overrideFromCustomResource(List&lt;EnvVar&gt; vars, List&lt;EnvVar&gt; envVars) {
+<span class="pc bpc" id="L343" title="1 of 2 branches missed.">        for (EnvVar envVar : envVars) {</span>
+<span class="nc" id="L344">            vars.removeIf(envVarToEvaluate -&gt; envVarToEvaluate.getName().equals(envVar.getName()));</span>
+<span class="nc" id="L345">            vars.add(new EnvVar(envVar.getName(), envVar.getValue(), envVar.getValueFrom()));</span>
+<span class="nc" id="L346">        }</span>
+<span class="fc" id="L347">    }</span>
+
+    private String volumeName(DeployableContainer container) {
+<span class="fc" id="L350">        return resolveName(container.getNameQualifier(), VOLUME_SUFFIX);</span>
+    }
+
+    protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable&lt;?&gt; deployable, boolean supportStartupProbes) {
+<span class="fc" id="L354">        return new DeploymentBuilder()</span>
+<span class="fc" id="L355">                .withMetadata(</span>
+<span class="fc" id="L356">                        fromCustomResource(true, resolveName(deployable.getQualifier().orElse(null), NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),</span>
+<span class="fc" id="L357">                                deployable.getQualifier().orElse(null)))</span>
+<span class="fc" id="L358">                .withSpec(buildDeploymentSpec(imageResolver, deployable, supportStartupProbes))</span>
+<span class="fc" id="L359">                .build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

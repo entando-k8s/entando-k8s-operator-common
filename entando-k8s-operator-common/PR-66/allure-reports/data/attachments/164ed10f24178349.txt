@@ -1,0 +1,29 @@
+---
+mixins:
+- "Deployable"
+defaultServiceAccountName: "default"
+replicas: 1
+customResource:
+  apiVersion: "test.org/v1"
+  kind: "TestResource"
+  metadata:
+    name: "my-app"
+    namespace: "my-namespace"
+  isCustomResource: true
+containers:
+- mixins:
+  - "DeployableContainer"
+  memoryLimitMebibytes: 256
+  kubernetesPermissions: []
+  environmentVariables: []
+  dockerImageInfo:
+    organization: "test"
+    repository: "my-image"
+    tag: "6.3.2"
+  namesOfSecretsToMount: []
+  nameQualifier: "server"
+  additionalPorts: []
+  primaryPort: 8081
+  secretsToMount: []
+  cpuLimitMillicores: 500
+serviceAccountToUse: "default"

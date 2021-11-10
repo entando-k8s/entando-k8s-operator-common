@@ -1,0 +1,8 @@
+---
+metadata:
+  generation: 1
+  name: "my-app"
+  namespace: "my-namespace"
+  resourceVersion: "4339982"
+  uid: "17c9f6d5-15bf-405f-a659-406b3adc5d49"
+kind: "TestResource"

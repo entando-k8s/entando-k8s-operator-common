@@ -1,0 +1,158 @@
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  creationTimestamp: "2021-11-10T11:12:26Z"
+  labels:
+    pod-label: "123"
+  managedFields:
+  - apiVersion: "v1"
+    fieldsType: "FieldsV1"
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          ".": {}
+          f:pod-label: {}
+      f:spec:
+        f:containers:
+          k:{"name":"nginx"}:
+            ".": {}
+            f:command: {}
+            f:image: {}
+            f:imagePullPolicy: {}
+            f:name: {}
+            f:ports:
+              ".": {}
+              k:{"containerPort":8080,"protocol":"TCP"}:
+                ".": {}
+                f:containerPort: {}
+                f:protocol: {}
+            f:resources: {}
+            f:terminationMessagePath: {}
+            f:terminationMessagePolicy: {}
+        f:dnsPolicy: {}
+        f:enableServiceLinks: {}
+        f:restartPolicy: {}
+        f:schedulerName: {}
+        f:securityContext: {}
+        f:terminationGracePeriodSeconds: {}
+    manager: "okhttp"
+    operation: "Update"
+    time: "2021-11-10T11:12:26Z"
+  - apiVersion: "v1"
+    fieldsType: "FieldsV1"
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:{"type":"ContainersReady"}:
+            ".": {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Initialized"}:
+            ".": {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Ready"}:
+            ".": {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+        f:containerStatuses: {}
+        f:hostIP: {}
+        f:phase: {}
+        f:podIP: {}
+        f:podIPs:
+          ".": {}
+          k:{"ip":"10.244.0.188"}:
+            ".": {}
+            f:ip: {}
+        f:startTime: {}
+    manager: "kubelet"
+    operation: "Update"
+    time: "2021-11-10T11:12:51Z"
+  name: "my-pod"
+  namespace: "entando-k8s-operator-common-cmpr66-test99"
+  resourceVersion: "3060482"
+  uid: "9fa4ffc8-f93b-4c37-a2a8-c33db8d437b4"
+spec:
+  containers:
+  - command:
+    - "/usr/libexec/s2i/run"
+    image: "entando/test-nginx-container:latest"
+    imagePullPolicy: "Always"
+    name: "nginx"
+    ports:
+    - containerPort: 8080
+      protocol: "TCP"
+    resources: {}
+    terminationMessagePath: "/dev/termination-log"
+    terminationMessagePolicy: "File"
+    volumeMounts:
+    - mountPath: "/var/run/secrets/kubernetes.io/serviceaccount"
+      name: "default-token-s4fjl"
+      readOnly: true
+  dnsPolicy: "ClusterFirst"
+  enableServiceLinks: true
+  imagePullSecrets:
+  - name: "redhat-registry"
+  nodeName: "aks-default-20781680-vmss000001"
+  preemptionPolicy: "PreemptLowerPriority"
+  priority: 0
+  restartPolicy: "Always"
+  schedulerName: "default-scheduler"
+  securityContext: {}
+  serviceAccount: "default"
+  serviceAccountName: "default"
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: "NoExecute"
+    key: "node.kubernetes.io/not-ready"
+    operator: "Exists"
+    tolerationSeconds: 300
+  - effect: "NoExecute"
+    key: "node.kubernetes.io/unreachable"
+    operator: "Exists"
+    tolerationSeconds: 300
+  volumes:
+  - name: "default-token-s4fjl"
+    secret:
+      defaultMode: 420
+      secretName: "default-token-s4fjl"
+status:
+  conditions:
+  - lastTransitionTime: "2021-11-10T11:12:26Z"
+    status: "True"
+    type: "Initialized"
+  - lastTransitionTime: "2021-11-10T11:12:51Z"
+    status: "True"
+    type: "Ready"
+  - lastTransitionTime: "2021-11-10T11:12:51Z"
+    status: "True"
+    type: "ContainersReady"
+  - lastTransitionTime: "2021-11-10T11:12:26Z"
+    status: "True"
+    type: "PodScheduled"
+  containerStatuses:
+  - containerID: "containerd://b8d736e0c9ac73ca0d09857ef2dce0dae2c5dd3aebe7519d5dda82c7e6a3b848"
+    image: "docker.io/entando/test-nginx-container:latest"
+    imageID: "docker.io/entando/test-nginx-container@sha256:6aa6f522f5ff569c4e43e8c5d5f193eca213599f16fe0dfc7d0e357ccfc5701f"
+    lastState: {}
+    name: "nginx"
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2021-11-10T11:12:51Z"
+  hostIP: "10.8.0.5"
+  phase: "Running"
+  podIP: "10.244.0.188"
+  podIPs:
+  - ip: "10.244.0.188"
+  qosClass: "BestEffort"
+  startTime: "2021-11-10T11:12:26Z"

@@ -1,0 +1,9 @@
+---
+apiVersion: "v1"
+kind: "Secret"
+metadata:
+  name: "default-keycloak-sso-in-namespace-admin-secret"
+  namespace: "my-namespace"
+stringData:
+  username: "jon"
+  password: "password123"

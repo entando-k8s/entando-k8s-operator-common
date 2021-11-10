@@ -1,0 +1,30 @@
+---
+ssoVariables:
+- name: "SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET"
+  valueFrom:
+    secretKeyRef:
+      key: "clientSecret"
+      name: "my-client-secret"
+      optional: false
+- name: "SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID"
+  valueFrom:
+    secretKeyRef:
+      key: "clientId"
+      name: "my-client-secret"
+      optional: false
+mixins:
+- "SsoAwareContainer"
+- "DeployableContainer"
+memoryLimitMebibytes: 256
+kubernetesPermissions: []
+environmentVariables: []
+dockerImageInfo:
+  organization: "test"
+  repository: "my-spring-boot-image"
+  tag: "6.3.2"
+namesOfSecretsToMount: []
+nameQualifier: "server"
+additionalPorts: []
+primaryPort: 8081
+secretsToMount: []
+cpuLimitMillicores: 500

@@ -1,0 +1,96 @@
+{
+  "uid" : "3de30d508a9c6032",
+  "name" : "calculateRequestsWithDefaultRatioButWithALimitOverride()",
+  "fullName" : "org.entando.kubernetes.controller.support.creators.ConfigurableResourceCalculatorTest.calculateRequestsWithDefaultRatioButWithALimitOverride",
+  "historyId" : "91e839f7a13185010b1383629948d865",
+  "time" : {
+    "start" : 1636542801035,
+    "stop" : 1636542801068,
+    "duration" : 33
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "resetProvidedRatio",
+    "time" : {
+      "start" : 1636542801042,
+      "stop" : 1636542801042,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "afterStages" : [ {
+    "name" : "resetProvidedRatio",
+    "time" : {
+      "start" : 1636542801068,
+      "stop" : 1636542801068,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : false
+  } ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.support.creators.ConfigurableResourceCalculatorTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.support.creators.ConfigurableResourceCalculatorTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "calculateRequestsWithDefaultRatioButWithALimitOverride"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.support.creators.ConfigurableResourceCalculatorTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "3de30d508a9c6032.json",
+  "parameterValues" : [ ]
+}

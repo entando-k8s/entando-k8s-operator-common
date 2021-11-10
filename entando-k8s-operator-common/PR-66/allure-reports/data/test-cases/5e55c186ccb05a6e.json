@@ -1,0 +1,66 @@
+{
+  "uid" : "5e55c186ccb05a6e",
+  "name" : "testWithKubernetesClientExceptionToFailure()",
+  "fullName" : "org.entando.kubernetes.controller.spi.common.ExceptionUtilsTest.testWithKubernetesClientExceptionToFailure",
+  "historyId" : "4be9c83f77428077f69c47d26a19adbe",
+  "time" : {
+    "start" : 1636542801987,
+    "stop" : 1636542801994,
+    "duration" : 7
+  },
+  "description" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "tag",
+    "value" : "unit"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.spi.common.ExceptionUtilsTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.spi.common.ExceptionUtilsTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "testWithKubernetesClientExceptionToFailure"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.spi.common.ExceptionUtilsTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "unit", "pre-deployment", "in-process" ]
+  },
+  "source" : "5e55c186ccb05a6e.json",
+  "parameterValues" : [ ]
+}

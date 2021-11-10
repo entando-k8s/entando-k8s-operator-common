@@ -1,0 +1,31 @@
+---
+ingress:
+  apiVersion: "extensions/v1beta1"
+  kind: "Ingress"
+  metadata:
+    name: "default-keycloak-sso-in-namespace-ingress"
+    namespace: "my-namespace"
+  isCustomResource: false
+mixins:
+- "CapabilityProvisioningResult"
+providedCapability:
+  apiVersion: "entando.org/v1"
+  kind: "ProvidedCapability"
+  metadata:
+    name: "default-keycloak-sso-in-namespace"
+    namespace: "my-namespace"
+  isCustomResource: true
+service:
+  apiVersion: "v1"
+  kind: "Service"
+  metadata:
+    name: "default-keycloak-sso-in-namespace-service"
+    namespace: "my-namespace"
+  isCustomResource: false
+adminSecret:
+  apiVersion: "v1"
+  kind: "Secret"
+  metadata:
+    name: "default-keycloak-sso-in-namespace-admin-secret"
+    namespace: "my-namespace"
+  isCustomResource: false

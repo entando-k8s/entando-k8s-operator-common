@@ -1,0 +1,12 @@
+---
+apiVersion: "test.org/v1"
+kind: "TestResource"
+metadata:
+  generation: 1
+  name: "my-app"
+  namespace: "my-app-namespace"
+  resourceVersion: "4627728"
+  uid: "a81ecdb6-d1e0-4d3e-94b9-7fa1281a0698"
+status:
+  serverStatuses: {}
+crdName: "testresources.test.org"

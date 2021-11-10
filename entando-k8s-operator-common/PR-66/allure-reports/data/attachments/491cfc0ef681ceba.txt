@@ -1,0 +1,30 @@
+---
+apiVersion: "v1"
+kind: "Endpoints"
+metadata:
+  annotations:
+    test: "123"
+  creationTimestamp: "2021-11-10T11:13:09Z"
+  managedFields:
+  - apiVersion: "v1"
+    fieldsType: "FieldsV1"
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          ".": {}
+          f:test: {}
+      f:subsets: {}
+    manager: "okhttp"
+    operation: "Update"
+    time: "2021-11-10T11:13:09Z"
+  name: "my-service"
+  namespace: "entando-k8s-operator-common-cmpr66-test99"
+  resourceVersion: "3060669"
+  uid: "35ed11d9-b190-4c20-81ea-d85e39a9f3c6"
+subsets:
+- addresses:
+  - ip: "172.17.0.123"
+  ports:
+  - name: "my-port"
+    port: 81
+    protocol: "TCP"

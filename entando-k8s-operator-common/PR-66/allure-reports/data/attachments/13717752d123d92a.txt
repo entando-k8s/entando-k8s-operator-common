@@ -1,0 +1,37 @@
+---
+mixins:
+- "SerializableDeploymentResult"
+- "ServiceResult"
+- "ServiceDeploymentResult"
+status:
+  type: "WebServerStatus"
+  qualifier: "main"
+  started: "2021-11-10T11:13:29+0000"
+  originatingCustomResource:
+    apiVersion: "test.org/v1"
+    kind: "TestResource"
+    namespace: "my-namespace"
+    name: "my-app"
+  originatingControllerPod:
+    namespace: "controller-namespace"
+    name: "test-controller-pod"
+  finished: "2021-11-10T11:13:29+0000"
+  podPhases:
+    my-app-dbprep-1985: "Failed"
+  persistentVolumeClaimPhases:
+    my-app-server-pvc: "Pending"
+  entandoControllerFailure:
+    failedObjectApiVersion: "v1"
+    failedObjectKind: "Pod"
+    failedObjectNamespace: "my-namespace"
+    failedObjectName: "my-app-dbprep-1985"
+    message: "Database preparation failed. Please inspect the logs of the pod my-namespace/my-app-dbprep-1985"
+    detailMessage: "org.entando.kubernetes.controller.spi.common.EntandoControllerException:\
+      \ Database preparation failed. Please inspect the logs of the pod my-namespace/my-app-dbprep-1985\n\
+      \tat org.entando.kubernetes.controller.support.command.DeployCommand.prepareDbSchemas(DeployCommand.java:239)\n\
+      \tat org.entando.kubernetes.controller.support.command.DeployCommand.deployServiceInternally(DeployCommand.java:149)\n\
+      \tat org.entando.kubernetes.controller.support.command.DeployCommand.lambda$execute$0(DeployCommand.java:108)\n\
+      \tat java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)\n\t\
+      at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\n\
+      \tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\n\
+      \tat java.base/java.lang.Thread.run(Thread.java:834)\n"

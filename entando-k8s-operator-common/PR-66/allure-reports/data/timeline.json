@@ -1,0 +1,1690 @@
+{
+  "uid" : "ab17fc5a4eb3bca4b216b548c7f9fcbc",
+  "name" : "timeline",
+  "children" : [ {
+    "name" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2",
+    "children" : [ {
+      "name" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)",
+      "children" : [ {
+        "name" : "shouldRemovePathFromIngress()",
+        "uid" : "e09fa50fd299555",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542730398,
+          "stop" : 1636542735780,
+          "duration" : 5382
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromCofigmapWithRepositoryKey()",
+        "uid" : "56c234a196980807",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801729,
+          "stop" : 1636542801733,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolveFromClusterByLabels()",
+        "uid" : "f8459c28bebf602c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636541973000,
+          "stop" : 1636541984523,
+          "duration" : 11523
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldTranslateProvidedCapabilityToTestResource()",
+        "uid" : "4dcc2bed8bc2deac",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636541948181,
+          "stop" : 1636541948795,
+          "duration" : 614
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testCustomPermissions()",
+        "uid" : "f9eb87d3d2b6ab71",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801181,
+          "stop" : 1636542801217,
+          "duration" : 36
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromOverridingPropertiesWhenThereAreFallbackProperties()",
+        "uid" : "97daba006763f348",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801598,
+          "stop" : 1636542801600,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "minimalDeploymentThatFailsToStartSuccessfully()",
+        "uid" : "749b35ab7ac801",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542811502,
+          "stop" : 1636542811823,
+          "duration" : 321
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides()",
+        "uid" : "486a6e258d3c925c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801510,
+          "stop" : 1636542801512,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "minimalDeploymentThatFailsOnStatusUpdate()",
+        "uid" : "3bfcd06c2d82958c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "skipped",
+        "time" : {
+          "start" : 1636542811496,
+          "stop" : 1636542811496,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolve()",
+        "uid" : "19264d5ca099f9a8",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542808065,
+          "stop" : 1636542808069,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithDefaultRatioButWithALimitOverride()",
+        "uid" : "3de30d508a9c6032",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801035,
+          "stop" : 1636542801068,
+          "duration" : 33
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldBuildACapabilityResult()",
+        "uid" : "8871dc9c1a0513d",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542008178,
+          "stop" : 1636542019794,
+          "duration" : 11616
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testEdit()",
+        "uid" : "e8a5f5c5baaec8fe",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542800976,
+          "stop" : 1636542801015,
+          "duration" : 39
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "exposeHttpsServiceOverSpecifiedHostName()",
+        "uid" : "b3eefbda74e13b57",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636541946435,
+          "stop" : 1636541947053,
+          "duration" : 618
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testHttpsUrls()",
+        "uid" : "a8292befdf65977d",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801942,
+          "stop" : 1636542801945,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "[2] RELATED_IMAGE_TEST_IMAGE",
+        "uid" : "c8c571015adaabc3",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801713,
+          "stop" : 1636542801716,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldProvideLabeledCapability()",
+        "uid" : "8056207068906788",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542814349,
+          "stop" : 1636542814720,
+          "duration" : 371
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateOrReplaceEndpoints()",
+        "uid" : "adbf14bd262d308c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542771680,
+          "stop" : 1636542789165,
+          "duration" : 17485
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "requestDatabaseCapabilityOnDemandAndConnectToIt()",
+        "uid" : "15ed7a53f1792779",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542808663,
+          "stop" : 1636542809339,
+          "duration" : 676
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "minimalDeploymentThatTimesOut()",
+        "uid" : "bacd38678676628",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542810202,
+          "stop" : 1636542811483,
+          "duration" : 1281
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testUrlsOnDelegatingService()",
+        "uid" : "9e77fa0aec51a03",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801957,
+          "stop" : 1636542801959,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithDefaultRatioButWithALimitOverride()",
+        "uid" : "d087548af6ac1f9c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801502,
+          "stop" : 1636542801506,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testAccessibleNamespaces()",
+        "uid" : "e3aaede759c4ce0b",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801773,
+          "stop" : 1636542801778,
+          "duration" : 5
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldRunPodToCompletion()",
+        "uid" : "289bfe418f92915b",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542061198,
+          "stop" : 1636542094281,
+          "duration" : 33083
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithProvidedRatioButWithALimitOverride()",
+        "uid" : "5ba5761ccf22e6da",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801527,
+          "stop" : 1636542801530,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testIoSafe()",
+        "uid" : "799ba03a7b80066",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542808037,
+          "stop" : 1636542808041,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromFallbackProperties()",
+        "uid" : "8c8be75ca3dc2332",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801627,
+          "stop" : 1636542801634,
+          "duration" : 7
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testStandardClusterRoles()",
+        "uid" : "8463be093d6f14a3",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801169,
+          "stop" : 1636542801174,
+          "duration" : 5
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldUpdatePreviouslyCreatedCapabilityWithEssentialChanges()",
+        "uid" : "15adf2ebcb5eaf60",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542812439,
+          "stop" : 1636542813311,
+          "duration" : 872
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldProvideDedicatedCapabilityWithIngress()",
+        "uid" : "eb08bb96a69a384a",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542816289,
+          "stop" : 1636542816573,
+          "duration" : 284
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testWithKubernetesClientExceptionToFailure()",
+        "uid" : "5e55c186ccb05a6e",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801987,
+          "stop" : 1636542801994,
+          "duration" : 7
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "dbawareDeploymentFailsWhenDatabasePreparationFailed()",
+        "uid" : "8ac210a4926efb49",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542809344,
+          "stop" : 1636542810169,
+          "duration" : 825
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldThrowTimeoutException()",
+        "uid" : "f9c2280a70b07794",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "skipped",
+        "time" : {
+          "start" : 1636542031622,
+          "stop" : 1636542031622,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldFailWhenTimingOut()",
+        "uid" : "b6e54b4068bbd5ba",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542814292,
+          "stop" : 1636542814337,
+          "duration" : 45
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testImagePullSecretPropagation()",
+        "uid" : "bd5194dfc74ef177",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801283,
+          "stop" : 1636542801292,
+          "duration" : 9
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "requestSsoCapabilityOnDemandAndConnectToIt()",
+        "uid" : "bc31cee816687921",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542808085,
+          "stop" : 1636542808631,
+          "duration" : 546
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldWaitForPreviouslyStartedPod()",
+        "uid" : "2a3076a250a9fe6f",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542041159,
+          "stop" : 1636542061194,
+          "duration" : 20035
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "[3] registry.hub.docker.com:50/lib/ra/ry/mysql",
+        "uid" : "6b4a9bde79232f2e",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801765,
+          "stop" : 1636542801766,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldProvideClusterScopeCapability()",
+        "uid" : "5224350aa578e5d6",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542815033,
+          "stop" : 1636542815307,
+          "duration" : 274
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldTranslateTestResourceToProvidedCapability()",
+        "uid" : "64ae719e2aa2be9f",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636541948809,
+          "stop" : 1636541949089,
+          "duration" : 280
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateADelegateServiceAndEndpoints()",
+        "uid" : "1416119fe713fd0a",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542735798,
+          "stop" : 1636542771677,
+          "duration" : 35879
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testWithDiagnostics()",
+        "uid" : "6558a8476a705071",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542808017,
+          "stop" : 1636542808025,
+          "duration" : 8
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "[4] RELATED_IMAGE_TEST_ENTANDO_TEST_IMAGE",
+        "uid" : "4ef34a017bd180ce",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801724,
+          "stop" : 1636542801727,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testComplianceMode()",
+        "uid" : "4e6e7c1e01f1df0d",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801769,
+          "stop" : 1636542801772,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testImagePullSecrets()",
+        "uid" : "90a3c867f1a4d369",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801130,
+          "stop" : 1636542801162,
+          "duration" : 32
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateConfigMapIfAbsent()",
+        "uid" : "89c8e53e76f3129f",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542679508,
+          "stop" : 1636542684911,
+          "duration" : 5403
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testCreatePublicClient()",
+        "uid" : "b848d7665550def9",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542387414,
+          "stop" : 1636542527752,
+          "duration" : 140338
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldNotReplacePreviouslyCreatedRole()",
+        "uid" : "67da2e8c5dc5e1fc",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542702605,
+          "stop" : 1636542714028,
+          "duration" : 11423
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldRemoveSuccessfullyCompletedPods()",
+        "uid" : "c9c4670df6a8b1ea",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542094305,
+          "stop" : 1636542105464,
+          "duration" : 11159
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldFailWhenNoReferenceSpecifiedForSpecifiedCapability()",
+        "uid" : "1771dbc0c593a070",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542814726,
+          "stop" : 1636542814767,
+          "duration" : 41
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldNotResolveProvidedCapabilityFromUninterestingNamespaces()",
+        "uid" : "475e555e0229f5c6",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636541950435,
+          "stop" : 1636541962180,
+          "duration" : 11745
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolvePreviouslyCreatedNamespaceScopedCapability()",
+        "uid" : "88a85a4149ef6f80",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542813669,
+          "stop" : 1636542813979,
+          "duration" : 310
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldLinkToExternalDatabaseService()",
+        "uid" : "49c4ae91197f9fc3",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636541947617,
+          "stop" : 1636541948148,
+          "duration" : 531
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldLinkToExternalDatabaseServiceUsingItsIpAddress()",
+        "uid" : "53665f64349c5aac",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636541947076,
+          "stop" : 1636541947580,
+          "duration" : 504
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldNotResolveProvidedCapabilityFromInaccessibleNamespaces()",
+        "uid" : "3531ee389d44ebb3",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "skipped",
+        "time" : {
+          "start" : 1636541972985,
+          "stop" : 1636541972986,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateDeploymentWithStartupProbeOnK8S16()",
+        "uid" : "898ea02c50f7a62f",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801357,
+          "stop" : 1636542801421,
+          "duration" : 64
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "createPersistentVolumeClaimWithGarbageCollection()",
+        "uid" : "e7abfd117aa885fc",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801557,
+          "stop" : 1636542801559,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithDefaultRatio()",
+        "uid" : "b09a56f9c8c1b5c7",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801255,
+          "stop" : 1636542801256,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromCofigmapWithDifferentRepository()",
+        "uid" : "1d247c9efe8c7ff0",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801646,
+          "stop" : 1636542801649,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithDefaultRatioAndNoOverride()",
+        "uid" : "255050e9eb83362d",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801521,
+          "stop" : 1636542801522,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromCofigmapWithOrganizationAwareRepositoryKeyAndPort()",
+        "uid" : "61df9c50c90a2e56",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801636,
+          "stop" : 1636542801640,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testCreatePublicClientTwice()",
+        "uid" : "e4393a2df7b8e5fa",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542527755,
+          "stop" : 1636542668021,
+          "duration" : 140266
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolve()",
+        "uid" : "8411b287d17cb18a",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542808058,
+          "stop" : 1636542808059,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testUrlsOnMultiplePorts()",
+        "uid" : "49d4bbef65ab9ad3",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801951,
+          "stop" : 1636542801955,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "minimalDeploymentWithEnvironmentVariables()",
+        "uid" : "bdedfae996aa7d8",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542812275,
+          "stop" : 1636542812411,
+          "duration" : 136
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testAssignRoleToServiceAccount()",
+        "uid" : "74cf1b563d6290af",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542247094,
+          "stop" : 1636542387399,
+          "duration" : 140305
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldFindPreviouslyCreatedServiceAccount()",
+        "uid" : "a8c4e4ddc8c00b4c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542719542,
+          "stop" : 1636542724952,
+          "duration" : 5410
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromCofigmapWithOrganizationAwareRepositoryKey()",
+        "uid" : "4ec52e5cb1e5cf2b",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801654,
+          "stop" : 1636542801658,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldFailWhenThereIsAnImplementationMismatch()",
+        "uid" : "c9c897c95c3ab456",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542813328,
+          "stop" : 1636542813664,
+          "duration" : 336
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "DefaultKubernetesClientForControllersTest",
+        "uid" : "5ecb35cd0b8dfdf7",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542801918,
+          "stop" : 1636542801918,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithDefaultRatio()",
+        "uid" : "5439451a628cc37d",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801315,
+          "stop" : 1636542801316,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "createPersistentVolumeClaimUsingDefaults()",
+        "uid" : "813266b9fbaff501",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "skipped",
+        "time" : {
+          "start" : 1636541941195,
+          "stop" : 1636541941197,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolveProvidedCapabilityFromAccessibleNamespaces()",
+        "uid" : "3fef695e874967d4",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542019817,
+          "stop" : 1636542031605,
+          "duration" : 11788
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "[2] registry.hub.docker.com:50/library/mysql:5:3",
+        "uid" : "f0c70562f9658100",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801760,
+          "stop" : 1636542801763,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateDeploymentWithoutStartupProbeOnK8S15()",
+        "uid" : "e92d5a547387cb",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801447,
+          "stop" : 1636542801487,
+          "duration" : 40
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithDefaultRatioAndNoOverride()",
+        "uid" : "7f516b62ad9fde8",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801085,
+          "stop" : 1636542801087,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldOverwriteControllerConfigMap()",
+        "uid" : "d9b7b2266b1791e8",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542684916,
+          "stop" : 1636542690441,
+          "duration" : 5525
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldProvideSpecifiedCapability()",
+        "uid" : "93bc637a313c3904",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542815315,
+          "stop" : 1636542815603,
+          "duration" : 288
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateAProvidedCapabilityAndWaitForItsStatusToEnterACompletionPhase()",
+        "uid" : "96d92285a15d2",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636541962219,
+          "stop" : 1636541972956,
+          "duration" : 10737
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldFailWhenNoLabelsProvidedForLabeledCapability()",
+        "uid" : "d11bcea77eca3925",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542816225,
+          "stop" : 1636542816281,
+          "duration" : 56
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithProvidedRatio()",
+        "uid" : "eb5a073c30c8e111",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801312,
+          "stop" : 1636542801313,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateDeploymentWithTrueImposeResourceLimitsWillSetResourceLimitsOnCreatedDeployment()",
+        "uid" : "ba160fea1c650bd8",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801327,
+          "stop" : 1636542801350,
+          "duration" : 23
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "createPersistentVolumeClaimWithoutGarbageCollection()",
+        "uid" : "479fd7c41cae133a",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801548,
+          "stop" : 1636542801551,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "createPersistentVolumeClaimWithGivenConfigs()",
+        "uid" : "8b5cdf84f4d7ba11",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636541941316,
+          "stop" : 1636541944333,
+          "duration" : 3017
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldRemoveAndWait()",
+        "uid" : "875570122df32612",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542031649,
+          "stop" : 1636542041156,
+          "duration" : 9507
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromCofigmapWithMultilevelOrganization()",
+        "uid" : "b3951dda7a7ff481",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801620,
+          "stop" : 1636542801624,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldNotReplacePreviouslyCreatedRoleBinding()",
+        "uid" : "2cd95cc53ef87092",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542714033,
+          "stop" : 1636542719540,
+          "duration" : 5507
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testSecurityMode()",
+        "uid" : "ca8aef1638d4886d",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801790,
+          "stop" : 1636542801791,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldRemainConsistentWithManyThreads()",
+        "uid" : "f19a0a95fb3805ff",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "skipped",
+        "time" : {
+          "start" : 1636542724966,
+          "stop" : 1636542724966,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testProbes()",
+        "uid" : "6e7035182662c723",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "skipped",
+        "time" : {
+          "start" : 1636542094283,
+          "stop" : 1636542094283,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testBug()",
+        "uid" : "700d7cf1310d912c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801610,
+          "stop" : 1636542801613,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testPrepareClientWithPermissions()",
+        "uid" : "1898d07cb0d0bfa7",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542105471,
+          "stop" : 1636542247089,
+          "duration" : 141618
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromDefaultPropertiesWhenThereIsAConfigMap()",
+        "uid" : "342e80ba01629cab",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801582,
+          "stop" : 1636542801596,
+          "duration" : 14
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromOverridingPropertiesWhenThereIsAConfigMap()",
+        "uid" : "1876e540994370a6",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801650,
+          "stop" : 1636542801653,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldFailWhenTheCapabilityStatusPhaseIsFailed()",
+        "uid" : "20266f543b364888",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542815608,
+          "stop" : 1636542815879,
+          "duration" : 271
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "[1] registry.hub.docker.com:50:50/library/mysql",
+        "uid" : "a512615b7e4b4cd9",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801742,
+          "stop" : 1636542801752,
+          "duration" : 10
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "[1] related.image.test-image",
+        "uid" : "3be8ba98ba34f676",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801688,
+          "stop" : 1636542801710,
+          "duration" : 22
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateOrReplaceService()",
+        "uid" : "a76211109e6a2cda",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542789170,
+          "stop" : 1636542800883,
+          "duration" : 11713
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithProvidedRatioNoOverride()",
+        "uid" : "72b096dd6cbbb210",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801089,
+          "stop" : 1636542801092,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolveByNameAndNamespace()",
+        "uid" : "2442f8ce1c89a59c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636541984530,
+          "stop" : 1636541996272,
+          "duration" : 11742
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "absoluteMinimalDeployment()",
+        "uid" : "f57a2a8c10282434",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542811838,
+          "stop" : 1636542812047,
+          "duration" : 209
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "[3] related.image.test-entando.test-image",
+        "uid" : "4771945da3d981c",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801718,
+          "stop" : 1636542801722,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithProvidedRatioButWithALimitOverride()",
+        "uid" : "1d247f5e0250fc92",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801094,
+          "stop" : 1636542801103,
+          "duration" : 9
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldReflectChangesThatWerePatchedAfterInitialCreation()",
+        "uid" : "fedcc9a610d0ab39",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542690463,
+          "stop" : 1636542702601,
+          "duration" : 12138
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testCamelCaseToDashDelimited()",
+        "uid" : "d4566432474c46cf",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801979,
+          "stop" : 1636542801981,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides()",
+        "uid" : "cb6837350d3835cb",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801070,
+          "stop" : 1636542801083,
+          "duration" : 13
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testIsClusterScope()",
+        "uid" : "8639594ce3c1b67e",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801783,
+          "stop" : 1636542801788,
+          "duration" : 5
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionFromAnnotations()",
+        "uid" : "866032e680f6f89f",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801603,
+          "stop" : 1636542801605,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testResolutionIgnoredForNonEntandoImages()",
+        "uid" : "3dd2fea01faead6a",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801570,
+          "stop" : 1636542801578,
+          "duration" : 8
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "minimalDeploymentWithoutResourceLimits()",
+        "uid" : "d32c43164eecd925",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542812063,
+          "stop" : 1636542812270,
+          "duration" : 207
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithProvidedRatioNoOverride()",
+        "uid" : "59a961924d5659d8",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801523,
+          "stop" : 1636542801524,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldFailWhenThereIsAScopeMismatch()",
+        "uid" : "fdf1ea4a223c8284",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542813990,
+          "stop" : 1636542814284,
+          "duration" : 294
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldProvideDedicatedCapability()",
+        "uid" : "88ef64e188d2003b",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542815887,
+          "stop" : 1636542816207,
+          "duration" : 320
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldAddHttpPath()",
+        "uid" : "63ea2fed6b79b864",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636542724968,
+          "stop" : 1636542730393,
+          "duration" : 5425
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "exposeSecondPathOnHttpsServiceOverSpecifiedHostName()",
+        "uid" : "8d31a5e23be989cd",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636541944436,
+          "stop" : 1636541946425,
+          "duration" : 1989
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "calculateRequestsWithProvidedRatio()",
+        "uid" : "6cb24c8c5809279",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801240,
+          "stop" : 1636542801252,
+          "duration" : 12
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testRetry()",
+        "uid" : "b35a5a90640567fc",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801995,
+          "stop" : 1636542808013,
+          "duration" : 6018
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldResolveFromNamespaceByLabels()",
+        "uid" : "991d9f8bde7969a7",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "broken",
+        "time" : {
+          "start" : 1636541996288,
+          "stop" : 1636542008169,
+          "duration" : 11881
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testShortenTo63Chars()",
+        "uid" : "7600f4d53b6299c5",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801974,
+          "stop" : 1636542801978,
+          "duration" : 4
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testControllerNameOf()",
+        "uid" : "4ba0552dd6b595de",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801971,
+          "stop" : 1636542801972,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateDeploymentWithFalseImposeResourceLimitsWillNotSetResourceLimitsOnCreatedDeployment()",
+        "uid" : "687095c5670d7ea6",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801424,
+          "stop" : 1636542801446,
+          "duration" : 22
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testVersionResolutionWithProvidedValue()",
+        "uid" : "323e415462a554da",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801641,
+          "stop" : 1636542801644,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testDeploymentType()",
+        "uid" : "e56893dec19463ac",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801779,
+          "stop" : 1636542801782,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreateSecretIfAbsent()",
+        "uid" : "14c98f8798531826",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542668050,
+          "stop" : 1636542674170,
+          "duration" : 6120
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldOverwriteControllerSecret()",
+        "uid" : "af936a448b18fcf9",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542674172,
+          "stop" : 1636542679501,
+          "duration" : 5329
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldProvideNamespaceScopedCapability()",
+        "uid" : "b71b3dd64d316e91",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542814771,
+          "stop" : 1636542815028,
+          "duration" : 257
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testExternalHttpsProvider()",
+        "uid" : "1e3f702dbfe558bf",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801926,
+          "stop" : 1636542801929,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "shouldCreatePersistentVolumeClaimIfAbsent()",
+        "uid" : "374c8d327a189c82",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636541949153,
+          "stop" : 1636541950412,
+          "duration" : 1259
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "testUrlsOnSinglePorts()",
+        "uid" : "499b1f1b20eefa76",
+        "parentUid" : "71a18f28e8444d95a74419d9068c2878",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636542801931,
+          "stop" : 1636542801940,
+          "duration" : 9
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "71a18f28e8444d95a74419d9068c2878"
+    } ],
+    "uid" : "07ea4e52547ec2fb65140ba0afd218c4"
+  } ]
+}

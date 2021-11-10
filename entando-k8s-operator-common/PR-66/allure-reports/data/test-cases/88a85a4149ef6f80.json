@@ -1,0 +1,269 @@
+{
+  "uid" : "88a85a4149ef6f80",
+  "name" : "shouldResolvePreviouslyCreatedNamespaceScopedCapability()",
+  "fullName" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest.shouldResolvePreviouslyCreatedNamespaceScopedCapability",
+  "historyId" : "7c64fc735221332d4911f581d3a331b0",
+  "time" : {
+    "start" : 1636542813669,
+    "stop" : 1636542813979,
+    "duration" : 310
+  },
+  "description" : "Should provide a previously created Capability in the same namespace",
+  "descriptionHtml" : "<p>Should provide a previously created Capability in the same namespace</p>\n",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ {
+    "name" : "beforeEach",
+    "time" : {
+      "start" : 1636542813672,
+      "stop" : 1636542813706,
+      "duration" : 34
+    },
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have registered a CustomResourceDefinition for the resource kind 'TestResource'",
+      "time" : {
+        "start" : 1636542813672,
+        "stop" : 1636542813706,
+        "duration" : 34
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 1,
+    "attachmentsCount" : 0,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  } ],
+  "testStage" : {
+    "description" : "Should provide a previously created Capability in the same namespace",
+    "status" : "passed",
+    "steps" : [ {
+      "name" : "Given I have an TestResource",
+      "time" : {
+        "start" : 1636542813707,
+        "stop" : 1636542813713,
+        "duration" : 6
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "4ff4fffcf6d5b834",
+        "name" : "TestResource",
+        "source" : "4ff4fffcf6d5b834.txt",
+        "type" : "text/plain",
+        "size" : 264
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 1,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "And there is a controller to process requests for the DBMS capability requested",
+      "time" : {
+        "start" : 1636542813713,
+        "stop" : 1636542813713,
+        "duration" : 0
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    }, {
+      "name" : "And I have created a Capability to be usable by others in the same namespace",
+      "time" : {
+        "start" : 1636542813713,
+        "stop" : 1636542813954,
+        "duration" : 241
+      },
+      "status" : "passed",
+      "steps" : [ {
+        "name" : "with the DBMS service 'default-mysql-dbms-in-namespace-service'",
+        "time" : {
+          "start" : 1636542813925,
+          "stop" : 1636542813927,
+          "duration" : 2
+        },
+        "status" : "passed",
+        "steps" : [ ],
+        "attachments" : [ {
+          "uid" : "1be58187e47d86a6",
+          "name" : "DBMS Service",
+          "source" : "1be58187e47d86a6.txt",
+          "type" : "text/plain",
+          "size" : 184
+        } ],
+        "parameters" : [ ],
+        "stepsCount" : 0,
+        "attachmentsCount" : 1,
+        "shouldDisplayMessage" : false,
+        "hasContent" : true
+      }, {
+        "name" : "and the admin secret 'default-mysql-dbms-in-namespace-admin-secret'",
+        "time" : {
+          "start" : 1636542813927,
+          "stop" : 1636542813928,
+          "duration" : 1
+        },
+        "status" : "passed",
+        "steps" : [ ],
+        "attachments" : [ {
+          "uid" : "615139e5a001db3",
+          "name" : "Admin Secret",
+          "source" : "615139e5a001db3.txt",
+          "type" : "text/plain",
+          "size" : 189
+        } ],
+        "parameters" : [ ],
+        "stepsCount" : 0,
+        "attachmentsCount" : 1,
+        "shouldDisplayMessage" : false,
+        "hasContent" : true
+      } ],
+      "attachments" : [ {
+        "uid" : "bdeda9e5db7ef9b8",
+        "name" : "CapabilityRequirement",
+        "source" : "bdeda9e5db7ef9b8.txt",
+        "type" : "text/plain",
+        "size" : 127
+      }, {
+        "uid" : "754ff4a69122c94b",
+        "name" : "CapabilityProvisioningResult",
+        "source" : "754ff4a69122c94b.txt",
+        "type" : "text/plain",
+        "size" : 588
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 2,
+      "attachmentsCount" : 4,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "When I request for my CapabilityRequirement to be fulfilled at either Cluster or Namespace level",
+      "time" : {
+        "start" : 1636542813955,
+        "stop" : 1636542813975,
+        "duration" : 20
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ {
+        "uid" : "6755f32257db6e7d",
+        "name" : "CapabilityRequirement",
+        "source" : "6755f32257db6e7d.txt",
+        "type" : "text/plain",
+        "size" : 139
+      }, {
+        "uid" : "3d14d91a349fa2d3",
+        "name" : "CapabilityProvisioningResult",
+        "source" : "3d14d91a349fa2d3.txt",
+        "type" : "text/plain",
+        "size" : 588
+      } ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 2,
+      "shouldDisplayMessage" : false,
+      "hasContent" : true
+    }, {
+      "name" : "Then I receive a capability that meets my requirements",
+      "time" : {
+        "start" : 1636542813977,
+        "stop" : 1636542813978,
+        "duration" : 1
+      },
+      "status" : "passed",
+      "steps" : [ ],
+      "attachments" : [ ],
+      "parameters" : [ ],
+      "stepsCount" : 0,
+      "attachmentsCount" : 0,
+      "shouldDisplayMessage" : false,
+      "hasContent" : false
+    } ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 7,
+    "attachmentsCount" : 7,
+    "shouldDisplayMessage" : false,
+    "hasContent" : true
+  },
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "tag",
+    "value" : "inner-hexagon"
+  }, {
+    "name" : "tag",
+    "value" : "in-process"
+  }, {
+    "name" : "tag",
+    "value" : "allure"
+  }, {
+    "name" : "tag",
+    "value" : "pre-deployment"
+  }, {
+    "name" : "feature",
+    "value" : "As a controller developer, I would like to have be able to resolve ProvidedCapabilities at different levels of scope so that we can find the optimal balance of reuse of our Capabilities"
+  }, {
+    "name" : "host",
+    "value" : "ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2"
+  }, {
+    "name" : "thread",
+    "value" : "95@ndo-k8s-operator-common-pr-66-pr-2pb24-from-build-pack-7v-bd7f2.ForkJoinPool-1-worker-3(15)"
+  }, {
+    "name" : "framework",
+    "value" : "junit-platform"
+  }, {
+    "name" : "language",
+    "value" : "java"
+  }, {
+    "name" : "package",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "testClass",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "testMethod",
+    "value" : "shouldResolvePreviouslyCreatedNamespaceScopedCapability"
+  }, {
+    "name" : "suite",
+    "value" : "org.entando.kubernetes.controller.AdvancedCapabilityProvisionTest"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ {
+    "name" : "ENG-2284",
+    "url" : "https://entando.myjetbrains.com/youtrack/issue/ENG-2284",
+    "type" : "issue"
+  }, {
+    "name" : "AdvancedCapabilityProvisionTest.java",
+    "url" : "https://github.com/entando-k8s/entando-k8s-operator-common/tree/ENG-2284_removing_cluster_infrastructure/src/test/java/org/entando/kubernetes/controller/AdvancedCapabilityProvisionTest.java",
+    "type" : "source"
+  } ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ "inner-hexagon", "pre-deployment", "allure", "in-process" ]
+  },
+  "source" : "88a85a4149ef6f80.json",
+  "parameterValues" : [ ]
+}

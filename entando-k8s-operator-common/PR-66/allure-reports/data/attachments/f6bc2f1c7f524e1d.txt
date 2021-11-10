@@ -1,0 +1,77 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  labels:
+    entando.org/entando-resource-namespace: "my-namespace"
+    entando.org/deployment: "my-app"
+    TestResource: "my-app"
+    entando.org/entando-resource-kind: "TestResource"
+  name: "my-app-deployment"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "test.org/v1"
+    kind: "TestResource"
+    blockOwnerDeletion: true
+    controller: true
+    name: "my-app"
+    uid: "dde1efae-f3bf-4679-bdee-5be9f8086602"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      entando.org/entando-resource-namespace: "my-namespace"
+      entando.org/deployment: "my-app"
+      TestResource: "my-app"
+      entando.org/entando-resource-kind: "TestResource"
+  template:
+    metadata:
+      labels:
+        entando.org/entando-resource-namespace: "my-namespace"
+        entando.org/deployment: "my-app"
+        TestResource: "my-app"
+        entando.org/entando-resource-kind: "TestResource"
+      name: "my-app-pod"
+    spec:
+      containers:
+      - env:
+        - name: "CONNECTION_CONFIG_ROOT"
+          value: "/etc/entando/secrets"
+        image: "registry.hub.docker.com/test/my-image:6.3.2"
+        imagePullPolicy: "IfNotPresent"
+        livenessProbe:
+          failureThreshold: 1
+          periodSeconds: 10
+          tcpSocket:
+            host: "localhost"
+            port: 8081
+          timeoutSeconds: 3
+        name: "server-container"
+        ports:
+        - containerPort: 8081
+          name: "server-port"
+          protocol: "TCP"
+        readinessProbe:
+          failureThreshold: 1
+          periodSeconds: 10
+          tcpSocket:
+            host: "localhost"
+            port: 8081
+          timeoutSeconds: 5
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "125m"
+        startupProbe:
+          failureThreshold: 11
+          periodSeconds: 12
+          tcpSocket:
+            host: "localhost"
+            port: 8081
+          timeoutSeconds: 5
+      dnsPolicy: "ClusterFirst"
+      restartPolicy: "Always"
+      serviceAccountName: "default"

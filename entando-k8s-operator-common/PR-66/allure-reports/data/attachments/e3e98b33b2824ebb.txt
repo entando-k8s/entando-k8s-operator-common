@@ -1,0 +1,10 @@
+---
+mixins: []
+capability: "DBMS"
+implementation: "MYSQL"
+capabilityParameters: {}
+resolutionScopePreference:
+- "LABELED"
+selector:
+  Environment: "Stage"
+provisioningStrategy: "DEPLOY_DIRECTLY"

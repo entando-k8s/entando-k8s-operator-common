@@ -1,0 +1,101 @@
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  labels:
+    entando.org/entando-resource-namespace: "my-namespace"
+    entando.org/deployment-qualifier: "main"
+    entando.org/job-kind: "db-preparation-job"
+    TestResource: "my-app"
+    entando.org/entando-resource-kind: "TestResource"
+  name: "my-app-dbprep-1985"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "test.org/v1"
+    kind: "TestResource"
+    blockOwnerDeletion: true
+    controller: true
+    name: "my-app"
+    uid: "c865c538-0e27-42fb-8015-58e2f5638063"
+spec:
+  containers:
+  - image: "registry.hub.docker.com/entando/busybox:latest"
+    name: "dummy"
+  initContainers:
+  - env:
+    - name: "DATABASE_SERVER_HOST"
+      value: "default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local"
+    - name: "DATABASE_SERVER_PORT"
+      value: "5432"
+    - name: "DATABASE_ADMIN_USER"
+      valueFrom:
+        secretKeyRef:
+          key: "username"
+          name: "default-postgresql-dbms-in-namespace-admin-secret"
+          optional: false
+    - name: "DATABASE_ADMIN_PASSWORD"
+      valueFrom:
+        secretKeyRef:
+          key: "password"
+          name: "default-postgresql-dbms-in-namespace-admin-secret"
+          optional: false
+    - name: "DATABASE_NAME"
+      value: "my_db"
+    - name: "DATABASE_VENDOR"
+      value: "postgresql"
+    - name: "DATABASE_SCHEMA_COMMAND"
+      value: "CREATE_SCHEMA"
+    - name: "DATABASE_USER"
+      valueFrom:
+        secretKeyRef:
+          key: "username"
+          name: "my-app-server-secret"
+          optional: false
+    - name: "DATABASE_PASSWORD"
+      valueFrom:
+        secretKeyRef:
+          key: "password"
+          name: "my-app-server-secret"
+          optional: false
+    image: "registry.hub.docker.com/entando/entando-k8s-dbjob:latest"
+    imagePullPolicy: "IfNotPresent"
+    name: "my-app-server-schema-creation-job"
+  - command:
+    - "java"
+    - "-jar"
+    - "/deployments/myapp.jar"
+    - "--prepare-db"
+    env:
+    - name: "SPRING_DATASOURCE_USERNAME"
+      valueFrom:
+        secretKeyRef:
+          key: "username"
+          name: "my-app-server-secret"
+          optional: false
+    - name: "SPRING_DATASOURCE_PASSWORD"
+      valueFrom:
+        secretKeyRef:
+          key: "password"
+          name: "my-app-server-secret"
+          optional: false
+    - name: "SPRING_DATASOURCE_URL"
+      value: "jdbc:postgresql://default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local:5432/my_db"
+    - name: "SPRING_JPA_DATABASE_PLATFORM"
+      value: "org.hibernate.dialect.PostgreSQLDialect"
+    image: "registry.hub.docker.com/test/my-spring-boot-image:6.3.2"
+    imagePullPolicy: "IfNotPresent"
+    name: "my-app-server-db-population-job"
+  restartPolicy: "Never"
+status:
+  containerStatuses:
+  - state:
+      terminated:
+        exitCode: 0
+  initContainerStatuses:
+  - state:
+      terminated:
+        exitCode: 0
+  - state:
+      terminated:
+        exitCode: 0
+  phase: "Failed"

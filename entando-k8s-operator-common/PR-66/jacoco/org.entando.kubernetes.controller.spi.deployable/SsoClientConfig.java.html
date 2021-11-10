@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SsoClientConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.deployable</a> &gt; <span class="el_source">SsoClientConfig.java</span></div><h1>SsoClientConfig.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.deployable;
+
+import static java.util.Optional.ofNullable;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.util.ArrayList;
+import java.util.List;
+import org.entando.kubernetes.model.common.ExpectedRole;
+import org.entando.kubernetes.model.common.Permission;
+
+@JsonSerialize
+@JsonDeserialize
+@JsonInclude(Include.NON_NULL)
+@JsonAutoDetect(
+        fieldVisibility = Visibility.ANY,
+        isGetterVisibility = Visibility.NONE,
+        getterVisibility = Visibility.NONE,
+        setterVisibility = Visibility.NONE
+)
+public class SsoClientConfig {
+
+    private final String realm;
+    private final String clientId;
+    private final String clientName;
+    private final List&lt;ExpectedRole&gt; roles;
+    private final List&lt;Permission&gt; permissions;
+<span class="fc" id="L50">    private List&lt;String&gt; redirectUri = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L51">    private List&lt;String&gt; webOrigins = new ArrayList&lt;&gt;();</span>
+
+    @JsonCreator
+    public SsoClientConfig(@JsonProperty(&quot;realm&quot;) String realm,
+            @JsonProperty(&quot;clientId&quot;) String clientId,
+            @JsonProperty(&quot;clientName&quot;) String clientName,
+            @JsonProperty(&quot;roles&quot;) List&lt;ExpectedRole&gt; roles,
+<span class="fc" id="L58">            @JsonProperty(&quot;permissions&quot;) List&lt;Permission&gt; permissions) {</span>
+<span class="fc" id="L59">        this.realm = realm;</span>
+<span class="fc" id="L60">        this.clientId = clientId;</span>
+<span class="fc" id="L61">        this.clientName = clientName;</span>
+<span class="fc" id="L62">        this.roles = ofNullable(roles).map(ArrayList::new).orElseGet(ArrayList::new);</span>
+<span class="fc" id="L63">        this.permissions = ofNullable(permissions).map(ArrayList::new).orElseGet(ArrayList::new);</span>
+<span class="fc" id="L64">    }</span>
+
+    public SsoClientConfig(String realm, String clientId, String clientName) {
+<span class="fc" id="L67">        this(realm, clientId, clientName, null, null);</span>
+<span class="fc" id="L68">    }</span>
+
+    public SsoClientConfig withRedirectUri(String redirectUri) {
+<span class="fc" id="L71">        this.redirectUri.add(redirectUri);</span>
+<span class="fc" id="L72">        return this;</span>
+    }
+
+    public SsoClientConfig withWebOrigin(String webOrigin) {
+<span class="fc" id="L76">        this.webOrigins.add(webOrigin);</span>
+<span class="fc" id="L77">        return this;</span>
+    }
+
+    public List&lt;ExpectedRole&gt; getRoles() {
+<span class="nc" id="L81">        return roles;</span>
+    }
+
+    public List&lt;Permission&gt; getPermissions() {
+<span class="nc" id="L85">        return permissions;</span>
+    }
+
+    public String getClientId() {
+<span class="fc" id="L89">        return clientId;</span>
+    }
+
+    public String getClientName() {
+<span class="nc" id="L93">        return clientName;</span>
+    }
+
+    public String getRealm() {
+<span class="fc" id="L97">        return realm;</span>
+    }
+
+    public SsoClientConfig withPermission(String clientId, String role) {
+<span class="nc" id="L101">        permissions.add(new Permission(clientId, role));</span>
+<span class="nc" id="L102">        return this;</span>
+    }
+
+    public SsoClientConfig withRole(String role) {
+<span class="nc" id="L106">        roles.add(new ExpectedRole(role));</span>
+<span class="nc" id="L107">        return this;</span>
+    }
+
+    public List&lt;String&gt; getRedirectUris() {
+<span class="nc" id="L111">        return redirectUri;</span>
+    }
+
+    public List&lt;String&gt; getWebOrigins() {
+<span class="nc" id="L115">        return webOrigins;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

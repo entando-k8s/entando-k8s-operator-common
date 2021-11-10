@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrustStoreHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.common</a> &gt; <span class="el_source">TrustStoreHelper.java</span></div><h1>TrustStoreHelper.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.common;
+
+import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
+
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Base64;
+import java.util.Map;
+import java.util.Map.Entry;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
+public final class TrustStoreHelper {
+
+    public static final String DEFAULT_TRUSTSTORE_SECRET = &quot;entando-default-truststore&quot;;
+    public static final String CERT_SECRET_MOUNT_ROOT = &quot;/etc/entando/certs&quot;;
+    public static final String TRUSTSTORE_SETTINGS_KEY = &quot;TRUSTSTORE_SETTINGS&quot;;
+    public static final String TRUST_STORE_FILE = &quot;store.jks&quot;;
+<span class="fc" id="L53">    public static final String TRUST_STORE_PATH =</span>
+            CERT_SECRET_MOUNT_ROOT + File.separatorChar + DEFAULT_TRUSTSTORE_SECRET + File.separatorChar + TRUST_STORE_FILE;
+    public static final String JAVA_TOOL_OPTIONS = &quot;JAVA_TOOL_OPTIONS&quot;;
+
+    private TrustStoreHelper() {
+    }
+
+    @SuppressWarnings(&quot;squid:S2068&quot;)//Because it is not a hardcoded password
+    public static Secret newTrustStoreSecret(Secret caCertSecret) {
+<span class="fc" id="L62">        char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();</span>
+<span class="fc" id="L63">        return new SecretBuilder()</span>
+<span class="fc" id="L64">                .withNewMetadata()</span>
+<span class="fc" id="L65">                .withNamespace(caCertSecret.getMetadata().getNamespace())</span>
+<span class="fc" id="L66">                .withName(DEFAULT_TRUSTSTORE_SECRET)</span>
+<span class="fc" id="L67">                .endMetadata()</span>
+<span class="fc" id="L68">                .addToData(TRUST_STORE_FILE, buildBase64TrustStoreFrom(caCertSecret, trustStorePassword))</span>
+<span class="fc" id="L69">                .addToStringData(</span>
+                        TRUSTSTORE_SETTINGS_KEY,
+<span class="fc" id="L71">                        format(&quot;-Djavax.net.ssl.trustStore=%s -Djavax.net.ssl.trustStorePassword=%s&quot;, TRUST_STORE_PATH,</span>
+                                new String(trustStorePassword)))
+<span class="fc" id="L73">                .build();</span>
+    }
+
+    public static void trustCertificateAuthoritiesIn(Secret secret) {
+<span class="nc" id="L77">        ofNullable(secret).flatMap(present -&gt; ofNullable(present.getData())).ifPresent(data -&gt;</span>
+<span class="nc" id="L78">                safely(() -&gt; {</span>
+<span class="nc" id="L79">                    char[] trustStorePassword = SecretUtils.randomAlphanumeric(20).toCharArray();</span>
+<span class="nc" id="L80">                    KeyStore keyStore = buildKeystoreFrom(data);</span>
+                    Path tempFile = Files
+<span class="nc" id="L82">                            .createTempFile(Path.of(EntandoOperatorSpiConfig.getSafeTempFileDirectory()), &quot;trust-store&quot;, &quot;.jks&quot;);</span>
+<span class="nc" id="L83">                    try (OutputStream stream = Files.newOutputStream(tempFile)) {</span>
+<span class="nc" id="L84">                        keyStore.store(stream, trustStorePassword);</span>
+                    }
+<span class="nc" id="L86">                    System.setProperty(&quot;javax.net.ssl.trustStore&quot;, tempFile.normalize().toAbsolutePath().toString());</span>
+<span class="nc" id="L87">                    System.setProperty(&quot;javax.net.ssl.trustStorePassword&quot;, new String(trustStorePassword));</span>
+<span class="nc" id="L88">                    return null;</span>
+                }));
+<span class="nc" id="L90">    }</span>
+
+    private static &lt;T&gt; T safely(ExceptionSafe&lt;T&gt; t) {
+        try {
+<span class="fc" id="L94">            return t.invoke();</span>
+<span class="nc" id="L95">        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {</span>
+<span class="nc" id="L96">            throw new IllegalStateException(e);</span>
+        }
+    }
+
+    interface ExceptionSafe&lt;T&gt; {
+
+        T invoke() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException;
+    }
+
+    private static String buildBase64TrustStoreFrom(Secret caSecret, char[] trustStorePassword) {
+<span class="fc" id="L106">        return safely(() -&gt; {</span>
+<span class="fc" id="L107">            KeyStore keyStore = buildKeystoreFrom(caSecret.getData());</span>
+<span class="fc" id="L108">            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {</span>
+<span class="fc" id="L109">                keyStore.store(outputStream, trustStorePassword);</span>
+<span class="fc" id="L110">                return new String(Base64.getEncoder().encode(outputStream.toByteArray()), StandardCharsets.UTF_8);</span>
+            }
+        });
+    }
+
+    private static KeyStore buildKeystoreFrom(Map&lt;String, String&gt; certs)
+            throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+        //NB!!! this keystore is accessed across different JVM versions and platforms. JKS has proven to be the most portable.
+<span class="fc" id="L118">        KeyStore keyStore = KeyStore.getInstance(&quot;jks&quot;);</span>
+<span class="fc" id="L119">        keyStore.load(null, null);</span>
+<span class="fc" id="L120">        certs.entrySet().forEach(cert -&gt; importCert(keyStore, cert));</span>
+<span class="fc" id="L121">        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(&quot;PKIX&quot;);</span>
+<span class="fc" id="L122">        trustManagerFactory.init((KeyStore) null);</span>
+<span class="fc" id="L123">        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();</span>
+<span class="fc" id="L124">        X509TrustManager trustManager = (X509TrustManager) trustManagers[0];</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        for (X509Certificate certificate : trustManager.getAcceptedIssuers()) {</span>
+<span class="fc" id="L126">            keyStore.setCertificateEntry(certificate.getSubjectX500Principal().getName(), certificate);</span>
+        }
+<span class="fc" id="L128">        return keyStore;</span>
+    }
+
+    private static void importCert(KeyStore keyStore, Entry&lt;String, String&gt; entry) {
+<span class="fc" id="L132">        safely(() -&gt; {</span>
+<span class="fc" id="L133">            try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(entry.getValue()))) {</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">                for (Certificate cert : CertificateFactory.getInstance(&quot;x.509&quot;).generateCertificates(stream)) {</span>
+<span class="fc" id="L135">                    keyStore.setCertificateEntry(entry.getKey(), cert);</span>
+<span class="fc" id="L136">                }</span>
+            }
+<span class="fc" id="L138">            return null;</span>
+        });
+<span class="fc" id="L140">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

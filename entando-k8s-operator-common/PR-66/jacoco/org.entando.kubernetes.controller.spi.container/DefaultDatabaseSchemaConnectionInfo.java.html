@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultDatabaseSchemaConnectionInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.container</a> &gt; <span class="el_source">DefaultDatabaseSchemaConnectionInfo.java</span></div><h1>DefaultDatabaseSchemaConnectionInfo.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.container;
+
+import io.fabric8.kubernetes.api.model.EnvVarSource;
+import io.fabric8.kubernetes.api.model.Secret;
+import org.entando.kubernetes.controller.spi.common.SecretUtils;
+import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
+
+public class DefaultDatabaseSchemaConnectionInfo implements DatabaseSchemaConnectionInfo {
+
+    private final DatabaseConnectionInfo databaseConnectionInfo;
+    private final String schemaName;
+    private final Secret schemaSecret;
+
+<span class="fc" id="L30">    public DefaultDatabaseSchemaConnectionInfo(DatabaseConnectionInfo databaseConnectionInfo, String schemaName, Secret schemaSecret) {</span>
+<span class="fc" id="L31">        this.databaseConnectionInfo = databaseConnectionInfo;</span>
+<span class="fc" id="L32">        this.schemaName = schemaName;</span>
+<span class="fc" id="L33">        this.schemaSecret = schemaSecret;</span>
+<span class="fc" id="L34">    }</span>
+
+    @Override
+    public String getSchemaSecretName() {
+<span class="fc" id="L38">        return schemaSecret.getMetadata().getName();</span>
+    }
+
+    @Override
+    public String getJdbcUrl() {
+<span class="fc" id="L43">        return getDatabaseServiceResult().getVendor().getConnectionStringBuilder()</span>
+<span class="fc" id="L44">                .toHost(databaseConnectionInfo.getInternalServiceHostname())</span>
+<span class="fc" id="L45">                .onPort(databaseConnectionInfo.getPort())</span>
+<span class="fc" id="L46">                .usingDatabase(</span>
+<span class="fc" id="L47">                        getDatabaseServiceResult().getDatabaseName()).usingSchema(schemaName)</span>
+<span class="fc" id="L48">                .usingParameters(this.databaseConnectionInfo.getJdbcParameters())</span>
+<span class="fc" id="L49">                .buildJdbcConnectionString();</span>
+    }
+
+    @Override
+    public String getDatabaseNameToUse() {
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (getDatabaseServiceResult().getVendor().schemaIsDatabase()) {</span>
+<span class="nc" id="L55">            return getSchemaName();</span>
+        } else {
+<span class="fc" id="L57">            return this.databaseConnectionInfo.getDatabaseName();</span>
+        }
+    }
+
+    public DatabaseConnectionInfo getDatabaseServiceResult() {
+<span class="fc" id="L62">        return databaseConnectionInfo;</span>
+    }
+
+    @Override
+    public String getSchemaName() {
+<span class="fc" id="L67">        return schemaName;</span>
+    }
+
+    @Override
+    public EnvVarSource getPasswordRef() {
+<span class="fc" id="L72">        return SecretUtils.secretKeyRef(getSchemaSecretName(), SecretUtils.PASSSWORD_KEY);</span>
+    }
+
+    @Override
+    public EnvVarSource getUsernameRef() {
+<span class="fc" id="L77">        return SecretUtils.secretKeyRef(getSchemaSecretName(), SecretUtils.USERNAME_KEY);</span>
+    }
+
+    public Secret getSchemaSecret() {
+<span class="fc" id="L81">        return this.schemaSecret;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

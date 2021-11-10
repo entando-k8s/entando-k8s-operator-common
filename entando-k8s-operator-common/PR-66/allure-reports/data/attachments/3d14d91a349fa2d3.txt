@@ -1,0 +1,24 @@
+---
+mixins:
+- "CapabilityProvisioningResult"
+providedCapability:
+  apiVersion: "entando.org/v1"
+  kind: "ProvidedCapability"
+  metadata:
+    name: "default-mysql-dbms-in-namespace"
+    namespace: "my-app-namespace"
+  isCustomResource: true
+service:
+  apiVersion: "v1"
+  kind: "Service"
+  metadata:
+    name: "default-mysql-dbms-in-namespace-service"
+    namespace: "my-app-namespace"
+  isCustomResource: false
+adminSecret:
+  apiVersion: "v1"
+  kind: "Secret"
+  metadata:
+    name: "default-mysql-dbms-in-namespace-admin-secret"
+    namespace: "my-app-namespace"
+  isCustomResource: false

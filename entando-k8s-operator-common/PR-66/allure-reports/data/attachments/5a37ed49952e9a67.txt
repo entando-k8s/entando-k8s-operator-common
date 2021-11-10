@@ -1,0 +1,31 @@
+---
+ingress:
+  apiVersion: "extensions/v1beta1"
+  kind: "Ingress"
+  metadata:
+    name: "my-app-sso-ingress"
+    namespace: "my-app-namespace"
+  isCustomResource: false
+mixins:
+- "CapabilityProvisioningResult"
+providedCapability:
+  apiVersion: "entando.org/v1"
+  kind: "ProvidedCapability"
+  metadata:
+    name: "my-app-sso"
+    namespace: "my-app-namespace"
+  isCustomResource: true
+service:
+  apiVersion: "v1"
+  kind: "Service"
+  metadata:
+    name: "my-app-sso-service"
+    namespace: "my-app-namespace"
+  isCustomResource: false
+adminSecret:
+  apiVersion: "v1"
+  kind: "Secret"
+  metadata:
+    name: "my-app-sso-admin-secret"
+    namespace: "my-app-namespace"
+  isCustomResource: false

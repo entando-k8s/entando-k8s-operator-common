@@ -1,0 +1,6 @@
+---
+capability: "sso"
+implementation: "keycloak"
+resolutionScopePreference:
+- "Dedicated"
+provisioningStrategy: "DeployDirectly"

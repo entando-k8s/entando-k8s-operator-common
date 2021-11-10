@@ -1,0 +1,25 @@
+---
+ingressNamespace: "my-namespace"
+mixins:
+- "Deployable"
+- "IngressingDeployable"
+- "PublicIngressingDeployable"
+- "Secretive"
+- "SsoAwareDeployable"
+defaultServiceAccountName: "default"
+ingressRequired: true
+ingressName: "my-app-ingress"
+replicas: 1
+ingressHostName: "myhost.com"
+containers: []
+secrets: []
+serviceAccountToUse: "default"
+tlsSecretName: "test-tls-secret"
+ssoClientConfig:
+  realm: "my-realm"
+  clientId: "my-client"
+  clientName: "my-client"
+  roles: []
+  permissions: []
+  redirectUri: []
+  webOrigins: []

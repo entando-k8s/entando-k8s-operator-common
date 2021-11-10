@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SupportedCommand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Entando K8S Operator Common Library</a> &gt; <a href="index.source.html" class="el_package">org.entando.kubernetes.controller.spi.command</a> &gt; <span class="el_source">SupportedCommand.java</span></div><h1>SupportedCommand.java</h1><pre class="source lang-java linenums">/*
+ *
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ *  This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ */
+
+package org.entando.kubernetes.controller.spi.command;
+
+<span class="fc" id="L19">public enum SupportedCommand {</span>
+<span class="fc" id="L20">    PROCESS_DEPLOYABLE(&quot;Input Deployable&quot;, &quot;Ouput DeploymentResult&quot;), PROVIDE_CAPABILITY(&quot;Required Capability&quot;, &quot;Provided Capability&quot;);</span>
+
+    private final String inputName;
+    private final String outputName;
+
+<span class="fc" id="L25">    SupportedCommand(String inputName, String outputName) {</span>
+
+<span class="fc" id="L27">        this.inputName = inputName;</span>
+<span class="fc" id="L28">        this.outputName = outputName;</span>
+<span class="fc" id="L29">    }</span>
+
+    public String getInputName() {
+<span class="fc" id="L32">        return inputName;</span>
+    }
+
+    public String getOutputName() {
+<span class="fc" id="L36">        return outputName;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

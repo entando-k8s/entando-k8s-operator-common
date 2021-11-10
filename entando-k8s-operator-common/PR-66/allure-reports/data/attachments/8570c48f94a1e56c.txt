@@ -1,0 +1,31 @@
+---
+apiVersion: "extensions/v1beta1"
+kind: "Ingress"
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    entando.org/my-app-server-path: "/my-app"
+  labels:
+    TestResource: "my-app"
+  name: "my-app-ingress"
+  namespace: "my-namespace"
+  ownerReferences:
+  - apiVersion: "test.org/v1"
+    kind: "TestResource"
+    blockOwnerDeletion: true
+    controller: true
+    name: "my-app"
+    uid: "107e414b-7539-4335-b6e6-114fd8964f5c"
+spec:
+  rules:
+  - host: "myhost.com"
+    http:
+      paths:
+      - backend:
+          serviceName: "my-app-service"
+          servicePort: 8081
+        path: "/my-app"
+  tls:
+  - hosts:
+    - "myhost.com"
+    secretName: "test-tls-secret"

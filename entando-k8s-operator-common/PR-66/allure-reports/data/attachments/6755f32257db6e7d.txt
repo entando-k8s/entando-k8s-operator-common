@@ -1,0 +1,7 @@
+---
+capability: "dbms"
+implementation: "mysql"
+resolutionScopePreference:
+- "Cluster"
+- "Namespace"
+provisioningStrategy: "DeployDirectly"

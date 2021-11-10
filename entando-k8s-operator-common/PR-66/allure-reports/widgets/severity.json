@@ -1,0 +1,1291 @@
+[ {
+  "uid" : "5224350aa578e5d6",
+  "name" : "shouldProvideClusterScopeCapability()",
+  "time" : {
+    "start" : 1636542815033,
+    "stop" : 1636542815307,
+    "duration" : 274
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "4ef34a017bd180ce",
+  "name" : "[4] RELATED_IMAGE_TEST_ENTANDO_TEST_IMAGE",
+  "time" : {
+    "start" : 1636542801724,
+    "stop" : 1636542801727,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "fedcc9a610d0ab39",
+  "name" : "shouldReflectChangesThatWerePatchedAfterInitialCreation()",
+  "time" : {
+    "start" : 1636542690463,
+    "stop" : 1636542702601,
+    "duration" : 12138
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "88ef64e188d2003b",
+  "name" : "shouldProvideDedicatedCapability()",
+  "time" : {
+    "start" : 1636542815887,
+    "stop" : 1636542816207,
+    "duration" : 320
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "700d7cf1310d912c",
+  "name" : "testBug()",
+  "time" : {
+    "start" : 1636542801610,
+    "stop" : 1636542801613,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "cb6837350d3835cb",
+  "name" : "calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides()",
+  "time" : {
+    "start" : 1636542801070,
+    "stop" : 1636542801083,
+    "duration" : 13
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "ca8aef1638d4886d",
+  "name" : "testSecurityMode()",
+  "time" : {
+    "start" : 1636542801790,
+    "stop" : 1636542801791,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f19a0a95fb3805ff",
+  "name" : "shouldRemainConsistentWithManyThreads()",
+  "time" : {
+    "start" : 1636542724966,
+    "stop" : 1636542724966,
+    "duration" : 0
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "499b1f1b20eefa76",
+  "name" : "testUrlsOnSinglePorts()",
+  "time" : {
+    "start" : 1636542801931,
+    "stop" : 1636542801940,
+    "duration" : 9
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "1d247c9efe8c7ff0",
+  "name" : "testResolutionFromCofigmapWithDifferentRepository()",
+  "time" : {
+    "start" : 1636542801646,
+    "stop" : 1636542801649,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "255050e9eb83362d",
+  "name" : "calculateRequestsWithDefaultRatioAndNoOverride()",
+  "time" : {
+    "start" : 1636542801521,
+    "stop" : 1636542801522,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b3951dda7a7ff481",
+  "name" : "testResolutionFromCofigmapWithMultilevelOrganization()",
+  "time" : {
+    "start" : 1636542801620,
+    "stop" : 1636542801624,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "eb5a073c30c8e111",
+  "name" : "calculateRequestsWithProvidedRatio()",
+  "time" : {
+    "start" : 1636542801312,
+    "stop" : 1636542801313,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "72b096dd6cbbb210",
+  "name" : "calculateRequestsWithProvidedRatioNoOverride()",
+  "time" : {
+    "start" : 1636542801089,
+    "stop" : 1636542801092,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8463be093d6f14a3",
+  "name" : "testStandardClusterRoles()",
+  "time" : {
+    "start" : 1636542801169,
+    "stop" : 1636542801174,
+    "duration" : 5
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "e4393a2df7b8e5fa",
+  "name" : "testCreatePublicClientTwice()",
+  "time" : {
+    "start" : 1636542527755,
+    "stop" : 1636542668021,
+    "duration" : 140266
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "61df9c50c90a2e56",
+  "name" : "testResolutionFromCofigmapWithOrganizationAwareRepositoryKeyAndPort()",
+  "time" : {
+    "start" : 1636542801636,
+    "stop" : 1636542801640,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "2a3076a250a9fe6f",
+  "name" : "shouldWaitForPreviouslyStartedPod()",
+  "time" : {
+    "start" : 1636542041159,
+    "stop" : 1636542061194,
+    "duration" : 20035
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "74cf1b563d6290af",
+  "name" : "testAssignRoleToServiceAccount()",
+  "time" : {
+    "start" : 1636542247094,
+    "stop" : 1636542387399,
+    "duration" : 140305
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "f9c2280a70b07794",
+  "name" : "shouldThrowTimeoutException()",
+  "time" : {
+    "start" : 1636542031622,
+    "stop" : 1636542031622,
+    "duration" : 0
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "342e80ba01629cab",
+  "name" : "testResolutionFromDefaultPropertiesWhenThereIsAConfigMap()",
+  "time" : {
+    "start" : 1636542801582,
+    "stop" : 1636542801596,
+    "duration" : 14
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b71b3dd64d316e91",
+  "name" : "shouldProvideNamespaceScopedCapability()",
+  "time" : {
+    "start" : 1636542814771,
+    "stop" : 1636542815028,
+    "duration" : 257
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "1771dbc0c593a070",
+  "name" : "shouldFailWhenNoReferenceSpecifiedForSpecifiedCapability()",
+  "time" : {
+    "start" : 1636542814726,
+    "stop" : 1636542814767,
+    "duration" : 41
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "813266b9fbaff501",
+  "name" : "createPersistentVolumeClaimUsingDefaults()",
+  "time" : {
+    "start" : 1636541941195,
+    "stop" : 1636541941197,
+    "duration" : 2
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "b09a56f9c8c1b5c7",
+  "name" : "calculateRequestsWithDefaultRatio()",
+  "time" : {
+    "start" : 1636542801255,
+    "stop" : 1636542801256,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "866032e680f6f89f",
+  "name" : "testResolutionFromAnnotations()",
+  "time" : {
+    "start" : 1636542801603,
+    "stop" : 1636542801605,
+    "duration" : 2
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "20266f543b364888",
+  "name" : "shouldFailWhenTheCapabilityStatusPhaseIsFailed()",
+  "time" : {
+    "start" : 1636542815608,
+    "stop" : 1636542815879,
+    "duration" : 271
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "5ecb35cd0b8dfdf7",
+  "name" : "DefaultKubernetesClientForControllersTest",
+  "time" : {
+    "start" : 1636542801918,
+    "stop" : 1636542801918,
+    "duration" : 0
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "bc31cee816687921",
+  "name" : "requestSsoCapabilityOnDemandAndConnectToIt()",
+  "time" : {
+    "start" : 1636542808085,
+    "stop" : 1636542808631,
+    "duration" : 546
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "bdedfae996aa7d8",
+  "name" : "minimalDeploymentWithEnvironmentVariables()",
+  "time" : {
+    "start" : 1636542812275,
+    "stop" : 1636542812411,
+    "duration" : 136
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "749b35ab7ac801",
+  "name" : "minimalDeploymentThatFailsToStartSuccessfully()",
+  "time" : {
+    "start" : 1636542811502,
+    "stop" : 1636542811823,
+    "duration" : 321
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "59a961924d5659d8",
+  "name" : "calculateRequestsWithProvidedRatioNoOverride()",
+  "time" : {
+    "start" : 1636542801523,
+    "stop" : 1636542801524,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "7600f4d53b6299c5",
+  "name" : "testShortenTo63Chars()",
+  "time" : {
+    "start" : 1636542801974,
+    "stop" : 1636542801978,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "93bc637a313c3904",
+  "name" : "shouldProvideSpecifiedCapability()",
+  "time" : {
+    "start" : 1636542815315,
+    "stop" : 1636542815603,
+    "duration" : 288
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8ac210a4926efb49",
+  "name" : "dbawareDeploymentFailsWhenDatabasePreparationFailed()",
+  "time" : {
+    "start" : 1636542809344,
+    "stop" : 1636542810169,
+    "duration" : 825
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "d087548af6ac1f9c",
+  "name" : "calculateRequestsWithDefaultRatioButWithALimitOverride()",
+  "time" : {
+    "start" : 1636542801502,
+    "stop" : 1636542801506,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "e92d5a547387cb",
+  "name" : "shouldCreateDeploymentWithoutStartupProbeOnK8S15()",
+  "time" : {
+    "start" : 1636542801447,
+    "stop" : 1636542801487,
+    "duration" : 40
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "96d92285a15d2",
+  "name" : "shouldCreateAProvidedCapabilityAndWaitForItsStatusToEnterACompletionPhase()",
+  "time" : {
+    "start" : 1636541962219,
+    "stop" : 1636541972956,
+    "duration" : 10737
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "b848d7665550def9",
+  "name" : "testCreatePublicClient()",
+  "time" : {
+    "start" : 1636542387414,
+    "stop" : 1636542527752,
+    "duration" : 140338
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "6e7035182662c723",
+  "name" : "testProbes()",
+  "time" : {
+    "start" : 1636542094283,
+    "stop" : 1636542094283,
+    "duration" : 0
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "4771945da3d981c",
+  "name" : "[3] related.image.test-entando.test-image",
+  "time" : {
+    "start" : 1636542801718,
+    "stop" : 1636542801722,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "d11bcea77eca3925",
+  "name" : "shouldFailWhenNoLabelsProvidedForLabeledCapability()",
+  "time" : {
+    "start" : 1636542816225,
+    "stop" : 1636542816281,
+    "duration" : 56
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "479fd7c41cae133a",
+  "name" : "createPersistentVolumeClaimWithoutGarbageCollection()",
+  "time" : {
+    "start" : 1636542801548,
+    "stop" : 1636542801551,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "4ba0552dd6b595de",
+  "name" : "testControllerNameOf()",
+  "time" : {
+    "start" : 1636542801971,
+    "stop" : 1636542801972,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "a8292befdf65977d",
+  "name" : "testHttpsUrls()",
+  "time" : {
+    "start" : 1636542801942,
+    "stop" : 1636542801945,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "a512615b7e4b4cd9",
+  "name" : "[1] registry.hub.docker.com:50:50/library/mysql",
+  "time" : {
+    "start" : 1636542801742,
+    "stop" : 1636542801752,
+    "duration" : 10
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3bfcd06c2d82958c",
+  "name" : "minimalDeploymentThatFailsOnStatusUpdate()",
+  "time" : {
+    "start" : 1636542811496,
+    "stop" : 1636542811496,
+    "duration" : 0
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "289bfe418f92915b",
+  "name" : "shouldRunPodToCompletion()",
+  "time" : {
+    "start" : 1636542061198,
+    "stop" : 1636542094281,
+    "duration" : 33083
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "88a85a4149ef6f80",
+  "name" : "shouldResolvePreviouslyCreatedNamespaceScopedCapability()",
+  "time" : {
+    "start" : 1636542813669,
+    "stop" : 1636542813979,
+    "duration" : 310
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "1876e540994370a6",
+  "name" : "testResolutionFromOverridingPropertiesWhenThereIsAConfigMap()",
+  "time" : {
+    "start" : 1636542801650,
+    "stop" : 1636542801653,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "49d4bbef65ab9ad3",
+  "name" : "testUrlsOnMultiplePorts()",
+  "time" : {
+    "start" : 1636542801951,
+    "stop" : 1636542801955,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3be8ba98ba34f676",
+  "name" : "[1] related.image.test-image",
+  "time" : {
+    "start" : 1636542801688,
+    "stop" : 1636542801710,
+    "duration" : 22
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b3eefbda74e13b57",
+  "name" : "exposeHttpsServiceOverSpecifiedHostName()",
+  "time" : {
+    "start" : 1636541946435,
+    "stop" : 1636541947053,
+    "duration" : 618
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "a8c4e4ddc8c00b4c",
+  "name" : "shouldFindPreviouslyCreatedServiceAccount()",
+  "time" : {
+    "start" : 1636542719542,
+    "stop" : 1636542724952,
+    "duration" : 5410
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "a76211109e6a2cda",
+  "name" : "shouldCreateOrReplaceService()",
+  "time" : {
+    "start" : 1636542789170,
+    "stop" : 1636542800883,
+    "duration" : 11713
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "7f516b62ad9fde8",
+  "name" : "calculateRequestsWithDefaultRatioAndNoOverride()",
+  "time" : {
+    "start" : 1636542801085,
+    "stop" : 1636542801087,
+    "duration" : 2
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "c9c4670df6a8b1ea",
+  "name" : "shouldRemoveSuccessfullyCompletedPods()",
+  "time" : {
+    "start" : 1636542094305,
+    "stop" : 1636542105464,
+    "duration" : 11159
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8871dc9c1a0513d",
+  "name" : "shouldBuildACapabilityResult()",
+  "time" : {
+    "start" : 1636542008178,
+    "stop" : 1636542019794,
+    "duration" : 11616
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "e8a5f5c5baaec8fe",
+  "name" : "testEdit()",
+  "time" : {
+    "start" : 1636542800976,
+    "stop" : 1636542801015,
+    "duration" : 39
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "15ed7a53f1792779",
+  "name" : "requestDatabaseCapabilityOnDemandAndConnectToIt()",
+  "time" : {
+    "start" : 1636542808663,
+    "stop" : 1636542809339,
+    "duration" : 676
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3fef695e874967d4",
+  "name" : "shouldResolveProvidedCapabilityFromAccessibleNamespaces()",
+  "time" : {
+    "start" : 1636542019817,
+    "stop" : 1636542031605,
+    "duration" : 11788
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "ba160fea1c650bd8",
+  "name" : "shouldCreateDeploymentWithTrueImposeResourceLimitsWillSetResourceLimitsOnCreatedDeployment()",
+  "time" : {
+    "start" : 1636542801327,
+    "stop" : 1636542801350,
+    "duration" : 23
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "875570122df32612",
+  "name" : "shouldRemoveAndWait()",
+  "time" : {
+    "start" : 1636542031649,
+    "stop" : 1636542041156,
+    "duration" : 9507
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "5439451a628cc37d",
+  "name" : "calculateRequestsWithDefaultRatio()",
+  "time" : {
+    "start" : 1636542801315,
+    "stop" : 1636542801316,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f0c70562f9658100",
+  "name" : "[2] registry.hub.docker.com:50/library/mysql:5:3",
+  "time" : {
+    "start" : 1636542801760,
+    "stop" : 1636542801763,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "4e6e7c1e01f1df0d",
+  "name" : "testComplianceMode()",
+  "time" : {
+    "start" : 1636542801769,
+    "stop" : 1636542801772,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "eb08bb96a69a384a",
+  "name" : "shouldProvideDedicatedCapabilityWithIngress()",
+  "time" : {
+    "start" : 1636542816289,
+    "stop" : 1636542816573,
+    "duration" : 284
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "d4566432474c46cf",
+  "name" : "testCamelCaseToDashDelimited()",
+  "time" : {
+    "start" : 1636542801979,
+    "stop" : 1636542801981,
+    "duration" : 2
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "991d9f8bde7969a7",
+  "name" : "shouldResolveFromNamespaceByLabels()",
+  "time" : {
+    "start" : 1636541996288,
+    "stop" : 1636542008169,
+    "duration" : 11881
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "c8c571015adaabc3",
+  "name" : "[2] RELATED_IMAGE_TEST_IMAGE",
+  "time" : {
+    "start" : 1636542801713,
+    "stop" : 1636542801716,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "67da2e8c5dc5e1fc",
+  "name" : "shouldNotReplacePreviouslyCreatedRole()",
+  "time" : {
+    "start" : 1636542702605,
+    "stop" : 1636542714028,
+    "duration" : 11423
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f8459c28bebf602c",
+  "name" : "shouldResolveFromClusterByLabels()",
+  "time" : {
+    "start" : 1636541973000,
+    "stop" : 1636541984523,
+    "duration" : 11523
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "3531ee389d44ebb3",
+  "name" : "shouldNotResolveProvidedCapabilityFromInaccessibleNamespaces()",
+  "time" : {
+    "start" : 1636541972985,
+    "stop" : 1636541972986,
+    "duration" : 1
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "687095c5670d7ea6",
+  "name" : "shouldCreateDeploymentWithFalseImposeResourceLimitsWillNotSetResourceLimitsOnCreatedDeployment()",
+  "time" : {
+    "start" : 1636542801424,
+    "stop" : 1636542801446,
+    "duration" : 22
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "64ae719e2aa2be9f",
+  "name" : "shouldTranslateTestResourceToProvidedCapability()",
+  "time" : {
+    "start" : 1636541948809,
+    "stop" : 1636541949089,
+    "duration" : 280
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "323e415462a554da",
+  "name" : "testVersionResolutionWithProvidedValue()",
+  "time" : {
+    "start" : 1636542801641,
+    "stop" : 1636542801644,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "486a6e258d3c925c",
+  "name" : "calculateRequestsWithDefaultRatioButWithRequestAndLimitOverrides()",
+  "time" : {
+    "start" : 1636542801510,
+    "stop" : 1636542801512,
+    "duration" : 2
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "898ea02c50f7a62f",
+  "name" : "shouldCreateDeploymentWithStartupProbeOnK8S16()",
+  "time" : {
+    "start" : 1636542801357,
+    "stop" : 1636542801421,
+    "duration" : 64
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "5ba5761ccf22e6da",
+  "name" : "calculateRequestsWithProvidedRatioButWithALimitOverride()",
+  "time" : {
+    "start" : 1636542801527,
+    "stop" : 1636542801530,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "c9c897c95c3ab456",
+  "name" : "shouldFailWhenThereIsAnImplementationMismatch()",
+  "time" : {
+    "start" : 1636542813328,
+    "stop" : 1636542813664,
+    "duration" : 336
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f9eb87d3d2b6ab71",
+  "name" : "testCustomPermissions()",
+  "time" : {
+    "start" : 1636542801181,
+    "stop" : 1636542801217,
+    "duration" : 36
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "bd5194dfc74ef177",
+  "name" : "testImagePullSecretPropagation()",
+  "time" : {
+    "start" : 1636542801283,
+    "stop" : 1636542801292,
+    "duration" : 9
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8411b287d17cb18a",
+  "name" : "testResolve()",
+  "time" : {
+    "start" : 1636542808058,
+    "stop" : 1636542808059,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "14c98f8798531826",
+  "name" : "shouldCreateSecretIfAbsent()",
+  "time" : {
+    "start" : 1636542668050,
+    "stop" : 1636542674170,
+    "duration" : 6120
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "1e3f702dbfe558bf",
+  "name" : "testExternalHttpsProvider()",
+  "time" : {
+    "start" : 1636542801926,
+    "stop" : 1636542801929,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "d32c43164eecd925",
+  "name" : "minimalDeploymentWithoutResourceLimits()",
+  "time" : {
+    "start" : 1636542812063,
+    "stop" : 1636542812270,
+    "duration" : 207
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "e7abfd117aa885fc",
+  "name" : "createPersistentVolumeClaimWithGarbageCollection()",
+  "time" : {
+    "start" : 1636542801557,
+    "stop" : 1636542801559,
+    "duration" : 2
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "e56893dec19463ac",
+  "name" : "testDeploymentType()",
+  "time" : {
+    "start" : 1636542801779,
+    "stop" : 1636542801782,
+    "duration" : 3
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8056207068906788",
+  "name" : "shouldProvideLabeledCapability()",
+  "time" : {
+    "start" : 1636542814349,
+    "stop" : 1636542814720,
+    "duration" : 371
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3dd2fea01faead6a",
+  "name" : "testResolutionIgnoredForNonEntandoImages()",
+  "time" : {
+    "start" : 1636542801570,
+    "stop" : 1636542801578,
+    "duration" : 8
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "89c8e53e76f3129f",
+  "name" : "shouldCreateConfigMapIfAbsent()",
+  "time" : {
+    "start" : 1636542679508,
+    "stop" : 1636542684911,
+    "duration" : 5403
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "97daba006763f348",
+  "name" : "testResolutionFromOverridingPropertiesWhenThereAreFallbackProperties()",
+  "time" : {
+    "start" : 1636542801598,
+    "stop" : 1636542801600,
+    "duration" : 2
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "799ba03a7b80066",
+  "name" : "testIoSafe()",
+  "time" : {
+    "start" : 1636542808037,
+    "stop" : 1636542808041,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "1d247f5e0250fc92",
+  "name" : "calculateRequestsWithProvidedRatioButWithALimitOverride()",
+  "time" : {
+    "start" : 1636542801094,
+    "stop" : 1636542801103,
+    "duration" : 9
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b35a5a90640567fc",
+  "name" : "testRetry()",
+  "time" : {
+    "start" : 1636542801995,
+    "stop" : 1636542808013,
+    "duration" : 6018
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "6cb24c8c5809279",
+  "name" : "calculateRequestsWithProvidedRatio()",
+  "time" : {
+    "start" : 1636542801240,
+    "stop" : 1636542801252,
+    "duration" : 12
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "fdf1ea4a223c8284",
+  "name" : "shouldFailWhenThereIsAScopeMismatch()",
+  "time" : {
+    "start" : 1636542813990,
+    "stop" : 1636542814284,
+    "duration" : 294
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b6e54b4068bbd5ba",
+  "name" : "shouldFailWhenTimingOut()",
+  "time" : {
+    "start" : 1636542814292,
+    "stop" : 1636542814337,
+    "duration" : 45
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "af936a448b18fcf9",
+  "name" : "shouldOverwriteControllerSecret()",
+  "time" : {
+    "start" : 1636542674172,
+    "stop" : 1636542679501,
+    "duration" : 5329
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "90a3c867f1a4d369",
+  "name" : "testImagePullSecrets()",
+  "time" : {
+    "start" : 1636542801130,
+    "stop" : 1636542801162,
+    "duration" : 32
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8639594ce3c1b67e",
+  "name" : "testIsClusterScope()",
+  "time" : {
+    "start" : 1636542801783,
+    "stop" : 1636542801788,
+    "duration" : 5
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "374c8d327a189c82",
+  "name" : "shouldCreatePersistentVolumeClaimIfAbsent()",
+  "time" : {
+    "start" : 1636541949153,
+    "stop" : 1636541950412,
+    "duration" : 1259
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "adbf14bd262d308c",
+  "name" : "shouldCreateOrReplaceEndpoints()",
+  "time" : {
+    "start" : 1636542771680,
+    "stop" : 1636542789165,
+    "duration" : 17485
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "2cd95cc53ef87092",
+  "name" : "shouldNotReplacePreviouslyCreatedRoleBinding()",
+  "time" : {
+    "start" : 1636542714033,
+    "stop" : 1636542719540,
+    "duration" : 5507
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "6b4a9bde79232f2e",
+  "name" : "[3] registry.hub.docker.com:50/lib/ra/ry/mysql",
+  "time" : {
+    "start" : 1636542801765,
+    "stop" : 1636542801766,
+    "duration" : 1
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8b5cdf84f4d7ba11",
+  "name" : "createPersistentVolumeClaimWithGivenConfigs()",
+  "time" : {
+    "start" : 1636541941316,
+    "stop" : 1636541944333,
+    "duration" : 3017
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "6558a8476a705071",
+  "name" : "testWithDiagnostics()",
+  "time" : {
+    "start" : 1636542808017,
+    "stop" : 1636542808025,
+    "duration" : 8
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "e09fa50fd299555",
+  "name" : "shouldRemovePathFromIngress()",
+  "time" : {
+    "start" : 1636542730398,
+    "stop" : 1636542735780,
+    "duration" : 5382
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "1898d07cb0d0bfa7",
+  "name" : "testPrepareClientWithPermissions()",
+  "time" : {
+    "start" : 1636542105471,
+    "stop" : 1636542247089,
+    "duration" : 141618
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "53665f64349c5aac",
+  "name" : "shouldLinkToExternalDatabaseServiceUsingItsIpAddress()",
+  "time" : {
+    "start" : 1636541947076,
+    "stop" : 1636541947580,
+    "duration" : 504
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "4ec52e5cb1e5cf2b",
+  "name" : "testResolutionFromCofigmapWithOrganizationAwareRepositoryKey()",
+  "time" : {
+    "start" : 1636542801654,
+    "stop" : 1636542801658,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "56c234a196980807",
+  "name" : "testResolutionFromCofigmapWithRepositoryKey()",
+  "time" : {
+    "start" : 1636542801729,
+    "stop" : 1636542801733,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "19264d5ca099f9a8",
+  "name" : "testResolve()",
+  "time" : {
+    "start" : 1636542808065,
+    "stop" : 1636542808069,
+    "duration" : 4
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3de30d508a9c6032",
+  "name" : "calculateRequestsWithDefaultRatioButWithALimitOverride()",
+  "time" : {
+    "start" : 1636542801035,
+    "stop" : 1636542801068,
+    "duration" : 33
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "bacd38678676628",
+  "name" : "minimalDeploymentThatTimesOut()",
+  "time" : {
+    "start" : 1636542810202,
+    "stop" : 1636542811483,
+    "duration" : 1281
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "e3aaede759c4ce0b",
+  "name" : "testAccessibleNamespaces()",
+  "time" : {
+    "start" : 1636542801773,
+    "stop" : 1636542801778,
+    "duration" : 5
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "1416119fe713fd0a",
+  "name" : "shouldCreateADelegateServiceAndEndpoints()",
+  "time" : {
+    "start" : 1636542735798,
+    "stop" : 1636542771677,
+    "duration" : 35879
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "63ea2fed6b79b864",
+  "name" : "shouldAddHttpPath()",
+  "time" : {
+    "start" : 1636542724968,
+    "stop" : 1636542730393,
+    "duration" : 5425
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "8d31a5e23be989cd",
+  "name" : "exposeSecondPathOnHttpsServiceOverSpecifiedHostName()",
+  "time" : {
+    "start" : 1636541944436,
+    "stop" : 1636541946425,
+    "duration" : 1989
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "9e77fa0aec51a03",
+  "name" : "testUrlsOnDelegatingService()",
+  "time" : {
+    "start" : 1636542801957,
+    "stop" : 1636542801959,
+    "duration" : 2
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "2442f8ce1c89a59c",
+  "name" : "shouldResolveByNameAndNamespace()",
+  "time" : {
+    "start" : 1636541984530,
+    "stop" : 1636541996272,
+    "duration" : 11742
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "5e55c186ccb05a6e",
+  "name" : "testWithKubernetesClientExceptionToFailure()",
+  "time" : {
+    "start" : 1636542801987,
+    "stop" : 1636542801994,
+    "duration" : 7
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "49c4ae91197f9fc3",
+  "name" : "shouldLinkToExternalDatabaseService()",
+  "time" : {
+    "start" : 1636541947617,
+    "stop" : 1636541948148,
+    "duration" : 531
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f57a2a8c10282434",
+  "name" : "absoluteMinimalDeployment()",
+  "time" : {
+    "start" : 1636542811838,
+    "stop" : 1636542812047,
+    "duration" : 209
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "15adf2ebcb5eaf60",
+  "name" : "shouldUpdatePreviouslyCreatedCapabilityWithEssentialChanges()",
+  "time" : {
+    "start" : 1636542812439,
+    "stop" : 1636542813311,
+    "duration" : 872
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "d9b7b2266b1791e8",
+  "name" : "shouldOverwriteControllerConfigMap()",
+  "time" : {
+    "start" : 1636542684916,
+    "stop" : 1636542690441,
+    "duration" : 5525
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8c8be75ca3dc2332",
+  "name" : "testResolutionFromFallbackProperties()",
+  "time" : {
+    "start" : 1636542801627,
+    "stop" : 1636542801634,
+    "duration" : 7
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "475e555e0229f5c6",
+  "name" : "shouldNotResolveProvidedCapabilityFromUninterestingNamespaces()",
+  "time" : {
+    "start" : 1636541950435,
+    "stop" : 1636541962180,
+    "duration" : 11745
+  },
+  "status" : "broken",
+  "severity" : "normal"
+}, {
+  "uid" : "4dcc2bed8bc2deac",
+  "name" : "shouldTranslateProvidedCapabilityToTestResource()",
+  "time" : {
+    "start" : 1636541948181,
+    "stop" : 1636541948795,
+    "duration" : 614
+  },
+  "status" : "passed",
+  "severity" : "normal"
+} ]
