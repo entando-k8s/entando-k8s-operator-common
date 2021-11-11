@@ -121,7 +121,7 @@ public final class EntandoOperatorConfig extends EntandoOperatorConfigBase {
     }
 
     public static boolean imposeResourceLimits() {
-        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS).map(Boolean::valueOf).orElse(true);
+        return lookupProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS).map(Boolean::valueOf).orElse(false);
     }
 
     public static boolean disablePvcGarbageCollection() {
