@@ -95,14 +95,28 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         return !service.getMetadata().getNamespace().equals(ingressingDeployable.getIngressNamespace());
     }
 
-    public void createIngress(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable,
+    public synchronized void createIngress(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable,
             Service service, ServerStatus status) {
         this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(), ingressingDeployable.getIngressName());
+
+        System.out.println("\n\n\n"); //NOSONAR
+        System.out.println(">>>>>>>> TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"); //NOSONAR
+        System.out.println(">>>>>>>> " + this.ingress); //NOSONAR
+        System.out.println(">>>>>>>> " + System.identityHashCode(ingressClient)); //NOSONAR
+        System.out.println(">>>>>>>> " + ingressingDeployable.getIngressName()); //NOSONAR
+        System.out.println(">>>>>>>> " + service); //NOSONAR
+        System.out.println(">>>>>>>> " + status); //NOSONAR
+
         if (this.ingress == null) {
+            System.out.println(">>>>>>>> NEW"); //NOSONAR
+            System.out.println("<<<<<<<< ============================================"); //NOSONAR
             Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service, status),
                     ingressingDeployable);
             this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress), () -> newIngress);
         } else {
+            System.out.println(">>>>>>>> FOUND"); //NOSONAR
+            System.out.println("<<<<<<<< =========================================="); //NOSONAR
+            System.out.println("\n\n\n"); //NOSONAR
             if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
                 final String host = determineIngressHost(ingressClient, ingressingDeployable);
                 final List<IngressTLS> tls = maybeBuildTls(ingressClient, ingressingDeployable);

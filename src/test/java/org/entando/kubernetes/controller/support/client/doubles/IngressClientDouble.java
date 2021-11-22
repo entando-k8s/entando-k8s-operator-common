@@ -41,7 +41,7 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
     }
 
     @Override
-    public DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
+    public synchronized DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
         return new DoneableIngress(getNamespace(peerInNamespace).getIngress(name), item -> {
             item.getMetadata().getName();
             getNamespace(peerInNamespace).putIngress(item);
@@ -73,7 +73,7 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
     }
 
     @Override
-    public Ingress removeHttpPath(Ingress ingress, HTTPIngressPath path) {
+    public synchronized Ingress removeHttpPath(Ingress ingress, HTTPIngressPath path) {
         if (ingress == null) {
             return null;
         }
