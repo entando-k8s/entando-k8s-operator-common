@@ -151,15 +151,9 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
             assertThat(capability.getMetadata().getName()).isEqualTo("my-capability1");
             assertThat(capability.getMetadata().getNamespace()).isEqualTo(MY_APP_NAMESPACE_1);
         });
-        if (!excludeBrokenCapTests()) {
-            step("But expect no ProvidedCapability to be resolved using the label 'my-label=value2'", () -> {
-                assertThat(getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value2"))).isEmpty();
-            });
-        }
-    }
-
-    private boolean excludeBrokenCapTests() {
-        return ("" + System.getenv("ENTANDO_TESTS_EXCLUDE_BROKEN_CAP_TESTS")).equals("true");
+        step("But expect no ProvidedCapability to be resolved using the label 'my-label=value2'", () -> {
+            assertThat(getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value2"))).isEmpty();
+        });
     }
 
     @Test

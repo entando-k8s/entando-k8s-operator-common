@@ -75,6 +75,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Test
     @Disabled("Disabled for now, need to come back later")
+    @SuppressWarnings("java:S2925")
     void shouldRemainConsistentWithManyThreads() throws JsonProcessingException, InterruptedException {
         TestResource app = newTestResource();
         Ingress myIngress = getTestIngress();
