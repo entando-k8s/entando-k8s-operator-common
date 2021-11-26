@@ -60,7 +60,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
 
         Assertions.assertTrue(() -> deployedIngress.getSpec().getRules().get(0).getHttp().getPaths().size() == 2);
 
-        HTTPIngressPath ingressPath = myIngress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
+        HTTPIngressPath ingressPath = deployedIngress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
         Ingress cleanedIngress = this.getSimpleK8SClient().ingresses().removeHttpPath(deployedIngress, ingressPath);
 
         Assertions.assertFalse(() ->
