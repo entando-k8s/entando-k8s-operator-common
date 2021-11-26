@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.SecretList;
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
@@ -132,20 +133,20 @@ public final class TestFixturePreparation {
     }
 
     public static void createNamespace(KubernetesClient client, String namespace) {
+        System.out.println("> Base");
         client.namespaces().create(new NamespaceBuilder().withNewMetadata().withName(namespace)
                 .addToLabels("testType", "end-to-end")
                 .endMetadata().build());
-                
+
+                System.out.println("> Base..");
         await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
                 .until(() -> {
-                    for (Secret secret : client.secrets().inNamespace(namespace).list().getItems()) {
-                        if (TestFixturePreparation.isValidTokenSecret(secret, "default")) {
-                            return true;
-                        }
-                    }
-                    return false;
+                    SecretList lst = client.secrets().inNamespace(namespace).list();
+                    System.out.println("> Base.. (" + lst.getItems().size() + ")");
+                    return lst.getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "default"));
                 });
-                        
+        System.out.println("> Credentials");
+
         EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s -> {
             client.secrets().inNamespace(namespace).createOrReplace(new SecretBuilder().withNewMetadata()
                     .withNamespace(namespace)
@@ -155,6 +156,7 @@ public final class TestFixturePreparation {
                     .withType("kubernetes.io/dockerconfigjson")
                     .build());
 
+            System.out.println("> Service accounts");
             client.serviceAccounts().inNamespace(namespace).withName("default").edit(serviceAccount -> {
                 serviceAccount.getImagePullSecrets().add(new LocalObjectReference(
                         "redhat-registry"));

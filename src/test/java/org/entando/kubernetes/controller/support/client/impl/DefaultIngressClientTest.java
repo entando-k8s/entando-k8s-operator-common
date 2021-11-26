@@ -96,6 +96,14 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
                     .build());
             executor.submit(() -> getSimpleK8SClient().ingresses().createIngress(app, tmp));
         }
+        await().atMost(1, TimeUnit.MINUTES).ignoreExceptions().until(() -> {
+            boolean res = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName())
+                    .getSpec().getRules().get(0).getHttp().getPaths().size() < total;
+            if (!res) {
+                Thread.sleep(1000);
+            }
+            return res;
+        });
         executor.shutdown();
         await().atMost(10, TimeUnit.MINUTES).ignoreExceptions().until(() -> executor.awaitTermination(60, TimeUnit.SECONDS));
         Ingress actual = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName());
