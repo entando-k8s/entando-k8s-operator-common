@@ -18,11 +18,14 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
 
+import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
+import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -64,9 +67,20 @@ public class DefaultPodClient implements PodClient {
         return interruptionSafe(() -> {
             this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
             return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName())
-                    .waitUntilCondition(got -> PodResult.of(got).getState() == State.COMPLETED,
-                            timeoutSeconds, TimeUnit.SECONDS);
+                    .waitUntilCondition(got -> PodResult.of(got).getState() == State.COMPLETED || hasPodFailedContainers(got)
+                            , timeoutSeconds, TimeUnit.SECONDS);
+
         });
+    }
+
+    private boolean hasPodFailedContainers(Pod pod) {
+        for (ContainerStatus cs : pod.getStatus().getContainerStatuses()) {
+            ContainerStateWaiting waiting = cs.getState().getWaiting();
+            if (waiting != null && waiting.getReason().toLowerCase(Locale.ROOT).contains("error")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
