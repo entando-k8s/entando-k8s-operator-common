@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
@@ -112,7 +113,8 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             attachResource("TestResource", actual);
         });
         step("And the failure event has been issued to Kubernetes", () -> {
-            final List<Event> events = getKubernetesClientForControllers().listEventsFor(testResource);
+            final List<Event> events = getKubernetesClientForControllers().listEventsFor(testResource).stream()
+                    .filter(e -> !e.getAction().equals("PHASE_CHANGE")).collect(Collectors.toList());
             attachResources("Events", events);
             assertThat(events).allMatch(event -> event.getInvolvedObject().getName().equals(testResource.getMetadata().getName()));
             assertThat(events).allMatch(event -> event.getRelated() == null || event.getRelated().getName().equals(TEST_CONTROLLER_POD));
@@ -338,9 +340,8 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         ValueHolder<ExecutionResult> success = new ValueHolder<>();
         ValueHolder<ExecutionResult> failure = new ValueHolder<>();
         step("When I execute a valid command and in invalid command", () -> {
-            success.set(getKubernetesClientForControllers().executeOnPod(pod.get(), "nginx", 10, "echo 'hello world'"));
-            failure.set(getKubernetesClientForControllers()
-                    .executeOnPod(pod.get(), "nginx", 10, "asdfasdfasf", "echo 'hello world'"));
+            success.set(getKubernetesClientForControllers().executeOnPod(pod.get(), "nginx", 20, "echo 'hello world'"));
+            failure.set(getKubernetesClientForControllers().executeOnPod(pod.get(), "nginx", 20, "asdfasdfasf", "echo 'hello world'"));
         });
         step("Then the the return code of the valid command is 0", () -> {
             assertThat(success.get().getOutputLines()).contains("hello world");

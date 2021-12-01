@@ -22,8 +22,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.qameta.allure.Allure;
 import java.util.Collection;
 import java.util.concurrent.Executors;
@@ -40,7 +44,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
-    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test99";
+    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test66";
     public static final String MY_APP_NAMESPACE_2 = MY_APP_NAMESPACE_1 + "2";
     public static final String TEST_CONTROLLER_POD = "test-controller-pod";
     protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -89,23 +93,44 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
     @BeforeEach
     public void setup() {
+        System.out.println("\n.\n.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n.\n.\n");
         System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
         fabric8Client = new SupportProducer().getKubernetesClient();
 
-        for (String s : getNamespacesToUse()) {
-            await().atMost(240, TimeUnit.SECONDS).ignoreExceptions()
-                    .until(() -> {
-                        if (fabric8Client.namespaces().withName(s).get() == null) {
-                            return true;
-                        } else {
-                            fabric8Client.namespaces().withName(s).delete();
-                            return false;
-                        }
-                    });
+        for (String nsToUse : getNamespacesToUse()) {
+            await().atMost(240, TimeUnit.SECONDS).until(() -> {
+                Resource<Namespace> nsres = fabric8Client.namespaces().withName(nsToUse);
+                try {
+                    Namespace ns = nsres.get();
+                    if (ns == null) {
+                        return true;
+                    } else {
+                        nsres.delete();
+                        return false;
+                    }
+                } catch (KubernetesClientException ex) {
+                    Status status = ex.getStatus();
+                    if (status == null) {
+                        throw new IllegalStateException("No kubernetes connection profile is active");
+                    }
+                    if (isStatusFatalClientConnectionError(status)) {
+                        throw new IllegalStateException("Unable to access the test playground (" + ex.getStatus().getCode() + ")");
+                    }
+                    return false;
+                } catch (Exception ex) {
+                    return false;
+                }
+            });
         }
-        for (String s : getNamespacesToUse()) {
-            TestFixturePreparation.createNamespace(fabric8Client, s);
+
+        for (String ns : getNamespacesToUse()) {
+            TestFixturePreparation.createNamespace(fabric8Client, ns);
         }
+    }
+
+    private boolean isStatusFatalClientConnectionError(Status status) {
+        Integer resultCode = status.getCode();
+        return resultCode >= 400 && resultCode < 500 && resultCode != 404 && resultCode != 408 && resultCode != 425 && resultCode != 429;
     }
 
     protected abstract String[] getNamespacesToUse();
