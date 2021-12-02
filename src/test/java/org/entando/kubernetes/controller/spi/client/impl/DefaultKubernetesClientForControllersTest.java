@@ -340,9 +340,8 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         ValueHolder<ExecutionResult> success = new ValueHolder<>();
         ValueHolder<ExecutionResult> failure = new ValueHolder<>();
         step("When I execute a valid command and in invalid command", () -> {
-            success.set(getKubernetesClientForControllers().executeOnPod(pod.get(), "nginx", 10, "echo 'hello world'"));
-            failure.set(getKubernetesClientForControllers()
-                    .executeOnPod(pod.get(), "nginx", 10, "asdfasdfasf", "echo 'hello world'"));
+            success.set(getKubernetesClientForControllers().executeOnPod(pod.get(), "nginx", 20, "echo 'hello world'"));
+            failure.set(getKubernetesClientForControllers().executeOnPod(pod.get(), "nginx", 20, "asdfasdfasf", "echo 'hello world'"));
         });
         step("Then the the return code of the valid command is 0", () -> {
             assertThat(success.get().getOutputLines()).contains("hello world");

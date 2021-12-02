@@ -44,7 +44,7 @@ jobs:
             .. status-report \
             .. @checkout-branch pr --lcd "$LOCAL_CLONE_DIR" \
             .. @setup-feature-flags "PR_PREFLIGHT_CHECKS" "BOM_CHECK" "BOM" \
-            .. @setup-features-list "SCAN_MATRIX" --prefix "SCAN-MVN-" \
+            .. @setup-features-list "SCAN_MATRIX" --prefix "MVN-" \
           ;
       - name: "PR preflight checks"
         if: steps.START.outputs.PR_PREFLIGHT_CHECKS != 'false'
@@ -161,12 +161,12 @@ jobs:
         run: |
           SCAN_TYPE="${{ matrix.scan-type }}"
           case "$SCAN_TYPE" in
-            SCAN-MVN-SONAR)
+            MVN-SCAN-SONAR)
               export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
               export SONAR_TOKEN="${{ secrets.SONAR_TOKEN }}"
               export ENTANDO_OPT_SONAR_PROJECT_KEY="${{ secrets.ENTANDO_OPT_SONAR_PROJECT_KEY }}"
               ;;
-            SCAN-MVN-SNYK)
+            MVN-SCAN-SNYK)
               export SNYK_TOKEN="${{ secrets.SNYK_TOKEN }}"
             ;;
           esac

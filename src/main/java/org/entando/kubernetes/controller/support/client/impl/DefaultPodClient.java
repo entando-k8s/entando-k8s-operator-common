@@ -67,9 +67,8 @@ public class DefaultPodClient implements PodClient {
         return interruptionSafe(() -> {
             this.client.pods().inNamespace(pod.getMetadata().getNamespace()).create(pod);
             return this.client.pods().inNamespace(pod.getMetadata().getNamespace()).withName(pod.getMetadata().getName())
-                    .waitUntilCondition(got -> PodResult.of(got).getState() == State.COMPLETED || hasPodFailedContainers(got)
-                            , timeoutSeconds, TimeUnit.SECONDS);
-
+                    .waitUntilCondition(got -> PodResult.of(got).getState() == State.COMPLETED || hasPodFailedContainers(got),
+                            timeoutSeconds, TimeUnit.SECONDS);
         });
     }
 
