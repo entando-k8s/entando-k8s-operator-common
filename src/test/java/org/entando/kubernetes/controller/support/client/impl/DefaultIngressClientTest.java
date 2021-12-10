@@ -60,7 +60,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
 
         Assertions.assertTrue(() -> deployedIngress.getSpec().getRules().get(0).getHttp().getPaths().size() == 2);
 
-        HTTPIngressPath ingressPath = myIngress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
+        HTTPIngressPath ingressPath = deployedIngress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
         Ingress cleanedIngress = this.getSimpleK8SClient().ingresses().removeHttpPath(deployedIngress, ingressPath);
 
         Assertions.assertFalse(() ->
@@ -75,6 +75,7 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
 
     @Test
     @Disabled("Disabled for now, need to come back later")
+    @SuppressWarnings("java:S2925")
     void shouldRemainConsistentWithManyThreads() throws JsonProcessingException, InterruptedException {
         TestResource app = newTestResource();
         Ingress myIngress = getTestIngress();
@@ -96,6 +97,14 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
                     .build());
             executor.submit(() -> getSimpleK8SClient().ingresses().createIngress(app, tmp));
         }
+        await().atMost(1, TimeUnit.MINUTES).ignoreExceptions().until(() -> {
+            boolean res = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName())
+                    .getSpec().getRules().get(0).getHttp().getPaths().size() < total;
+            if (!res) {
+                Thread.sleep(1000);
+            }
+            return res;
+        });
         executor.shutdown();
         await().atMost(10, TimeUnit.MINUTES).ignoreExceptions().until(() -> executor.awaitTermination(60, TimeUnit.SECONDS));
         Ingress actual = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName());

@@ -39,6 +39,7 @@ import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 class TrustStoreHelperTest {
 
@@ -66,19 +67,21 @@ class TrustStoreHelperTest {
     }
 
     @Test
+    @EnabledIfEnvironmentVariable(named = "ENTANDO_TESTS_TRUST_STORE_TEST_URL", matches = "h.*")
     void testInTrustStore() throws IOException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
-        assertThrows(SSLHandshakeException.class, this::openSelfSignedUrl);
+        String url = System.getenv("ENTANDO_TESTS_TRUST_STORE_TEST_URL");
+        assertThrows(SSLHandshakeException.class, () -> openSelfSignedUrl(url));
         TrustStoreHelper.trustCertificateAuthoritiesIn(new SecretBuilder().addToData("cert1.crt", TRUSTED_CERT).build());
         try {
-            openSelfSignedUrl();
+            openSelfSignedUrl(url);
         } catch (SSLHandshakeException e) {
             e.printStackTrace();
             fail();
         }
     }
 
-    private void openSelfSignedUrl() throws IOException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
-        final HttpsURLConnection urlConnection = (HttpsURLConnection) new URL("https://openshift.serv.run:8443/console").openConnection();
+    private void openSelfSignedUrl(String url) throws IOException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
+        final HttpsURLConnection urlConnection = (HttpsURLConnection) new URL(url).openConnection();
         SSLContext sslContext = SSLContext.getInstance("SSL");
         sslContext.init(new KeyManager[0], new TrustManager[]{reloadX509TrustManager()}, new SecureRandom());
         SSLSocketFactory socketFactory = sslContext.getSocketFactory();
