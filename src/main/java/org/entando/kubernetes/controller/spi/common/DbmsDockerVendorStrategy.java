@@ -28,7 +28,7 @@ public enum DbmsDockerVendorStrategy {
 
     RHEL_MYSQL(DbmsVendorConfig.MYSQL, DockerRegistry.REGISTRY_REDHAT_IO, "rhel8", "mysql-80", "/var/lib/mysql/data", 27L, 512),
 
-    RHEL_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, DockerRegistry.REGISTRY_REDHAT_IO, "rhel8", "postgresql-12", "/var/lib/pgsql/data", 26L,
+    RHEL_POSTGRESQL(DbmsVendorConfig.POSTGRESQL, DockerRegistry.REGISTRY_REDHAT_IO, "rhel8", "postgresql-13", "/var/lib/pgsql/data", 26L,
             256),
 
     ORACLE(DbmsVendorConfig.ORACLE, DockerRegistry.DOCKER_IO, "store/oracle", "database-enterprise:12.2.0.1", "/ORCL", null, 4096);
