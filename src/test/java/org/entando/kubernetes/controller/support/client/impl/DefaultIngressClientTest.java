@@ -98,7 +98,8 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
             executor.submit(() -> getSimpleK8SClient().ingresses().createIngress(app, tmp));
         }
         await().atMost(1, TimeUnit.MINUTES).ignoreExceptions().until(() -> {
-            boolean res = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName())
+            boolean res = getSimpleK8SClient().ingresses()
+                    .loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName())
                     .getSpec().getRules().get(0).getHttp().getPaths().size() < total;
             if (!res) {
                 Thread.sleep(1000);
@@ -106,8 +107,10 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
             return res;
         });
         executor.shutdown();
-        await().atMost(10, TimeUnit.MINUTES).ignoreExceptions().until(() -> executor.awaitTermination(60, TimeUnit.SECONDS));
-        Ingress actual = getSimpleK8SClient().ingresses().loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName());
+        await().atMost(10, TimeUnit.MINUTES).ignoreExceptions().until(() ->
+                executor.awaitTermination(mkTimeoutSec(60), TimeUnit.SECONDS));
+        Ingress actual = getSimpleK8SClient().ingresses()
+                .loadIngress(app.getMetadata().getNamespace(), myIngress.getMetadata().getName());
         //Then the paths should be consistent
         for (int i = 0; i < total; i++) {
             int finalI = i;

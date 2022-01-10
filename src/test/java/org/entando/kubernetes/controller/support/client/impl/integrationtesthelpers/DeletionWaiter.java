@@ -26,6 +26,7 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.Scaleable;
 import io.fabric8.kubernetes.client.dsl.base.OperationSupport;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -71,6 +72,10 @@ public class DeletionWaiter<
     public DeletionWaiter<R, L, O> fromNamespace(String namespace) {
         this.namespace = namespace;
         return this;
+    }
+
+    public void waitingAtMost(Duration duration) {
+        waitingAtMost(duration.getSeconds(), TimeUnit.SECONDS);
     }
 
     public void waitingAtMost(long duration, TimeUnit timeUnit) {

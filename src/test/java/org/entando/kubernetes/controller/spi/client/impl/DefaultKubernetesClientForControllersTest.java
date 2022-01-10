@@ -334,8 +334,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             pod.set(this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace())
                     .withName("my-pod")
                     .waitUntilCondition(pod1 -> pod1 != null && pod1.getStatus() != null && PodResult.of(pod1).getState() == State.READY,
-                            30L,
-                            TimeUnit.SECONDS));
+                            mkTimeoutSec(100L), TimeUnit.SECONDS));
         });
         ValueHolder<ExecutionResult> success = new ValueHolder<>();
         ValueHolder<ExecutionResult> failure = new ValueHolder<>();

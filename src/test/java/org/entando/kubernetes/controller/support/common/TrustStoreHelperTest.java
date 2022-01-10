@@ -58,6 +58,28 @@ class TrustStoreHelperTest {
                     + "h5OHNIUzJYWDlsdnVpNHF0M2NwTXArVitrcHRaeUhKNEhCZFhUcGJhMzM0RXJQegpGVWlqNFRvSlE0UERMMEQ1SVlCNU9jODZXbTJCRERIO"
                     + "FdJclY4TSt6SU5iKzN4Y1pnRjhFMFR5Si9qUWpHKzB0Cm5HdGVXdk9NTXQwTC85d0xjN1B1RHg2YUtEK0E4NFF4VnN3NnhubnAKLS0tLS1F"
                     + "TkQgQ0VSVElGSUNBVEUtLS0tLQ==";
+    private static final String TRUSTED_CERT2 = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURZVENDQWttZ0F3SUJBZ0lJTHZtd1VUQXdQ"
+            + "OUV3RFFZSktvWklodmNOQVFFTEJRQXdKakVrTUNJR0ExVUUKQXd3YmFXNW5jbVZ6Y3kxdmNHVnlZ"
+            + "WFJ2Y2tBeE5qSTBOVFF5TkRJM01CNFhEVEl4TURZeU5ERXpORGN3T0ZvWApEVEl6TURZeU5ERXpO"
+            + "RGN3T1Zvd0lERWVNQndHQTFVRUF3d1ZLaTVoY0hCekxtVnVkRFkwWVhwMWNtVXVZMjl0Ck1JSUJJ"
+            + "akFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdW5PbFc1YmlkM1ZOd1Q4RTZy"
+            + "Q3QKa2JWaHlMNFZ1RDBxazlBUlBoT25nWXhKV25tMDhrQWh2WEljSUowZURoeXhJczJWbXVVWHJq"
+            + "Rk9MR0kxaXJjcQp3UXYvdVBBTUwybmFoTmhLSE92SmZYV284ekdlR1BEeXBRdTIvSll6cHdxUUFv"
+            + "dTEyZ3k0Z1B5ak1sS01wT3FLCkk0dHNUZlErdDN5SCtkcEQvd0JFamZVNTN1R1RlcVYrQVpHcFVy"
+            + "MVphM0twZm9HMkVEY1Z0cGNOcUV2UVE0eXIKU2xHYWhlTmNmcjNJd0dyT1c2Z1JpQXBaNkJRMGps"
+            + "eU42QmxGdys2RmlXUmdaWHdzRFk2YkNPZGNoUlB6cC9WcwpSM0IvOHlFTU04RmYzbFhBVXBLMFBr"
+            + "UFlvd2o0UWV1Q0V1c0lmaVVvYVBjTXU5L0ExZCtOeThEU0tOZXlDRWhkClB3SURBUUFCbzRHWU1J"
+            + "R1ZNQTRHQTFVZER3RUIvd1FFQXdJRm9EQVRCZ05WSFNVRUREQUtCZ2dyQmdFRkJRY0QKQVRBTUJn"
+            + "TlZIUk1CQWY4RUFqQUFNQjBHQTFVZERnUVdCQlMzWUJrcWdGZVV5dXlBMW01dmpyVTVoUnNXZHpB"
+            + "ZgpCZ05WSFNNRUdEQVdnQlMxVEhYTkZKT0FML1ZWL0ptbm5IcmlJbWhXSERBZ0JnTlZIUkVFR1RB"
+            + "WGdoVXFMbUZ3CmNITXVaVzUwTmpSaGVuVnlaUzVqYjIwd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dF"
+            + "QkFJZE9yN3YrS013WXpLeHUKZ3dHa3ZpV3pYVys3Q0lYTUZKVnp4eTFvcnh4MFQwYUNFMkVEeU1i"
+            + "RnhVa1FlL0tXTDdEZEhPNTA5SHRmMFlMcQpXYTc2MnNjdld0M2wvTUZrSjJ0TmNicU1ENWR6eFlm"
+            + "TVZBL1RLSDNUYVFyNXRNN1BaYWtTQjJPSkJBV1h3UVRuCm41R1MrQTVWZ3hEMTRWbjMwanVWcThO"
+            + "SUluL0NwSUJueVFleXJheWJKSWI0NzdiMmRtSnJWUHNTYkFmVVd2Z1QKWi9HeFYwdW51azhJOE55"
+            + "dUhLeUNNMHlXWkNMMnJQSEVJWm1KNGFyT1hJRXRlaWVsTmh2Zk1ISXdERXVYUWpwWQpmMlM1NzQw"
+            + "RkN3eEg3WWkzVXd0Ky9UMERETHhMK0pvbS9UQjNzL3l2RUZuMktxdnZyL3RJKzV6L0Z5bnFyRkox"
+            + "CnQxZ0hZSFk9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K";
 
     @BeforeEach
     @AfterEach
@@ -70,8 +92,9 @@ class TrustStoreHelperTest {
     @EnabledIfEnvironmentVariable(named = "ENTANDO_TESTS_TRUST_STORE_TEST_URL", matches = "h.*")
     void testInTrustStore() throws IOException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
         String url = System.getenv("ENTANDO_TESTS_TRUST_STORE_TEST_URL");
+        String crt = System.getenv("ENTANDO_TESTS_TRUST_STORE_TEST_CA_CERT");
         assertThrows(SSLHandshakeException.class, () -> openSelfSignedUrl(url));
-        TrustStoreHelper.trustCertificateAuthoritiesIn(new SecretBuilder().addToData("cert1.crt", TRUSTED_CERT).build());
+        TrustStoreHelper.trustCertificateAuthoritiesIn(new SecretBuilder().addToData("cert1.crt", crt).build());
         try {
             openSelfSignedUrl(url);
         } catch (SSLHandshakeException e) {

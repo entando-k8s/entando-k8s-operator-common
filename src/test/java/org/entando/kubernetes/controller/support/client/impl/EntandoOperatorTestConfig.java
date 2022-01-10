@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 
 public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 
@@ -45,6 +46,7 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
     private static final String ENTANDO_TEST_KEYCLOAK_ADMIN_USER = "entando.test.keycloak.admin.user";
     private static final String ENTANDO_TEST_KEYCLOAK_ADMIN_PASSWORD = "entando.test.keycloak.admin.password";
     private static final String ENTANDO_TEST_REDHAT_REGISTRY_CREDENTIALS = "entando.test.redhat.registry.credentials";
+    private static final String ENTANDO_TEST_TIMEOUT_HUNDREDS_MULTIPLIER = "entando.test.timeout.hundreds.multiplier";
 
     private EntandoOperatorTestConfig() {
     }
@@ -84,6 +86,11 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 
     public static Optional<String> getTestNameSuffix() {
         return lookupProperty(ENTANDO_TEST_NAME_SUFFIX);
+    }
+
+    public static String mustGetDefaultRoutingSuffix() {
+        return EntandoOperatorConfig.getDefaultRoutingSuffix()
+                .orElseThrow(() -> new IllegalStateException("Mandatory ENTANDO_DEFAULT_ROUTING_SUFFIX was not found"));
     }
 
     public static Optional<String> getVersionOfImageUnderTest() {
@@ -135,6 +142,10 @@ public final class EntandoOperatorTestConfig extends EntandoOperatorConfigBase {
 
     public static Optional<String> getRedhatRegistryCredentials() {
         return lookupProperty(ENTANDO_TEST_REDHAT_REGISTRY_CREDENTIALS);
+    }
+
+    public static Long getTimeoutHundredsMultiplier() {
+        return Long.parseLong(lookupProperty(ENTANDO_TEST_TIMEOUT_HUNDREDS_MULTIPLIER).orElse("100"));
     }
 
     public enum TestTarget {

@@ -28,6 +28,7 @@ import io.fabric8.kubernetes.api.model.StatusBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.io.IOException;
 import org.entando.kubernetes.model.common.EntandoControllerFailure;
+import org.entando.kubernetes.test.common.ControllerTestHelper;
 import org.entando.kubernetes.test.common.ValueHolder;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -49,7 +50,7 @@ class ExceptionUtilsTest {
     void testWithDiagnostics() {
         HasMetadata pod = new PodBuilder()
                 .withNewMetadata()
-                .withNamespace("my-namespace")
+                .withNamespace(ControllerTestHelper.MY_NAMESPACE)
                 .withName("my-pod")
                 .endMetadata()
                 .build();
@@ -76,13 +77,14 @@ class ExceptionUtilsTest {
     @Test
     void testWithKubernetesClientExceptionToFailure() {
         final EntandoControllerFailure failure = ExceptionUtils
-                .failureOf(new PodBuilder().withNewMetadata().withNamespace("my-namespace").withName("my-name").endMetadata().build(),
+                .failureOf(new PodBuilder().withNewMetadata().withNamespace(ControllerTestHelper.MY_NAMESPACE)
+                                .withName("my-name").endMetadata().build(),
                         new KubernetesClientException(new StatusBuilder()
                                 .withMessage("my message")
                                 .withCode(404)
                                 .build()));
         assertThat(failure.getFailedObjectName()).isEqualTo("my-name");
-        assertThat(failure.getFailedObjectNamespace()).isEqualTo("my-namespace");
+        assertThat(failure.getFailedObjectNamespace()).isEqualTo(ControllerTestHelper.MY_NAMESPACE);
         assertThat(failure.getFailedObjectKind()).isEqualTo("Pod");
         assertThat(failure.getFailedObjectApiVersion()).isEqualTo("v1");
         assertThat(failure.getMessage()).isEqualTo("my message");

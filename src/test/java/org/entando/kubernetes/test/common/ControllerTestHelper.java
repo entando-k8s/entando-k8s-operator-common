@@ -62,6 +62,7 @@ import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.controller.support.client.doubles.EntandoResourceClientDouble;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
+import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.command.InProcessCommandStream;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.model.capability.CapabilityRequirement;
@@ -75,7 +76,7 @@ public interface ControllerTestHelper extends FluentTraversals, CustomResourceSt
 
     String DEFAULT_TLS_SECRET = "default-tls-secret";
     String MY_APP = "my-app";
-    String MY_NAMESPACE = "my-namespace";
+    String MY_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace");
     String ENTANDO_RESOURCE_ACTION = "entando.resource.action";
     String TEST_CONTROLLER_POD = "test-controller-pod";
 

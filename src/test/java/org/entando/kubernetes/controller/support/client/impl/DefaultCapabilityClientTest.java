@@ -233,7 +233,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         for (ProvidedCapability providedCapability : entandoCustomResource) {
             createRoleBindingForClusterRole(providedCapability, serviceAccount);
         }
-        await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
+        await().atMost(mkTimeout(60)).ignoreExceptions()
                 .until(() -> getFabric8Client().secrets().inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
                         .getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "test-account")));
         final List<Secret> items = getFabric8Client().secrets().inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
@@ -349,7 +349,7 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
             executor.schedule(() -> {
                 try {
                     KubernetesClientForControllers clientForControllers = getClient().entandoResources();
-                    await().atMost(10, TimeUnit.SECONDS)
+                    await().atMost(mkTimeout(10))
                             .until(() -> clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE_1, "my-capability") != null);
                     capability.set(clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE_1, "my-capability"));
                     capability.set(clientForControllers.updateStatus(capability.get(),

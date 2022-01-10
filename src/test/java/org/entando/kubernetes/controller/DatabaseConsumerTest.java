@@ -58,6 +58,7 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ServerStatus;
 import org.entando.kubernetes.test.common.CommonLabels;
+import org.entando.kubernetes.test.common.ControllerTestHelper;
 import org.entando.kubernetes.test.common.PodBehavior;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.entando.kubernetes.test.common.ValueHolder;
@@ -74,7 +75,8 @@ import picocli.CommandLine;
 @Feature("As a controller developer, I would like to request the Database capability so that I can deploy containers that use the database")
 @Issue("ENG-2284")
 @SourceLink("DatabaseConsumerTest.java")
-class DatabaseConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels, PodBehavior {
+class DatabaseConsumerTest extends ControllerTestBase implements VariableReferenceAssertions, CommonLabels,
+        PodBehavior {
 
     public static final String MY_APP_SERVER_SECRET = "my-app-server-secret";
 
@@ -82,7 +84,8 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                 Classes to be implemented by the controller provider
                  */
     @CommandLine.Command()
-    public static class BasicDatabaseConsumingController extends DatabaseConsumingControllerFluent<BasicDatabaseConsumingController> {
+    public static class BasicDatabaseConsumingController extends
+            DatabaseConsumingControllerFluent<BasicDatabaseConsumingController> {
 
         public BasicDatabaseConsumingController(KubernetesClientForControllers k8sClient,
                 DeploymentProcessor deploymentProcessor,
@@ -108,15 +111,17 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
     public Runnable createController(KubernetesClientForControllers entandoResourceClientDouble,
             DeploymentProcessor deploymentProcessor,
             CapabilityProvider capabilityProvider) {
-        return new BasicDatabaseConsumingController(entandoResourceClientDouble, deploymentProcessor, capabilityProvider)
+        return new BasicDatabaseConsumingController(entandoResourceClientDouble, deploymentProcessor,
+                capabilityProvider)
                 .withDeployable(this.deployable)
                 .withDatabaseRequirement(this.databaseRequirement)
                 .withSupportedClass(TestResource.class);
     }
 
     @Test
-    @Description("Should request a required database capability on-demand and connect to the service using the resulting "
-            + "DatabaseConnectionInfo ")
+    @Description(
+            "Should request a required database capability on-demand and connect to the service using the resulting "
+                    + "DatabaseConnectionInfo ")
     void requestDatabaseCapabilityOnDemandAndConnectToIt() {
         step("Given I have a basic DbAwareDeployable", () -> {
             this.deployable = new BasicDbAwareDeployable();
@@ -135,9 +140,11 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                             .withCapability(StandardCapability.DBMS)
                             .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
                             .withResolutionScopePreference(CapabilityScope.NAMESPACE)
-                            .addAllToCapabilityParameters(Map.of(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, "my_db"))
                             .addAllToCapabilityParameters(
-                                    Map.of(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX + "connectionTimeout", "300"))
+                                    Map.of(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, "my_db"))
+                            .addAllToCapabilityParameters(
+                                    Map.of(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX + "connectionTimeout",
+                                            "300"))
                             .build();
                 });
         final BasicDbAwareContainer container = deployable
@@ -148,7 +155,8 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
             attachSpiResource("Container", container);
         });
         step("And there is a controller to process requests for the DBMS capability requested",
-                () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.POSTGRESQL, "my_db")).when(getClient().capabilities())
+                () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.POSTGRESQL, "my_db")).when(
+                                getClient().capabilities())
                         .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("When the controller processes a new TestResource", () -> {
             runControllerAgainstCustomResource(entandoCustomResource);
@@ -157,33 +165,40 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                         + "DBMS in the namespace",
                 () -> {
                     this.capabilityProvisioningResult = getClient().entandoResources().loadCapabilityProvisioningResult(
-                            getClient().capabilities().providedCapabilityByName(MY_NAMESPACE, "default-postgresql-dbms-in-namespace")
+                            getClient().capabilities()
+                                    .providedCapabilityByName(MY_NAMESPACE, "default-postgresql-dbms-in-namespace")
                                     .get().getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get());
                 });
         step("And a database preparation Pod was run for the DbAwareDeployable", () -> {
-            step("identified by the labels + " + dbPreparationJobLabels(entandoCustomResource, NameUtils.MAIN_QUALIFIER));
+            step("identified by the labels + " + dbPreparationJobLabels(entandoCustomResource,
+                    NameUtils.MAIN_QUALIFIER));
             Pod dbPreparationPod = getClient().pods()
                     .loadPod(MY_NAMESPACE, dbPreparationJobLabels(entandoCustomResource, NameUtils.MAIN_QUALIFIER));
             attachKubernetesResource("DbPreparationPod", dbPreparationPod);
             step("with 2 initContainers, the first to create the schema and the second to populate it", () -> {
                 assertThat(dbPreparationPod.getSpec().getInitContainers().size()).isEqualTo(2);
-                assertThat(dbPreparationPod.getSpec().getInitContainers().get(0).getImage()).contains("entando/entando-k8s-dbjob");
-                assertThat(dbPreparationPod.getSpec().getInitContainers().get(1).getImage()).contains("test/my-spring-boot-image:6.3.2");
+                assertThat(dbPreparationPod.getSpec().getInitContainers().get(0).getImage()).contains(
+                        "entando/entando-k8s-dbjob");
+                assertThat(dbPreparationPod.getSpec().getInitContainers().get(1).getImage()).contains(
+                        "test/my-spring-boot-image:6.3.2");
             });
             step("and the first container defines all the EnvironmentVariables required by the dbjob container", () -> {
-                final String adminSecret = NameUtils.standardAdminSecretName(this.capabilityProvisioningResult.getProvidedCapability());
+                final String adminSecret = NameUtils.standardAdminSecretName(
+                        this.capabilityProvisioningResult.getProvidedCapability());
                 final Container schemaCreationContainer = dbPreparationPod.getSpec().getInitContainers().get(0);
                 verifyDbJobConnectionVariables(schemaCreationContainer, DbmsVendor.POSTGRESQL,
                         NameUtils.standardServiceName(this.capabilityProvisioningResult.getProvidedCapability())
-                                + ".my-namespace.svc.cluster.local");
+                                + "." + ControllerTestHelper.MY_NAMESPACE + ".svc.cluster.local");
                 verifyDbJobAdminCredentials(adminSecret, schemaCreationContainer);
                 verifyDbJobSchemaCredentials(MY_APP_SERVER_SECRET, schemaCreationContainer);
-                assertThat(theVariableNamed("JDBC_PARAMETERS").on(schemaCreationContainer)).isEqualTo("connectionTimeout=300");
+                assertThat(theVariableNamed("JDBC_PARAMETERS").on(schemaCreationContainer)).isEqualTo(
+                        "connectionTimeout=300");
             });
             step("and the second container populates the database with some initial state", () -> {
                 final Container populator = dbPreparationPod.getSpec().getInitContainers().get(1);
                 step("using a hypothetical command 'java -jar /deployments/myapp.jar --prepare-db',", () ->
-                        assertThat(populator.getCommand()).contains("java", "-jar", "/deployments/myapp.jar", "--prepare-db"));
+                        assertThat(populator.getCommand()).contains("java", "-jar", "/deployments/myapp.jar",
+                                "--prepare-db"));
                 verifySpringJdbcVars(MY_APP_SERVER_SECRET, populator);
             });
         });
@@ -203,8 +218,9 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
     }
 
     @Test
-    @Description("Should track failure when the database preparation Pod failed on the status of the EntandoCustomResource and NOT create"
-            + " a deployment")
+    @Description(
+            "Should track failure when the database preparation Pod failed on the status of the EntandoCustomResource and NOT create"
+                    + " a deployment")
     void dbawareDeploymentFailsWhenDatabasePreparationFailed() {
         step("Given I have a basic Deployable", () -> this.deployable = new BasicDbAwareDeployable());
         step("Given I have a basic DbAwareDeployable", () -> {
@@ -224,7 +240,8 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
                             .withCapability(StandardCapability.DBMS)
                             .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
                             .withResolutionScopePreference(CapabilityScope.NAMESPACE)
-                            .addAllToCapabilityParameters(Map.of(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, "my_db"))
+                            .addAllToCapabilityParameters(
+                                    Map.of(ProvidedDatabaseCapability.DATABASE_NAME_PARAMETER, "my_db"))
                             .build();
                 });
         final BasicDbAwareContainer container = deployable
@@ -235,7 +252,8 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
             attachSpiResource("Container", container);
         });
         step("And there is a controller to process requests for the DBMS capability requested",
-                () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.POSTGRESQL, "my_db")).when(getClient().capabilities())
+                () -> doAnswer(withADatabaseCapabilityStatus(DbmsVendor.POSTGRESQL, "my_db")).when(
+                                getClient().capabilities())
                         .waitForCapabilityCompletion(argThat(matchesCapability(StandardCapability.DBMS)), anyInt()));
         step("But the database preparation pod is going to fail", () ->
                 when(getClient().pods().runToCompletion(any(), anyInt())).thenAnswer(inv -> {
@@ -253,7 +271,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
         final Deployment deployment = getClient().deployments()
                 .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
         step(format("Then no Deployment was created reflecting the name of the TestResource and the suffix '%s'",
-                NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
+                        NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
                 () -> {
                     attachKubernetesResource("Deployment", deployment);
                     assertThat(deployment).isNull();
@@ -263,14 +281,16 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
             thrown.get().hasMessageContaining("Database preparation failed. Please inspect the logs of the pod ");
         });
 
-        step("And the status on the TestResource indicates that the deployment has failed and makes some diagnostic info available", () -> {
-            final EntandoCustomResource resource = getClient().entandoResources().reload(entandoCustomResource);
-            assertThat(resource.getStatus().hasFailed()).isTrue();
-            assertThat(resource.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.FAILED);
-            assertThat(resource.getStatus().findFailedServerStatus().flatMap(ServerStatus::getEntandoControllerFailure).map(
-                    EntandoControllerFailure::getMessage).get())
-                    .contains("Database preparation failed. Please inspect the logs of the pod ");
-        });
+        step("And the status on the TestResource indicates that the deployment has failed and makes some diagnostic info available",
+                () -> {
+                    final EntandoCustomResource resource = getClient().entandoResources().reload(entandoCustomResource);
+                    assertThat(resource.getStatus().hasFailed()).isTrue();
+                    assertThat(resource.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.FAILED);
+                    assertThat(resource.getStatus().findFailedServerStatus()
+                            .flatMap(ServerStatus::getEntandoControllerFailure).map(
+                                    EntandoControllerFailure::getMessage).get())
+                            .contains("Database preparation failed. Please inspect the logs of the pod ");
+                });
         attachKubernetesState();
     }
 
@@ -286,7 +306,7 @@ class DatabaseConsumerTest extends ControllerTestBase implements VariableReferen
 
         final String jdbcUrl = "jdbc:postgresql://" + NameUtils
                 .standardServiceName(this.capabilityProvisioningResult.getProvidedCapability())
-                + ".my-namespace.svc.cluster.local:5432/my_db?connectionTimeout=300";
+                + "." + ControllerTestHelper.MY_NAMESPACE + ".svc.cluster.local:5432/my_db?connectionTimeout=300";
         step(format("and the JDBC connection string '%s'", jdbcUrl),
                 () -> assertThat(theVariableNamed(SpringProperty.SPRING_DATASOURCE_URL.name()).on(populator)).isEqualTo(
                         jdbcUrl));

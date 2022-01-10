@@ -19,15 +19,19 @@ package org.entando.kubernetes.controller.support.client.impl;
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.entando.kubernetes.controller.support.common.EntandoOperatorConfig.getDefaultRoutingSuffix;
 
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.EndpointsBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import java.util.Map;
@@ -36,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
-import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.test.common.ValueHolder;
 import org.junit.jupiter.api.Tag;
@@ -118,10 +121,11 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
     void shouldCreateADelegateServiceAndEndpoints() throws InterruptedException {
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod").delete();
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
-                .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
+                .waitUntilCondition(Objects::isNull, mkTimeoutSec(80L), TimeUnit.SECONDS);
         TestResource testResource1 = newTestResource();
         TestResource testResource2 = newTestResource()
-                .withNames(testResource1.getMetadata().getNamespace() + "2", testResource1.getMetadata().getName() + "2");
+                .withNames(companionResourceOf(testResource1.getMetadata().getNamespace()),
+                        companionResourceOf(testResource1.getMetadata().getName()));
         ValueHolder<Service> firstService = new ValueHolder<>();
         step("Given I have started a new NGINX Pod with the label 'pod-label: 123'", () -> {
             final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
@@ -186,8 +190,9 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
                             .endSubset()
                             .build()));
         });
-        final String hostname = testResource2.getMetadata().getName() + "." + EntandoOperatorConfig.getDefaultRoutingSuffix()
-                .orElse("apps.serv.run");
+        final String hostname =
+                testResource2.getMetadata().getName() + "." + getDefaultRoutingSuffix().orElse(
+                        EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix());
         step("Then I can successfully expose the delegate service on an ingress in the second namespace", () -> {
             getSimpleK8SClient().ingresses().createIngress(testResource2, new IngressBuilder()
                     .withNewMetadata()
@@ -208,7 +213,7 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
                     .endRule()
                     .endSpec()
                     .build());
-            await().atMost(40, TimeUnit.SECONDS).ignoreExceptions()
+            await().atMost(mkTimeout(300)).ignoreExceptions()
                     .until(() -> HttpTestHelper.getStatus("http://" + hostname + "/index2.html") == 200);
             assertThat(HttpTestHelper.getStatus("http://" + hostname + "/index2.html")).isEqualTo(200);
         });
