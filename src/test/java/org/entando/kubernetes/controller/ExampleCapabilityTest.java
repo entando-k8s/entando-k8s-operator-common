@@ -33,6 +33,7 @@ import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.DbmsVendor;
+import org.entando.kubernetes.test.common.ControllerTestHelper;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -42,8 +43,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure"), @Tag("pre-deployment")})
-@Feature("As a controller developer, I would like to implement a controller that responds to CapabilityRequirements so that I can extend"
-        + "Kubernetes with my own controllers")
+@Feature(
+        "As a controller developer, I would like to implement a controller that responds to CapabilityRequirements so that I can extend"
+                + "Kubernetes with my own controllers")
 @Issue("ENG-2284")
 @SourceLink("ExampleCapabilityTest.java")
 class ExampleCapabilityTest extends ControllerTestBase {
@@ -51,7 +53,8 @@ class ExampleCapabilityTest extends ControllerTestBase {
     static final String DEFAULT_DBMS_IN_NAMESPACE = "default-postgresql-dbms-in-namespace";
 
     @Override
-    public Runnable createController(KubernetesClientForControllers kubernetesClientForControllers, DeploymentProcessor deploymentProcessor,
+    public Runnable createController(KubernetesClientForControllers kubernetesClientForControllers,
+            DeploymentProcessor deploymentProcessor,
             CapabilityProvider capabilityProvider) {
         return new TestResourceController(kubernetesClientForControllers, deploymentProcessor);
     }
@@ -61,19 +64,22 @@ class ExampleCapabilityTest extends ControllerTestBase {
     void shouldTranslateProvidedCapabilityToTestResource() {
         step("Given I have an example Controller that responds to DBMS CapabilityRequirements");
         step("And I have created the ProvidedCapability CRD", () -> {
-            getClient().entandoResources().registerCustomResourceDefinition("crd/providedcapabilities.entando.org.crd.yaml");
+            getClient().entandoResources()
+                    .registerCustomResourceDefinition("crd/providedcapabilities.entando.org.crd.yaml");
         });
 
         step("When I request a namespace scoped, PostgreSQL DBMS Capability for direct deployment",
-                () -> runControllerAgainstCapabilityRequirement(newResourceRequiringCapability(), new CapabilityRequirementBuilder()
-                        .withCapability(StandardCapability.DBMS)
-                        .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
-                        .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
-                        .withResolutionScopePreference(CapabilityScope.NAMESPACE)
-                        .build()));
+                () -> runControllerAgainstCapabilityRequirement(newResourceRequiringCapability(),
+                        new CapabilityRequirementBuilder()
+                                .withCapability(StandardCapability.DBMS)
+                                .withImplementation(StandardCapabilityImplementation.POSTGRESQL)
+                                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
+                                .withResolutionScopePreference(CapabilityScope.NAMESPACE)
+                                .build()));
         ProvidedCapability providedCapability = getClient().entandoResources()
                 .load(ProvidedCapability.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);
-        TestResource testResource = getClient().entandoResources().load(TestResource.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);
+        TestResource testResource = getClient().entandoResources()
+                .load(TestResource.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);
         step("Then an TestResource was provisioned:", () -> {
             step("using the DeployDirectly provisioningStrategy",
                     () -> assertThat(testResource.getSpec().getProvisioningStrategy())
@@ -92,7 +98,8 @@ class ExampleCapabilityTest extends ControllerTestBase {
                     final Deployment deployment = getClient().deployments()
                             .loadDeployment(testResource, NameUtils.standardDeployment(testResource));
                     attachKubernetesResource("Deployment", deployment);
-                    step("using the PostgreSQL Image " + DbmsDockerVendorStrategy.CENTOS_POSTGRESQL.getOrganization() + "/"
+                    step("using the PostgreSQL Image " + DbmsDockerVendorStrategy.CENTOS_POSTGRESQL.getOrganization()
+                                    + "/"
                                     + DbmsDockerVendorStrategy.CENTOS_POSTGRESQL
                                     .getImageRepository(),
                             () -> assertThat(thePrimaryContainerOn(deployment).getImage())
@@ -109,7 +116,8 @@ class ExampleCapabilityTest extends ControllerTestBase {
                                 .loadPersistentVolumeClaim(testResource, "default-postgresql-dbms-in-namespace-db-pvc");
                         attachKubernetesResource("PersistentVolumeClaim", pvc);
                         assertThat(
-                                theVolumeNamed("default-postgresql-dbms-in-namespace-db-volume").on(deployment).getPersistentVolumeClaim()
+                                theVolumeNamed("default-postgresql-dbms-in-namespace-db-volume").on(deployment)
+                                        .getPersistentVolumeClaim()
                                         .getClaimName()).isEqualTo(
                                 "default-postgresql-dbms-in-namespace-db-pvc");
                     });
@@ -125,13 +133,14 @@ class ExampleCapabilityTest extends ControllerTestBase {
                             });
 
                 });
-        step("And the admin secret specifies the standard super user 'postgres' as user and has a dynamically generated password", () -> {
-            final Secret secret = getClient().secrets()
-                    .loadSecret(testResource, NameUtils.standardAdminSecretName(testResource));
-            attachKubernetesResource("Admin Secret", secret);
-            assertThat(theKey("username").on(secret)).isEqualTo("postgres");
-            assertThat(theKey("password").on(secret)).isNotBlank();
-        });
+        step("And the admin secret specifies the standard super user 'postgres' as user and has a dynamically generated password",
+                () -> {
+                    final Secret secret = getClient().secrets()
+                            .loadSecret(testResource, NameUtils.standardAdminSecretName(testResource));
+                    attachKubernetesResource("Admin Secret", secret);
+                    assertThat(theKey("username").on(secret)).isEqualTo("postgres");
+                    assertThat(theKey("password").on(secret)).isNotBlank();
+                });
         step("And a Kubernetes Service was created:", () -> {
             final Service service = getClient().services()
                     .loadService(testResource, NameUtils.standardServiceName(testResource));
@@ -148,18 +157,22 @@ class ExampleCapabilityTest extends ControllerTestBase {
                     ));
         });
 
-        step("And the resulting DatabaseServiceResult reflects the correct information to connect to the deployed DBMS service", () -> {
-            DatabaseConnectionInfo connectionInfo = new ProvidedDatabaseCapability(
-                    getClient().entandoResources()
-                            .loadCapabilityProvisioningResult(
-                                    providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get()));
-            Allure.attachment("DatabaseServiceResult", SerializationHelper.serialize(connectionInfo));
-            assertThat(connectionInfo.getDatabaseName()).isEqualTo("default_postgresql_dbms_in_namespace");
-            assertThat(connectionInfo.getPort()).isEqualTo("5432");
-            assertThat(connectionInfo.getInternalServiceHostname())
-                    .isEqualTo("default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local");
-            assertThat(connectionInfo.getVendor()).isEqualTo(DbmsVendorConfig.POSTGRESQL);
-        });
+        step("And the resulting DatabaseServiceResult reflects the correct information to connect to the deployed DBMS service",
+                () -> {
+                    DatabaseConnectionInfo connectionInfo = new ProvidedDatabaseCapability(
+                            getClient().entandoResources()
+                                    .loadCapabilityProvisioningResult(
+                                            providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)
+                                                    .get()));
+                    Allure.attachment("DatabaseServiceResult", SerializationHelper.serialize(connectionInfo));
+                    assertThat(connectionInfo.getDatabaseName()).isEqualTo("default_postgresql_dbms_in_namespace");
+                    assertThat(connectionInfo.getPort()).isEqualTo("5432");
+                    assertThat(connectionInfo.getInternalServiceHostname())
+                            .isEqualTo(
+                                    "default-postgresql-dbms-in-namespace-service." + ControllerTestHelper.MY_NAMESPACE
+                                            + ".svc.cluster.local");
+                    assertThat(connectionInfo.getVendor()).isEqualTo(DbmsVendorConfig.POSTGRESQL);
+                });
         attachKubernetesState();
     }
 
@@ -168,16 +181,20 @@ class ExampleCapabilityTest extends ControllerTestBase {
     void shouldTranslateTestResourceToProvidedCapability() {
         step("Given I have an example Controller that responds to DBMS CapabilityRequirements");
         step("And I have created the ProvidedCapability CRD", () -> {
-            getClient().entandoResources().registerCustomResourceDefinition("crd/providedcapabilities.entando.org.crd.yaml");
+            getClient().entandoResources()
+                    .registerCustomResourceDefinition("crd/providedcapabilities.entando.org.crd.yaml");
         });
 
         step("When I request a namespace scoped, PostgreSQL DBMS Capability for direct deployment",
-                () -> runControllerAgainstCustomResource(new TestResource().withNames(MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE).withSpec(
-                        new BasicDeploymentSpecBuilder().withDbms(DbmsVendor.POSTGRESQL)
-                                .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY).build())));
+                () -> runControllerAgainstCustomResource(
+                        new TestResource().withNames(MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE).withSpec(
+                                new BasicDeploymentSpecBuilder().withDbms(DbmsVendor.POSTGRESQL)
+                                        .withProvisioningStrategy(CapabilityProvisioningStrategy.DEPLOY_DIRECTLY)
+                                        .build())));
         ProvidedCapability providedCapability = getClient().entandoResources()
                 .load(ProvidedCapability.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);
-        TestResource testResource = getClient().entandoResources().load(TestResource.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);
+        TestResource testResource = getClient().entandoResources()
+                .load(TestResource.class, MY_NAMESPACE, DEFAULT_DBMS_IN_NAMESPACE);
         step("Then an ProvidedCapability was created:", () -> {
             step("using the DeployDirectly provisioningStrategy",
                     () -> assertThat(providedCapability.getSpec().getProvisioningStrategy())
@@ -191,7 +208,8 @@ class ExampleCapabilityTest extends ControllerTestBase {
             step("and it has the correct labels",
                     () -> {
                         assertThat(providedCapability.getMetadata().getLabels())
-                                .containsEntry(LabelNames.CAPABILITY.getName(), StandardCapability.DBMS.getCamelCaseName());
+                                .containsEntry(LabelNames.CAPABILITY.getName(),
+                                        StandardCapability.DBMS.getCamelCaseName());
                         assertThat(providedCapability.getMetadata().getLabels())
                                 .containsEntry(LabelNames.CAPABILITY_IMPLEMENTATION.getName(),
                                         StandardCapabilityImplementation.POSTGRESQL.getCamelCaseName());
@@ -201,18 +219,22 @@ class ExampleCapabilityTest extends ControllerTestBase {
                     });
             attachKubernetesResource("TestResource", providedCapability);
         });
-        step("And the resulting DatabaseServiceResult reflects the correct information to connect to the deployed DBMS service", () -> {
-            DatabaseConnectionInfo connectionInfo = new ProvidedDatabaseCapability(
-                    getClient().entandoResources()
-                            .loadCapabilityProvisioningResult(
-                                    providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get()));
-            Allure.attachment("DatabaseServiceResult", SerializationHelper.serialize(connectionInfo));
-            assertThat(connectionInfo.getDatabaseName()).isEqualTo("default_postgresql_dbms_in_namespace");
-            assertThat(connectionInfo.getPort()).isEqualTo("5432");
-            assertThat(connectionInfo.getInternalServiceHostname())
-                    .isEqualTo("default-postgresql-dbms-in-namespace-service.my-namespace.svc.cluster.local");
-            assertThat(connectionInfo.getVendor()).isEqualTo(DbmsVendorConfig.POSTGRESQL);
-        });
+        step("And the resulting DatabaseServiceResult reflects the correct information to connect to the deployed DBMS service",
+                () -> {
+                    DatabaseConnectionInfo connectionInfo = new ProvidedDatabaseCapability(
+                            getClient().entandoResources()
+                                    .loadCapabilityProvisioningResult(
+                                            providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER)
+                                                    .get()));
+                    Allure.attachment("DatabaseServiceResult", SerializationHelper.serialize(connectionInfo));
+                    assertThat(connectionInfo.getDatabaseName()).isEqualTo("default_postgresql_dbms_in_namespace");
+                    assertThat(connectionInfo.getPort()).isEqualTo("5432");
+                    assertThat(connectionInfo.getInternalServiceHostname())
+                            .isEqualTo(
+                                    "default-postgresql-dbms-in-namespace-service." + ControllerTestHelper.MY_NAMESPACE
+                                            + ".svc.cluster.local");
+                    assertThat(connectionInfo.getVendor()).isEqualTo(DbmsVendorConfig.POSTGRESQL);
+                });
         attachKubernetesState();
     }
 }

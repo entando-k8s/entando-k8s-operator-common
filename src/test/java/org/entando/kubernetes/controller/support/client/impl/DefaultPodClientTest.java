@@ -51,7 +51,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     void shouldWaitForPreviouslyStartedPod() throws TimeoutException, InterruptedException {
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod").delete();
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
-                .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
+                .waitUntilCondition(Objects::isNull, mkTimeoutSec(40L), TimeUnit.SECONDS);
         //Given I have started a new Pod
         awaitDefaultToken(testResource.getMetadata().getNamespace());
         final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
@@ -80,7 +80,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     void shouldRemoveAndWait() throws TimeoutException, InterruptedException {
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod").delete();
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
-                .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
+                .waitUntilCondition(Objects::isNull, mkTimeoutSec(40L), TimeUnit.SECONDS);
         awaitDefaultToken(testResource.getMetadata().getNamespace());
         //Given I have started a new Pod
         final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
@@ -113,7 +113,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         for (String s : new String[]{"successful-pod", "failed-pod"}) {
             this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName(s).delete();
             this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName(s)
-                    .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
+                    .waitUntilCondition(Objects::isNull, mkTimeoutSec(40L), TimeUnit.SECONDS);
         }
         awaitDefaultToken(testResource.getMetadata().getNamespace());
         //Given I have started a new Pod
@@ -155,7 +155,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
         getSimpleK8SClient().pods()
                 .removeSuccessfullyCompletedPods(testResource.getMetadata().getNamespace(), Collections.singletonMap("label", "value"));
         //Then the current thread only proceeds once the pod is ready
-        await().atMost(10, TimeUnit.SECONDS).until(() -> getSimpleK8SClient().pods()
+        await().atMost(mkTimeout(10)).until(() -> getSimpleK8SClient().pods()
                 .loadPod(testResource.getMetadata().getNamespace(), Collections.singletonMap("pod-label", "successful-pod")) == null);
         assertThat(
                 getSimpleK8SClient().pods()
@@ -167,7 +167,7 @@ class DefaultPodClientTest extends AbstractSupportK8SIntegrationTest {
     void shouldRunPodToCompletion() throws TimeoutException, InterruptedException {
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod").delete();
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
-                .waitUntilCondition(Objects::isNull, 40L, TimeUnit.SECONDS);
+                .waitUntilCondition(Objects::isNull, mkTimeoutSec(40L), TimeUnit.SECONDS);
         awaitDefaultToken(testResource.getMetadata().getNamespace());
 
         //Given I have started a new Pod

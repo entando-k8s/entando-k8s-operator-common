@@ -38,6 +38,7 @@ import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
+import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.fluentspi.TestResourceController;
 import org.entando.kubernetes.model.capability.CapabilityProvisioningStrategy;
@@ -47,6 +48,7 @@ import org.entando.kubernetes.model.capability.ProvidedCapability;
 import org.entando.kubernetes.model.capability.StandardCapability;
 import org.entando.kubernetes.model.capability.StandardCapabilityImplementation;
 import org.entando.kubernetes.model.common.ResourceReference;
+import org.entando.kubernetes.test.common.ControllerTestHelper;
 import org.entando.kubernetes.test.common.SourceLink;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -56,8 +58,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @Tags({@Tag("inner-hexagon"), @Tag("in-process"), @Tag("allure"), @Tag("pre-deployment")})
-@Feature("As a controller developer, I would like to implement a controller that responds to CapabilityRequirements so that I can extend"
-        + "Kubernetes with my own controllers")
+@Feature(
+        "As a controller developer, I would like to implement a controller that responds to CapabilityRequirements so that I can extend"
+                + "Kubernetes with my own controllers")
 @Issue("ENG-2284")
 @SourceLink("ExampleExternalCapabilityTest.java")
 class ExampleExternalCapabilityTest extends ControllerTestBase {
@@ -80,20 +83,22 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
             attachKubernetesResource("Existing Admin Secret", adminSecret);
         });
         step("When I request an DBMS Capability  with its name and namespace explicitly specified, provisioned externally",
-                () -> runControllerAgainstCapabilityRequirement(newResourceRequiringCapability(), new CapabilityRequirementBuilder()
-                        .withCapability(StandardCapability.DBMS)
-                        .withImplementation(StandardCapabilityImplementation.MYSQL)
-                        .withProvisioningStrategy(CapabilityProvisioningStrategy.USE_EXTERNAL)
-                        .withResolutionScopePreference(CapabilityScope.SPECIFIED)
-                        .withNewExternallyProvidedService()
-                        .withHost("pg.apps.serv.run")
-                        .withPort(3307)
-                        .withAdminSecretName("my-existing-dbms-admin-secret")
-                        .endExternallyProvidedService()
-                        .withSpecifiedCapability(new ResourceReference(MY_NAMESPACE, SPECIFIED_DBMS))
-                        .addAllToCapabilityParameters(
-                                Map.of(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX + "disconnectOnExpiredPasswords", "true"))
-                        .build()));
+                () -> runControllerAgainstCapabilityRequirement(newResourceRequiringCapability(),
+                        new CapabilityRequirementBuilder()
+                                .withCapability(StandardCapability.DBMS)
+                                .withImplementation(StandardCapabilityImplementation.MYSQL)
+                                .withProvisioningStrategy(CapabilityProvisioningStrategy.USE_EXTERNAL)
+                                .withResolutionScopePreference(CapabilityScope.SPECIFIED)
+                                .withNewExternallyProvidedService()
+                                .withHost("pg." + EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix() + "")
+                                .withPort(3307)
+                                .withAdminSecretName("my-existing-dbms-admin-secret")
+                                .endExternallyProvidedService()
+                                .withSpecifiedCapability(new ResourceReference(MY_NAMESPACE, SPECIFIED_DBMS))
+                                .addAllToCapabilityParameters(
+                                        Map.of(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX
+                                                + "disconnectOnExpiredPasswords", "true"))
+                                .build()));
         final ProvidedCapability providedCapability = getClient().entandoResources()
                 .load(ProvidedCapability.class, MY_NAMESPACE, SPECIFIED_DBMS);
         final TestResource testResource = getClient().entandoResources()
@@ -103,7 +108,8 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
             step("with the name explicitly specified", () -> {
                 assertThat(testResource.getMetadata().getName()).isEqualTo(SPECIFIED_DBMS);
                 assertThat(providedCapability.getMetadata().getName()).isEqualTo(SPECIFIED_DBMS);
-                assertThat(providedCapability.getSpec().getSpecifiedCapability().get().getName()).isEqualTo(SPECIFIED_DBMS);
+                assertThat(providedCapability.getSpec().getSpecifiedCapability().get().getName()).isEqualTo(
+                        SPECIFIED_DBMS);
             });
 
             step("using the 'Use External' provisioningStrategy",
@@ -114,10 +120,12 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
                     () -> assertThat(ResourceUtils.customResourceOwns(providedCapability, testResource)));
             step("and its host, port and database name reflect the connection info provided in the CapabilityRequirement",
                     () -> {
-                        assertThat(testResource.getSpec().getExternalHostName()).contains("pg.apps.serv.run");
+                        assertThat(testResource.getSpec().getExternalHostName()).contains(
+                                "pg." + EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix() + "");
                     });
             step("and the ProvidedCapability's status carries the name of the correct admin secret to use",
-                    () -> assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getAdminSecretName())
+                    () -> assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get()
+                            .getAdminSecretName())
                             .contains("my-existing-dbms-admin-secret"));
         });
         step("And an 'ExternalName' Service  was provisioned:", () -> {
@@ -130,7 +138,8 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
             });
 
             step("and to the previously configured hostname of the database service",
-                    () -> assertThat(service.getSpec().getExternalName()).isEqualTo("pg.apps.serv.run"));
+                    () -> assertThat(service.getSpec().getExternalName()).isEqualTo(
+                            "pg." + EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix() + ""));
         });
         final DatabaseConnectionInfo providedDatabase = new ProvidedDatabaseCapability(
                 getClient().capabilities().buildCapabilityProvisioningResult(providedCapability));
@@ -142,10 +151,12 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
             });
             step("and a hostname that reflects the previously inspected ExternalName service", () -> {
                 assertThat(providedDatabase.getInternalServiceHostname())
-                        .isEqualTo("specified-dbms-service.my-namespace.svc.cluster.local");
+                        .isEqualTo(
+                                "specified-dbms-service." + ControllerTestHelper.MY_NAMESPACE + ".svc.cluster.local");
             });
             step("and previously configured JDBC parameters", () -> {
-                assertThat(providedDatabase.getJdbcParameters()).containsAllEntriesOf(Map.of("disconnectOnExpiredPasswords", "true"));
+                assertThat(providedDatabase.getJdbcParameters()).containsAllEntriesOf(
+                        Map.of("disconnectOnExpiredPasswords", "true"));
             });
             step("and the previously configured DBMS vendor config", () -> {
                 assertThat(providedDatabase.getVendor()).isEqualTo(DbmsVendorConfig.MYSQL);
@@ -172,20 +183,22 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
             attachKubernetesResource("Existing Admin Secret", adminSecret);
         });
         step("When I request an DBMS Capability  with its name and namespace explicitly specified, provisioned externally",
-                () -> runControllerAgainstCapabilityRequirement(newResourceRequiringCapability(), new CapabilityRequirementBuilder()
-                        .withCapability(StandardCapability.DBMS)
-                        .withImplementation(StandardCapabilityImplementation.MYSQL)
-                        .withProvisioningStrategy(CapabilityProvisioningStrategy.USE_EXTERNAL)
-                        .withResolutionScopePreference(CapabilityScope.SPECIFIED)
-                        .withNewExternallyProvidedService()
-                        .withHost("10.0.0.234")
-                        .withPort(3307)
-                        .withAdminSecretName("my-existing-dbms-admin-secret")
-                        .endExternallyProvidedService()
-                        .withSpecifiedCapability(new ResourceReference(MY_NAMESPACE, SPECIFIED_DBMS))
-                        .addAllToCapabilityParameters(
-                                Map.of(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX + "disconnectOnExpiredPasswords", "true"))
-                        .build()));
+                () -> runControllerAgainstCapabilityRequirement(newResourceRequiringCapability(),
+                        new CapabilityRequirementBuilder()
+                                .withCapability(StandardCapability.DBMS)
+                                .withImplementation(StandardCapabilityImplementation.MYSQL)
+                                .withProvisioningStrategy(CapabilityProvisioningStrategy.USE_EXTERNAL)
+                                .withResolutionScopePreference(CapabilityScope.SPECIFIED)
+                                .withNewExternallyProvidedService()
+                                .withHost("10.0.0.234")
+                                .withPort(3307)
+                                .withAdminSecretName("my-existing-dbms-admin-secret")
+                                .endExternallyProvidedService()
+                                .withSpecifiedCapability(new ResourceReference(MY_NAMESPACE, SPECIFIED_DBMS))
+                                .addAllToCapabilityParameters(
+                                        Map.of(ProvidedDatabaseCapability.JDBC_PARAMETER_PREFIX
+                                                + "disconnectOnExpiredPasswords", "true"))
+                                .build()));
         final ProvidedCapability providedCapability = getClient().entandoResources()
                 .load(ProvidedCapability.class, MY_NAMESPACE, SPECIFIED_DBMS);
         final TestResource testResource = getClient().entandoResources()
@@ -195,7 +208,8 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
             step("with the name explicitly specified", () -> {
                 assertThat(testResource.getMetadata().getName()).isEqualTo(SPECIFIED_DBMS);
                 assertThat(providedCapability.getMetadata().getName()).isEqualTo(SPECIFIED_DBMS);
-                assertThat(providedCapability.getSpec().getSpecifiedCapability().get().getName()).isEqualTo(SPECIFIED_DBMS);
+                assertThat(providedCapability.getSpec().getSpecifiedCapability().get().getName()).isEqualTo(
+                        SPECIFIED_DBMS);
             });
 
             step("using the 'Use External' provisioningStrategy",
@@ -209,25 +223,28 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
                         assertThat(testResource.getSpec().getExternalHostName()).contains("10.0.0.234");
                     });
             step("and the ProvidedCapability's status carries the name of the correct admin secret to use",
-                    () -> assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get().getAdminSecretName())
+                    () -> assertThat(providedCapability.getStatus().getServerStatus(NameUtils.MAIN_QUALIFIER).get()
+                            .getAdminSecretName())
                             .contains("my-existing-dbms-admin-secret"));
         });
-        step("And an 'ClusterIP' Service  was provisioned with an EndPoints pointing to the original IP of the database service:", () -> {
-            final Service service = getClient().services()
-                    .loadService(testResource, NameUtils.standardServiceName(testResource));
-            final Endpoints endpoints = getClient().services()
-                    .loadEndpoints(testResource, NameUtils.standardServiceName(testResource));
-            attachKubernetesResource("Service", service);
-            attachKubernetesResource("EndPoints", endpoints);
-            assertThat(service.getSpec().getType()).isEqualTo("ClusterIP");
-            step("mapped to the port 3307", () -> {
-                assertThat(service.getSpec().getPorts().get(0).getPort()).isEqualTo(3307);
-                assertThat(endpoints.getSubsets().get(0).getPorts().get(0).getPort()).isEqualTo(3307);
-            });
+        step("And an 'ClusterIP' Service  was provisioned with an EndPoints pointing to the original IP of the database service:",
+                () -> {
+                    final Service service = getClient().services()
+                            .loadService(testResource, NameUtils.standardServiceName(testResource));
+                    final Endpoints endpoints = getClient().services()
+                            .loadEndpoints(testResource, NameUtils.standardServiceName(testResource));
+                    attachKubernetesResource("Service", service);
+                    attachKubernetesResource("EndPoints", endpoints);
+                    assertThat(service.getSpec().getType()).isEqualTo("ClusterIP");
+                    step("mapped to the port 3307", () -> {
+                        assertThat(service.getSpec().getPorts().get(0).getPort()).isEqualTo(3307);
+                        assertThat(endpoints.getSubsets().get(0).getPorts().get(0).getPort()).isEqualTo(3307);
+                    });
 
-            step("and an EndPoints pointing to the previously configured IP address of the database service",
-                    () -> assertThat(endpoints.getSubsets().get(0).getAddresses().get(0).getIp()).isEqualTo("10.0.0.234"));
-        });
+                    step("and an EndPoints pointing to the previously configured IP address of the database service",
+                            () -> assertThat(endpoints.getSubsets().get(0).getAddresses().get(0).getIp()).isEqualTo(
+                                    "10.0.0.234"));
+                });
         final DatabaseConnectionInfo providedDatabase = new ProvidedDatabaseCapability(
                 getClient().capabilities().buildCapabilityProvisioningResult(providedCapability));
         step("And the provided Database connection info reflects the external service", () -> {
@@ -238,10 +255,12 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
             });
             step("and a hostname that reflects the previously inspected ExternalName service", () -> {
                 assertThat(providedDatabase.getInternalServiceHostname())
-                        .isEqualTo("specified-dbms-service.my-namespace.svc.cluster.local");
+                        .isEqualTo(
+                                "specified-dbms-service." + ControllerTestHelper.MY_NAMESPACE + ".svc.cluster.local");
             });
             step("and previously configured JDBC parameters", () -> {
-                assertThat(providedDatabase.getJdbcParameters()).containsAllEntriesOf(Map.of("disconnectOnExpiredPasswords", "true"));
+                assertThat(providedDatabase.getJdbcParameters()).containsAllEntriesOf(
+                        Map.of("disconnectOnExpiredPasswords", "true"));
             });
             step("and the previously configured DBMS vendor config", () -> {
                 assertThat(providedDatabase.getVendor()).isEqualTo(DbmsVendorConfig.MYSQL);
@@ -253,7 +272,8 @@ class ExampleExternalCapabilityTest extends ControllerTestBase {
     }
 
     @Override
-    public Runnable createController(KubernetesClientForControllers kubernetesClientForControllers, DeploymentProcessor deploymentProcessor,
+    public Runnable createController(KubernetesClientForControllers kubernetesClientForControllers,
+            DeploymentProcessor deploymentProcessor,
             CapabilityProvider capabilityProvider) {
         return new TestResourceController(kubernetesClientForControllers, deploymentProcessor);
     }

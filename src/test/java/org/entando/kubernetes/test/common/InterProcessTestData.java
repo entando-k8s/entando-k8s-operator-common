@@ -51,9 +51,11 @@ public interface InterProcessTestData {
     String MY_CLUSTER_INFRASTRUCTURE_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-eci-namespace");
     String MY_APP = EntandoOperatorTestConfig.calculateName("my-app");
     String MY_APP_TLS_SECRET = MY_APP + "-" + TLS_SECRET;
-    String MY_APP_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace");
+    String MY_APP_DEFAULT_NAMESPACE = "test-entando-app-namespace";
+    String MY_APP_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace(MY_APP_DEFAULT_NAMESPACE);
+    String MY_PLUGIN_DEFAULT_NAMESPACE = "test-entando-plugin-namespace";
     String MY_PLUGIN = EntandoOperatorTestConfig.calculateName("my-plugin");
-    String MY_PLUGIN_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace("my-plugin-namespace");
+    String MY_PLUGIN_NAMESPACE = EntandoOperatorTestConfig.calculateNameSpace(MY_PLUGIN_DEFAULT_NAMESPACE);
     String MY_KEYCLOAK_HOSTNAME = "access.192.168.0.100.nip.io";
     String MY_KEYCLOAK_BASE_URL = "http://" + MY_KEYCLOAK_HOSTNAME + "/auth";
 

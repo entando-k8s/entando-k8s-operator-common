@@ -22,6 +22,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -49,6 +50,10 @@ public class CustomResourceDeletionWaiter {
     public CustomResourceDeletionWaiter fromNamespace(String namespace) {
         this.namespace = namespace;
         return this;
+    }
+
+    public void waitingAtMost(Duration duration) {
+        waitingAtMost(duration.getSeconds(), TimeUnit.SECONDS);
     }
 
     public void waitingAtMost(long duration, TimeUnit timeUnit) {

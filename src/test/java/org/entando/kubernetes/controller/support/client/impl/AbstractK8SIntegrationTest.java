@@ -29,6 +29,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.qameta.allure.Allure;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,25 +40,38 @@ import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigPro
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.test.common.FluentTraversals;
+import org.entando.kubernetes.test.common.InterProcessTestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
-    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace("my-app-namespace") + "-test66";
-    public static final String MY_APP_NAMESPACE_2 = MY_APP_NAMESPACE_1 + "2";
+    public static final String MY_APP_NAMESPACE_1 = EntandoOperatorTestConfig.calculateNameSpace(
+            InterProcessTestData.MY_APP_DEFAULT_NAMESPACE);
+    public static final String MY_APP_NAMESPACE_2 = companionResourceOf(MY_APP_NAMESPACE_1);
     public static final String TEST_CONTROLLER_POD = "test-controller-pod";
     protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     protected KubernetesClient fabric8Client;
+
+    protected static long TIMEOUT_HUNDREDS_MULTIPLIER = EntandoOperatorTestConfig.getTimeoutHundredsMultiplier();
 
     public ScheduledExecutorService getScheduler() {
         return scheduler;
     }
 
+    public static java.time.Duration mkTimeout(long baseSeconds) {
+        return java.time.Duration.ofSeconds(mkTimeoutSec(baseSeconds));
+    }
+
+    public static long mkTimeoutSec(long baseSeconds) {
+        return baseSeconds * TIMEOUT_HUNDREDS_MULTIPLIER / 100;
+    }
+
     protected void awaitDefaultToken(String namespace) {
-        await().atMost(30, TimeUnit.SECONDS).ignoreExceptions()
+        await().atMost(mkTimeout(60)).ignoreExceptions()
                 .until(() -> getFabric8Client().secrets().inNamespace(namespace).list()
-                        .getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "default")));
+                        .getItems().stream()
+                        .anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "default")));
     }
 
     protected TestResource newTestResource() {
@@ -66,6 +80,10 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
                 .withSpec(new BasicDeploymentSpecBuilder()
                         .withReplicas(1)
                         .build());
+    }
+
+    public static String companionResourceOf(String namespace) {
+        return namespace + "-bis";
     }
 
     @AfterEach
@@ -98,7 +116,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
         fabric8Client = new SupportProducer().getKubernetesClient();
 
         for (String nsToUse : getNamespacesToUse()) {
-            await().atMost(240, TimeUnit.SECONDS).until(() -> {
+            await().atMost(mkTimeout(240)).until(() -> {
                 Resource<Namespace> nsres = fabric8Client.namespaces().withName(nsToUse);
                 try {
                     Namespace ns = nsres.get();

@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers;
 
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotFoundException;
+import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.keycloak.admin.client.Keycloak;
@@ -71,7 +73,16 @@ public interface KeycloakTestHelper {
         DefaultKeycloakClient keycloakClient = new DefaultKeycloakClient();
         if (EntandoOperatorTestConfig.lookupProperty(EntandoOperatorTestConfig.ENTANDO_TEST_KEYCLOAK_BASE_URL).isEmpty()) {
             try (DefaultKubernetesClient defaultKubernetesClient = new DefaultKubernetesClient()) {
-                final Secret secret = defaultKubernetesClient.secrets().inNamespace("jx").withName("entando-jx-common-secret").get();
+                final Secret secret = defaultKubernetesClient.secrets().inNamespace("jx")
+                        .withName("entando-jx-common-secret").get();
+
+                String crt = decodeData(secret, "keycloak.server.ca-cert");
+                if (!crt.isEmpty()) {
+                    TrustStoreHelper.trustCertificateAuthoritiesIn(
+                            new SecretBuilder().addToData("test-keycloak-server-ca-cert",
+                                    Base64.getEncoder().encodeToString(crt.getBytes(StandardCharsets.UTF_8))).build());
+                }
+
                 keycloakClient.login(decodeData(secret, "keycloak.base.url"),
                         decodeData(secret, "keycloak.admin.user"),
                         decodeData(secret, "keycloak.admin.password"));

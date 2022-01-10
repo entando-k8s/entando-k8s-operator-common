@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller;
 import static io.qameta.allure.Allure.step;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest.companionResourceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -278,12 +279,14 @@ class ExposedDeploymentTest extends ControllerTestBase implements VariableRefere
                         .withSpec(new BasicDeploymentSpec()));
                 attachKubernetesResource("TestResource 1", entandoCustomResource);
             });
-            step(format("the second in the namespace '%s' with name '%s'", MY_NAMESPACE + "2", MY_APP + "2"), () -> {
-                secondResource.set(new TestResource()
-                        .withNames(MY_NAMESPACE + "2", MY_APP + "2")
-                        .withSpec(new BasicDeploymentSpec()));
-                attachKubernetesResource("TestResource 2", entandoCustomResource);
-            });
+            step(format("the second in the namespace '%s' with name '%s'", companionResourceOf(MY_NAMESPACE),
+                            companionResourceOf(MY_APP)), () -> {
+                        secondResource.set(
+                                new TestResource().withNames(companionResourceOf(MY_NAMESPACE), companionResourceOf(MY_APP))
+                                        .withSpec(new BasicDeploymentSpec()));
+                        attachKubernetesResource("TestResource 2", entandoCustomResource);
+                    }
+            );
         });
         step("And I have created the necessary Kubernetes Secrets to support TLS", () -> {
             CertificateSecretHelper.buildCertificateSecretsFromDirectory(
@@ -341,8 +344,7 @@ class ExposedDeploymentTest extends ControllerTestBase implements VariableRefere
                 });
         step(format(
                 "When I deploy the second TestResource '%s' in namespace '%s' with the context path '/my-app2' and the health check path "
-                        + "'/my-app2/health'",
-                MY_APP + "2", MY_NAMESPACE + "2"),
+                        + "'/my-app2/health'", companionResourceOf(MY_APP), companionResourceOf(MY_NAMESPACE)),
                 () -> {
                     container.withWebContextPath("/my-app2").withHealthCheckPath("/my-app2/health");
                     attachSpiResource("Container", container);
@@ -384,7 +386,7 @@ class ExposedDeploymentTest extends ControllerTestBase implements VariableRefere
         step(format("And a delegate Service '%s' was created in namespace '%s' that points to the service in namespace '%s' ",
                 delegateName,
                 MY_NAMESPACE,
-                MY_NAMESPACE + "2"),
+                companionResourceOf(MY_NAMESPACE)),
                 () -> {
                     final Service delegateService = getClient().services().loadService(firstResource.get(), delegateName);
                     attachKubernetesResource("Service", delegateService);
@@ -394,7 +396,7 @@ class ExposedDeploymentTest extends ControllerTestBase implements VariableRefere
                     attachKubernetesResource("Service", delegateService);
                 });
         step(format("And the delegate Service is backed by a Endpoints resource that points to the second service in namespace '%s'",
-                MY_NAMESPACE + "2"),
+                companionResourceOf(MY_NAMESPACE)),
                 () -> {
                     final Endpoints delegateService = getClient().services().loadEndpoints(firstResource.get(), delegateName);
                     attachKubernetesResource("Service", delegateService);

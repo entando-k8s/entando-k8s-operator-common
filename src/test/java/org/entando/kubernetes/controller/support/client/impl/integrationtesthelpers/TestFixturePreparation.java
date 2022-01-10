@@ -18,6 +18,7 @@ package org.entando.kubernetes.controller.support.client.impl.integrationtesthel
 
 import static java.util.Optional.ofNullable;
 import static org.awaitility.Awaitility.await;
+import static org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest.mkTimeout;
 
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
+import org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
@@ -116,15 +118,15 @@ public final class TestFixturePreparation {
                     // it takes to shut down can interfere with subsequent pod watchers.
                     DeletionWaiter.delete(client.apps().deployments()).fromNamespace(entry.getKey())
                             .withLabel(type.getSimpleName())
-                            .waitingAtMost(60, TimeUnit.SECONDS);
+                            .waitingAtMost(mkTimeout(60));
                     DeletionWaiter.delete(client.pods()).fromNamespace(entry.getKey())
                             .withLabel(type.getSimpleName())
-                            .waitingAtMost(60, TimeUnit.SECONDS);
+                            .waitingAtMost(mkTimeout(60));
                     new CustomResourceDeletionWaiter(client, type.getSimpleName()).fromNamespace(entry.getKey())
-                            .waitingAtMost(120, TimeUnit.SECONDS);
+                            .waitingAtMost(mkTimeout(120));
                     DeletionWaiter.delete(client.persistentVolumeClaims()).fromNamespace(entry.getKey())
                             .withLabel(type.getSimpleName())
-                            .waitingAtMost(60, TimeUnit.SECONDS);
+                            .waitingAtMost(mkTimeout(60));
                 }
             } else {
                 createNamespace(client, entry.getKey());
@@ -136,8 +138,8 @@ public final class TestFixturePreparation {
         client.namespaces().create(new NamespaceBuilder().withNewMetadata().withName(namespace)
                 .addToLabels("testType", "end-to-end")
                 .endMetadata().build());
-        
-        await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
+
+        await().atMost(mkTimeout(60)).ignoreExceptions()
                 .until(() -> {
                     SecretList lst = client.secrets().inNamespace(namespace).list();
                     return lst.getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "default"));

@@ -53,6 +53,7 @@ import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 import org.entando.kubernetes.model.common.ServerStatus;
+import org.entando.kubernetes.test.common.ControllerTestHelper;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.PodBehavior;
 import org.entando.kubernetes.test.common.SourceLink;
@@ -248,15 +249,20 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
                 });
         step("But the controller throws a CommandLine.ExecutionException", () -> {
             thrown.get().isInstanceOf(CommandLine.ExecutionException.class);
-            thrown.get().hasMessageContaining("Deployment failed. Please inspect the logs of the pod my-namespace/my-app-deployment");
+            thrown.get().hasMessageContaining(
+                    "Deployment failed. Please inspect the logs of the pod " + ControllerTestHelper.MY_NAMESPACE
+                            + "/my-app-deployment");
         });
 
         step("And the status on the TestResource indicates that the deployment has failed and makes some diagnostic info available", () -> {
             final EntandoCustomResource resource = getClient().entandoResources().reload(entandoCustomResource);
             assertThat(resource.getStatus().hasFailed()).isTrue();
             assertThat(resource.getStatus().getPhase()).isEqualTo(EntandoDeploymentPhase.FAILED);
-            assertThat(resource.getStatus().findFailedServerStatus().flatMap(ServerStatus::getEntandoControllerFailure).get().getMessage())
-                    .isEqualTo("Deployment failed. Please inspect the logs of the pod my-namespace/my-app-deployment");
+            assertThat(resource.getStatus().findFailedServerStatus().flatMap(ServerStatus::getEntandoControllerFailure)
+                    .get().getMessage())
+                    .isEqualTo(
+                            "Deployment failed. Please inspect the logs of the pod " + ControllerTestHelper.MY_NAMESPACE
+                                    + "/my-app-deployment");
         });
         attachKubernetesState();
     }
