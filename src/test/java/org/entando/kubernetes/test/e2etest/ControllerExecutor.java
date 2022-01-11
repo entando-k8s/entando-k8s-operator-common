@@ -87,7 +87,7 @@ public class ControllerExecutor {
                 .addNewContainer()
                 .withName("deployer")
                 .withImage(determineControllerImage(resource, imageVersionToUse))
-                .withImagePullPolicy("IfNotPresent")
+                .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse("IfNotPresent"))
                 .withEnv(buildEnvVars(action, resource))
                 .endContainer()
                 .endSpec()
