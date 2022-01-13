@@ -53,7 +53,7 @@ public class ResourceUtils {
 
     public static Map<String, String> labelsFromResource(EntandoCustomResource entandoCustomResource) {
         Map<String, String> labels = new ConcurrentHashMap<>();
-        labels.put(entandoCustomResource.getKind(), entandoCustomResource.getMetadata().getName());
+        labels.put(entandoCustomResource.getKind(), NameUtils.shortenLabelToMaxLength(entandoCustomResource.getMetadata().getName()));
         labels.put(LabelNames.RESOURCE_KIND.getName(), entandoCustomResource.getKind());
         labels.put(LabelNames.RESOURCE_NAMESPACE.getName(), entandoCustomResource.getMetadata().getNamespace());
         labels.putAll(ofNullable(entandoCustomResource.getMetadata().getLabels()).orElse(Collections.emptyMap()));

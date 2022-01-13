@@ -20,12 +20,19 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface DbAwareContainer extends DeployableContainer {
+
+    Logger logger = LoggerFactory.getLogger(DbAwareContainer.class.getName());
+
+    int USERNAME_RANDOM_HASH_LENGTH = 5;
 
     default Optional<DatabasePopulator> getDatabasePopulator() {
         return Optional.empty();
@@ -41,20 +48,33 @@ public interface DbAwareContainer extends DeployableContainer {
             List<String> schemaQualifiers) {
         return schemaQualifiers.stream()
                 .map(schemaQualifier -> {
+                    final DbmsVendorConfig dbmsVendor = databaseConnectionInfo.getVendor();
                     String schemaName = NameUtils.databaseCompliantName(
                             entandoBaseCustomResource,
                             schemaQualifier,
-                            databaseConnectionInfo.getVendor()
+                            dbmsVendor
                     );
                     return new DefaultDatabaseSchemaConnectionInfo(databaseConnectionInfo,
                             schemaName,
                             SecretUtils.generateSecret(
                                     entandoBaseCustomResource,
                                     entandoBaseCustomResource.getMetadata().getName() + "-" + schemaQualifier + "-secret",
-                                    schemaName
+                                    generateUsername(schemaName, dbmsVendor)
                             )
                     );
                 }).collect(Collectors.toList());
+    }
+
+    static String generateUsername(String schemaName, DbmsVendorConfig dbmsVendor) {
+        int lenWithoutRandom = dbmsVendor.getMaxUsernameLength() - (USERNAME_RANDOM_HASH_LENGTH + 1);
+
+        String username = schemaName;
+        if (schemaName.length() > lenWithoutRandom) {
+            username = schemaName.substring(0, lenWithoutRandom);
+            logger.debug("Database username {} too long: {} supports max length of {}. Truncating to {}",
+                    schemaName, dbmsVendor.getName(), dbmsVendor.getMaxUsernameLength(), username);
+        }
+        return username + "_" + NameUtils.randomNumeric(USERNAME_RANDOM_HASH_LENGTH);
     }
 
 }

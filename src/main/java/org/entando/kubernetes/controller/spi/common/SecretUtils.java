@@ -45,7 +45,7 @@ public class SecretUtils {
         return new SecretBuilder()
                 .withNewMetadata().withName(secretName)
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(resource))
-                .addToLabels(resource.getKind(), resource.getMetadata().getName())
+                .addToLabels(resource.getKind(), NameUtils.shortenLabelToMaxLength(resource.getMetadata().getName()))
                 .endMetadata()
                 .addToStringData(USERNAME_KEY, username)
                 .addToStringData(PASSSWORD_KEY, password)

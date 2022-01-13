@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.PodClient;
@@ -94,8 +95,9 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue, int timeoutSeconds) throws TimeoutException {
+        String shortLabelValue = NameUtils.shortenLabelToMaxLength(labelValue);
         return interruptionSafe(() ->
-                client.pods().inNamespace(namespace).withLabel(labelName, labelValue).waitUntilCondition(
+                client.pods().inNamespace(namespace).withLabel(labelName, shortLabelValue).waitUntilCondition(
                         got -> got != null && got.getStatus() != null && (PodResult.of(got).getState() == State.READY
                                 || PodResult.of(got).getState() == State.COMPLETED),
                         EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds(),

@@ -46,10 +46,18 @@ public class SpringBootDeployable<S extends KeycloakAwareSpec> implements
     public SpringBootDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource,
             SsoConnectionInfo ssoConnectionInfo,
             DatabaseConnectionInfo databaseConnectionInfo) {
+        this(customResource, ssoConnectionInfo,
+                new SampleSpringBootDeployableContainer<>(customResource, databaseConnectionInfo, ssoConnectionInfo,
+                        new SsoClientConfig("entando", "asdf", "asdf")));
+
+    }
+
+    public SpringBootDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> customResource,
+            SsoConnectionInfo ssoConnectionInfo,
+            DeployableContainer container) {
         this.customResource = customResource;
         this.ssoConnectionInfo = ssoConnectionInfo;
-        container = new SampleSpringBootDeployableContainer<>(customResource, databaseConnectionInfo, ssoConnectionInfo,
-                new SsoClientConfig("entando", "asdf", "asdf"));
+        this.container = container;
     }
 
     /**

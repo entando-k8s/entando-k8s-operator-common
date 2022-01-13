@@ -81,7 +81,6 @@ public interface KubernetesClientForControllers {
         return load(supportedTypes.stream().filter(c -> c.getSimpleName().equals(kind)).findAny().orElseThrow(() ->
                         new IllegalArgumentException(format("The resourceKind %s was not found in the list of supported types", kind))),
                 resourceNamespace, resourceName);
-
     }
 
     private String resolveProperty(EntandoOperatorSpiConfigProperty name) {
@@ -155,6 +154,7 @@ public interface KubernetesClientForControllers {
     <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer);
 
     default <T extends EntandoCustomResource> T updateStatus(T customResource, ServerStatus status) {
+
         return issueEventAndPerformStatusUpdate(customResource,
                 t -> t.getStatus().putServerStatus(status),
                 e -> e.withType("Normal")
