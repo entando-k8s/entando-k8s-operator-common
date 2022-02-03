@@ -38,6 +38,7 @@ import org.entando.kubernetes.model.common.ServerStatus;
 
 public class IngressPathCreator {
 
+    public static final int MAX_SUFFIX_LENGTH = 15;
     private final EntandoCustomResource entandoCustomResource;
 
     public IngressPathCreator(EntandoCustomResource entandoCustomResource) {
@@ -76,8 +77,13 @@ public class IngressPathCreator {
     }
 
     private String pathAnnotationName(String qualifier) {
-        String suffix = "-" + qualifier + "-path";
-        return "entando.org/" + NameUtils.shortenTo(entandoCustomResource.getMetadata().getName(), 63 - suffix.length()) + suffix;
+        String suffix = "-" + qualifier;
+        if (suffix.length() > MAX_SUFFIX_LENGTH) {
+            suffix = suffix.substring(0, MAX_SUFFIX_LENGTH);
+        }
+        suffix += "-path";
+        return "entando.org/" + NameUtils.shortenTo(entandoCustomResource.getMetadata().getName(),
+                NameUtils.GENERIC_K8S_MAX_LENGTH - suffix.length()) + suffix;
     }
 
     private HTTPIngressPath newHttpPath(IngressingPathOnPort ingressingPathOnPort, Service service) {

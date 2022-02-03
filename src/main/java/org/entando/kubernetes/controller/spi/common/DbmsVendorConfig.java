@@ -20,8 +20,12 @@ import java.util.Locale;
 import org.entando.kubernetes.model.common.DbmsVendor;
 
 public enum DbmsVendorConfig {
+
+    // About the NOSONAR: sonar mistakes "${MYSQL_ROOT_PASSWORD}" with the actual password and reports a hotspot,
+    // Thefore the NOSONAR special comment has been used to disable the hotspot
     MYSQL("org.hibernate.dialect.MySQL5InnoDBDialect", 3306, "root",
-            "MYSQL_PWD=${MYSQL_ROOT_PASSWORD} mysql -h 127.0.0.1 -u root -e 'SELECT 1'", 32, true) {
+            "MYSQL_PWD=\"${MYSQL_ROOT_PASSWORD}\" mysql -h 127.0.0.1 -u root -e 'SELECT 1'",   //NOSONAR
+             32, 16, true) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
@@ -31,20 +35,22 @@ public enum DbmsVendorConfig {
         }
     },
     POSTGRESQL("org.hibernate.dialect.PostgreSQLDialect", 5432, "postgres",
-            "/usr/libexec/check-container", 64, false) {
+            "/usr/libexec/check-container", 64, 64, false) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
-                    return String.format("jdbc:postgresql://%s:%s/%s", this.getHost(), this.getPort(), this.getDatabase());
+                    return String.format("jdbc:postgresql://%s:%s/%s", this.getHost(), this.getPort(),
+                            this.getDatabase());
                 }
             };
         }
     },
-    ORACLE("org.hibernate.dialect.Oracle10gDialect", 1521, "sys", "sqlplus sys/Oradoc_db1:${DB_SID}", 128, false) {
+    ORACLE("org.hibernate.dialect.Oracle10gDialect", 1521, "sys", "sqlplus sys/Oradoc_db1:${DB_SID}", 128, 128, false) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
-                    return String.format("jdbc:oracle:thin:@//%s:%s/%s", this.getHost(), this.getPort(), this.getDatabase());
+                    return String.format("jdbc:oracle:thin:@//%s:%s/%s", this.getHost(), this.getPort(),
+                            this.getDatabase());
                 }
             };
         }
@@ -76,7 +82,8 @@ public enum DbmsVendorConfig {
     private int defaultPort;
     private boolean schemaIsDatabase;
     private String healthCheck;
-    private int maxNameLength;
+    private int maxDatabaseNameLength;
+    private int maxUsernameLength;
 
     DbmsVendorConfig(String hibernateDialect, String defaultAdminUsername, String defaultAdminPassword) {
         this.hibernateDialect = hibernateDialect;
@@ -84,12 +91,14 @@ public enum DbmsVendorConfig {
         this.defaultAdminPassword = defaultAdminPassword;
     }
 
-    DbmsVendorConfig(String hibernateDialect, int port, String user, String healthCheck, int maxNameLength, boolean schemaIsDatabase) {
+    DbmsVendorConfig(String hibernateDialect, int port, String user, String healthCheck, int maxDatabaseNameLength,
+            int maxUsernameLength, boolean schemaIsDatabase) {
         this.hibernateDialect = hibernateDialect;
         this.defaultAdminUsername = user;
         this.defaultPort = port;
         this.healthCheck = healthCheck;
-        this.maxNameLength = maxNameLength;
+        this.maxDatabaseNameLength = maxDatabaseNameLength;
+        this.maxUsernameLength = maxUsernameLength;
         this.schemaIsDatabase = schemaIsDatabase;
     }
 
@@ -101,8 +110,8 @@ public enum DbmsVendorConfig {
         return this.schemaIsDatabase;
     }
 
-    public int getMaxNameLength() {
-        return maxNameLength;
+    public int getMaxDatabaseNameLength() {
+        return maxDatabaseNameLength;
     }
 
     public abstract JdbcConnectionStringBuilder getConnectionStringBuilder();
@@ -134,5 +143,9 @@ public enum DbmsVendorConfig {
             return DbmsVendor.EMBEDDED;
         }
 
+    }
+
+    public int getMaxUsernameLength() {
+        return maxUsernameLength;
     }
 }

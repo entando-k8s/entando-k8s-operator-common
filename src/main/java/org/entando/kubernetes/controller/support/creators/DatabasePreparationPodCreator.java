@@ -121,7 +121,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     private Container prepareContainerToPopulateSchemas(EntandoImageResolver entandoImageResolver, DatabasePopulator databasePopulator,
             String nameQualifier) {
         String dbJobName = NameUtils
-                .shortenTo63Chars(entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-db-population-job");
+                .shortenToMaxLength(entandoCustomResource.getMetadata().getName() + "-" + nameQualifier + "-db-population-job");
         return new ContainerBuilder()
                 .withImage(entandoImageResolver.determineImageUri(databasePopulator.getDockerImageInfo()))
                 .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse("IfNotPresent"))
@@ -137,7 +137,7 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
     private Container buildContainerToCreateSchema(EntandoImageResolver entandoImageResolver,
             DatabaseSchemaConnectionInfo schemaConnectionInfo) {
         String dbJobName = NameUtils
-                .shortenTo63Chars(schemaConnectionInfo.getSchemaName().replace("_", "-") + "-schema-creation-job");
+                .shortenToMaxLength(schemaConnectionInfo.getSchemaName().replace("_", "-") + "-schema-creation-job");
         return new ContainerBuilder()
                 .withImage(entandoImageResolver
                         .determineImageUri("entando/entando-k8s-dbjob"))

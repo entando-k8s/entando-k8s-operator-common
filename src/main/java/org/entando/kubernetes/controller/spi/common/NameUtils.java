@@ -20,6 +20,7 @@ import java.beans.Introspector;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.ObjectUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class NameUtils {
@@ -37,15 +38,33 @@ public class NameUtils {
     public static final String DEFAULT_PVC_SUFFIX = "pvc";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Pattern pattern = Pattern.compile("(?=[A-Z][a-z])");
+    public static final int GENERIC_K8S_MAX_LENGTH = 63;
 
     private NameUtils() {
     }
 
+    public static String shortenLabelToMaxLength(String s) {
+        s = shortenToMaxLengthCharsNoRandoms(s);
+        // try to adjust last char
+        if (s.endsWith("-") || s.endsWith("_") || s.endsWith(".")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        return s;
+    }
+
+    public static String shortenToMaxLengthCharsNoRandoms(String s) {
+        if (s.length() > GENERIC_K8S_MAX_LENGTH) {
+            s = s.substring(0, GENERIC_K8S_MAX_LENGTH);
+        }
+        return s;
+    }
+
+
     /**
      * Useful for labelvalues and container names.
      */
-    public static String shortenTo63Chars(String s) {
-        return shortenTo(s, 63);
+    public static String shortenToMaxLength(String s) {
+        return shortenTo(s, GENERIC_K8S_MAX_LENGTH);
     }
 
     public static String shortenTo(String s, int maxLength) {
@@ -90,11 +109,10 @@ public class NameUtils {
         if (nameQualifier != null) {
             idealDatabaseName.append("_").append(NameUtils.snakeCaseOf(nameQualifier));
         }
-        if (idealDatabaseName.length() > dbmsVendorConfig.getMaxNameLength()) {
-            return idealDatabaseName.substring(0, dbmsVendorConfig.getMaxNameLength() - 3) + randomNumeric(3);
+        if (idealDatabaseName.length() > dbmsVendorConfig.getMaxDatabaseNameLength()) {
+            return idealDatabaseName.substring(0, dbmsVendorConfig.getMaxDatabaseNameLength() - 3) + randomNumeric(3);
         }
         return idealDatabaseName.toString();
-
     }
 
     public static String standardIngressName(EntandoCustomResource resource) {
@@ -109,7 +127,11 @@ public class NameUtils {
         if (NameUtils.MAIN_QUALIFIER.equals(qualifier)) {
             return standardServiceName(resource);
         } else {
-            return resource.getMetadata().getName() + "-" + qualifier + "-" + DEFAULT_SERVICE_SUFFIX;
+            if (! ObjectUtils.isEmpty(qualifier)) {
+                return resource.getMetadata().getName() + "-" + qualifier + "-" + DEFAULT_SERVICE_SUFFIX;
+            } else {
+                return resource.getMetadata().getName() + "-" + DEFAULT_SERVICE_SUFFIX;
+            }
         }
     }
 

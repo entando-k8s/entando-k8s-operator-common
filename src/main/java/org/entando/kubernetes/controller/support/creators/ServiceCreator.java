@@ -102,7 +102,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
 
     private Service newService(Deployable<?> deployable) {
         final String nameQualifier = deployable.getQualifier().orElse(null);
-        ObjectMeta objectMeta = fromCustomResource(true, resolveName(nameQualifier, NameUtils.DEFAULT_SERVICE_SUFFIX), nameQualifier);
+        ObjectMeta objectMeta = fromCustomResource(true, generateName(nameQualifier, NameUtils.DEFAULT_SERVICE_SUFFIX), nameQualifier);
         return new ServiceBuilder()
                 .withMetadata(objectMeta)
                 .withNewSpec()
@@ -139,7 +139,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
     private Endpoints newEndpoints(ExternalService externalService) {
         return new EndpointsBuilder()
                 //Needs to match the service name exactly
-                .withMetadata(fromCustomResource(true, resolveName(null, NameUtils.DEFAULT_SERVICE_SUFFIX), null))
+                .withMetadata(fromCustomResource(true, generateName(null, NameUtils.DEFAULT_SERVICE_SUFFIX), null))
                 .addNewSubset()
                 .addNewAddress()
                 .withIp(externalService.getHost())
@@ -153,7 +153,7 @@ public class ServiceCreator extends AbstractK8SResourceCreator {
 
     private Service newExternalService(ExternalService externalService) {
         return new ServiceBuilder()
-                .withMetadata(fromCustomResource(true, resolveName(null, NameUtils.DEFAULT_SERVICE_SUFFIX), null))
+                .withMetadata(fromCustomResource(true, generateName(null, NameUtils.DEFAULT_SERVICE_SUFFIX), null))
                 .withNewSpec()
                 .withExternalName(FluentTernary.useNull(String.class).when(isIpAddress(externalService))
                         .orElse(externalService.getHost()))

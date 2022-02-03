@@ -96,7 +96,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .withReplicas(Math.max(1, deployable.getReplicas()))
                 .withNewTemplate()
                 .withNewMetadata()
-                .withName(resolveName(nameQualifier, "pod"))
+                .withName(generateName(nameQualifier, "pod"))
                 .withLabels(labelsFromResource(nameQualifier))
                 .endMetadata()
                 .withNewSpec()
@@ -347,13 +347,13 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     private String volumeName(DeployableContainer container) {
-        return resolveName(container.getNameQualifier(), VOLUME_SUFFIX);
+        return generateName(container.getNameQualifier(), VOLUME_SUFFIX);
     }
 
     protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable, boolean supportStartupProbes) {
         return new DeploymentBuilder()
                 .withMetadata(
-                        fromCustomResource(true, resolveName(deployable.getQualifier().orElse(null), NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
+                        fromCustomResource(true, generateName(deployable.getQualifier().orElse(null), NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
                                 deployable.getQualifier().orElse(null)))
                 .withSpec(buildDeploymentSpec(imageResolver, deployable, supportStartupProbes))
                 .build();

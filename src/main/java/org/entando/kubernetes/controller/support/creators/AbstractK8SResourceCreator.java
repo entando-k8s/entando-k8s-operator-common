@@ -21,6 +21,7 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import java.util.Map;
 import org.entando.kubernetes.controller.spi.common.LabelNames;
+import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -32,13 +33,24 @@ public class AbstractK8SResourceCreator {
         this.entandoCustomResource = entandoCustomResource;
     }
 
-    protected String resolveName(String nameQualifier, String suffix) {
+    protected String generateName(String nameQualifier, String suffix) {
+
         StringBuilder sb = new StringBuilder(entandoCustomResource.getMetadata().getName());
         if (!Strings.isNullOrEmpty(nameQualifier)) {
             sb.append("-").append(nameQualifier);
         }
-        if (!Strings.isNullOrEmpty(suffix)) {
-            sb.append("-").append(suffix);
+
+        String completeSuffix = "";
+        if (! Strings.isNullOrEmpty(suffix)) {
+            completeSuffix = "-" + suffix;
+        }
+        int maxLength = NameUtils.GENERIC_K8S_MAX_LENGTH - completeSuffix.length();
+        if (sb.length() > maxLength) {
+            sb.setLength(maxLength);    // only if it is longer, otherwise \x00 will be added to match the required length
+        }
+
+        if (! Strings.isNullOrEmpty(completeSuffix)) {
+            sb.append(completeSuffix);
         }
         return sb.toString();
     }
@@ -64,7 +76,7 @@ public class AbstractK8SResourceCreator {
 
     protected Map<String, String> labelsFromResource(String nameQualifier) {
         Map<String, String> labels = labelsFromResource();
-        labels.put(LabelNames.DEPLOYMENT.getName(), resolveName(nameQualifier, null));
+        labels.put(LabelNames.DEPLOYMENT.getName(), NameUtils.shortenLabelToMaxLength(generateName(nameQualifier, null)));
         return labels;
     }
 
