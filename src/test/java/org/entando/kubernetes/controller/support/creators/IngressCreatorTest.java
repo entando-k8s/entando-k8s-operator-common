@@ -112,6 +112,33 @@ class IngressCreatorTest implements InProcessTestData {
     }
 
     @Test
+    void shouldTruncateTheHostNameIfRequired() {
+        var x50 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+        EntandoApp longNameEntandoApp = new EntandoAppBuilder(newTestEntandoApp())
+                .editMetadata()
+                .withName("my-app-" + x50 + x50 + x50)
+                .endMetadata()
+                .editSpec()
+                .withIngressHostName(null)
+                .withTlsSecretName("original-tls-secret")
+                .endSpec()
+                .build();
+
+        SpringBootDeployable<EntandoAppSpec> deployable = new TestSpringBootDeployable(longNameEntandoApp, null, null);
+
+        ServiceCreator serviceCreator = new ServiceCreator(longNameEntandoApp);
+        serviceCreator.createService(client.services(), deployable);
+        IngressCreator creator = new IngressCreator(longNameEntandoApp);
+        creator.createIngress(client.ingresses(), deployable, serviceCreator.getService(),
+                new ServerStatus(NameUtils.MAIN_QUALIFIER));
+
+        String expectedHost = "my-app-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-my-app-namespace.apps.autotest.eng-entando.com";
+        assertThat(creator.getIngress().getSpec().getRules().get(0).getHost(), is(expectedHost));
+        assertThat(creator.getIngress().getSpec().getTls().get(0).getHosts().get(0), is(expectedHost));
+        assertThat(creator.getIngress().getSpec().getTls().get(0).getSecretName(), is("original-tls-secret"));
+    }
+
+    @Test
     void shouldManageAnEventualException() {
         SpringBootDeployable<EntandoAppSpec> deployable = new TestSpringBootDeployable(entandoApp, null, null);
         ServiceCreator serviceCreator = new ServiceCreator(entandoApp);

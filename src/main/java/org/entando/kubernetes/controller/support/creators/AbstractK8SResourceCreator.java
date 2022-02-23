@@ -16,6 +16,10 @@
 
 package org.entando.kubernetes.controller.support.creators;
 
+import static org.entando.kubernetes.controller.spi.common.NameUtils.GENERIC_K8S_MAX_LENGTH;
+import static org.entando.kubernetes.controller.spi.common.NameUtils.K8S_DEPLOYMENT_MAX_LENGTH;
+import static org.entando.kubernetes.controller.spi.common.NameUtils.generateEntandoResourceName;
+
 import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
@@ -33,26 +37,17 @@ public class AbstractK8SResourceCreator {
         this.entandoCustomResource = entandoCustomResource;
     }
 
+    protected String generateDeploymentName(String nameQualifier, String suffix) {
+        return generateEntandoResourceName(metadataName(), nameQualifier, suffix, K8S_DEPLOYMENT_MAX_LENGTH);
+    }
+
+
     protected String generateName(String nameQualifier, String suffix) {
+        return generateEntandoResourceName(metadataName(), nameQualifier, suffix, GENERIC_K8S_MAX_LENGTH);
+    }
 
-        StringBuilder sb = new StringBuilder(entandoCustomResource.getMetadata().getName());
-        if (!Strings.isNullOrEmpty(nameQualifier)) {
-            sb.append("-").append(nameQualifier);
-        }
-
-        String completeSuffix = "";
-        if (! Strings.isNullOrEmpty(suffix)) {
-            completeSuffix = "-" + suffix;
-        }
-        int maxLength = NameUtils.GENERIC_K8S_MAX_LENGTH - completeSuffix.length();
-        if (sb.length() > maxLength) {
-            sb.setLength(maxLength);    // only if it is longer, otherwise \x00 will be added to match the required length
-        }
-
-        if (! Strings.isNullOrEmpty(completeSuffix)) {
-            sb.append(completeSuffix);
-        }
-        return sb.toString();
+    private String metadataName() {
+        return entandoCustomResource.getMetadata().getName();
     }
 
     protected ObjectMeta fromCustomResource(boolean ownedByCustomResource, String name, String nameQualifier) {
