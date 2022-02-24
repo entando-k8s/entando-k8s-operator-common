@@ -177,4 +177,24 @@ class NameUtilsTest {
             assertThat(actual, is(value));
         });
     }
+
+
+    @Test
+    void test_shortenIdentifierTo() {
+        var maxLength = 10;
+        assertEquals("", NameUtils.shortenIdentifierTo("", maxLength));
+        assertEquals("", NameUtils.shortenIdentifierTo("-", maxLength));
+        assertEquals("123", NameUtils.shortenIdentifierTo("123", maxLength));
+        assertEquals("1234567890", NameUtils.shortenIdentifierTo("1234567890", maxLength));
+        assertEquals("1234567890", NameUtils.shortenIdentifierTo("1234567890a", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789-a", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789_a", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789.a", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789-", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789_", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789.", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789-_", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789_.", maxLength));
+        assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789.-", maxLength));
+    }
 }

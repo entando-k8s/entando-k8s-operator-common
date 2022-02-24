@@ -17,6 +17,7 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
+import static org.entando.kubernetes.controller.spi.common.NameUtils.DEFAULT_DEPLOYMENT_SUFFIX;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
@@ -351,10 +352,9 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
     }
 
     protected Deployment newDeployment(EntandoImageResolver imageResolver, Deployable<?> deployable, boolean supportStartupProbes) {
-        return new DeploymentBuilder()
-                .withMetadata(
-                        fromCustomResource(true, generateName(deployable.getQualifier().orElse(null), NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
-                                deployable.getQualifier().orElse(null)))
+        return new DeploymentBuilder().withMetadata(fromCustomResource(true,
+                        generateDeploymentName(deployable.getQualifier().orElse(null), DEFAULT_DEPLOYMENT_SUFFIX),
+                        deployable.getQualifier().orElse(null)))
                 .withSpec(buildDeploymentSpec(imageResolver, deployable, supportStartupProbes))
                 .build();
     }

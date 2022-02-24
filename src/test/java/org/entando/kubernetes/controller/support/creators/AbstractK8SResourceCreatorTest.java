@@ -1,5 +1,6 @@
 package org.entando.kubernetes.controller.support.creators;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,7 +32,19 @@ class AbstractK8SResourceCreatorTest {
         plugin.getMetadata().setName("test-plugin-a-with.very.long.naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaame");
         final String name = resourceCreator.generateName("myqualifier", "service");
         assertTrue(name.length() <= 63);
-        assertEquals("test-plugin-a-with.very.long.naaaaaaaaaaaaaaaaaaaaaaaaa-service", name);
+        assertEquals("test-plugin-a-with.very.long.naaaaaaaaaaaaa-myqualifier-service", name);
+    }
+
+    @Test
+    void shouldProperlyGenerateLongNames() {
+        String q = "myqualifier";
+        String a50 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        plugin.getMetadata().setName("test-resource-with.very.long.na" + a50 + a50 + a50 + a50 + a50 + "me");
+        //~
+        String s;
+        String name = resourceCreator.generateDeploymentName(q, s = "deployment");
+        assertThat(name.length()).isLessThanOrEqualTo(253);
+        assertEquals("test-resource-with.very.long.n" + a50 + a50 + a50 + a50 + "-" + q + "-" + s, name);
     }
 
     @Test

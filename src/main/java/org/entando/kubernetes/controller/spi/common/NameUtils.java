@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.spi.common;
 
+import com.google.common.base.Strings;
 import java.beans.Introspector;
 import java.security.SecureRandom;
 import java.util.Locale;
@@ -39,12 +40,53 @@ public class NameUtils {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Pattern pattern = Pattern.compile("(?=[A-Z][a-z])");
     public static final int GENERIC_K8S_MAX_LENGTH = 63;
+    public static final int MAX_LENGTH_OF_DNS_SEGMENT = 63;
+    public static final int K8S_DEPLOYMENT_MAX_LENGTH = 253;
 
     private NameUtils() {
     }
 
+    /**
+     * Generates an Entando composite name given its components and the maxSize.
+     * If the generated name exceed the #maxSize the baseResourceName is truncated in order to make it fit
+     * @param baseResourceName the base name of the resource
+     * @param nameQualifier    the middle suffix indicating the deployment
+     * @param typeSuffix       the terminator suffix indicating the resource type
+     * @param maxLength        the maximum size of the generated name
+     * @return the generated name
+     */
+    public static String generateEntandoResourceName(
+            String baseResourceName,
+            String nameQualifier,
+            String typeSuffix,
+            int maxLength) {
+        //~
+        var sb = new StringBuilder(baseResourceName);
+
+        String completeSuffix = "";
+        if (!Strings.isNullOrEmpty(typeSuffix)) {
+            completeSuffix = "-" + typeSuffix;
+        }
+
+        String completeNameQualifier = "";
+        if (!Strings.isNullOrEmpty(nameQualifier)) {
+            completeNameQualifier = "-" + nameQualifier;
+        }
+
+        int spaceLeft = maxLength - sb.length() - completeNameQualifier.length() - completeSuffix.length();
+        if (spaceLeft < 0) {
+            // only if it is longer, otherwise \x00 will be added to match the required length
+            sb.setLength(sb.length() + spaceLeft);
+        }
+
+        sb.append(completeNameQualifier);
+        sb.append(completeSuffix);
+
+        return sb.toString();
+    }
+
     public static String shortenLabelToMaxLength(String s) {
-        s = shortenToMaxLengthCharsNoRandoms(s);
+        s = truncateStringTo(s, GENERIC_K8S_MAX_LENGTH);
         // try to adjust last char
         if (s.endsWith("-") || s.endsWith("_") || s.endsWith(".")) {
             s = s.substring(0, s.length() - 1);
@@ -52,11 +94,20 @@ public class NameUtils {
         return s;
     }
 
-    public static String shortenToMaxLengthCharsNoRandoms(String s) {
-        if (s.length() > GENERIC_K8S_MAX_LENGTH) {
-            s = s.substring(0, GENERIC_K8S_MAX_LENGTH);
+    public static String shortenIdentifierTo(String s, int maxLength) {
+        if (maxLength < 0) {
+            throw new IllegalStateException(String.format("Illegal maxLength %d provided", maxLength));
+        }
+        s = truncateStringTo(s, maxLength);
+        // try to adjust last char
+        if (s.endsWith("-") || s.endsWith("_") || s.endsWith(".")) {
+            s = s.substring(0, s.length() - 1);
         }
         return s;
+    }
+
+    public static String truncateStringTo(String s, int maxLength) {
+        return (s.length() > maxLength) ? s.substring(0, maxLength) : s;
     }
 
 

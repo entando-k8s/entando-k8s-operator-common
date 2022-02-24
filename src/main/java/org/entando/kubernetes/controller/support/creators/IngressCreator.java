@@ -18,6 +18,9 @@ package org.entando.kubernetes.controller.support.creators;
 
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
+import static org.entando.kubernetes.controller.spi.common.NameUtils.MAX_LENGTH_OF_DNS_SEGMENT;
+import static org.entando.kubernetes.controller.spi.common.NameUtils.shortenIdentifierTo;
+import static org.entando.kubernetes.controller.spi.common.NameUtils.shortenLabelToMaxLength;
 
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
@@ -35,7 +38,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
@@ -98,11 +100,14 @@ public class IngressCreator extends AbstractK8SResourceCreator {
 
     public void createIngress(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable,
             Service service, ServerStatus status) {
-        this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(), ingressingDeployable.getIngressName());
+        this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(),
+                ingressingDeployable.getIngressName());
         if (this.ingress == null) {
-            Ingress newIngress = newIngress(ingressClient, ingressPathCreator.buildPaths(ingressingDeployable, service, status),
+            Ingress newIngress = newIngress(ingressClient,
+                    ingressPathCreator.buildPaths(ingressingDeployable, service, status),
                     ingressingDeployable);
-            this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress), () -> newIngress);
+            this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress),
+                    () -> newIngress);
         } else {
             if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
                 final String host = determineIngressHost(ingressClient, ingressingDeployable);
@@ -112,9 +117,11 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                         .withTls(tls).endSpec().done();
             }
             List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
-                    .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast).collect(Collectors.toList());
+                    .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)
+                    .collect(Collectors.toList());
 
-            this.ingress = ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingContainers, ingress, service, status);
+            this.ingress = ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingContainers, ingress, service,
+                    status);
         }
     }
 
@@ -131,7 +138,7 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                 .withName(deployable.getIngressName())
                 .withNamespace(entandoCustomResource.getMetadata().getNamespace())
                 .addToLabels(entandoCustomResource.getKind(),
-                        NameUtils.shortenLabelToMaxLength(entandoCustomResource.getMetadata().getName()))
+                        shortenLabelToMaxLength(entandoCustomResource.getMetadata().getName()))
                 .withOwnerReferences(ResourceUtils.buildOwnerReference(entandoCustomResource))
                 .endMetadata()
                 .withNewSpec()
@@ -165,7 +172,8 @@ public class IngressCreator extends AbstractK8SResourceCreator {
         List<IngressTLS> result = new ArrayList<>();
 
         deployable.getTlsSecretName().ifPresent(s ->
-                result.add(new IngressTLSBuilder().withSecretName(s).withHosts(determineIngressHost(ingressClient, deployable)).build()));
+                result.add(new IngressTLSBuilder().withSecretName(s)
+                        .withHosts(determineIngressHost(ingressClient, deployable)).build()));
         if (result.isEmpty()) {
             EntandoOperatorConfig.getTlsSecretName().ifPresent(s ->
                     result.add(new IngressTLSBuilder().withHosts(determineIngressHost(ingressClient, deployable))
@@ -179,10 +187,15 @@ public class IngressCreator extends AbstractK8SResourceCreator {
     }
 
     private String determineIngressHost(IngressClient ingressClient, IngressingDeployable<?> deployable) {
-        return deployable.getIngressHostName()
-                .orElse(entandoCustomResource.getMetadata().getName() + "-" + entandoCustomResource.getMetadata().getNamespace() + "."
-                        + determineRoutingSuffix(
-                        ingressClient.getMasterUrlHost()));
+        var ingressHostName = deployable.getIngressHostName().orElse("");
+        if (!ingressHostName.isEmpty()) {
+            return ingressHostName;
+        } else {
+            var hostNameBase = entandoCustomResource.getMetadata().getName();
+            var ns = entandoCustomResource.getMetadata().getNamespace();
+            String routingSuffix = determineRoutingSuffix(ingressClient.getMasterUrlHost());
+            return shortenIdentifierTo(hostNameBase, MAX_LENGTH_OF_DNS_SEGMENT - ns.length() - 1)
+                    + "-" + ns + "." + routingSuffix;
+        }
     }
-
 }
