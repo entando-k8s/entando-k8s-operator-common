@@ -16,7 +16,6 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
-import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,24 +28,18 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
-import io.fabric8.kubernetes.client.CustomResource;
-import io.fabric8.kubernetes.client.Watcher;
-import io.fabric8.kubernetes.client.WatcherException;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
@@ -55,7 +48,6 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorConfigBase;
 import org.entando.kubernetes.controller.support.client.EntandoResourceClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
-import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
 
 public class EntandoResourceClientDouble extends EntandoResourceClientDoubleBase implements EntandoResourceClient {
 
@@ -81,11 +73,22 @@ public class EntandoResourceClientDouble extends EntandoResourceClientDoubleBase
     }
 
     @Override
-    public ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) throws TimeoutException {
+    public ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands)
+            throws TimeoutException {
         if (pod != null) {
             PodResource<Pod> podResource = new PodResourceDouble();
             return executeAndWait(podResource, containerName, timeoutSeconds, commands);
         }
+        return null;
+    }
+
+    @Override
+    public PodResource<Pod> getPodByName(String name, String namespace) {
+        return null;
+    }
+
+    @Override
+    public RollableScalableResource<Deployment> getDeploymentByName(String name, String namespace) {
         return null;
     }
 
