@@ -18,6 +18,12 @@ package org.entando.kubernetes.controller.spi.client.impl;
 
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -25,7 +31,13 @@ import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.AppsAPIGroupDSL;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.apps.v1.DeploymentOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.PersistentVolumeClaimOperationsImpl;
@@ -39,8 +51,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import org.assertj.core.api.Assertions;
 import org.entando.kubernetes.controller.spi.client.ExecutionResult;
 import org.entando.kubernetes.controller.spi.client.SerializedEntandoResource;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
@@ -48,6 +60,7 @@ import org.entando.kubernetes.controller.spi.common.LabelNames;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
+import org.entando.kubernetes.controller.support.client.doubles.PodResourceDouble;
 import org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
 import org.entando.kubernetes.fluentspi.TestResource;
@@ -59,19 +72,27 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 @Tags({@Tag("adapter"), @Tag("pre-deployment"), @Tag("integration")})
-@Feature("As a controller developer, I would like perform common operations on the relevant Kubernetes resources through a simple "
-        + "interface to reduce the learning curve")
+@Feature(
+        "As a controller developer, I would like perform common operations on the relevant Kubernetes resources through a simple "
+                + "interface to reduce the learning curve")
 @EnableRuleMigrationSupport
 class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTest {
 
     private DefaultKubernetesClientForControllers clientForControllers;
     private TestResource testResource;
 
-    DefaultKubernetesClientForControllers getKubernetesClientForControllers() throws IOException {
+    DefaultKubernetesClientForControllers getKubernetesClientForControllers() {
+        return getKubernetesClientForControllers(getFabric8Client());
+    }
+
+    DefaultKubernetesClientForControllers getKubernetesClientForControllers(KubernetesClient client) {
         if (clientForControllers == null) {
-            clientForControllers = new DefaultKubernetesClientForControllers(getFabric8Client());
+            clientForControllers = new DefaultKubernetesClientForControllers(client);
             clientForControllers.prepareConfig();
         }
         return clientForControllers;
@@ -351,6 +372,69 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             assertThat(failure.get().getOutputLines()).doesNotContain("hello world");
             assertThat(failure.get().getCode()).isNotZero();
         });
+    }
+
+    @Test
+    void test_findDeployment_And_Pod() throws InterruptedException {
+        String ns = MY_APP_NAMESPACE_1;
+        var deployment = startNewDeployment(ns);
+        getFabric8Client().pods().inNamespace(ns).waitUntilCondition(
+                pod -> !getFabric8Client().pods().inNamespace(ns).list().getItems().isEmpty(),
+                30, TimeUnit.SECONDS);
+        var firstPod = getFabric8Client().pods().inNamespace(ns).list().getItems().get(0);
+        var erc = getKubernetesClientForControllers();
+        var foundPod = erc.getPodByName(firstPod.getMetadata().getName(), ns);
+        Assertions.assertThat(foundPod.get()).isNotNull();
+        erc.getDeploymentByName(deployment.getMetadata().getName(), ns).scale(0);
+        getFabric8Client().pods().inNamespace(ns).waitUntilCondition(
+                pod -> erc.getPodByName(firstPod.getMetadata().getName(), ns).get() == null,
+                30, TimeUnit.SECONDS);
+        Assertions.assertThat(foundPod.get()).isNull();
+    }
+
+    @Test
+    void test_findDeployment_And_Pod_Mocked() {
+        var resPod = spy(PodResourceDouble.class);
+        var resDeployment = spy(RollableScalableResource.class);
+
+        var mockedClient = spy(getFabric8Client());
+        Mockito.when(mockedClient.pods()).thenReturn(spy(MixedOperation.class));
+        Mockito.when(mockedClient.pods().withName("test")).thenReturn(resPod);
+        Mockito.when(mockedClient.apps()).thenReturn(spy(AppsAPIGroupDSL.class));
+        Mockito.when(mockedClient.apps().deployments()).thenReturn(spy(MixedOperation.class));
+        Mockito.when(mockedClient.apps().deployments().withName("test")).thenReturn(resDeployment);
+
+        var erc = getKubernetesClientForControllers(mockedClient);
+        Assertions.assertThat(erc.getPodByName("test")).isSameAs(resPod);
+        Assertions.assertThat(erc.getDeploymentByName("test")).isSameAs(resDeployment);
+    }
+
+    private Deployment startNewDeployment(String namespace) {
+        return getFabric8Client().apps().deployments().inNamespace(namespace).createOrReplace(
+                new DeploymentBuilder()
+                        .withNewMetadata()
+                        .withName("my-deployment")
+                        .withNamespace(namespace)
+                        .endMetadata()
+                        .withNewSpec()
+                        .withNewSelector()
+                        .addToMatchLabels("my-test-label", "bla-bla")
+                        .endSelector()
+                        .withNewTemplate()
+                        .withNewMetadata()
+                        .addToLabels("my-test-label", "bla-bla")
+                        .endMetadata()
+                        .withNewSpec()
+                        .addNewContainer()
+                        .withImage("centos/nginx-116-centos7")
+                        .withName("nginx")
+                        .withCommand("/usr/libexec/s2i/run")
+                        .endContainer()
+                        .endSpec()
+                        .endTemplate()
+                        .endSpec()
+                        .build()
+        );
     }
 
     @Override

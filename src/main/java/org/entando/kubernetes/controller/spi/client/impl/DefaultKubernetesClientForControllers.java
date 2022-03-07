@@ -25,10 +25,12 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
 import java.util.List;
@@ -95,6 +97,18 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
         PodResource<Pod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName());
         return executeAndWait(podResource, containerName, timeoutSeconds, commands);
+    }
+
+    public PodResource<Pod> getPodByName(String name, String namespace) {
+        var pod = (namespace != null) ? client.pods().inNamespace(namespace) : client.pods();
+        return pod.withName(name);
+    }
+
+    @Override
+    public RollableScalableResource<Deployment> getDeploymentByName(String name, String namespace) {
+        var dep =
+                (namespace != null) ? client.apps().deployments().inNamespace(namespace) : client.apps().deployments();
+        return dep.withName(name);
     }
 
     @Override

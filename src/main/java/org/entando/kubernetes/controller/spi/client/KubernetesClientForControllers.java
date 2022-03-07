@@ -27,9 +27,11 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.io.ByteArrayInputStream;
 import java.net.HttpURLConnection;
 import java.time.LocalDateTime;
@@ -269,5 +271,18 @@ public interface KubernetesClientForControllers {
 
     List<Event> listEventsFor(EntandoCustomResource resource);
 
-    ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) throws TimeoutException;
+    ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands)
+            throws TimeoutException;
+
+    default PodResource<Pod> getPodByName(String name) {
+        return getPodByName(name, null);
+    }
+
+    PodResource<Pod> getPodByName(String name, String namespace);
+
+    default RollableScalableResource<Deployment> getDeploymentByName(String name) {
+        return getDeploymentByName(name, null);
+    }
+
+    RollableScalableResource<Deployment> getDeploymentByName(String name, String namespace);
 }
