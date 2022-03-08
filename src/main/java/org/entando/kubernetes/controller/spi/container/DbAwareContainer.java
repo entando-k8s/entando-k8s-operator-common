@@ -49,18 +49,25 @@ public interface DbAwareContainer extends DeployableContainer {
         return schemaQualifiers.stream()
                 .map(schemaQualifier -> {
                     final DbmsVendorConfig dbmsVendor = databaseConnectionInfo.getVendor();
-                    String schemaName = NameUtils.databaseCompliantName(
+
+                    var schemaName = NameUtils.databaseCompliantName(
                             entandoBaseCustomResource,
                             schemaQualifier,
                             dbmsVendor
                     );
+
+                    final var secretName = entandoBaseCustomResource.getMetadata().getName()
+                            + "-" + schemaQualifier + "-secret";
+                    final var userName = generateUsername(schemaName, dbmsVendor);
+
+                    if (databaseConnectionInfo.getVendor().schemaIsDatabase()) {
+                        // schemaName equals databaseName that equals username
+                        schemaName = userName;
+                    }
+
                     return new DefaultDatabaseSchemaConnectionInfo(databaseConnectionInfo,
                             schemaName,
-                            SecretUtils.generateSecret(
-                                    entandoBaseCustomResource,
-                                    entandoBaseCustomResource.getMetadata().getName() + "-" + schemaQualifier + "-secret",
-                                    generateUsername(schemaName, dbmsVendor)
-                            )
+                            SecretUtils.generateSecret(entandoBaseCustomResource, secretName, userName)
                     );
                 }).collect(Collectors.toList());
     }
