@@ -22,12 +22,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
@@ -48,7 +46,6 @@ import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.DeploymentCreator;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpec;
-import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
 import org.entando.kubernetes.fluentspi.ControllerFluent;
 import org.entando.kubernetes.fluentspi.DeployableContainerFluent;
 import org.entando.kubernetes.fluentspi.DeployableFluent;
@@ -159,6 +156,10 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
                                     + "'registry.hub.docker.com' specified",
                             () -> assertThat(thePrimaryContainerOn(deployment).getImage())
                                     .isEqualTo("registry.hub.docker.com/test/my-image:6.3.2"));
+                    step("And the default resource limits of 256Mi of Memory and 0.5 CPU were specified", () -> {
+                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("memory")).hasToString("256Mi");
+                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("cpu")).hasToString("500m");
+                    });
                     step("And all the startupProbe, readinessProbe and livenessProve all verify that port 8081 is receiving connections",
                             () -> {
                                 assertThat(thePrimaryContainerOn(deployment).getStartupProbe().getTcpSocket().getPort().getIntVal())
@@ -168,89 +169,13 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
                                 assertThat(thePrimaryContainerOn(deployment).getReadinessProbe().getTcpSocket().getPort().getIntVal())
                                         .isEqualTo(8081);
                             });
-                    step("And the startupProbe is guaranteed to allow the maximum boot time required by the container",
-                            () -> {
-                                final Probe startupProbe = thePrimaryContainerOn(deployment).getStartupProbe();
-                                assertThat(startupProbe.getPeriodSeconds() * startupProbe.getFailureThreshold())
-                                        .isBetween(DeploymentCreator.DEFAULT_STARTUP_TIME,
-                                                (int) Math.round(DeploymentCreator.DEFAULT_STARTUP_TIME * 1.1));
+                    step("And the startupProbe is guaranteed to allow the maximum boot time required by the container", () -> {
+                        final Probe startupProbe = thePrimaryContainerOn(deployment).getStartupProbe();
+                        assertThat(startupProbe.getPeriodSeconds() * startupProbe.getFailureThreshold())
+                                .isBetween(DeploymentCreator.DEFAULT_STARTUP_TIME,
+                                        (int) Math.round(DeploymentCreator.DEFAULT_STARTUP_TIME * 1.1));
 
-                            });
-                });
-        attachKubernetesState();
-    }
-
-    @Test
-    @AllureId("test11")
-    @Description("Should deploy successfully even if only the image and port are specified")
-    void minimalDeploymentWithResourceLimits() {
-
-        step("Given I have a basic Deployable", () -> this.deployable = new BasicDeployable());
-        step("and that the flag to impose limits is enabled",
-                () -> System.setProperty("ENTANDO_K8S_OPERATOR_IMPOSE_LIMITS", "true"));
-        step("and a basic DeployableContainer qualified as 'server' that uses the image test/my-image:6.3.2 and exports port 8081",
-                () -> {
-                    deployable.withContainer(
-                            new BasicDeployableContainer().withDockerImageInfo("test/my-image:6.3.2")
-                                    .withNameQualifier("server")
-                                    .withPrimaryPort(8081));
-                    attachSpiResource("DeployableContainer",
-                            SerializationHelper.serialize(deployable.getContainers().get(0)));
-                });
-        final EntandoCustomResource entandoCustomResource = new TestResource()
-                .withNames(MY_NAMESPACE, MY_APP)
-                .withSpec(new BasicDeploymentSpec());
-        step("When the controller processes a new TestResource", () -> {
-            runControllerAgainstCustomResource(entandoCustomResource);
-        });
-        step(format("Then a Deployment was created reflecting the name of the TestResource and the suffix '%s'",
-                        NameUtils.DEFAULT_DEPLOYMENT_SUFFIX),
-                () -> {
-                    final Deployment deployment = getClient().deployments()
-                            .loadDeployment(entandoCustomResource, NameUtils.standardDeployment(entandoCustomResource));
-                    attachKubernetesResource("Deployment", deployment);
-                    assertThat(deployment).isNotNull();
-                    step("and it has a single container with a name reflecting the qualifier 'server'", () -> {
-                        assertThat(deployment.getSpec().getTemplate().getSpec().getContainers()).hasSize(1);
-                        assertThat(thePrimaryContainerOn(deployment).getName()).isEqualTo("server-container");
                     });
-                    step("and this container exports port 8081 with a name that reflects the qualifier 'server'", () ->
-                            assertThat(thePortNamed("server-port").on(thePrimaryContainerOn(deployment))
-                                    .getContainerPort())
-                                    .isEqualTo(8081));
-                    step("and the image of this container is the previously specified image test/my-image:6.3.2 but with the default "
-                                    + "registry "
-                                    + "'registry.hub.docker.com' specified",
-                            () -> assertThat(thePrimaryContainerOn(deployment).getImage())
-                                    .isEqualTo("registry.hub.docker.com/test/my-image:6.3.2"));
-                    step("And the default resource limits of 256Mi of Memory and 0.5 CPU were specified", () -> {
-                        assertThat(
-                                thePrimaryContainerOn(deployment).getResources().getLimits().get("memory")).hasToString(
-                                "256Mi");
-                        assertThat(thePrimaryContainerOn(deployment).getResources().getLimits().get("cpu")).hasToString(
-                                "500m");
-                    });
-                    step("And all the startupProbe, readinessProbe and livenessProve all verify that port 8081 is receiving connections",
-                            () -> {
-                                assertThat(thePrimaryContainerOn(deployment).getStartupProbe().getTcpSocket().getPort()
-                                        .getIntVal())
-                                        .isEqualTo(8081);
-                                assertThat(thePrimaryContainerOn(deployment).getLivenessProbe().getTcpSocket().getPort()
-                                        .getIntVal())
-                                        .isEqualTo(8081);
-                                assertThat(
-                                        thePrimaryContainerOn(deployment).getReadinessProbe().getTcpSocket().getPort()
-                                                .getIntVal())
-                                        .isEqualTo(8081);
-                            });
-                    step("And the startupProbe is guaranteed to allow the maximum boot time required by the container",
-                            () -> {
-                                final Probe startupProbe = thePrimaryContainerOn(deployment).getStartupProbe();
-                                assertThat(startupProbe.getPeriodSeconds() * startupProbe.getFailureThreshold())
-                                        .isBetween(DeploymentCreator.DEFAULT_STARTUP_TIME,
-                                                (int) Math.round(DeploymentCreator.DEFAULT_STARTUP_TIME * 1.1));
-
-                            });
                 });
         attachKubernetesState();
     }
@@ -262,8 +187,7 @@ class MinimalDeploymentTest extends ControllerTestBase implements FluentTraversa
         step("and a basic DeployableContainer qualified as 'server' that uses the image test/my-image:6.3.2 and exports port 8081",
                 () -> {
                     deployable.withContainer(
-                            new BasicDeployableContainer().withDockerImageInfo("test/my-image:6.3.2")
-                                    .withNameQualifier("server")
+                            new BasicDeployableContainer().withDockerImageInfo("test/my-image:6.3.2").withNameQualifier("server")
                                     .withPrimaryPort(8081));
                     attachSpiResource("DeployableContainer", SerializationHelper.serialize(deployable.getContainers().get(0)));
                 });
