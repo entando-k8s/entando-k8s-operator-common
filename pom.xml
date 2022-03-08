@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.entando</groupId>
         <artifactId>entando-quarkus-parent</artifactId>
-        <version>7.0.0-ENG-3280-PR-17</version>
+        <version>7.0.0-ENG-3143-PR-20</version>
         <relativePath/>
     </parent>
     <artifactId>entando-k8s-operator-common</artifactId>
@@ -63,7 +63,7 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
-        <entando-k8s-custom-model.version>7.0.6</entando-k8s-custom-model.version>
+        <entando-k8s-custom-model.version>7.0.7</entando-k8s-custom-model.version>
         <owaspSuppressionFileLocation>${project.basedir}/owasp-dependency-check-suppression.xml</owaspSuppressionFileLocation>
     </properties>
 
