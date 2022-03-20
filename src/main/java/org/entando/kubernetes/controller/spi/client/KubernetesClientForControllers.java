@@ -31,6 +31,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.io.ByteArrayInputStream;
 import java.net.HttpURLConnection;
@@ -279,6 +280,12 @@ public interface KubernetesClientForControllers {
     }
 
     PodResource<Pod> getPodByName(String name, String namespace);
+
+    default Resource<Secret> getSecretByName(String name) {
+        return getSecretByName(name, null);
+    }
+
+    Resource<Secret> getSecretByName(String name, String namespace);
 
     default RollableScalableResource<Deployment> getDeploymentByName(String name) {
         return getDeploymentByName(name, null);
