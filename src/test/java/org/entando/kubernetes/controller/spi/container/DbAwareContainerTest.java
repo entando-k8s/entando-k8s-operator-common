@@ -18,7 +18,7 @@ class DbAwareContainerTest {
     void shouldGenerateTheExpectedUsername() {
         Map<String, String> mysqlMap = Map.of(
                 "myschema", "myschema",
-                "mylooooongnameohmygod", "mylooooong");
+                "mylooooooooooooooooooooooongnameohmygod", "mylooooooooooooooooooooooongname");
         verifyDbMapUsernameGeneration(mysqlMap, DbmsVendorConfig.MYSQL);
 
         Map<String, String> postgresMap = Map.of(
