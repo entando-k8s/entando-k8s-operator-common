@@ -22,10 +22,10 @@ import org.entando.kubernetes.model.common.DbmsVendor;
 public enum DbmsVendorConfig {
 
     // About the NOSONAR: sonar mistakes "${MYSQL_ROOT_PASSWORD}" with the actual password and reports a hotspot,
-    // Thefore the NOSONAR special comment has been used to disable the hotspot
+    // Therefore the NOSONAR special comment has been used to disable the hotspot
     MYSQL("org.hibernate.dialect.MySQL5InnoDBDialect", 3306, "root",
             "MYSQL_PWD=\"${MYSQL_ROOT_PASSWORD}\" mysql -h 127.0.0.1 -u root -e 'SELECT 1'",   //NOSONAR
-             32, 16, true) {
+             32, 32, true) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {

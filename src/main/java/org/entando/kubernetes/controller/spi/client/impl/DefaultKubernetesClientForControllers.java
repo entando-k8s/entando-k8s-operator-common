@@ -24,6 +24,7 @@ import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -102,6 +103,12 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
     public PodResource<Pod> getPodByName(String name, String namespace) {
         var pod = (namespace != null) ? client.pods().inNamespace(namespace) : client.pods();
         return pod.withName(name);
+    }
+
+    @Override
+    public Resource<Secret> getSecretByName(String name, String namespace) {
+        var sec = (namespace != null) ? client.secrets().inNamespace(namespace) : client.secrets();
+        return sec.withName(name);
     }
 
     @Override

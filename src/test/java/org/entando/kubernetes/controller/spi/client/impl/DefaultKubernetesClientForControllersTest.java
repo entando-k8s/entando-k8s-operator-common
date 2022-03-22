@@ -30,6 +30,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
@@ -37,6 +39,7 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.AppsAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.apps.v1.DeploymentOperationsImpl;
@@ -87,13 +90,16 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
     private TestResource testResource;
 
     DefaultKubernetesClientForControllers getKubernetesClientForControllers() {
-        return getKubernetesClientForControllers(getFabric8Client());
+        return getKubernetesClientForControllers(getFabric8Client(), true);
     }
 
-    DefaultKubernetesClientForControllers getKubernetesClientForControllers(KubernetesClient client) {
+    DefaultKubernetesClientForControllers getKubernetesClientForControllers(KubernetesClient client,
+            boolean prepareConfig) {
         if (clientForControllers == null) {
             clientForControllers = new DefaultKubernetesClientForControllers(client);
-            clientForControllers.prepareConfig();
+            if (prepareConfig) {
+                clientForControllers.prepareConfig();
+            }
         }
         return clientForControllers;
     }
@@ -375,7 +381,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
     }
 
     @Test
-    void test_findDeployment_And_Pod() throws InterruptedException {
+    void test_findDeployment_And_Pod_And_Secret() throws InterruptedException {
         String ns = MY_APP_NAMESPACE_1;
         var deployment = startNewDeployment(ns);
         getFabric8Client().pods().inNamespace(ns).waitUntilCondition(
@@ -393,6 +399,28 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
     }
 
     @Test
+    void test_FindSecret() {
+        String ns = MY_APP_NAMESPACE_1;
+        getFabric8Client().secrets().inNamespace(ns).createOrReplace(
+                new SecretBuilder()
+                        .withNewMetadata()
+                        .withName("test-secret")
+                        .withNamespace(ns)
+                        .endMetadata()
+                        .withType("Opaque")
+                        .addToStringData("test", "test")
+                        .build()
+        );
+        var erc = getKubernetesClientForControllers();
+        var foundSec = erc.getSecretByName("test-secret", ns);
+        Assertions.assertThat(foundSec.get()).isNotNull();
+        foundSec = erc.getSecretByName("non-existent-test-secret", ns);
+        Assertions.assertThat(foundSec.get()).isNull();
+        foundSec = erc.getSecretByName("non-existent-test-secret");
+        Assertions.assertThat(foundSec.get()).isNull();
+    }
+
+    @Test
     void test_findDeployment_And_Pod_Mocked() {
         var resPod = spy(PodResourceDouble.class);
         var resDeployment = spy(RollableScalableResource.class);
@@ -404,9 +432,21 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         Mockito.when(mockedClient.apps().deployments()).thenReturn(spy(MixedOperation.class));
         Mockito.when(mockedClient.apps().deployments().withName("test")).thenReturn(resDeployment);
 
-        var erc = getKubernetesClientForControllers(mockedClient);
+        var erc = getKubernetesClientForControllers(mockedClient,true);
         Assertions.assertThat(erc.getPodByName("test")).isSameAs(resPod);
         Assertions.assertThat(erc.getDeploymentByName("test")).isSameAs(resDeployment);
+    }
+
+    @Test
+    void test_findSecret_Mocked() {
+        var resSec = spy(Resource.class);
+
+        var mockedClient = spy(getFabric8Client());
+        Mockito.when(mockedClient.secrets()).thenReturn(spy(MixedOperation.class));
+        Mockito.when(mockedClient.secrets().withName("test")).thenReturn(resSec);
+        var erc = getKubernetesClientForControllers(mockedClient, false);
+
+        Assertions.assertThat(erc.getSecretByName("test")).isSameAs(resSec);
     }
 
     private Deployment startNewDeployment(String namespace) {
