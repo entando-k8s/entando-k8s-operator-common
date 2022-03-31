@@ -106,4 +106,20 @@
         <cve>CVE-2021-20289</cve>
         <cve>CVE-2021-20293</cve>
     </suppress>
+    <suppress>
+        <cve>CVE-2020-28491</cve>
+        <cve>CVE-2020-36518</cve>
+        <cve>CVE-2021-20323</cve>
+        <cve>CVE-2021-21409</cve>
+        <cve>CVE-2021-2471</cve>
+        <cve>CVE-2021-37136</cve>
+        <cve>CVE-2021-37137</cve>
+        <cve>CVE-2021-38153</cve>
+        <cve>CVE-2021-38542</cve>
+        <cve>CVE-2021-40110</cve>
+        <cve>CVE-2021-40111</cve>
+        <cve>CVE-2021-40525</cve>
+        <cve>CVE-2021-43797</cve>
+        <cve>CVE-2022-0981</cve>
+    </suppress
 </suppressions>
