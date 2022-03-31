@@ -121,5 +121,5 @@
         <cve>CVE-2021-40525</cve>
         <cve>CVE-2021-43797</cve>
         <cve>CVE-2022-0981</cve>
-    </suppress
+    </suppress>
 </suppressions>
