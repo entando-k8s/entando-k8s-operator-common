@@ -19,9 +19,9 @@ package org.entando.kubernetes.controller.spi.result;
 import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackend;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 
@@ -40,7 +40,8 @@ public class ExposedService extends AbstractServiceResult {
 
     public String getInternalBaseUrlForPort(String portName) {
         HTTPIngressPath pathForPort = getHttpIngressPathForPort(portName);
-        return "http://" + getInternalServiceHostname() + ":" + pathForPort.getBackend().getServicePort().getIntVal() + pathForPort
+        return "http://" + getInternalServiceHostname() + ":" + pathForPort.getBackend().getService().getPort()
+                .getNumber() + pathForPort
                 .getPath();
     }
 
@@ -88,7 +89,8 @@ public class ExposedService extends AbstractServiceResult {
 
     private boolean hasMatchingServicePortNamed(IngressBackend backend, String portName) {
         return service.getSpec().getPorts().stream()
-                .anyMatch(servicePort -> portName.equals(servicePort.getName()) && backend.getServicePort().getIntVal()
+                .anyMatch(servicePort -> portName.equals(servicePort.getName()) && backend.getService().getPort()
+                        .getNumber()
                         .equals(servicePort.getPort()));
     }
 
@@ -100,16 +102,16 @@ public class ExposedService extends AbstractServiceResult {
     private boolean hasMatchingServicePort(IngressBackend backend) {
         return service.getSpec().getPorts().stream()
                 .anyMatch(servicePort ->
-                        backend.getServicePort().getIntVal().equals(
+                        backend.getService().getPort().getNumber().equals(
                                 servicePort.getPort()));
     }
 
     private boolean matchesThisService(IngressBackend backend) {
-        return backend.getServiceName().equals(service.getMetadata().getName());
+        return backend.getService().getName().equals(service.getMetadata().getName());
     }
 
     private boolean matchesDelegatingService(IngressBackend backend) {
-        return backend.getServiceName().endsWith("-to-" + service.getMetadata().getName());
+        return backend.getService().getName().endsWith("-to-" + service.getMetadata().getName());
     }
 
     @SerializeByReference

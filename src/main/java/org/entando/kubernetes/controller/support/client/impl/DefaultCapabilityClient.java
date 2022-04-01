@@ -20,7 +20,7 @@ import static java.util.Optional.ofNullable;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.net.HttpURLConnection;
@@ -109,7 +109,7 @@ public class DefaultCapabilityClient extends EntandoResourceClientBase implement
                 .map(s -> client.secrets().inNamespace(providedCapability.getMetadata().getNamespace()).withName(s).get())
                 .orElse(null);
         Ingress ingress = serverStatus.getIngressName()
-                .map(s -> client.extensions().ingresses().inNamespace(providedCapability.getMetadata().getNamespace())
+                .map(s -> client.network().v1().ingresses().inNamespace(providedCapability.getMetadata().getNamespace())
                         .withName(s).get()).orElse(null);
         return new SerializedCapabilityProvisioningResult(providedCapability, service, ingress, adminSecret);
     }

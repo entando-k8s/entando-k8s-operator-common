@@ -46,7 +46,7 @@ import io.fabric8.kubernetes.client.dsl.internal.apps.v1.DeploymentOperationsImp
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.PersistentVolumeClaimOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.SecretOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.ServiceOperationsImpl;
-import io.fabric8.kubernetes.client.dsl.internal.extensions.v1beta1.IngressOperationsImpl;
+import io.fabric8.kubernetes.client.dsl.internal.networking.v1.IngressOperationsImpl;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import java.io.IOException;
