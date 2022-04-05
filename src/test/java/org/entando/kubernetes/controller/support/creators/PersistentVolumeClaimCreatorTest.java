@@ -39,7 +39,7 @@ class PersistentVolumeClaimCreatorTest implements InProcessTestData {
 
     private EntandoApp entandoApp = newTestEntandoApp();
     private SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(
-            entandoApp, null, null);
+            entandoApp, null, null, null);
 
     @AfterEach
     @BeforeEach

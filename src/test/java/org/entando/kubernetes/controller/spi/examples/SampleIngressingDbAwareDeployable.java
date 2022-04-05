@@ -27,6 +27,7 @@ import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.spibase.IngressingDeployableBase;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -41,10 +42,10 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
     protected final DatabaseConnectionInfo databaseConnectionInfo;
 
     public SampleIngressingDbAwareDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource,
-            DatabaseConnectionInfo databaseConnectionInfo) {
+            DatabaseConnectionInfo databaseConnectionInfo, SecretClient secretClient) {
         this.entandoResource = entandoResource;
         this.databaseConnectionInfo = databaseConnectionInfo;
-        this.containers = createContainers(entandoResource);
+        this.containers = createContainers(entandoResource, secretClient);
     }
 
     @Override
@@ -53,7 +54,7 @@ public abstract class SampleIngressingDbAwareDeployable<S extends EntandoIngress
     }
 
     protected abstract List<DeployableContainer> createContainers(
-            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource);
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource, SecretClient secretClient);
 
     @Override
     public List<DeployableContainer> getContainers() {

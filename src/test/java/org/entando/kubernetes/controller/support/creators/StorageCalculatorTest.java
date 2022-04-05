@@ -39,7 +39,7 @@ class StorageCalculatorTest {
 
     @Test
     void calculateRequestsWithDefaultRatio() {
-        StorageCalculator resourceCalculator = new StorageCalculator(new SampleDeployableContainer<>(new EntandoApp(), null));
+        StorageCalculator resourceCalculator = new StorageCalculator(new SampleDeployableContainer<>(new EntandoApp(), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));
         //NB! rounded...
         assertThat(resourceCalculator.getStorageRequest(), is("512Mi"));
@@ -48,7 +48,7 @@ class StorageCalculatorTest {
     @Test
     void calculateRequestsWithProvidedRatio() {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_REQUEST_TO_LIMIT_RATIO.getJvmSystemProperty(), "0.2");
-        StorageCalculator resourceCalculator = new StorageCalculator(new SampleDeployableContainer<>(new EntandoApp(), null));
+        StorageCalculator resourceCalculator = new StorageCalculator(new SampleDeployableContainer<>(new EntandoApp(), null, null));
         assertThat(resourceCalculator.getStorageLimit(), is("2048Mi"));
         //NB! rounded...
         assertThat(resourceCalculator.getStorageRequest(), is("410Mi"));
