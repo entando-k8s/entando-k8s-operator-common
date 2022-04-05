@@ -158,7 +158,6 @@ public class IngressCreator extends AbstractK8SResourceCreator {
 
     private Map<String, String> forNginxIngress(IngressingDeployable<?> deployable) {
         Map<String, String> result = new HashMap<>();
-        EntandoOperatorConfig.getIngressClass().ifPresent(s -> result.put("kubernetes.io/ingress.class", s));
         if (EntandoOperatorConfig.getTlsSecretName().isPresent() || EntandoOperatorConfig.useAutoCertGeneration()) {
 
             //for cases where we have https available but the Keycloak redirect was specified as http
