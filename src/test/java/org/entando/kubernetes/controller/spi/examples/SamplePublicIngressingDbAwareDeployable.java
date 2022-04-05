@@ -31,6 +31,7 @@ import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
 import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
 import org.entando.kubernetes.model.common.KeycloakAwareSpec;
@@ -44,8 +45,9 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
 
     public SamplePublicIngressingDbAwareDeployable(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource,
             DatabaseConnectionInfo databaseConnectionInfo,
-            SsoConnectionInfo ssoConnectionInfo) {
-        super(entandoResource, databaseConnectionInfo);
+            SsoConnectionInfo ssoConnectionInfo,
+            SecretClient secretClient) {
+        super(entandoResource, databaseConnectionInfo, secretClient);
         this.ssoConnectionInfo = ssoConnectionInfo;
         sampleSecret = generateSecret(this.entandoResource, secretName(this.entandoResource),
                 "entando_keycloak_admin");
@@ -56,8 +58,10 @@ public class SamplePublicIngressingDbAwareDeployable<S extends KeycloakAwareSpec
         return resource.getMetadata().getName() + "-admin-secret";
     }
 
-    protected List<DeployableContainer> createContainers(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource) {
-        return Collections.singletonList(new SampleDeployableContainer<>(entandoResource, databaseConnectionInfo));
+    protected List<DeployableContainer> createContainers(
+            EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource, SecretClient secretClient) {
+        return Collections.singletonList(
+                new SampleDeployableContainer<>(entandoResource, databaseConnectionInfo, secretClient));
     }
 
     @Override
