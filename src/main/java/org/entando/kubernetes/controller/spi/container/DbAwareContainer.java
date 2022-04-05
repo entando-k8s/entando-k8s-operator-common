@@ -17,13 +17,17 @@
 package org.entando.kubernetes.controller.spi.container;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.Secret;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
+import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +49,8 @@ public interface DbAwareContainer extends DeployableContainer {
     static List<DatabaseSchemaConnectionInfo> buildDatabaseSchemaConnectionInfo(
             EntandoCustomResource entandoBaseCustomResource,
             DatabaseConnectionInfo databaseConnectionInfo,
-            List<String> schemaQualifiers) {
+            List<String> schemaQualifiers,
+            SecretClient secretClient) {
         return schemaQualifiers.stream()
                 .map(schemaQualifier -> {
                     final DbmsVendorConfig dbmsVendor = databaseConnectionInfo.getVendor();
@@ -58,7 +63,8 @@ public interface DbAwareContainer extends DeployableContainer {
 
                     final var secretName = entandoBaseCustomResource.getMetadata().getName()
                             + "-" + schemaQualifier + "-secret";
-                    final var userName = generateUsername(schemaName, dbmsVendor);
+
+                    final var userName = getUsername(secretClient, secretName, schemaName, dbmsVendor);
 
                     if (databaseConnectionInfo.getVendor().schemaIsDatabase()) {
                         // schemaName equals databaseName that equals username
@@ -72,6 +78,28 @@ public interface DbAwareContainer extends DeployableContainer {
                 }).collect(Collectors.toList());
     }
 
+    /**
+     * if a username is present in the secret whose name is received as first param, return that username, otherwise
+     * generate a new one.
+     * @param secretName the name of the secret from which fetch a possible username
+     * @param schemaName the name of the schema to use
+     * @param dbmsVendor the dbms vendor
+     * @return the username to use
+     */
+    static String getUsername(SecretClient secretClient, String secretName, String schemaName, DbmsVendorConfig dbmsVendor) {
+
+        final Secret dbSecret = secretClient.loadControllerSecret(secretName);
+
+        if (dbSecret == null || dbSecret.getData() == null
+                || StringUtils.isEmpty(dbSecret.getData().get(SecretUtils.USERNAME_KEY))) {
+            return generateUsername(schemaName, dbmsVendor);
+        } else {
+            final byte[] byteUsername = Base64.getDecoder()
+                    .decode(dbSecret.getData().get(SecretUtils.USERNAME_KEY));
+            return new String(byteUsername);
+        }
+    }
+
     static String generateUsername(String schemaName, DbmsVendorConfig dbmsVendor) {
         int lenWithoutRandom = dbmsVendor.getMaxUsernameLength() - (USERNAME_RANDOM_HASH_LENGTH + 1);
 
@@ -83,5 +111,4 @@ public interface DbAwareContainer extends DeployableContainer {
         }
         return username + "_" + NameUtils.randomNumeric(USERNAME_RANDOM_HASH_LENGTH);
     }
-
 }

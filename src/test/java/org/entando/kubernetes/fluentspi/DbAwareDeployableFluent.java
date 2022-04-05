@@ -19,13 +19,17 @@ package org.entando.kubernetes.fluentspi;
 import org.entando.kubernetes.controller.spi.container.ProvidedDatabaseCapability;
 import org.entando.kubernetes.controller.spi.deployable.DbAwareDeployable;
 import org.entando.kubernetes.controller.spi.result.DefaultExposedDeploymentResult;
+import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 
 public class DbAwareDeployableFluent<N extends DbAwareDeployableFluent<N>> extends SecretiveDeployableFluent<N> implements
         DbAwareDeployable<DefaultExposedDeploymentResult> {
 
     public N withProvidedDatabase(ProvidedDatabaseCapability databaseCapability) {
-        this.getContainers().stream().filter(DbAwareContainerFluent.class::isInstance).map(DbAwareContainerFluent.class::cast).forEach(
-                dbAwareContainerFluent -> dbAwareContainerFluent.determineDatabaseSchemaInfo(databaseCapability));
+        SimpleK8SClientDouble simpleK8SClientDouble = new SimpleK8SClientDouble();
+        this.getContainers().stream().filter(DbAwareContainerFluent.class::isInstance)
+                .map(DbAwareContainerFluent.class::cast).forEach(
+                        dbAwareContainerFluent -> dbAwareContainerFluent.determineDatabaseSchemaInfo(databaseCapability,
+                                simpleK8SClientDouble.secrets()));
         return thisAsN();
     }
 }
