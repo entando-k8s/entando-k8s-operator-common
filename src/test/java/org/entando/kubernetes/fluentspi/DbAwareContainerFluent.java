@@ -26,6 +26,7 @@ import org.entando.kubernetes.controller.spi.container.DatabaseSchemaConnectionI
 import org.entando.kubernetes.controller.spi.container.DbAwareContainer;
 import org.entando.kubernetes.controller.spi.container.SpringBootDeployableContainer.SpringProperty;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
+import org.entando.kubernetes.controller.support.client.SecretClient;
 
 public class DbAwareContainerFluent<N extends DbAwareContainerFluent<N>> extends PersistentContainerFluent<N> implements DbAwareContainer {
 
@@ -48,11 +49,13 @@ public class DbAwareContainerFluent<N extends DbAwareContainerFluent<N>> extends
         return this.schemaConnectionInfo;
     }
 
-    public void determineDatabaseSchemaInfo(DatabaseConnectionInfo dbConnectionInfo) {
+    public void determineDatabaseSchemaInfo(DatabaseConnectionInfo dbConnectionInfo, SecretClient secretClient) {
+
         this.schemaConnectionInfo.clear();
         this.databaseConnectionVariables.clear();
         this.schemaConnectionInfo.addAll(DbAwareContainer
-                .buildDatabaseSchemaConnectionInfo(customResource, dbConnectionInfo, Collections.singletonList(getNameQualifier())));
+                .buildDatabaseSchemaConnectionInfo(customResource, dbConnectionInfo,
+                        Collections.singletonList(getNameQualifier()), secretClient));
         final DatabaseSchemaConnectionInfo databaseSchema = schemaConnectionInfo.get(0);
         databaseConnectionVariables
                 .add(new EnvVar(SpringProperty.SPRING_DATASOURCE_USERNAME.name(), null, databaseSchema.getUsernameRef()));

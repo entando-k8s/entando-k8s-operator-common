@@ -32,6 +32,7 @@ import org.entando.kubernetes.controller.spi.container.SsoAwareContainer;
 import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
 import org.entando.kubernetes.controller.spi.deployable.SsoConnectionInfo;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
+import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.model.common.DbmsVendor;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
@@ -59,7 +60,8 @@ public class SampleSpringBootDeployableContainer<T extends EntandoBaseCustomReso
             this.dbSchemaInfo = Collections.emptyList();
         } else {
             this.dbSchemaInfo = DbAwareContainer
-                    .buildDatabaseSchemaConnectionInfo(customResource, databaseConnectionInfo, Collections.singletonList("serverdb"));
+                    .buildDatabaseSchemaConnectionInfo(customResource, databaseConnectionInfo,
+                            Collections.singletonList("serverdb"), new SimpleK8SClientDouble().secrets());
         }
     }
 

@@ -31,6 +31,7 @@ import org.entando.kubernetes.controller.spi.container.ParameterizableContainer;
 import org.entando.kubernetes.controller.spi.container.PersistentVolumeAwareContainer;
 import org.entando.kubernetes.controller.spi.container.TrustStoreAwareContainer;
 import org.entando.kubernetes.controller.spi.result.DatabaseConnectionInfo;
+import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.common.FluentTernary;
 import org.entando.kubernetes.model.common.EntandoBaseCustomResource;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -49,13 +50,14 @@ public class SampleDeployableContainer<S extends EntandoDeploymentSpec> implemen
     private final List<DatabaseSchemaConnectionInfo> databaseSchemaInfo;
 
     public SampleDeployableContainer(EntandoBaseCustomResource<S, EntandoCustomResourceStatus> entandoResource,
-            DatabaseConnectionInfo databaseConnectionInfo) {
+            DatabaseConnectionInfo databaseConnectionInfo, SecretClient secretClient) {
         this.entandoResource = entandoResource;
         if (databaseConnectionInfo == null) {
             this.databaseSchemaInfo = Collections.emptyList();
         } else {
             this.databaseSchemaInfo = DbAwareContainer
-                    .buildDatabaseSchemaConnectionInfo(entandoResource, databaseConnectionInfo, Collections.singletonList("db"));
+                    .buildDatabaseSchemaConnectionInfo(entandoResource, databaseConnectionInfo,
+                            Collections.singletonList("db"), secretClient);
         }
     }
 

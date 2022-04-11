@@ -68,7 +68,7 @@ class SecretCreatorTest implements InProcessTestData {
                 .addToStringData(".dockerconfig", DOCKER_CONFIG_JSON)
                 .build());
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(entandoApp, null,
-                emulateKeycloakDeployment(client));
+                emulateKeycloakDeployment(client), client.secrets());
         //When the operator creates the secrets required for the deployment
         new SecretCreator(entandoApp).createSecrets(client.secrets(), deployable);
         //Then the image pull secret is present in the  deployment namespace
