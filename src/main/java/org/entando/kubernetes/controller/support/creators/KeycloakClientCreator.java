@@ -19,7 +19,7 @@ package org.entando.kubernetes.controller.support.creators;
 import static org.entando.kubernetes.controller.support.creators.IngressCreator.getIngressServerUrl;
 
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
 import org.entando.kubernetes.controller.spi.container.KeycloakAwareContainer;

@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.is;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.Serializable;
@@ -129,7 +129,8 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         //And I an ingress paths
         Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
                 ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
-        assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
+        assertThat(
+                theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getService().getPort().getNumber(),
                 Matchers.is(8084));
     }
 
@@ -181,7 +182,8 @@ public abstract class SpringBootContainerTestBase implements InProcessTestUtil, 
         //And I an ingress path
         Ingress ingress = getClient().ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
                 ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
-        assertThat(theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getServicePort().getIntVal(),
+        assertThat(
+                theHttpPath(SampleSpringBootDeployableContainer.MY_WEB_CONTEXT).on(ingress).getBackend().getService().getPort().getNumber(),
                 Matchers.is(8084));
         //Exposed over TLS using the previously created TLS secret
         assertThat(ingress.getSpec().getTls().get(0).getHosts().get(0), Matchers.is(ingress.getSpec().getRules().get(0).getHost()));

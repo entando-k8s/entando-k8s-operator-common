@@ -60,7 +60,7 @@ public class DefaultPodClient implements PodClient {
 
     @Override
     public void removeAndWait(String namespace, Map<String, String> labels) {
-        FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client
+        FilterWatchListDeletable<Pod, PodList, Boolean, Watch> podResource = client
                 .pods().inNamespace(namespace).withLabels(labels);
         podResource.delete();
         watchPod(

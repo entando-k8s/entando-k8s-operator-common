@@ -17,7 +17,7 @@
 package org.entando.kubernetes.controller.support.command;
 
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import org.entando.kubernetes.controller.spi.deployable.IngressingDeployable;
 import org.entando.kubernetes.controller.spi.result.ExposedDeploymentResult;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;

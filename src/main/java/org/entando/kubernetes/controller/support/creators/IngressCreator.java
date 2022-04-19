@@ -17,12 +17,12 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
-import io.fabric8.kubernetes.api.model.extensions.IngressStatus;
-import io.fabric8.kubernetes.api.model.extensions.IngressTLS;
-import io.fabric8.kubernetes.api.model.extensions.IngressTLSBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressStatus;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressTLS;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressTLSBuilder;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

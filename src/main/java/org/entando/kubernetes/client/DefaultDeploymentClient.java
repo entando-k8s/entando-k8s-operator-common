@@ -71,7 +71,7 @@ public class DefaultDeploymentClient implements DeploymentClient, PodWaitingClie
         } else {
             //Don't wait because watching the pods until they have been removed is safer than to Fabric8's polling
             getDeploymenResourceFor(peerInNamespace, deployment).scale(0, false);
-            FilterWatchListDeletable<Pod, PodList, Boolean, Watch, Watcher<Pod>> podResource = client.pods()
+            FilterWatchListDeletable<Pod, PodList, Boolean, Watch> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
             if (!podResource.list().getItems().isEmpty()) {

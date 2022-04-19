@@ -38,8 +38,8 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceStatus;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentStatus;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressStatus;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressStatus;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.IOException;
@@ -224,8 +224,8 @@ class DeployExampleServiceTest implements InProcessTestUtil, FluentTraversals, C
         verify(client.ingresses()).createIngress(eq(newEntandoApp), ingressArgumentCaptor.capture());
         Ingress resultingIngress = ingressArgumentCaptor.getValue();
         //With a path that reflects webcontext of Keycloak, mapped to the previously created service
-        assertThat(theBackendFor(AUTH).on(resultingIngress).getServicePort().getIntVal(), is(8080));
-        assertThat(theBackendFor(AUTH).on(resultingIngress).getServiceName(), is(MY_APP_SERVER_SERVICE));
+        assertThat(theBackendFor(AUTH).on(resultingIngress).getService().getPort().getNumber(), is(8080));
+        assertThat(theBackendFor(AUTH).on(resultingIngress).getService().getName(), is(MY_APP_SERVER_SERVICE));
         //And the Ingress state was reloaded from K8S
         verify(client.ingresses(), times(2))
                 .loadIngress(eq(newEntandoApp.getMetadata().getNamespace()), eq(MY_APP_INGRESS));

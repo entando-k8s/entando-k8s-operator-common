@@ -16,8 +16,8 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.entando.kubernetes.controller.support.client.DoneableIngress;

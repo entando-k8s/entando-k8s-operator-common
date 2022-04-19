@@ -57,16 +57,12 @@ public class SimpleK8SClientDouble extends AbstractK8SClientDouble implements Si
     }
 
     private static VersionInfo getVersionInfo(int minorVersion) {
-        final ConcurrentHashMap<String, String> data = new ConcurrentHashMap<>();
         try {
-            data.put("minor", String.valueOf(minorVersion));
-            data.put("major", "1");
-            data.put("gitCommit", "123");
-            data.put("gitVersion", "1");
-            data.put("buildDate", "2021-01-31T14:00:12Z");
-            data.put("MAJOR", "1");
-            data.put("MAJOR", "1");
-            return new VersionInfo(data);
+            return new VersionInfo.Builder().withMinor(String.valueOf(minorVersion))
+                    .withMajor("1")
+                    .withGitCommit("123")
+                    .withGitVersion("1")
+                    .withBuildDate("2021-01-31T14:00:12Z").build();
         } catch (ParseException e) {
             //no need to do anything here
             return null;

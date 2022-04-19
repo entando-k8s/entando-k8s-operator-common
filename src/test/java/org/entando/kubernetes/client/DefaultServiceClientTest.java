@@ -78,7 +78,10 @@ class DefaultServiceClientTest extends AbstractK8SIntegrationTest {
                         .endMetadata()
                         .addNewSubset()
                         .addNewAddress().withIp("172.17.0.123").endAddress()
-                        .addNewPort("my-port", 80, null)
+                        .addNewPort()
+                        .withName("my-port")
+                        .withPort(80)
+                        .endPort()
                         .endSubset()
                         .build());
         //When I attempt to findOrCreate a service with the same name but with the annotation "test: 234"

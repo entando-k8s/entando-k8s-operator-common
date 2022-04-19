@@ -17,9 +17,9 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPathBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPathBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,8 +58,12 @@ public class IngressPathCreator {
         return new HTTPIngressPathBuilder()
                 .withPath(ingressingPathOnPort.getWebContextPath())
                 .withNewBackend()
-                .withServiceName(service.getMetadata().getName())
-                .withNewServicePort(ingressingPathOnPort.getPortForIngressPath())
+                .withNewService()
+                .withName(service.getMetadata().getName())
+                .withNewPort()
+                .withNumber(ingressingPathOnPort.getPortForIngressPath())
+                .endPort()
+                .endService()
                 .endBackend()
                 .build();
     }

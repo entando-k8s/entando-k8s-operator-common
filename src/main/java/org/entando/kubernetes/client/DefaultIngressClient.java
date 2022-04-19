@@ -19,8 +19,8 @@ package org.entando.kubernetes.client;
 import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.NodeAddress;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.Map;
 import java.util.Optional;
@@ -61,9 +61,10 @@ public class DefaultIngressClient implements IngressClient {
     }
 
     private DoneableIngress edit(ObjectMeta metadata, String name) {
-        return new DoneableIngress(client.extensions().ingresses().inNamespace(metadata.getNamespace())
-                .withName(name).fromServer().get(), client.extensions().ingresses().inNamespace(metadata.getNamespace())
-                .withName(name)::patch);
+        return new DoneableIngress(client.network().v1().ingresses().inNamespace(metadata.getNamespace())
+                .withName(name).fromServer().get(),
+                client.network().v1().ingresses().inNamespace(metadata.getNamespace())
+                        .withName(name)::patch);
     }
 
     @Override
@@ -85,7 +86,8 @@ public class DefaultIngressClient implements IngressClient {
 
     @Override
     public Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
-        return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(ingress);
+        return client.network().v1().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace())
+                .create(ingress);
     }
 
     @Override
@@ -95,6 +97,6 @@ public class DefaultIngressClient implements IngressClient {
 
     @Override
     public Ingress loadIngress(String namespace, String name) {
-        return client.extensions().ingresses().inNamespace(namespace).withName(name).get();
+        return client.network().v1().ingresses().inNamespace(namespace).withName(name).get();
     }
 }

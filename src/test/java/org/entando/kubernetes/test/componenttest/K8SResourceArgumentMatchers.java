@@ -20,7 +20,7 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimStatus;
 import io.fabric8.kubernetes.api.model.ServiceStatus;
 import io.fabric8.kubernetes.api.model.apps.DeploymentStatus;
-import io.fabric8.kubernetes.api.model.extensions.IngressStatus;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressStatus;
 import org.entando.kubernetes.model.AbstractServerStatus;
 import org.entando.kubernetes.model.WebServerStatus;
 import org.mockito.ArgumentMatcher;

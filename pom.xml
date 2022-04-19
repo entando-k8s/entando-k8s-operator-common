@@ -65,11 +65,12 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
-        <entando-k8s-custom-model.version>6.3.4</entando-k8s-custom-model.version>
+        <entando-k8s-custom-model.version>111</entando-k8s-custom-model.version>
         <preDeploymentTestGroups>pre-deployment</preDeploymentTestGroups>
         <postDeploymentTestGroups>none</postDeploymentTestGroups>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <fabric8.version>4.13.3</fabric8.version>
     </properties>
     <issueManagement>
         <system>Github</system>
