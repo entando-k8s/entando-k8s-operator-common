@@ -27,8 +27,10 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPortBuilder;
 import io.qameta.allure.Allure;
 import java.io.IOException;
 import java.util.Collections;
@@ -115,10 +117,13 @@ public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extend
                     .withNewHttp()
                     .addNewPath()
                     .withNewBackend()
-                    .withServiceName(NameUtils.standardServiceName(customResource, status.getQualifier()))
-                    .withServicePort(new IntOrString(port))
+                    .withNewService()
+                    .withName(NameUtils.standardServiceName(customResource, status.getQualifier()))
+                    .withPort(new ServiceBackendPortBuilder().withNumber(port).build())
+                    .endService()
                     .endBackend()
                     .withPath(path)
+                    .withPathType("Prefix")
                     .endPath()
                     .endHttp()
                     .endRule()
@@ -134,10 +139,13 @@ public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extend
                     .editHttp()
                     .addNewPath()
                     .withNewBackend()
-                    .withServiceName(NameUtils.standardServiceName(customResource, status.getQualifier()))
-                    .withServicePort(new IntOrString(port))
+                    .withNewService()
+                    .withName(NameUtils.standardServiceName(customResource, status.getQualifier()))
+                    .withPort(new ServiceBackendPortBuilder().withNumber(port).build())
+                    .endService()
                     .endBackend()
                     .withPath(path)
+                    .withPathType("Prefix")
                     .endPath()
                     .endHttp()
                     .endRule()

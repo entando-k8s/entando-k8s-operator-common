@@ -18,7 +18,7 @@ package org.entando.kubernetes.controller.spi.result;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import org.entando.kubernetes.controller.spi.common.SerializeByReference;
 import org.entando.kubernetes.model.common.ServerStatus;
 

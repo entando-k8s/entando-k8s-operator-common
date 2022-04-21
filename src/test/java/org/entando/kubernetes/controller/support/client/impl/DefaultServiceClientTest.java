@@ -26,12 +26,11 @@ import io.fabric8.kubernetes.api.model.EndpointsBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
-import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPortBuilder;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import java.util.Map;
@@ -204,10 +203,13 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
                     .withNewHttp()
                     .addNewPath()
                     .withNewBackend()
-                    .withServiceName("my-service2")
-                    .withServicePort(new IntOrString(8080))
+                    .withNewService()
+                    .withName("my-service2")
+                    .withPort(new ServiceBackendPortBuilder().withNumber(8080).build())
+                    .endService()
                     .endBackend()
                     .withNewPath("/")
+                    .withPathType("Prefix")
                     .endPath()
                     .endHttp()
                     .endRule()

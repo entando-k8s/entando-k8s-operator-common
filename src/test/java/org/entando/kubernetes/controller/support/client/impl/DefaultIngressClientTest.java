@@ -23,10 +23,12 @@ import static org.hamcrest.Matchers.is;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.fabric8.kubernetes.api.model.IntOrString;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPathBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPathBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPortBuilder;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,8 +68,10 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         Assertions.assertFalse(() ->
                 cleanedIngress.getSpec().getRules().get(0).getHttp().getPaths().stream()
                         .anyMatch(p -> p.getPath().equals(ingressPath.getPath())
-                                && p.getBackend().getServicePort().equals(ingressPath.getBackend().getServicePort())
-                                && p.getBackend().getServiceName().equals(ingressPath.getBackend().getServiceName())));
+                                && p.getBackend().getService().getPort()
+                                .equals(ingressPath.getBackend().getService().getPort())
+                                && p.getBackend().getService().getName()
+                                .equals(ingressPath.getBackend().getService().getName())));
 
         Assertions.assertTrue(() -> cleanedIngress.getSpec().getRules().get(0).getHttp()
                 .getPaths().size() == 1);
@@ -91,8 +95,10 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
             tmp.getSpec().getRules().get(0).getHttp().getPaths().add(new HTTPIngressPathBuilder()
                     .withPath("/path/" + i)
                     .withNewBackend()
-                    .withServiceName("service-for-path" + i)
-                    .withServicePort(new IntOrString(8080))
+                    .withNewService()
+                    .withName("service-for-path" + i)
+                    .withPort(new ServiceBackendPortBuilder().withNumber(8080).build())
+                    .endService()
                     .endBackend()
                     .build());
             executor.submit(() -> getSimpleK8SClient().ingresses().createIngress(app, tmp));
@@ -132,8 +138,10 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         getSimpleK8SClient().ingresses().addHttpPath(deployedIngress, new HTTPIngressPathBuilder()
                 .withPath("/new-path")
                 .withNewBackend()
-                .withServiceName("some-service")
-                .withServicePort(new IntOrString(80))
+                .withNewService()
+                .withName("some-service")
+                .withPort(new ServiceBackendPortBuilder().withNumber(80).build())
+                .endService()
                 .endBackend()
                 .build(), Collections.emptyMap());
         final Ingress actual = getSimpleK8SClient().ingresses()
@@ -152,16 +160,22 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
                 .withNewHttp()
                 .addNewPath()
                 .withPath("/path1")
+                .withPathType("Prefix")
                 .withNewBackend()
-                .withServiceName("path1-plugin")
-                .withServicePort(new IntOrString(8081))
+                .withNewService()
+                .withName("path1-plugin")
+                .withPort(new ServiceBackendPortBuilder().withNumber(8081).build())
+                .endService()
                 .endBackend()
                 .endPath()
                 .addNewPath()
                 .withPath("/path2")
+                .withPathType("Prefix")
                 .withNewBackend()
-                .withServiceName("path2-plugin")
-                .withServicePort(new IntOrString(8081))
+                .withNewService()
+                .withName("path2-plugin")
+                .withPort(new ServiceBackendPortBuilder().withNumber(8081).build())
+                .endService()
                 .endBackend()
                 .endPath()
                 .endHttp()

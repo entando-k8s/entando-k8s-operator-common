@@ -18,11 +18,6 @@ package org.entando.kubernetes.controller.spi.client.impl;
 
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +25,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -46,7 +40,7 @@ import io.fabric8.kubernetes.client.dsl.internal.apps.v1.DeploymentOperationsImp
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.PersistentVolumeClaimOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.SecretOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.ServiceOperationsImpl;
-import io.fabric8.kubernetes.client.dsl.internal.extensions.v1beta1.IngressOperationsImpl;
+import io.fabric8.kubernetes.client.dsl.internal.networking.v1.IngressOperationsImpl;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import java.io.IOException;
@@ -75,8 +69,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 @Tags({@Tag("adapter"), @Tag("pre-deployment"), @Tag("integration")})

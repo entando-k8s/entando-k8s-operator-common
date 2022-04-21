@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 import io.fabric8.kubernetes.api.model.Endpoints;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
@@ -245,8 +245,8 @@ class ExposedDeploymentTest extends ControllerTestBase implements VariableRefere
             attachKubernetesResource("Ingress", ingress);
             assertThat(ingress).isNotNull();
             step(" that points to port 8081 on the target Service", () -> {
-                assertThat(theHttpPath("/my-app").on(ingress).getBackend().getServicePort().getIntVal()).isEqualTo(8081);
-                assertThat(theHttpPath("/my-app").on(ingress).getBackend().getServiceName())
+                assertThat(theHttpPath("/my-app").on(ingress).getBackend().getService().getPort().getNumber()).isEqualTo(8081);
+                assertThat(theHttpPath("/my-app").on(ingress).getBackend().getService().getName())
                         .isEqualTo(NameUtils.standardServiceName(entandoCustomResource));
             });
             step("and exposes the service on the host 'myhost.com'",
@@ -414,8 +414,8 @@ class ExposedDeploymentTest extends ControllerTestBase implements VariableRefere
             attachKubernetesResource("Ingress", ingress);
             assertThat(ingress).isNotNull();
             step(" that points to port 8081 on the target Service", () -> {
-                assertThat(theHttpPath("/my-app2").on(ingress).getBackend().getServicePort().getIntVal()).isEqualTo(8081);
-                assertThat(theHttpPath("/my-app2").on(ingress).getBackend().getServiceName())
+                assertThat(theHttpPath("/my-app2").on(ingress).getBackend().getService().getPort().getNumber()).isEqualTo(8081);
+                assertThat(theHttpPath("/my-app2").on(ingress).getBackend().getService().getName())
                         .isEqualTo(delegateName);
             });
         });
