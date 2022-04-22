@@ -26,7 +26,7 @@ import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -103,7 +103,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                 Thread.currentThread().getContextClassLoader().getResource("testresources.test.org.crd.yaml"),
                 CustomResourceDefinition.class);
         customResourceDefinition.getMetadata().setLabels(Map.of(LabelNames.CRD_OF_INTEREST.getName(), "TestResource"));
-        fabric8Client.apiextensions().v1beta1().customResourceDefinitions().createOrReplace(customResourceDefinition);
+        fabric8Client.apiextensions().v1().customResourceDefinitions().createOrReplace(customResourceDefinition);
         fabric8Client.configMaps().inNamespace(fabric8Client.getNamespace())
                 .withName(DefaultKubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP).delete();
     }
