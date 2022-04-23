@@ -74,8 +74,7 @@ class DefaultServiceAccountClientTest extends AbstractSupportK8SIntegrationTest 
     @Test
     void shouldNotReplacePreviouslyCreatedRoleBinding() {
         //Given I have a service account and a role
-        getSimpleK8SClient().serviceAccounts().findOrCreateServiceAccount(testResource, "my-serviceaccount")
-                .done();
+        prepareTestServiceAccount(getSimpleK8SClient(), testResource, "my-serviceaccount");
         getSimpleK8SClient().serviceAccounts().createRoleIfAbsent(testResource, new RoleBuilder()
                 .editOrNewMetadata()
                 .withName("my-role")

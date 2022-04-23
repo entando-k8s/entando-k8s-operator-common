@@ -23,22 +23,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.qameta.allure.Allure;
-import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfigProperty;
+import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.TestFixturePreparation;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
 import org.entando.kubernetes.fluentspi.TestResource;
+import org.entando.kubernetes.model.common.EntandoCustomResource;
 import org.entando.kubernetes.test.common.FluentTraversals;
 import org.entando.kubernetes.test.common.InterProcessTestData;
 import org.junit.jupiter.api.AfterEach;
@@ -105,14 +107,17 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
         Allure.attachment(name, objectMapper.writeValueAsString(resource));
     }
 
-    protected void attachResources(String name, Collection<? extends HasMetadata> resource) throws JsonProcessingException {
+    protected void attachResources(String name, Collection<? extends HasMetadata> resource)
+            throws JsonProcessingException {
         Allure.attachment(name, objectMapper.writeValueAsString(resource));
     }
 
     @BeforeEach
     public void setup() {
-        System.out.println("\n.\n.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n.\n.\n");
-        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(), TEST_CONTROLLER_POD);
+        System.out.println(
+                "\n.\n.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n.\n.\n");
+        System.setProperty(EntandoOperatorSpiConfigProperty.ENTANDO_CONTROLLER_POD_NAME.getJvmSystemProperty(),
+                TEST_CONTROLLER_POD);
         fabric8Client = new SupportProducer().getKubernetesClient();
 
         for (String nsToUse : getNamespacesToUse()) {
@@ -132,7 +137,8 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
                         throw new IllegalStateException("No kubernetes connection profile is active");
                     }
                     if (isStatusFatalClientConnectionError(status)) {
-                        throw new IllegalStateException("Unable to access the test playground (" + ex.getStatus().getCode() + ")");
+                        throw new IllegalStateException(
+                                "Unable to access the test playground (" + ex.getStatus().getCode() + ")");
                     }
                     return false;
                 } catch (Exception ex) {
@@ -148,8 +154,21 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
     private boolean isStatusFatalClientConnectionError(Status status) {
         Integer resultCode = status.getCode();
-        return resultCode >= 400 && resultCode < 500 && resultCode != 404 && resultCode != 408 && resultCode != 425 && resultCode != 429;
+        return resultCode >= 400 && resultCode < 500 && resultCode != 404 && resultCode != 408 && resultCode != 425
+                && resultCode != 429;
     }
 
     protected abstract String[] getNamespacesToUse();
+
+    public ServiceAccount prepareTestServiceAccount(DefaultSimpleK8SClient client, EntandoCustomResource peer,
+            String name) {
+        ServiceAccountClient serviceAccountClient = client.serviceAccounts();
+        final var tmpServiceAccount = serviceAccountClient
+                .findOrCreateServiceAccount(peer, name);
+        await().atMost(10, TimeUnit.SECONDS).until(() ->
+                client.serviceAccounts().findServiceAccount(peer, name) != null
+        );
+        final var serviceAccount = tmpServiceAccount.done();
+        return serviceAccount;
+    }
 }
