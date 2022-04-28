@@ -64,8 +64,10 @@ class DefaultIngressClientTest extends AbstractK8SIntegrationTest {
         Assertions.assertFalse(() ->
                 cleanedIngress.getSpec().getRules().get(0).getHttp().getPaths().stream()
                         .anyMatch(p -> p.getPath().equals(ingressPath.getPath())
-                                && p.getBackend().getService().getPort().getNumber().equals(ingressPath.getBackend().getService().getPort().getNumber())
-                                && p.getBackend().getService().getName().equals(ingressPath.getBackend().getService().getName())));
+                                && p.getBackend().getService().getPort().getNumber()
+                                    .equals(ingressPath.getBackend().getService().getPort())
+                                && p.getBackend().getService().getName()
+                                    .equals(ingressPath.getBackend().getService().getName())));
 
         Assertions.assertTrue(() -> cleanedIngress.getSpec().getRules().get(0).getHttp()
                 .getPaths().size() == 1);
@@ -85,7 +87,7 @@ class DefaultIngressClientTest extends AbstractK8SIntegrationTest {
                 .withNewService()
                 .withName("some-service")
                 .withPort(new ServiceBackendPortBuilder().withNumber(80).build())
-                        .endService()
+                .endService()
                 .endBackend()
                 .build(), Collections.emptyMap());
         final Ingress actual = getSimpleK8SClient().ingresses()
