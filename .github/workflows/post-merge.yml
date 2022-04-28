@@ -25,14 +25,21 @@ jobs:
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # SNAPSHOT TAG
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 9e2c270b7f44b08a4b7bbd3d3820de7ea16a5a94
   add-version-tag:
     runs-on: ubuntu-latest
     steps:
       - name: "ADD SNAPSHOT TAG"
         run: |
           ${{ secrets.ENTANDO_OPT_PPL_INSTALL_CMD }}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9e2c270b7f44b08a4b7bbd3d3820de7ea16a5a94
           ~/ppl-run pr-status-report \
           .. checkout-branch base \
                 --id "CHECKOUT-BASE" \

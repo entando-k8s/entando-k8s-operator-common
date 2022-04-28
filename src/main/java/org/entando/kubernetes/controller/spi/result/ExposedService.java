@@ -88,8 +88,8 @@ public class ExposedService extends AbstractServiceResult {
 
     private boolean hasMatchingServicePortNamed(IngressBackend backend, String portName) {
         return service.getSpec().getPorts().stream()
-                .anyMatch(servicePort -> portName.equals(servicePort.getName()) && backend.getService().getPort().getNumber()
-                        .equals(servicePort.getPort()));
+                .anyMatch(servicePort -> portName.equals(servicePort.getName()) && backend.getService().getPort()
+                        .getNumber().equals(servicePort.getPort()));
     }
 
     private boolean matchesService(HTTPIngressPath httpIngressPath) {
@@ -100,8 +100,7 @@ public class ExposedService extends AbstractServiceResult {
     private boolean hasMatchingServicePort(IngressBackend backend) {
         return service.getSpec().getPorts().stream()
                 .anyMatch(servicePort ->
-                        backend.getService().getPort().getNumber().equals(
-                                servicePort.getPort()));
+                        backend.getService().getPort().getNumber().equals(servicePort.getPort()));
     }
 
     private boolean matchesThisService(IngressBackend backend) {
