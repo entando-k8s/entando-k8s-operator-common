@@ -23,12 +23,14 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.EventBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.CustomResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.CustomResourceOperationsImpl;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -241,13 +243,15 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
         if (customResource instanceof EntandoBaseCustomResource) {
             return (T) load(customResource.getClass(), customResource.getMetadata().getNamespace(), customResource.getMetadata().getName());
         } else {
-            return (T) client.customResources(
+            return (T)
+            ((NonNamespaceOperation<SerializedEntandoResource, CustomResourceList, DoneableCustomResource,
+                    Resource<SerializedEntandoResource, DoneableCustomResource>>)client.customResources(
                     resolveDefinition((SerializedEntandoResource) customResource),
                     SerializedEntandoResource.class,
                     CustomResourceList.class,
                     DoneableCustomResource.class
             )
-                    .inNamespace(customResource.getMetadata().getNamespace())
+                    .inNamespace(customResource.getMetadata().getNamespace()))
                     .withName(customResource.getMetadata().getName())
                     .fromServer()
                     .get();
@@ -301,7 +305,7 @@ public class DefaultEntandoResourceClient implements EntandoResourceClient, Patc
     }
 
     private Ingress loadIngress(EntandoCustomResource peerInNamespace, String name) {
-        return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
+        return client.network().v1().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
     }
 
     protected Deployment loadDeployment(EntandoCustomResource peerInNamespace, String name) {

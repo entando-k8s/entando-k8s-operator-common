@@ -24,7 +24,7 @@ import static org.mockito.Mockito.lenient;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.quarkus.runtime.StartupEvent;
 import java.io.Serializable;
@@ -165,9 +165,9 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //And I expect three ingress paths
         Ingress ingress = k8sClient.ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
                 ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
-        assertThat(theHttpPath("/auth").on(ingress).getBackend().getServicePort().getIntVal(), is(8080));
-        assertThat(theHttpPath("/auth2").on(ingress).getBackend().getServicePort().getIntVal(), is(8081));
-        assertThat(theHttpPath("/auth3").on(ingress).getBackend().getServicePort().getIntVal(), is(8082));
+        assertThat(theHttpPath("/auth").on(ingress).getBackend().getService().getPort().getNumber(), is(8080));
+        assertThat(theHttpPath("/auth2").on(ingress).getBackend().getService().getPort().getNumber(), is(8081));
+        assertThat(theHttpPath("/auth3").on(ingress).getBackend().getService().getPort().getNumber(), is(8082));
 
     }
 
@@ -216,8 +216,8 @@ public abstract class PublicIngressingTestBase implements InProcessTestUtil, Pod
         //And I expect two ingress paths
         Ingress ingress = k8sClient.ingresses().loadIngress(plugin1.getMetadata().getNamespace(),
                 ((EntandoCustomResource) plugin1).getMetadata().getName() + "-" + NameUtils.DEFAULT_INGRESS_SUFFIX);
-        assertThat(theHttpPath("/auth").on(ingress).getBackend().getServicePort().getIntVal(), is(8080));
-        assertThat(theHttpPath("/auth2").on(ingress).getBackend().getServicePort().getIntVal(), is(8081));
+        assertThat(theHttpPath("/auth").on(ingress).getBackend().getService().getPort().getNumber(), is(8080));
+        assertThat(theHttpPath("/auth2").on(ingress).getBackend().getService().getPort().getNumber(), is(8081));
         assertThat(ingress.getMetadata().getAnnotations().get("kubernetes.io/ingress.class"), is("nginx"));
         assertThat(ingress.getMetadata().getAnnotations().get("nginx.ingress.kubernetes.io/proxy-body-size"), is("50m"));
     }

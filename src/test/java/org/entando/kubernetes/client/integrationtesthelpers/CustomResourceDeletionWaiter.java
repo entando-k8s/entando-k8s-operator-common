@@ -21,6 +21,7 @@ import static org.awaitility.Awaitility.await;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -60,7 +61,11 @@ public class CustomResourceDeletionWaiter {
             }
         } else {
             if (this.operation.get(namespace, name) != null) {
-                this.operation.delete(namespace, name);
+                try {
+                    this.operation.delete(namespace, name);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 await().atMost(duration, timeUnit)
                         .ignoreExceptions()
                         .until(() -> this.operation.get(namespace, name) == null);
