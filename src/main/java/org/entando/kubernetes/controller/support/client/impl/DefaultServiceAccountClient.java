@@ -33,17 +33,22 @@ import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 /**
- * <p>RBAC objects are extremely sensitive resources in Kubernetes. Generally we expect customers to prohibiting us from
- * creating or modifying them, as this would allow our code to  create Roles that can perform any admin operation in a namespace. Even
+ * <p>RBAC objects are extremely sensitive resources in Kubernetes. Generally we expect customers to prohibiting us
+ * from
+ * creating or modifying them, as this would allow our code to  create Roles that can perform any admin operation in a
+ * namespace. Even
  * though it is limited  to a namespace, the customer may have secrets or other objects that need to be protected.</p>
  *
  * <p>If the customer does indeed prevent us from creating RBAC objects (which is the default assumption) the customer
- * would have to use our  predefined roles from another source such as a Helm or Openshift template, or perhaps the Operator Framework.
- * However, in cases where we are allowed to create them programmatically, it is always simpler to let the code do it without any manual
+ * would have to use our  predefined roles from another source such as a Helm or Openshift template, or perhaps the
+ * Operator Framework.
+ * However, in cases where we are allowed to create them programmatically, it is always simpler to let the code do it
+ * without any manual
  * intervention.</p>
  *
  * <p>This class will fail if the entando-operator ServiceAccount does not have GET access to ServiceAccounts, Roles
- * and RoleBindings. If the objects to be created don't already exist, this class will also fail if it doesn't have CREATE access to these
+ * and RoleBindings. If the objects to be created don't already exist, this class will also fail if it doesn't have
+ * CREATE access to these
  * objects.</p>
  */
 public class DefaultServiceAccountClient implements ServiceAccountClient {
@@ -79,6 +84,13 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @Override
+    public ServiceAccount findServiceAccount(EntandoCustomResource peerInNamespace, String name) {
+        final Resource<ServiceAccount> serviceAccountResource = client.serviceAccounts()
+                .inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name);
+        return serviceAccountResource.get();
+    }
+
+    @Override
     public String createRoleBindingIfAbsent(EntandoCustomResource peerInNamespace, RoleBinding roleBinding) {
         return createIfAbsent(peerInNamespace, roleBinding, client.rbac().roleBindings());
     }
@@ -102,7 +114,8 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     private <R extends HasMetadata> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
             MixedOperation<R, ?, Resource<R>> operation) {
         try {
-            return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).create(resource).getMetadata().getName();
+            return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).create(resource).getMetadata()
+                    .getName();
         } catch (KubernetesClientException e) {
             if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
                 throw e;

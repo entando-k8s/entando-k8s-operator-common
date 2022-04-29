@@ -64,10 +64,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 @Tags({@Tag("adapter"), @Tag("pre-deployment"), @Tag("integration")})
-@Feature("As a support developer, I would like perform common operations on the ProvidedCapability resources through a simple "
-        + "interface to reduce the learning curve")
+@Feature(
+        "As a support developer, I would like perform common operations on the ProvidedCapability resources through a simple "
+                + "interface to reduce the learning curve")
 @EnableRuleMigrationSupport
-class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements CustomResourceStatusEmulator<DefaultSimpleK8SClient> {
+class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements
+        CustomResourceStatusEmulator<DefaultSimpleK8SClient> {
 
     private DefaultSimpleK8SClient client;
 
@@ -82,26 +84,31 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         step(format("Given I have deployed the Operator with cluster scope access"),
                 () -> attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE, "*"));
 
-        step(format("Given I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
+        step(format(
+                "Given I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
                 MY_APP_NAMESPACE_1), () -> attachResource("ProvidedCapability 1",
                 createCapability(MY_APP_NAMESPACE_1, "my-capability1", "value1")));
-        step(format("And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
+        step(format(
+                "And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
                 MY_APP_NAMESPACE_2), () -> attachResource("ProvidedCapability 1",
                 createCapability(MY_APP_NAMESPACE_2, "my-capability2", "value2")));
         step("Expect ProvidedCapability 'my-capability1' to be resolved using the label 'my-label=value1'", () -> {
-            final ProvidedCapability capability = getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value1")).get();
+            final ProvidedCapability capability = getClient().capabilities()
+                    .providedCapabilityByLabels(Map.of("my-label", "value1")).get();
             attachResource("Resolve ProvidedCapability 'my-capability1'", capability);
             assertThat(capability.getMetadata().getName()).isEqualTo("my-capability1");
         });
         step("Expect ProvidedCapability 'my-capability2' to be resolved using the label 'my-label=value2'", () -> {
-            final ProvidedCapability capability = getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value2")).get();
+            final ProvidedCapability capability = getClient().capabilities()
+                    .providedCapabilityByLabels(Map.of("my-label", "value2")).get();
             attachResource("Resolve ProvidedCapability 'my-capability2'", capability);
             assertThat(capability.getMetadata().getName()).isEqualTo("my-capability2");
         });
 
     }
 
-    private void createRoleBindingForClusterRole(EntandoCustomResource entandoCustomResource, ServiceAccount serviceAccount) {
+    private void createRoleBindingForClusterRole(EntandoCustomResource entandoCustomResource,
+            ServiceAccount serviceAccount) {
         getClient().serviceAccounts().createRoleBindingIfAbsent(entandoCustomResource, new RoleBindingBuilder()
                 .withNewMetadata()
                 .withName(serviceAccount.getMetadata().getName() + "-" + EntandoRbacRole.ENTANDO_EDITOR.getK8sName())
@@ -127,25 +134,31 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         step(format("Given I have configured to operator to observe the Namespace '%s'", MY_APP_NAMESPACE_1), () -> {
             attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE, MY_APP_NAMESPACE_1);
         });
-        step(format("And I have configured to operator to have interest in the Namespace '%s'", MY_APP_NAMESPACE_2), () -> {
-            attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_OF_INTEREST, MY_APP_NAMESPACE_2);
-        });
-        step(format("And I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
-                MY_APP_NAMESPACE_1),
+        step(format("And I have configured to operator to have interest in the Namespace '%s'", MY_APP_NAMESPACE_2),
+                () -> {
+                    attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_OF_INTEREST,
+                            MY_APP_NAMESPACE_2);
+                });
+        step(format(
+                        "And I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
+                        MY_APP_NAMESPACE_1),
                 () -> {
                     capability1.set(createCapability(MY_APP_NAMESPACE_1, "my-capability1", "value1"));
                     attachResource("ProvidedCapability 1", capability1.get());
                 });
-        step(format("And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
-                MY_APP_NAMESPACE_2),
+        step(format(
+                        "And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
+                        MY_APP_NAMESPACE_2),
                 () -> {
                     capability2.set(createCapability(MY_APP_NAMESPACE_2, "my-capability2", "value2"));
                     attachResource("ProvidedCapability 2", capability2.get());
                 });
-        step(format("And I have logged in with an account that does not have access to the namespaces %s", MY_APP_NAMESPACE_2),
+        step(format("And I have logged in with an account that does not have access to the namespaces %s",
+                        MY_APP_NAMESPACE_2),
                 () -> loginWithAccessToTheNamespacesOf(capability1.get()));
         step("Expect ProvidedCapability 'my-capability1' to be resolved using the label 'my-label=value1'", () -> {
-            final ProvidedCapability capability = getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value1")).get();
+            final ProvidedCapability capability = getClient().capabilities()
+                    .providedCapabilityByLabels(Map.of("my-label", "value1")).get();
             attachResource("Resolve ProvidedCapability 'my-capability1'", capability);
             assertThat(capability.getMetadata().getName()).isEqualTo("my-capability1");
             assertThat(capability.getMetadata().getNamespace()).isEqualTo(MY_APP_NAMESPACE_1);
@@ -161,30 +174,36 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         final ValueHolder<ProvidedCapability> capability1 = new ValueHolder<>();
         final ValueHolder<ProvidedCapability> capability2 = new ValueHolder<>();
         step(format("Given I have configured to operator to observe the Namespace '%s'", MY_APP_NAMESPACE_1),
-                () -> attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE, MY_APP_NAMESPACE_1));
-        step(format("And I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
-                MY_APP_NAMESPACE_1),
+                () -> attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE,
+                        MY_APP_NAMESPACE_1));
+        step(format(
+                        "And I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
+                        MY_APP_NAMESPACE_1),
                 () -> {
                     capability1.set(createCapability(MY_APP_NAMESPACE_1, "my-capability1", "value1"));
                     attachResource("ProvidedCapability 1", capability1.get());
                 });
-        step(format("And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
-                MY_APP_NAMESPACE_2),
+        step(format(
+                        "And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
+                        MY_APP_NAMESPACE_2),
                 () -> {
                     capability2.set(createCapability(MY_APP_NAMESPACE_2, "my-capability2", "value2"));
                     attachResource("ProvidedCapability 2", capability2.get());
                 });
-        step(format("And I have logged in with an account that has access to the namespaces %s and %s", MY_APP_NAMESPACE_1,
-                MY_APP_NAMESPACE_2),
+        step(format("And I have logged in with an account that has access to the namespaces %s and %s",
+                        MY_APP_NAMESPACE_1,
+                        MY_APP_NAMESPACE_2),
                 () -> loginWithAccessToTheNamespacesOf(capability1.get(), capability2.get()));
         step("Expect ProvidedCapability 'my-capability1' to be resolved using the label 'my-label=value1'", () -> {
-            final ProvidedCapability capability = getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value1")).get();
+            final ProvidedCapability capability = getClient().capabilities()
+                    .providedCapabilityByLabels(Map.of("my-label", "value1")).get();
             attachResource("Resolve ProvidedCapability 'my-capability1'", capability);
             assertThat(capability.getMetadata().getName()).isEqualTo("my-capability1");
             assertThat(capability.getMetadata().getNamespace()).isEqualTo(MY_APP_NAMESPACE_1);
         });
         step("But expect no ProvidedCapability to be resolved using the label 'my-label=value2'", () ->
-                assertThat(getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value2"))).isEmpty());
+                assertThat(
+                        getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value2"))).isEmpty());
     }
 
     @Test
@@ -195,32 +214,39 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
         step(format("Given I have configured to operator to observe the Namespace '%s'", MY_APP_NAMESPACE_1), () -> {
             attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE, MY_APP_NAMESPACE_1);
         });
-        step(format("And I have configured to operator to have interest in the Namespace '%s'", MY_APP_NAMESPACE_2), () -> {
-            attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_OF_INTEREST, MY_APP_NAMESPACE_2);
-        });
-        step(format("And I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
-                MY_APP_NAMESPACE_1),
+        step(format("And I have configured to operator to have interest in the Namespace '%s'", MY_APP_NAMESPACE_2),
+                () -> {
+                    attachEnvironmentVariable(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_OF_INTEREST,
+                            MY_APP_NAMESPACE_2);
+                });
+        step(format(
+                        "And I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
+                        MY_APP_NAMESPACE_1),
                 () -> {
                     capability1.set(createCapability(MY_APP_NAMESPACE_1, "my-capability1", "value1"));
                     attachResource("ProvidedCapability 1", capability1.get());
                 });
-        step(format("And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
-                MY_APP_NAMESPACE_2),
+        step(format(
+                        "And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
+                        MY_APP_NAMESPACE_2),
                 () -> {
                     capability2.set(createCapability(MY_APP_NAMESPACE_2, "my-capability2", "value2"));
                     attachResource("ProvidedCapability 2", capability2.get());
                 });
-        step(format("And I have logged in with an account that has access to the namespaces %s and ", MY_APP_NAMESPACE_1,
-                MY_APP_NAMESPACE_2),
+        step(format("And I have logged in with an account that has access to the namespaces %s and ",
+                        MY_APP_NAMESPACE_1,
+                        MY_APP_NAMESPACE_2),
                 () -> loginWithAccessToTheNamespacesOf(capability1.get(), capability2.get()));
         step("Expect ProvidedCapability 'my-capability1' to be resolved using the label 'my-label=value1'", () -> {
-            final ProvidedCapability capability = getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value1")).get();
+            final ProvidedCapability capability = getClient().capabilities()
+                    .providedCapabilityByLabels(Map.of("my-label", "value1")).get();
             attachResource("Resolve ProvidedCapability 'my-capability1'", capability);
             assertThat(capability.getMetadata().getName()).isEqualTo("my-capability1");
             assertThat(capability.getMetadata().getNamespace()).isEqualTo(MY_APP_NAMESPACE_1);
         });
         step("And expect  ProvidedCapability 'my-capability2' to be resolved using the label 'my-label=value2'", () -> {
-            final ProvidedCapability capability = getClient().capabilities().providedCapabilityByLabels(Map.of("my-label", "value2")).get();
+            final ProvidedCapability capability = getClient().capabilities()
+                    .providedCapabilityByLabels(Map.of("my-label", "value2")).get();
             attachResource("Resolve ProvidedCapability 'my-capability2'", capability);
             assertThat(capability.getMetadata().getName()).isEqualTo("my-capability2");
             assertThat(capability.getMetadata().getNamespace()).isEqualTo(MY_APP_NAMESPACE_2);
@@ -228,19 +254,25 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
     }
 
     private void loginWithAccessToTheNamespacesOf(ProvidedCapability... entandoCustomResource) {
-        final ServiceAccount serviceAccount = getClient().serviceAccounts()
-                .findOrCreateServiceAccount(entandoCustomResource[0], "test-account").done();
+        final ServiceAccount serviceAccount = prepareTestServiceAccount(
+                getClient(), entandoCustomResource[0], "test-account"
+        );
+
         for (ProvidedCapability providedCapability : entandoCustomResource) {
             createRoleBindingForClusterRole(providedCapability, serviceAccount);
         }
         await().atMost(mkTimeout(60)).ignoreExceptions()
-                .until(() -> getFabric8Client().secrets().inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
-                        .getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "test-account")));
-        final List<Secret> items = getFabric8Client().secrets().inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
+                .until(() -> getFabric8Client().secrets()
+                        .inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
+                        .getItems().stream()
+                        .anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "test-account")));
+        final List<Secret> items = getFabric8Client().secrets()
+                .inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
                 .getItems();
         final Secret tokenSecret = items.stream()
                 .filter(s -> TestFixturePreparation.isValidTokenSecret(s, "test-account")).findFirst().get();
-        String token = new String(Base64.getDecoder().decode(tokenSecret.getData().get("token")), StandardCharsets.UTF_8);
+        String token = new String(Base64.getDecoder().decode(tokenSecret.getData().get("token")),
+                StandardCharsets.UTF_8);
         Config config = new ConfigBuilder().build();
         System.setProperty(Config.KUBERNETES_DISABLE_AUTO_CONFIG_SYSTEM_PROPERTY, "true");
         config = new ConfigBuilder()
@@ -257,17 +289,20 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
                         .addToLabels("my-label", value1)
                         .endMetadata()
                         .withNewSpec()
-                        .withCapability(StandardCapability.SSO).withImplementation(StandardCapabilityImplementation.KEYCLOAK)
+                        .withCapability(StandardCapability.SSO)
+                        .withImplementation(StandardCapabilityImplementation.KEYCLOAK)
                         .endSpec().build());
     }
 
     @Test
     @Description("Should resolve a ProvidedCapability at  Namespace scope by labels")
     void shouldResolveFromNamespaceByLabels() {
-        step(format("Given I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
+        step(format(
+                "Given I have created a ProvidedCapability 'my-capability1' with the label 'my-label=value1' in the Namespace '%s'",
                 MY_APP_NAMESPACE_1), () -> attachResource("ProvidedCapability 1",
                 createCapability(MY_APP_NAMESPACE_1, "my-capability1", "value1")));
-        step(format("And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
+        step(format(
+                "And I have created a ProvidedCapability 'my-capability2' with the label 'my-label=value2' in the Namespace '%s'",
                 MY_APP_NAMESPACE_2), () -> attachResource("ProvidedCapability 1",
                 createCapability(MY_APP_NAMESPACE_2, "my-capability2", "value2")));
         step("Expect ProvidedCapability 'my-capability1' to be resolved using the label 'my-label=value1'", () -> {
@@ -278,7 +313,8 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
             assertThat(capability.getMetadata().getNamespace()).isEqualTo(MY_APP_NAMESPACE_1);
         });
         step("Expect ProvidedCapability 'my-capability2' to be resolved using the label 'my-label=value2'", () -> {
-            assertThat(getClient().capabilities().providedCapabilityByLabels(MY_APP_NAMESPACE_1, Map.of("my-label", "value2"))).isEmpty();
+            assertThat(getClient().capabilities()
+                    .providedCapabilityByLabels(MY_APP_NAMESPACE_1, Map.of("my-label", "value2"))).isEmpty();
         });
     }
 
@@ -344,25 +380,29 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements 
             capability.set(getClient().capabilities().createOrPatchCapability(newCapability("my-capability")));
             attachResource("ProvidedCapability", capability.get());
         });
-        step("And there is a background process such as a controller that updates the Phase on its Status to 'SUCCESSFUL'", () -> {
-            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-            executor.schedule(() -> {
-                try {
-                    KubernetesClientForControllers clientForControllers = getClient().entandoResources();
-                    await().atMost(mkTimeout(10))
-                            .until(() -> clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE_1, "my-capability") != null);
-                    capability.set(clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE_1, "my-capability"));
-                    capability.set(clientForControllers.updateStatus(capability.get(),
-                            new ServerStatus("server").withOriginatingControllerPod(
-                                    client.entandoResources()
-                                            .getNamespace(), EntandoOperatorSpiConfig.getControllerPodName()))
-                    );
-                    capability.set(clientForControllers.updatePhase(capability.get(), EntandoDeploymentPhase.SUCCESSFUL));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }, 2, TimeUnit.SECONDS);
-        });
+        step("And there is a background process such as a controller that updates the Phase on its Status to 'SUCCESSFUL'",
+                () -> {
+                    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+                    executor.schedule(() -> {
+                        try {
+                            KubernetesClientForControllers clientForControllers = getClient().entandoResources();
+                            await().atMost(mkTimeout(10))
+                                    .until(() -> clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE_1,
+                                            "my-capability") != null);
+                            capability.set(clientForControllers.load(ProvidedCapability.class, MY_APP_NAMESPACE_1,
+                                    "my-capability"));
+                            capability.set(clientForControllers.updateStatus(capability.get(),
+                                    new ServerStatus("server").withOriginatingControllerPod(
+                                            client.entandoResources()
+                                                    .getNamespace(), EntandoOperatorSpiConfig.getControllerPodName()))
+                            );
+                            capability.set(clientForControllers.updatePhase(capability.get(),
+                                    EntandoDeploymentPhase.SUCCESSFUL));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }, 2, TimeUnit.SECONDS);
+                });
         step("When I wait for the ProvidedCapability to enter a completion phase", () -> {
             capability.set(getClient().capabilities().waitForCapabilityCompletion(
                     capability.get(), 15));
