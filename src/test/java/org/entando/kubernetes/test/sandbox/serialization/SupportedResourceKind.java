@@ -31,9 +31,9 @@ import io.fabric8.kubernetes.api.model.ServiceList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
 import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
-import io.fabric8.kubernetes.api.model.extensions.DoneableIngress;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressList;
+import io.fabric8.kubernetes.api.model.networking.v1.DoneableIngress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
@@ -85,7 +85,7 @@ public enum SupportedResourceKind {
                 DoneableIngress,
                 Resource<Ingress, DoneableIngress>
                 > getOperation(KubernetesClient client) {
-            return client.extensions().ingresses();
+            return client.network().v1().ingresses();
         }
     },
     PERSISTENT_VOLUME_CLAIM {

@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.entando</groupId>
-        <version>6.3.21</version>
+        <version>6.5.0-ENG-3515-PR-26</version>
         <artifactId>entando-quarkus-parent</artifactId>
         <relativePath/>
     </parent>
@@ -65,8 +65,8 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
-        <entando-k8s-custom-model.version>6.3.4</entando-k8s-custom-model.version>
-        <preDeploymentTestGroups>pre-deployment</preDeploymentTestGroups>
+        <entando-k8s-custom-model.version>6.5.0-ENG-3515-PR-58</entando-k8s-custom-model.version>
+        <preDeploymentTestGroups>none</preDeploymentTestGroups>
         <postDeploymentTestGroups>none</postDeploymentTestGroups>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
