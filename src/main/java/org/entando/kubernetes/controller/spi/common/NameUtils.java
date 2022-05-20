@@ -26,6 +26,9 @@ import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class NameUtils {
 
+    public static final String RFC_1123_REGEX = "[^a-zA-Z0-9\\-]";
+    public static final Pattern RFC_1123_PATTERN = Pattern.compile(RFC_1123_REGEX);
+
     public static final String URL_KEY = "url";
     public static final String INTERNAL_URL_KEY = "internalUrl";
     public static final String DB_NAME_QUALIFIER = "db";
@@ -200,5 +203,9 @@ public class NameUtils {
 
     public static String standardAdminSecretName(EntandoCustomResource keycloakServer) {
         return keycloakServer.getMetadata().getName() + "-admin-secret";
+    }
+
+    public static String makeRfc1123Compatible(String value) {
+        return RFC_1123_PATTERN.matcher(value.replace("_", "-")).replaceAll("");
     }
 }

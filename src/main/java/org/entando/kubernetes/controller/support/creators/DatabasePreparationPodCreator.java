@@ -136,8 +136,8 @@ public class DatabasePreparationPodCreator extends AbstractK8SResourceCreator {
 
     private Container buildContainerToCreateSchema(EntandoImageResolver entandoImageResolver,
             DatabaseSchemaConnectionInfo schemaConnectionInfo) {
-        String dbJobName = NameUtils
-                .shortenToMaxLength(schemaConnectionInfo.getSchemaName().toLowerCase().replace("_", "-") + "-schema-creation-job");
+        String inputName = NameUtils.makeRfc1123Compatible(schemaConnectionInfo.getSchemaName().toLowerCase());
+        String dbJobName = NameUtils.shortenToMaxLength(inputName + "-schema-creation-job");
         return new ContainerBuilder()
                 .withImage(entandoImageResolver
                         .determineImageUri("entando/entando-k8s-dbjob"))
