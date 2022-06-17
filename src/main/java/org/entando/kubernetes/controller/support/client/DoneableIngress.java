@@ -18,8 +18,8 @@ package org.entando.kubernetes.controller.support.client;
 
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressFluentImpl;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressFluentImpl;
 import java.util.function.UnaryOperator;
 
 public class DoneableIngress extends IngressFluentImpl<DoneableIngress> {

@@ -28,6 +28,7 @@ import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
 import org.entando.kubernetes.controller.spi.examples.SampleDeployableContainer;
 import org.entando.kubernetes.controller.spi.examples.SamplePublicIngressingDbAwareDeployable;
+import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.doubles.SimpleK8SClientDouble;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
@@ -70,7 +71,7 @@ class ServiceAcountCreatorTest implements InProcessTestData {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_K8S_OPERATOR_IMAGE_PULL_SECRETS.getJvmSystemProperty(),
                 MY_IMAGE_PULL_SECRET);
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(entandoApp, null,
-                emulateKeycloakDeployment(client));
+                emulateKeycloakDeployment(client), client.secrets());
         //When the operator prepares the service account
         new ServiceAccountCreator(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
         //then the custom image pull secret must be propagated to the new serviceAccount
@@ -84,7 +85,7 @@ class ServiceAcountCreatorTest implements InProcessTestData {
                 .put(EntandoOperatorConfigProperty.ENTANDO_NAMESPACES_TO_OBSERVE.getJvmSystemProperty(), "*");
         //When the operator prepares the service account
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<>(entandoApp, null,
-                emulateKeycloakDeployment(client));
+                emulateKeycloakDeployment(client), client.secrets());
         new ServiceAccountCreator(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
         //then RoleBindings must exist for the standard cluster roles
         RoleBinding entandoEditorRoleBinding = client.serviceAccounts().loadRoleBinding(entandoApp, MY_SERVICE_ACCOUNT + "-entando-editor");
@@ -104,12 +105,13 @@ class ServiceAcountCreatorTest implements InProcessTestData {
         //Given that I have a container that requires delete permissions on Openshift routes
         SamplePublicIngressingDbAwareDeployable<EntandoAppSpec> deployable = new SamplePublicIngressingDbAwareDeployable<EntandoAppSpec>(
                 entandoApp, null,
-                emulateKeycloakDeployment(client)) {
+                emulateKeycloakDeployment(client),
+                client.secrets()) {
 
             @Override
             protected List<DeployableContainer> createContainers(
-                    EntandoBaseCustomResource<EntandoAppSpec, EntandoCustomResourceStatus> entandoResource) {
-                return Arrays.asList(new SampleDeployableContainer<EntandoAppSpec>(entandoResource, databaseConnectionInfo) {
+                    EntandoBaseCustomResource<EntandoAppSpec, EntandoCustomResourceStatus> entandoResource, SecretClient secretClient) {
+                return Arrays.asList(new SampleDeployableContainer<EntandoAppSpec>(entandoResource, databaseConnectionInfo, secretClient) {
                     @Override
                     public List<KubernetesPermission> getKubernetesPermissions() {
                         return Arrays.asList(new KubernetesPermission("route.openshift.io", "routes", "delete"));

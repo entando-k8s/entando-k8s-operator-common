@@ -197,4 +197,20 @@ class NameUtilsTest {
         assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789_.", maxLength));
         assertEquals("123456789", NameUtils.shortenIdentifierTo("123456789.-", maxLength));
     }
+
+    @Test
+    void shouldMakeRfc1123Compatible() {
+        Map<String, String> map = Map.of(
+                "value", "value",
+                "v@alue", "value",
+                "my-value", "my-value",
+                "my_value", "my-value",
+                "VALUE", "VALUE",
+                "my.-str@123-va;lue", "my-str123-value");
+
+        map.forEach((key, value) -> {
+            final String actual = NameUtils.makeRfc1123Compatible(key);
+            assertThat(actual, is(value));
+        });
+    }
 }

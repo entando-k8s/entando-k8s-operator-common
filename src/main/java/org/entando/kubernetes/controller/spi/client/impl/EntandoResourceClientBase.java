@@ -149,7 +149,7 @@ public class EntandoResourceClientBase {
     protected CustomResourceDefinitionContext resolveDefinitionContext(String kind, String apiVersion) {
         final String key = kind + "." + apiVersion.substring(0, apiVersion.indexOf("/"));
         final String name = getCrdNameMap().getData().get(key);
-        return CustomResourceDefinitionContext.fromCrd(client.apiextensions().v1beta1().customResourceDefinitions()
+        return CustomResourceDefinitionContext.fromCrd(client.apiextensions().v1().customResourceDefinitions()
                 .withName(name).get());
     }
 
@@ -171,7 +171,7 @@ public class EntandoResourceClientBase {
                             .withNamespace(client.getNamespace())
                             .withName(KubernetesClientForControllers.ENTANDO_CRD_NAMES_CONFIG_MAP)
                             .endMetadata()
-                            .addToData(client.apiextensions().v1beta1().customResourceDefinitions()
+                            .addToData(client.apiextensions().v1().customResourceDefinitions()
                                     .withLabel(LabelNames.CRD_OF_INTEREST.getName())
                                     .list()
                                     .getItems()

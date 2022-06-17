@@ -19,8 +19,8 @@ package org.entando.kubernetes.controller.support.client.impl;
 import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.NodeAddress;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.net.HttpURLConnection;
@@ -56,15 +56,15 @@ public class DefaultIngressClient implements IngressClient {
     public Ingress addHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath, Map<String, String> annotations) {
         return edit(ingress.getMetadata(), ingress.getMetadata().getName())
                 .editSpec().editFirstRule().editHttp()
-                .addNewPathLike(httpIngressPath)
+                .addNewPathLike(httpIngressPath).withPathType("Prefix")
                 .endPath().endHttp().endRule().endSpec()
                 .editMetadata().addToAnnotations(annotations).endMetadata()
                 .done();
     }
 
     private DoneableIngress edit(ObjectMeta metadata, String name) {
-        return new DoneableIngress(client.extensions().ingresses().inNamespace(metadata.getNamespace())
-                .withName(name).fromServer().get(), client.extensions().ingresses().inNamespace(metadata.getNamespace())
+        return new DoneableIngress(client.network().v1().ingresses().inNamespace(metadata.getNamespace())
+                .withName(name).fromServer().get(), client.network().v1().ingresses().inNamespace(metadata.getNamespace())
                 .withName(name)::patch);
     }
 
@@ -87,11 +87,12 @@ public class DefaultIngressClient implements IngressClient {
 
     @Override
     public Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
+
         try {
-            return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(ingress);
+            return client.network().v1().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(ingress);
         } catch (KubernetesClientException e) {
             if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
-                return client.extensions().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace())
+                return client.network().v1().ingresses().inNamespace(peerInNamespace.getMetadata().getNamespace())
                         .withName(ingress.getMetadata().getName())
                         .edit(existing -> {
                             existing.getSpec().getRules().get(0).getHttp().getPaths()
@@ -111,6 +112,6 @@ public class DefaultIngressClient implements IngressClient {
 
     @Override
     public Ingress loadIngress(String namespace, String name) {
-        return client.extensions().ingresses().inNamespace(namespace).withName(name).get();
+        return client.network().v1().ingresses().inNamespace(namespace).withName(name).get();
     }
 }

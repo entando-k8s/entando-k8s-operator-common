@@ -69,4 +69,16 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
 
         });
     }
+
+    @Override
+    public ServiceAccount findServiceAccount(EntandoCustomResource peerInNamespace, String name) {
+        ServiceAccount serviceAccount = getNamespace(peerInNamespace).getServiceAccount(name);
+        if (serviceAccount == null) {
+            serviceAccount = new ServiceAccountBuilder().withNewMetadata().withName(name)
+                    .withNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .endMetadata().build();
+            getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
+        }
+        return serviceAccount;
+    }
 }

@@ -20,9 +20,11 @@ import static java.util.Optional.ofNullable;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPathBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPathBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPortBuilder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -87,12 +89,18 @@ public class IngressPathCreator {
     }
 
     private HTTPIngressPath newHttpPath(IngressingPathOnPort ingressingPathOnPort, Service service) {
+
         //A null path causes NPE down the line
         return new HTTPIngressPathBuilder()
-                .withPath(ofNullable(ingressingPathOnPort.getWebContextPath()).orElse("/" + entandoCustomResource.getMetadata().getName()))
+                .withPath(ofNullable(ingressingPathOnPort.getWebContextPath()).orElse(
+                        "/" + entandoCustomResource.getMetadata().getName()))
+                .withPathType("Prefix")
                 .withNewBackend()
-                .withServiceName(service.getMetadata().getName())
-                .withNewServicePort(ingressingPathOnPort.getPortForIngressPath())
+                .withNewService()
+                .withName(service.getMetadata().getName())
+                .withPort(new ServiceBackendPortBuilder().withNumber(ingressingPathOnPort.getPortForIngressPath())
+                        .build())
+                .endService()
                 .endBackend()
                 .build();
     }

@@ -16,6 +16,7 @@
 
 package org.entando.kubernetes.controller.support.client;
 
+import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
@@ -32,4 +33,6 @@ public interface ServiceAccountClient {
     Role loadRole(EntandoCustomResource peerInNamespace, String name);
 
     DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name);
+
+    ServiceAccount findServiceAccount(EntandoCustomResource peerInNamespace, String name);
 }
