@@ -63,7 +63,7 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
-        <entando-k8s-custom-model.version>7.1.0-ENG-3309-PR-57</entando-k8s-custom-model.version>
+        <entando-k8s-custom-model.version>7.1.0-ENG-3830-PR-59</entando-k8s-custom-model.version>
         <owaspSuppressionFileLocation>${project.basedir}/owasp-dependency-check-suppression.xml</owaspSuppressionFileLocation>
     </properties>
 
