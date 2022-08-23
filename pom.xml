@@ -21,11 +21,11 @@
     <parent>
         <groupId>org.entando</groupId>
         <artifactId>entando-quarkus-parent</artifactId>
-        <version>7.1.0-ENG-3309-PR-25</version>
+        <version>7.2.0-ENG-4134-PR-39</version>
         <relativePath/>
     </parent>
     <artifactId>entando-k8s-operator-common</artifactId>
-    <version>7.1.0-SNAPSHOT</version>
+    <version>7.2.0-SNAPSHOT</version>
     <name>Entando K8S Operator Common Library</name>
     <description>Entando's K8S Operator Common Library</description>
     <url>https://central.entando.com</url>
@@ -63,7 +63,7 @@
         <github.organization>entando-k8s</github.organization>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
-        <entando-k8s-custom-model.version>7.1.0-ENG-3830-PR-59</entando-k8s-custom-model.version>
+        <entando-k8s-custom-model.version>7.2.0-ENG-4134-PR-68</entando-k8s-custom-model.version>
         <owaspSuppressionFileLocation>${project.basedir}/owasp-dependency-check-suppression.xml</owaspSuppressionFileLocation>
     </properties>
 
