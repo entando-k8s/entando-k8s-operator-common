@@ -132,7 +132,7 @@ public final class TrustStoreHelper {
         safely(() -> {
             try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(entry.getValue()))) {
                 for (Certificate cert : CertificateFactory.getInstance("x.509").generateCertificates(stream)) {
-                    keyStore.setCertificateEntry(entry.getKey(), cert);
+                    keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectX500Principal().getName(), cert);
                 }
             }
             return null;
