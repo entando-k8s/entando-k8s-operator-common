@@ -100,28 +100,34 @@ public class IngressCreator extends AbstractK8SResourceCreator {
 
     public void createIngress(IngressClient ingressClient, IngressingDeployable<?> ingressingDeployable,
             Service service, ServerStatus status) {
-        this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(),
-                ingressingDeployable.getIngressName());
-        if (this.ingress == null) {
-            Ingress newIngress = newIngress(ingressClient,
-                    ingressPathCreator.buildPaths(ingressingDeployable, service, status),
-                    ingressingDeployable);
-            this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress),
-                    () -> newIngress);
-        } else {
-            if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
-                final String host = determineIngressHost(ingressClient, ingressingDeployable);
-                final List<IngressTLS> tls = maybeBuildTls(ingressClient, ingressingDeployable);
-                this.ingress = ingressClient.editIngress(entandoCustomResource, ingressingDeployable.getIngressName())
-                        .editSpec().editFirstRule().withHost(host).endRule()
-                        .withTls(tls).endSpec().done();
-            }
-            List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
-                    .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)
-                    .collect(Collectors.toList());
+        // ENG-4118
+        // used synchronized at class level to manage race condition between different objects and different threads
+        synchronized (IngressCreator.class) {
+            this.ingress = ingressClient.loadIngress(ingressingDeployable.getIngressNamespace(),
+                    ingressingDeployable.getIngressName());
+            if (this.ingress == null) {
+                Ingress newIngress = newIngress(ingressClient,
+                        ingressPathCreator.buildPaths(ingressingDeployable, service, status),
+                        ingressingDeployable);
+                this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress),
+                        () -> newIngress);
+            } else {
+                if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
+                    final String host = determineIngressHost(ingressClient, ingressingDeployable);
+                    final List<IngressTLS> tls = maybeBuildTls(ingressClient, ingressingDeployable);
+                    this.ingress = ingressClient.editIngress(entandoCustomResource,
+                                    ingressingDeployable.getIngressName())
+                            .editSpec().editFirstRule().withHost(host).endRule()
+                            .withTls(tls).endSpec().done();
+                }
+                List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
+                        .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)
+                        .collect(Collectors.toList());
 
-            this.ingress = ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingContainers, ingress, service,
-                    status);
+                this.ingress = ingressPathCreator.addMissingHttpPaths(ingressClient, ingressingContainers, ingress,
+                        service,
+                        status);
+            }
         }
     }
 
