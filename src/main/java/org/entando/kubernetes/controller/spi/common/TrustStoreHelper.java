@@ -122,9 +122,6 @@ public final class TrustStoreHelper {
     private static KeyStore buildKeystoreFrom(Map<String, String> certs)
             throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
 
-        String keys = certs.keySet() != null ? certs.keySet().stream().collect(Collectors.joining(",")) : null;
-        LOG.debug("Build keystore for ca certs with secretes keys:'{}'", keys);
-
         //NB!!! this keystore is accessed across different JVM versions and platforms. JKS has proven to be the most portable.
         KeyStore keyStore = KeyStore.getInstance("jks");
         keyStore.load(null, null);
@@ -143,14 +140,15 @@ public final class TrustStoreHelper {
         safely(() -> {
             try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(entry.getValue()))) {
                 for (Certificate cert : CertificateFactory.getInstance("x.509").generateCertificates(stream)) {
-                    LOG.debug(
-                            "Import cert into keystore for ca certs with key:'{}' and x.509 subject name as jks alias:'{}'",
+                    LOG.debug("From ca kubernetes secret with key:'{}' "
+                                    + "importing certificate into keystore with x.509 subject name as jks alias:'{}'",
                             entry.getKey(),
                             ((X509Certificate) cert).getSubjectX500Principal().getName());
 
                     keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectX500Principal().getName(), cert);
                 }
-                LOG.info("From ca secrets with key:'{}' imported certificates into keystore with aliases:'{}'",
+                LOG.info(
+                        "From ca kubernetes secret with key:'{}' imported certificates into keystore with aliases:'{}'",
                         entry.getKey(),
                         Streams.stream(keyStore.aliases().asIterator()).collect(Collectors.joining(" | ")));
             }
