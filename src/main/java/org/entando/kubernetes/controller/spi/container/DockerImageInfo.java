@@ -72,6 +72,8 @@ public class DockerImageInfo {
 
     public DockerImageInfo(String imageUri) {
         String[] segments = imageUri.split("/");
+
+        // extract repo and tag
         String[] repositorySegments = segments[segments.length - 1].split(":");
         if (repositorySegments.length == 1) {
             repository = repositorySegments[0];
@@ -81,15 +83,20 @@ public class DockerImageInfo {
             tag = repositorySegments[1];
         } else {
             throw new IllegalArgumentException(
-                    format("The repository '%s' is not supported. At most one colon (:) allowed.", segments[segments.length - 1]));
+                    format("The repository '%s' is not supported. At most one colon (:) allowed.",
+                            segments[segments.length - 1]));
         }
-        if (segments.length == 4) {
-            organization = segments[segments.length - 3] + "/" + segments[segments.length - 2];
-        } else if (segments.length >= 2) {
+
+        // extract organization
+        if (segments.length > 2) {
+            organization = joinOrganizationPath(segments);
+        } else if (segments.length == 2) {
             organization = segments[segments.length - 2];
         } else {
             organization = null;
         }
+
+        // extract registry
         if (segments.length >= 3) {
             String[] hostSegments = segments[0].split(":");
             registryHost = hostSegments[0];
@@ -105,11 +112,18 @@ public class DockerImageInfo {
             registryPort = null;
             registryHost = null;
         }
-        if (segments.length > 4) {
-            throw new IllegalArgumentException(
-                    format("The imageUri '%s' is not supported. Paths on the image name may not contain more than 3 segments", imageUri));
+        
+    }
 
+    private String joinOrganizationPath(String[] paths) {
+        StringBuilder org = new StringBuilder("");
+        for (int i = 1; i < paths.length - 1; i++) {
+            if (i > 1) {
+                org.append("/");
+            }
+            org.append(paths[i]);
         }
+        return org.toString();
     }
 
     public Optional<String> getRegistryHost() {
