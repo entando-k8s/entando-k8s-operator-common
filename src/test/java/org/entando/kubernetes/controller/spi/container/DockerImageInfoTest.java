@@ -38,11 +38,16 @@ class DockerImageInfoTest {
 
     @Test
     void shouldRaiseException() {
-        Stream.of("entando/image::1.0.0", "registry.private.cloud::5000/entando/image:1.0.0")
+        Stream.of("entando/image::1.0.0", "registry.private.cloud::5000/entando/image:1.0.0",
+                        "", null,
+                        // "simple-ms:1.0.0",
+                        "entando//simple-ms:1.0.0",
+                        //"example.org/simple-ms:1.0.0",
+                        "example.org")
                 .forEach(s -> {
+                    System.out.println(String.format("Testing: '%s'", s));
                     Assertions.assertThrows(IllegalArgumentException.class, () -> new DockerImageInfo(s));
                 });
     }
-
 
 }

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.entando.kubernetes.controller.spi.common.DbmsDockerVendorStrategy;
 
 @JsonSerialize
@@ -71,14 +72,19 @@ public class DockerImageInfo {
     }
 
     public DockerImageInfo(String imageUri) {
+        if (StringUtils.isBlank(imageUri) || imageUri.contains("//")) {
+            throw new IllegalArgumentException(format("The repository '%s' has illegal format", imageUri));
+        }
+
         String[] segments = imageUri.split("/");
 
         // extract repo and tag
+        // WARNING repository cannon contain .
         String[] repositorySegments = segments[segments.length - 1].split(":");
-        if (repositorySegments.length == 1) {
+        if (repositorySegments.length == 1 && !StringUtils.contains(repositorySegments[0], ".")) {
             repository = repositorySegments[0];
             tag = null;
-        } else if (repositorySegments.length == 2) {
+        } else if (repositorySegments.length == 2 && !StringUtils.contains(repositorySegments[0], ".")) {
             repository = repositorySegments[0];
             tag = repositorySegments[1];
         } else {
@@ -88,16 +94,14 @@ public class DockerImageInfo {
         }
 
         // extract organization
-        if (segments.length > 2) {
+        if (segments.length >= 2) {
             organization = joinOrganizationPath(segments);
-        } else if (segments.length == 2) {
-            organization = segments[segments.length - 2];
         } else {
             organization = null;
         }
 
         // extract registry
-        if (segments.length >= 3) {
+        if (segments.length >= 2 && StringUtils.contains(segments[0], ".")) {
             String[] hostSegments = segments[0].split(":");
             registryHost = hostSegments[0];
             if (hostSegments.length == 1) {
@@ -115,15 +119,23 @@ public class DockerImageInfo {
         
     }
 
+
     private String joinOrganizationPath(String[] paths) {
         StringBuilder org = new StringBuilder("");
-        for (int i = 1; i < paths.length - 1; i++) {
-            if (i > 1) {
+        for (int i = 0; i < paths.length - 1; i++) {
+            if (i > 1 || (i == 1 && !StringUtils.contains(paths[0], "."))) {
                 org.append("/");
             }
-            org.append(paths[i]);
+            if ((i == 0 && !StringUtils.contains(paths[i], ".")) || i > 0) {
+                org.append(paths[i]);
+            }
         }
-        return org.toString();
+        if (StringUtils.isBlank(org.toString())) {
+            return null;
+        } else {
+            return org.toString();
+        }
+
     }
 
     public Optional<String> getRegistryHost() {
