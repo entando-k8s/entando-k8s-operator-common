@@ -25,6 +25,7 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.common.ResourceUtils;
+import org.entando.kubernetes.controller.spi.common.UriUtils;
 import org.entando.kubernetes.controller.spi.container.HasWebContext;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
 import org.entando.kubernetes.controller.spi.deployable.PublicIngressingDeployable;
@@ -95,12 +96,14 @@ public class KeycloakClientCreator {
                 .map(HasWebContext.class::cast)
                 .collect(Collectors.toList())) {
             ssoClientConfig = ssoClientConfig
-                    .withRedirectUri(getIngressServerUrl(ingress) + container.getWebContextPath() + "/*");
+                    .withRedirectUri(
+                            UriUtils.composeRedirectUriOrThrow(getIngressServerUrl(ingress),
+                                    container.getWebContextPath()));
             if (ingress.getSpec().getTls().size() == 1) {
                 //Also support redirecting to http for http services that don't have knowledge that they are exposed as https
                 //TODO revisit this. This could be a Java only problem that we may be able to fix with X-Forwarded-* headers
-                ssoClientConfig = ssoClientConfig.withRedirectUri(
-                        "http://" + ingress.getSpec().getRules().get(0).getHost() + container.getWebContextPath() + "/*");
+                ssoClientConfig = ssoClientConfig.withRedirectUri(UriUtils.composeRedirectUriOrThrow(
+                        "http://" + ingress.getSpec().getRules().get(0).getHost(), container.getWebContextPath()));
             }
         }
         return ssoClientConfig.withWebOrigin(getIngressServerUrl(ingress));
