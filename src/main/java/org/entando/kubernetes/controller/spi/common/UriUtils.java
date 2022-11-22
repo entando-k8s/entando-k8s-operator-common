@@ -21,9 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class UriUtils {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(UriUtils.class);
 
-    private UriUtils() {}
+    private UriUtils() {
+
+    }
 
     public static String composeRedirectUriOrThrow(String serverUrl, String path) {
         try {
@@ -31,8 +34,8 @@ public final class UriUtils {
             builder.path(path).path("/*");
             return builder.build().toString();
             // FIXME replace Paths.get, it doesn't work with serverUrl (without +) or with wrong serverUrl
-//            String endpath = Paths.get("/", path, "/*").toString();
-//            return serverUrl + endpath;
+            // String endpath = Paths.get("/", path, "/*").toString();
+            // return serverUrl + endpath;
         } catch (Exception ex) {
             LOGGER.error("Error composing url to use as RedirectUri inside IDP serverUrl:'{}', path'{}'", serverUrl,
                     path, ex);

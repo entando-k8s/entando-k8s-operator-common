@@ -14,12 +14,10 @@
  *
  */
 
-package org.entando.kubernetes.controller.support.creators;
+package org.entando.kubernetes.controller.spi.common;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.entando.kubernetes.controller.spi.common.UriUtils;
-import org.entando.kubernetes.test.common.InProcessTestData;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +25,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 
-@Tags({@Tag("in-process"), @Tag("unit")})
-class KeycloakClientCreatorTest implements InProcessTestData {
+@Tags({@Tag("unit")})
+class UriUtilsTest {
 
 
     @AfterEach
