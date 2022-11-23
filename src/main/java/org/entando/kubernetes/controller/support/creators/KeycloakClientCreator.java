@@ -34,9 +34,12 @@ import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
 import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KeycloakClientCreator {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(KeycloakClientCreator.class);
     private final EntandoCustomResource entandoCustomResource;
     private String realm;
     private String ssoClientId;
@@ -96,18 +99,29 @@ public class KeycloakClientCreator {
                 .map(HasWebContext.class::cast)
                 .collect(Collectors.toList())) {
             ssoClientConfig = ssoClientConfig
-                    .withRedirectUri(
-                            UriUtils.composeRedirectUriOrThrow(getIngressServerUrl(ingress),
-                                    container.getWebContextPath()));
+                    .withRedirectUri(composeRedirectUri(getIngressServerUrl(ingress), container.getWebContextPath()));
             if (ingress.getSpec().getTls().size() == 1) {
                 //Also support redirecting to http for http services that don't have knowledge that they are exposed as https
                 //TODO revisit this. This could be a Java only problem that we may be able to fix with X-Forwarded-* headers
-                ssoClientConfig = ssoClientConfig.withRedirectUri(UriUtils.composeRedirectUriOrThrow(
+                ssoClientConfig = ssoClientConfig.withRedirectUri(composeRedirectUri(
                         "http://" + ingress.getSpec().getRules().get(0).getHost(), container.getWebContextPath()));
             }
         }
         return ssoClientConfig.withWebOrigin(getIngressServerUrl(ingress));
 
+    }
+
+    private String composeRedirectUri(String serverUrl, String path) {
+        try {
+            String redirectUri = UriUtils.composeUriOrThrow(serverUrl, path, "/*");
+            LOGGER.debug("composed redirect uri:'{}' from serverUrl:'{}' and path:'{}'", redirectUri, serverUrl, path);
+            return redirectUri;
+        } catch (IllegalArgumentException ex) {
+            LOGGER.error("Error composing url to use as RedirectUri inside IDP serverUrl:'{}', path'{}'",
+                    serverUrl,
+                    path);
+            throw ex;
+        }
     }
 
     public String getRealm() {

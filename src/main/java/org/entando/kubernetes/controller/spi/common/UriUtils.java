@@ -28,19 +28,12 @@ public final class UriUtils {
 
     }
 
-    public static String composeRedirectUriOrThrow(String serverUrl, String path) {
-        try {
-            UriBuilder builder = UriBuilder.fromUri(serverUrl);
-            builder.path(path).path("/*");
-            return builder.build().toString();
-            // FIXME replace Paths.get, it doesn't work with serverUrl (without +) or with wrong serverUrl
-            // String endpath = Paths.get("/", path, "/*").toString();
-            // return serverUrl + endpath;
-        } catch (Exception ex) {
-            LOGGER.error("Error composing url to use as RedirectUri inside IDP serverUrl:'{}', path'{}'", serverUrl,
-                    path, ex);
-            throw new RuntimeException(ex);
+    public static String composeUriOrThrow(String serverUrl, String... paths) {
+        UriBuilder builder = UriBuilder.fromUri(serverUrl);
+        for (String path : paths) {
+            builder.path(path);
         }
+        return builder.build().toString();
     }
 
 

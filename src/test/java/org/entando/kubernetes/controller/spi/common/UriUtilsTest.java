@@ -37,11 +37,11 @@ class UriUtilsTest {
     @Test
     void testComposeRedirectUri() {
         final String expctedUrl1 = "http://server.com/mycontextpath/*";
-        String calculatedUrl1 = UriUtils.composeRedirectUriOrThrow("http://server.com/","/mycontextpath");
+        String calculatedUrl1 = UriUtils.composeUriOrThrow("http://server.com/", "/mycontextpath", "/*");
         assertThat(calculatedUrl1, Is.is(expctedUrl1));
 
         final String expctedUrl2 = "http://server.com/*";
-        String calculatedUrl2 = UriUtils.composeRedirectUriOrThrow("http://server.com","/");
+        String calculatedUrl2 = UriUtils.composeUriOrThrow("http://server.com", "/", "/*");
         assertThat(calculatedUrl2, Is.is(expctedUrl2));
 
     }
