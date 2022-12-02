@@ -19,6 +19,7 @@ package org.entando.kubernetes.controller.spi.common;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
+import com.google.common.collect.Streams;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import java.io.ByteArrayInputStream;
@@ -40,9 +41,12 @@ import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class TrustStoreHelper {
 
@@ -51,8 +55,11 @@ public final class TrustStoreHelper {
     public static final String TRUSTSTORE_SETTINGS_KEY = "TRUSTSTORE_SETTINGS";
     public static final String TRUST_STORE_FILE = "store.jks";
     public static final String TRUST_STORE_PATH =
-            CERT_SECRET_MOUNT_ROOT + File.separatorChar + DEFAULT_TRUSTSTORE_SECRET + File.separatorChar + TRUST_STORE_FILE;
+            CERT_SECRET_MOUNT_ROOT + File.separatorChar + DEFAULT_TRUSTSTORE_SECRET + File.separatorChar
+                    + TRUST_STORE_FILE;
     public static final String JAVA_TOOL_OPTIONS = "JAVA_TOOL_OPTIONS";
+
+    private static final Logger LOG = LoggerFactory.getLogger(TrustStoreHelper.class);
 
     private TrustStoreHelper() {
     }
@@ -114,6 +121,7 @@ public final class TrustStoreHelper {
 
     private static KeyStore buildKeystoreFrom(Map<String, String> certs)
             throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+
         //NB!!! this keystore is accessed across different JVM versions and platforms. JKS has proven to be the most portable.
         KeyStore keyStore = KeyStore.getInstance("jks");
         keyStore.load(null, null);
@@ -132,8 +140,17 @@ public final class TrustStoreHelper {
         safely(() -> {
             try (InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(entry.getValue()))) {
                 for (Certificate cert : CertificateFactory.getInstance("x.509").generateCertificates(stream)) {
-                    keyStore.setCertificateEntry(entry.getKey(), cert);
+                    LOG.debug("From ca kubernetes secret with key:'{}' "
+                                    + "importing certificate into keystore with x.509 subject name as jks alias:'{}'",
+                            entry.getKey(),
+                            ((X509Certificate) cert).getSubjectX500Principal().getName());
+
+                    keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectX500Principal().getName(), cert);
                 }
+                LOG.info(
+                        "From ca kubernetes secret with key:'{}' imported certificates into keystore with aliases:'{}'",
+                        entry.getKey(),
+                        Streams.stream(keyStore.aliases().asIterator()).collect(Collectors.joining(" | ")));
             }
             return null;
         });
