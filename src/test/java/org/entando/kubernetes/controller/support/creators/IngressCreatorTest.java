@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressRuleValueBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.common.EntandoControllerException;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
@@ -132,7 +133,8 @@ class IngressCreatorTest implements InProcessTestData {
         creator.createIngress(client.ingresses(), deployable, serviceCreator.getService(),
                 new ServerStatus(NameUtils.MAIN_QUALIFIER));
 
-        String expectedHost = "my-app-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-my-app-namespace.apps.autotest.eng-entando.com";
+        String hostName = Optional.ofNullable(System.getenv("ENTANDO_DEFAULT_ROUTING_SUFFIX")).orElse("somehost.com");
+        String expectedHost = "my-app-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-my-app-namespace." + hostName;
         assertThat(creator.getIngress().getSpec().getRules().get(0).getHost(), is(expectedHost));
         assertThat(creator.getIngress().getSpec().getTls().get(0).getHosts().get(0), is(expectedHost));
         assertThat(creator.getIngress().getSpec().getTls().get(0).getSecretName(), is("original-tls-secret"));
