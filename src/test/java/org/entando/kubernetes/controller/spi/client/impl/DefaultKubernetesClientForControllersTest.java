@@ -326,16 +326,18 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                     PersistentVolumeClaimOperationsImpl.class);
         });
         step("And should throw exception for unknown kind or ns or name", () -> {
+            DefaultKubernetesClientForControllers ctrl = getKubernetesClientForControllers();
+            String nameSpace = this.newTestResource().getMetadata().getNamespace();
+            final String kindPod = "Pod";
+            final String namePod = "my-pod";
             org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
-                getKubernetesClientForControllers().loadStandardResource("P0d",
-                        this.newTestResource().getMetadata().getNamespace(), "my-pod");
+                ctrl.loadStandardResource("P0d", nameSpace, namePod);
             });
             org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
-                getKubernetesClientForControllers().loadStandardResource("Pod", "NS-fake", "my-pod");
+                ctrl.loadStandardResource(kindPod, "NS-fake", namePod);
             });
             org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
-                getKubernetesClientForControllers().loadStandardResource("Pod",
-                        this.newTestResource().getMetadata().getNamespace(), "fake-pod");
+                ctrl.loadStandardResource(kindPod, nameSpace, "fake-pod");
             });
         });
     }
