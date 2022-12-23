@@ -127,7 +127,7 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
                         .fromServer()
                         .get())
                 .orElseThrow(() -> new IllegalStateException(
-                        "Resource kind '" + kind + "' not supported."));
+                        String.format("Unable to load resource '%s/%s/%s'", kind, namespace, name)));
     }
 
     @Override

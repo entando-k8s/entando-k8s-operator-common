@@ -315,11 +315,28 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         step("And the same applies for Deployments, Services, Ingresses, Secrets and PersistentVolumeClaims", () -> {
             assertThat(SupportedStandardResourceKind.DEPLOYMENT.getOperation(getFabric8Client()))
                     .isInstanceOf(DeploymentOperationsImpl.class);
-            assertThat(SupportedStandardResourceKind.SERVICE.getOperation(getFabric8Client())).isInstanceOf(ServiceOperationsImpl.class);
-            assertThat(SupportedStandardResourceKind.SECRET.getOperation(getFabric8Client())).isInstanceOf(SecretOperationsImpl.class);
-            assertThat(SupportedStandardResourceKind.INGRESS.getOperation(getFabric8Client())).isInstanceOf(IngressOperationsImpl.class);
-            assertThat(SupportedStandardResourceKind.PERSISTENT_VOLUME_CLAIM.getOperation(getFabric8Client())).isInstanceOf(
+            assertThat(SupportedStandardResourceKind.SERVICE.getOperation(getFabric8Client())).isInstanceOf(
+                    ServiceOperationsImpl.class);
+            assertThat(SupportedStandardResourceKind.SECRET.getOperation(getFabric8Client())).isInstanceOf(
+                    SecretOperationsImpl.class);
+            assertThat(SupportedStandardResourceKind.INGRESS.getOperation(getFabric8Client())).isInstanceOf(
+                    IngressOperationsImpl.class);
+            assertThat(SupportedStandardResourceKind.PERSISTENT_VOLUME_CLAIM.getOperation(
+                    getFabric8Client())).isInstanceOf(
                     PersistentVolumeClaimOperationsImpl.class);
+        });
+        step("And should throw exception for unknown kind or ns or name", () -> {
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
+                getKubernetesClientForControllers().loadStandardResource("P0d",
+                        this.newTestResource().getMetadata().getNamespace(), "my-pod");
+            });
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
+                getKubernetesClientForControllers().loadStandardResource("Pod", "NS-fake", "my-pod");
+            });
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
+                getKubernetesClientForControllers().loadStandardResource("Pod",
+                        this.newTestResource().getMetadata().getNamespace(), "fake-pod");
+            });
         });
     }
 
