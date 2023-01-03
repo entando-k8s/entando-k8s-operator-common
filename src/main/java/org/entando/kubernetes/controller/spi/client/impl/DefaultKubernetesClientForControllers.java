@@ -127,7 +127,10 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
                         .fromServer()
                         .get())
                 .orElseThrow(() -> new IllegalStateException(
-                        String.format("Unable to load resource '%s/%s/%s'", kind, namespace, name)));
+                        String.format("Unable to load resource '%s' of kind '%s' from namespace '%s'",
+                                name,
+                                kind,
+                                namespace)));
     }
 
     @Override
