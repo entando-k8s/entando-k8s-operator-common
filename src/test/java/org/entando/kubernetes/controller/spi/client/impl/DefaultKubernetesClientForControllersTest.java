@@ -313,7 +313,8 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         });
         step("Then it is found", () -> assertThat(pod.get()).isNotNull());
         step("And the same applies for Deployments, Services, Ingresses, Secrets and PersistentVolumeClaims", () -> {
-            assertThat(SupportedStandardResourceKind.DEPLOYMENT.getOperation(getFabric8Client())).isInstanceOf(DeploymentOperationsImpl.class);
+            assertThat(SupportedStandardResourceKind.DEPLOYMENT.getOperation(getFabric8Client()))
+                    .isInstanceOf(DeploymentOperationsImpl.class);
             assertThat(SupportedStandardResourceKind.SERVICE.getOperation(getFabric8Client())).isInstanceOf(ServiceOperationsImpl.class);
             assertThat(SupportedStandardResourceKind.SECRET.getOperation(getFabric8Client())).isInstanceOf(SecretOperationsImpl.class);
             assertThat(SupportedStandardResourceKind.INGRESS.getOperation(getFabric8Client())).isInstanceOf(IngressOperationsImpl.class);
