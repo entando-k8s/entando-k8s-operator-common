@@ -29,6 +29,7 @@ public class SerializableCapabilityForResource implements CapabilityForResource 
         this.capabilityRequirement = capabilityRequirement;
     }
 
+
     @Override
     public EntandoCustomResource getResourceInNeed() {
         return resourceInNeed;
