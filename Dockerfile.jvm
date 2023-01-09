@@ -3,7 +3,7 @@ ARG VERSION
 LABEL name="Entando K8S Oerator Common" \
       vendor="Entando" \
       version="v${VERSION}" \
-      release="6" \
+      release="7.1" \
       summary="This Docker image contains all the common libraries used by Entando controllers." \
       description="This Docker image contains all the common libraries used by Entando controllers."
 COPY target/generated-resources/licenses /licenses
