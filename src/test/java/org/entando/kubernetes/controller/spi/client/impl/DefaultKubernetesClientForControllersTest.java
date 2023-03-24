@@ -321,6 +321,21 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
             assertThat(SupportedStandardResourceKind.PERSISTENT_VOLUME_CLAIM.getOperation(getFabric8Client())).isInstanceOf(
                     PersistentVolumeClaimOperationsImpl.class);
         });
+        step("And should throw exception for unknown kind or ns or name", () -> {
+            DefaultKubernetesClientForControllers ctrl = getKubernetesClientForControllers();
+            String nameSpace = this.newTestResource().getMetadata().getNamespace();
+            final String kindPod = "Pod";
+            final String namePod = "my-pod";
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
+                ctrl.loadStandardResource("P0d", nameSpace, namePod);
+            });
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
+                ctrl.loadStandardResource(kindPod, "NS-fake", namePod);
+            });
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
+                ctrl.loadStandardResource(kindPod, nameSpace, "fake-pod");
+            });
+        });
     }
 
     @Test
