@@ -21,8 +21,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface DeployableContainer {
+
+    Logger log = LoggerFactory.getLogger(DeployableContainer.class.getName());
 
     String ENTANDO_SECRET_MOUNTS_ROOT = "/etc/entando/secrets";
 
@@ -67,6 +72,12 @@ public interface DeployableContainer {
 
     default List<KubernetesPermission> getKubernetesPermissions() {
         return Collections.emptyList();
+    }
+
+    default boolean isResourceRequestApplicable() {
+        boolean mustApply = EntandoOperatorConfig.imposeResourceLimits();
+        log.debug("must Resource Request be applied ? mustApply:'{}'", mustApply);
+        return mustApply;
     }
 
 }

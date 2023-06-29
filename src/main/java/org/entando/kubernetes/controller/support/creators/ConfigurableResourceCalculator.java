@@ -16,16 +16,23 @@
 
 package org.entando.kubernetes.controller.support.creators;
 
+import java.util.Optional;
 import org.entando.kubernetes.controller.spi.container.ConfigurableResourceContainer;
 import org.entando.kubernetes.model.common.EntandoResourceRequirements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConfigurableResourceCalculator extends ResourceCalculator {
+
+    private static final Logger log = LoggerFactory.getLogger(ConfigurableResourceCalculator.class);
 
     private final EntandoResourceRequirements resourceRequirements;
 
     public ConfigurableResourceCalculator(ConfigurableResourceContainer container) {
         super(container);
-        this.resourceRequirements = container.getResourceRequirementsOverride().orElse(new EntandoResourceRequirements());
+        Optional<EntandoResourceRequirements> resourceRequirementsOverride = container.getResourceRequirementsOverride();
+        log.debug("is ResourceRequirementsOverride present?:'{}'", resourceRequirementsOverride.isPresent());
+        this.resourceRequirements = resourceRequirementsOverride.orElse(new EntandoResourceRequirements());
     }
 
     @Override
@@ -35,7 +42,9 @@ public class ConfigurableResourceCalculator extends ResourceCalculator {
 
     @Override
     public String getMemoryRequest() {
-        return this.resourceRequirements.getMemoryRequest().orElse(super.getMemoryRequest());
+        String memReq = this.resourceRequirements.getMemoryRequest().orElse(super.getMemoryRequest());
+        log.trace("configurable getMemoryRequest:'{}'", memReq);
+        return memReq;
     }
 
     @Override

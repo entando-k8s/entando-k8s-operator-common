@@ -26,8 +26,11 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
 import org.entando.kubernetes.controller.support.client.SimpleK8SClient;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InProcessCommandStream implements CommandStream {
+    private static final Logger log = LoggerFactory.getLogger(InProcessCommandStream.class);
 
     private final SimpleK8SClient<?> simpleK8SClient;
     private final SimpleKeycloakClient keycloakClient;
@@ -44,6 +47,7 @@ public class InProcessCommandStream implements CommandStream {
     @Override
     public String process(SupportedCommand supportedCommand, String data, int timeoutSeconds) {
         final int adjustedTimeOutSeconds = Math.round(timeoutSeconds * EntandoOperatorSpiConfig.getTimeoutAdjustmentRatio());
+        log.debug("deployable serialized data to process:'{}'", data);
         if (supportedCommand == SupportedCommand.PROCESS_DEPLOYABLE) {
             return processDeployment(data, adjustedTimeOutSeconds);
         } else {
@@ -62,6 +66,11 @@ public class InProcessCommandStream implements CommandStream {
     private String processDeployment(String deployable, int timeoutSeconds) {
         final Deployable<DefaultSerializableDeploymentResult> deserializedDeployable = DeserializationHelper
                 .deserialize(simpleK8SClient.entandoResources(), deployable);
+        if (log.isTraceEnabled()) {
+            log.trace("After deserialized data CustomResources to use to deploy has metadata:'{}'",
+                    deserializedDeployable.getCustomResource().getDefinitionName(),
+                    deserializedDeployable.getCustomResource().getMetadata());
+        }
         DeployCommand<DefaultSerializableDeploymentResult> command = new DeployCommand(deserializedDeployable);
         final DefaultSerializableDeploymentResult result = command.execute(simpleK8SClient, keycloakClient, timeoutSeconds);
         DefaultSerializableDeploymentResult serializableDeploymentResult = new DefaultSerializableDeploymentResult(null, result.getPod(),

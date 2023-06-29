@@ -17,8 +17,12 @@
 package org.entando.kubernetes.controller.support.creators;
 
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResourceCalculator extends LimitAndRequestCalculator {
+
+    private static final Logger log = LoggerFactory.getLogger(ResourceCalculator.class);
 
     private final DeployableContainer container;
 
@@ -35,7 +39,9 @@ public class ResourceCalculator extends LimitAndRequestCalculator {
     }
 
     public String getMemoryRequest() {
-        return applyRequestRatio(getMemoryLimit());
+        String memReq = applyRequestRatio(getMemoryLimit());
+        log.trace("configurable getMemoryRequest:'{}'", memReq);
+        return memReq;
     }
 
     public String getCpuRequest() {
