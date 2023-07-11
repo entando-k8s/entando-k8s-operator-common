@@ -60,9 +60,12 @@ import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.controller.support.common.EntandoImageResolver;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DeploymentCreator extends AbstractK8SResourceCreator {
 
+    private static final Logger log = LoggerFactory.getLogger(DeploymentCreator.class);
     public static final String VOLUME_SUFFIX = "volume";
     public static final String CONTAINER_SUFFIX = "container";
     public static final String PORT_SUFFIX = "port";
@@ -196,16 +199,21 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
 
     private Map<String, Quantity> buildResourceRequests(DeployableContainer deployableContainer) {
         Map<String, Quantity> result = new ConcurrentHashMap<>();
-        if (EntandoOperatorConfig.imposeResourceLimits()) {
+        if (deployableContainer.isResourceRequestApplicable()) {
             ResourceCalculator resourceCalculator = buildResourceCalculator(deployableContainer);
-            result.put("memory", new Quantity(resourceCalculator.getMemoryRequest()));
-            result.put("cpu", new Quantity(resourceCalculator.getCpuRequest()));
+            String memoryRequest = resourceCalculator.getMemoryRequest();
+            String cpuRequest = resourceCalculator.getCpuRequest();
+            log.debug("calculated resource request to apply to container memoryRequest:'{}', cpuRequest:'{}'", memoryRequest, cpuRequest);
+            result.put("memory", new Quantity(memoryRequest));
+            result.put("cpu", new Quantity(cpuRequest));
         }
         return result;
     }
 
     private ResourceCalculator buildResourceCalculator(DeployableContainer deployableContainer) {
-        return deployableContainer instanceof ConfigurableResourceContainer
+        boolean isConfigurableResourceContainer = deployableContainer instanceof ConfigurableResourceContainer;
+        log.trace("deployer is instance of ConfigurableResourceContainer ?:'{}'", isConfigurableResourceContainer);
+        return isConfigurableResourceContainer
                 ? new ConfigurableResourceCalculator((ConfigurableResourceContainer) deployableContainer)
                 : new ResourceCalculator(deployableContainer);
 
