@@ -34,15 +34,6 @@ jobs:
 
     steps:
 
-      - name: "PR PIPELINE START"
-        id: START
-        run: |
-          ${{ secrets.ENTANDO_OPT_PPL_INSTALL_CMD }}
-          ~/ppl-run \
-            .. status-report \
-            .. @setup-feature-flags "PR_FORMAT_CHECK" "BOM_CHECK" "BOM" "POST_PUB_DOCKER_SCAN" "POST_DEP_TESTS" \
-          ;
-
       - name: Checkout
         uses: actions/checkout@v3
         
@@ -61,25 +52,19 @@ jobs:
 
       - name: Build with Maven
         run: ${{ env.BUILD_COMMANDS }}
-        
-      #~ CONFIGURE REPO
-      - name: "Configure Entando Nexus Repository"
-        uses: actions/setup-java@v1
+
+      - name: Publish to Nexus
+        uses: sonatype-nexus-community/nexus-repo-github-action@master
         with:
-          java-version: 11
-          server-id: internal-nexus
-          server-username: NEXUS_USERNAME
-          server-password: NEXUS_PASSWORD
-          
-      #~ PUBLISH THE ARTIFACT
-      - name: "Publish package"
-        run: |
-          ~/ppl-run generic PUBLISH --id "PUBLICATION" \
-            --lcd "$LOCAL_CLONE_DIR"
-        env:
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-          
+          serverUrl: http://nexus-jx.apps.serv.run/
+          username: ${{ secrets.NEXUS_USERNAME }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
+          format: maven2
+          repository: maven-releases
+          coordinates: groupId=org.entando artifactId=entando-k8s-operator-common version=7.3.0-IT-485-PR-144
+          assets: extension=jar
+          filename: ./target/entando-k8s-operator-common-7.3.0.jar
+        
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
