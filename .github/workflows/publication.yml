@@ -1,9 +1,10 @@
 name: PUB
 
 on:
-  push:
-    tags:
-      - 'v*'
+  #push:
+  #  tags:
+  #    - 'v*'
+  workflow_dispatch:
 
 env:
   PPL_TEMPLATE_VERSION: "v2.0.0"
