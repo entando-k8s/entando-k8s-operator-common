@@ -52,7 +52,25 @@ jobs:
 
       - name: Build with Maven
         run: ${{ env.BUILD_COMMANDS }}
-
+        
+      #~ CONFIGURE REPO
+      - name: "Configure Entando Nexus Repository"
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          server-id: internal-nexus
+          server-username: NEXUS_USERNAME
+          server-password: NEXUS_PASSWORD
+          
+      #~ PUBLISH THE ARTIFACT
+      - name: "Publish package"
+        run: |
+          ~/ppl-run generic PUBLISH --id "PUBLICATION" \
+            --lcd "$LOCAL_CLONE_DIR"
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
