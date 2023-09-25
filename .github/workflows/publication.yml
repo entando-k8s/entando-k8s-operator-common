@@ -56,7 +56,7 @@ jobs:
       - name: Publish to Nexus
         uses: sonatype-nexus-community/nexus-repo-github-action@master
         with:
-          serverUrl: http://nexus-jx.apps.serv.run/
+          serverUrl: https://nexus-jx.apps.serv.run/
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}
           format: maven2
