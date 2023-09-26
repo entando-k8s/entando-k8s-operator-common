@@ -57,6 +57,9 @@ jobs:
           echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
 
       - name: Build with Maven
+        run: ${{ env.BUILD_COMMANDS }}
+
+      - name: Updating pom.xml version
         run: mvn versions:set -DnewVersion=${{ env.REF_VERSION }}
 
       - name: Release Maven package
