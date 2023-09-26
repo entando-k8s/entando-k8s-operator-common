@@ -67,15 +67,13 @@ jobs:
           echo "MAVEN_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
           echo "$MAVEN_VERSION"
           echo "Debugging 4";
-          REF_VERSION=${{ github.ref_name }}
-          echo "$REF_VERSION"
-          REF_VERSION=${ REF_VERSION:1 }
+          REF_VERSION= $( ${{  github.ref_name }} | tr -d v)
           echo "$REF_VERSION"
           echo "$REF_VERSION" >> $GITHUB_ENV
           echo "Debugging 5";
           
 
-      - name: Checking variables ${{ env.MAVEN_VERSION }}
+      - name: Checking variables ${{ env.REF_VERSION }}
         run: |
           echo "Debugging 0";
           echo "$GITHUB_REF_NAME"
