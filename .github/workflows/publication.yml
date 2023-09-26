@@ -69,6 +69,7 @@ jobs:
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
           maven_args: -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }}
+          maven_goals_phases: deploy
         
       - name: Docker meta
         id: meta
