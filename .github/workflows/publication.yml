@@ -119,12 +119,19 @@ jobs:
       #     MAVEN_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       #     MAVEN_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
 
-      - name: Deploy to Entando Nexus
-        uses: simontunnat/action-maven-deploy@v1.1
+      #- name: Deploy to Entando Nexus
+      #  uses: simontunnat/action-maven-deploy@v1.1
+      #  with:
+      #    username: ${{ secrets.NEXUS_USERNAME }}
+      # password: ${{ secrets.NEXUS_PASSWORD }}
+      #    repository: https://nexus-jx.apps.serv.run/repository/maven-releases/org.entando%3Aentando-k8s-operator-common
+
+      - name: Release Maven package
+        uses: samuelmeuli/action-maven-publish@v1
         with:
-          username: ${{ secrets.NEXUS_USERNAME }}
-          password: ${{ secrets.NEXUS_PASSWORD }}
-          repository: https://nexus-jx.apps.serv.run/repository/maven-releases/org.entando%3Aentando-k8s-operator-common
+          server_id: nexus-jx
+          nexus_username: ${{ secrets.NEXUS_USERNAME }}
+          nexus_password: ${{ secrets.NEXUS_PASSWORD }}
         
       - name: Docker meta
         id: meta
