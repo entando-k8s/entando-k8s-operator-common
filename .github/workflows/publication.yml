@@ -69,7 +69,7 @@ jobs:
           echo "Debugging 4";
           echo "$GITHUB_REF_NAME"
           echo "Debugging 5";
-          REF_VERSION=${ GITHUB_REF_NAME:1 }
+          REF_VERSION=${GITHUB_REF_NAME:1}
           echo "$REF_VERSION"
           echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
           echo "Debugging 6";
