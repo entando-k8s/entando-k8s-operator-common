@@ -62,10 +62,10 @@ jobs:
       - name: Release Maven package
         uses: samuelmeuli/action-maven-publish@v1
         with:
-          server_id: nexus-jx
+          server_id: ${{ vars.NEXUS_SERVER_ID }}
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
-          maven_args: -DaltDeploymentRepository=nexus-jx::default::https://nexus-jx.apps.serv.run/repository/maven-releases/
+          maven_args: -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }}
         
       - name: Docker meta
         id: meta
