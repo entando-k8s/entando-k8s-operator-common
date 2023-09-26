@@ -81,7 +81,7 @@ jobs:
           echo "Debugging 4";
 
       - name: Publish to Nexus
-        uses: sonatype-nexus-community/nexus-repo-github-action@v1.0.0
+        uses: sonatype-nexus-community/nexus-repo-github-action@master
         with:
           serverUrl: https://nexus-jx.apps.serv.run/
           username: ${{ secrets.NEXUS_USERNAME }}
