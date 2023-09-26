@@ -50,8 +50,11 @@ jobs:
           key: ${{ runner.os }}-m2
           restore-keys: ${{ runner.os }}-m2
 
+      #- name: Build with Maven
+      #  run: ${{ env.BUILD_COMMANDS }}
+      
       - name: Build with Maven
-        run: ${{ env.BUILD_COMMANDS }}
+        run: mvn versions:set -DnewVersion=7.3.0-test01-rc1
 
       - name: Setting up variables
         run: |
