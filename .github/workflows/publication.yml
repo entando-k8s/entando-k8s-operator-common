@@ -88,7 +88,7 @@ jobs:
           password: ${{ secrets.NEXUS_PASSWORD }}
           format: maven2
           repository: maven-releases
-          coordinates: groupId=$MAVEN_GROUP_ID artifactId=$MAVEN_ARTIFACT_ID version=7.3.0-IT-485-PR-144-testing
+          coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=7.3.0-IT-485-PR-144-testing
           assets: extension=jar
           filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}.jar
         
