@@ -103,18 +103,21 @@ jobs:
       #     assets: extension=jar
       #     filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}-tests.jar
 
-      - name: Set up Maven Central Repository
-        if: always()
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-          distribution: 'temurin'
-          server-id: nexus-jx
-          server-username: ${{ secrets.NEXUS_USERNAME }}
-          server-password: ${{ secrets.NEXUS_PASSWORD }}
+      # - name: Set up Maven Central Repository
+      #   if: always()
+      #   uses: actions/setup-java@v3
+      #   with:
+      #     java-version: '11'
+      #     distribution: 'temurin'
+      #     server-id: nexus-jx
+      #     server-username: ${{ secrets.NEXUS_USERNAME }}
+      #     server-password: ${{ secrets.NEXUS_PASSWORD }}
           
       - name: Publish package
         run: mvn --batch-mode deploy -DaltDeploymentRepository=nexus-jx::default::https://nexus-jx.apps.serv.run/repository/maven-releases/
+        env:
+          MAVEN_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         
       - name: Docker meta
         id: meta
