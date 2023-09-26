@@ -53,41 +53,13 @@ jobs:
       - name: Build with Maven
         run: ${{ env.BUILD_COMMANDS }}
 
-      - name: Extracting variables
+      - name: Setting up variables
         run: |
-          echo "Debugging 0";
-          echo "$GITHUB_REF_NAME"
-          echo "Debugging 1";
           echo "MAVEN_GROUP_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -q -DforceStdout)" >> $GITHUB_ENV
-          echo "$MAVEN_GROUP_ID"
-          echo "Debugging 2";
           echo "MAVEN_ARTIFACT_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
-          echo "$MAVEN_ARTIFACT_ID"
-          echo "Debugging 3";
           echo "MAVEN_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-          echo "$MAVEN_VERSION"
-          echo "Debugging 4";
-          echo "$GITHUB_REF_NAME"
-          echo "Debugging 5";
           REF_VERSION=${GITHUB_REF_NAME:1}
-          echo "$REF_VERSION"
           echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
-          echo "Debugging 6";
-          
-
-      - name: Checking variables ${{ env.REF_VERSION }}
-        run: |
-          echo "Debugging 0";
-          echo "$GITHUB_REF_NAME"
-          echo "Debugging 1";
-          echo "$MAVEN_GROUP_ID"
-          echo "Debugging 2";
-          echo "$MAVEN_ARTIFACT_ID"
-          echo "Debugging 3";
-          echo "$MAVEN_VERSION"
-          echo "Debugging 4";
-          echo "$REF_VERSION"
-          echo "Debugging 5";
 
       - name: Publish to Nexus
         uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
