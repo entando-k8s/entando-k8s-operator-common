@@ -124,7 +124,7 @@ jobs:
         with:
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}
-          repository: https://nexus-jx.apps.serv.run/repository/maven-releases/        
+          repository: https://nexus-jx.apps.serv.run/repository/maven-releases/org.entando%3Aentando-k8s-operator-common
         
       - name: Docker meta
         id: meta
