@@ -50,84 +50,14 @@ jobs:
           key: ${{ runner.os }}-m2
           restore-keys: ${{ runner.os }}-m2
 
-      #- name: Build with Maven
-      #  run: ${{ env.BUILD_COMMANDS }}
-      
+      - name: Setting up variables
+        run: |
+          REF_VERSION=${GITHUB_REF_NAME:1}
+          REF_VERSION=${REF_VERSION/+*}
+          echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
+
       - name: Build with Maven
-        run: mvn versions:set -DnewVersion=7.3.0-test01-rc1
-
-#      - name: Setting up variables
-#        run: |
-#          echo "MAVEN_GROUP_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -q -DforceStdout)" >> $GITHUB_ENV
-#          echo "MAVEN_ARTIFACT_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
-#          echo "MAVEN_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-#          REF_VERSION=${GITHUB_REF_NAME:1}
-#          REF_VERSION=${REF_VERSION/+*}
-#          echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
-#          echo "Debug1"
-#          ls ./target/
-#          echo "Debug2"
-
-      # - name: Publish to Nexus
-      #   uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
-      #   with:
-      #     serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
-      #     username: ${{ secrets.NEXUS_USERNAME }}
-      #     password: ${{ secrets.NEXUS_PASSWORD }}
-      #     format: maven2
-      #     repository: maven-releases
-      #     coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
-      #     assets: extension=jar
-      #     filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}.jar
-
-      # - name: Publish tests to Nexus
-      #   if: always()
-      #   uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
-      #   with:
-      #     serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
-      #     username: ${{ secrets.NEXUS_USERNAME }}
-      #     password: ${{ secrets.NEXUS_PASSWORD }}
-      #     format: maven2
-      #     repository: maven-releases
-      #     coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
-      #     assets: extension=jar
-      #     filename: ./target/entando-k8s-operator-common-*
-
-      # - name: Publish tests to Nexus 2
-      #   if: always()
-      #   uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
-      #   with:
-      #     serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
-      #     username: ${{ secrets.NEXUS_USERNAME }}
-      #     password: ${{ secrets.NEXUS_PASSWORD }}
-      #     format: maven2
-      #     repository: maven-releases
-      #     coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
-      #     assets: extension=jar
-      #     filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}-tests.jar
-
-      # - name: Set up Maven Central Repository
-      #   if: always()
-      #   uses: actions/setup-java@v3
-      #   with:
-      #     java-version: '11'
-      #     distribution: 'temurin'
-      #     server-id: nexus-jx
-      #     server-username: ${{ secrets.NEXUS_USERNAME }}
-      #     server-password: ${{ secrets.NEXUS_PASSWORD }}
-          
-      # - name: Publish package
-      #   run: mvn --batch-mode deploy -DaltDeploymentRepository=nexus-jx::default::https://nexus-jx.apps.serv.run/repository/maven-releases/
-      #   env:
-      #     MAVEN_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      #     MAVEN_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-
-      #- name: Deploy to Entando Nexus
-      #  uses: simontunnat/action-maven-deploy@v1.1
-      #  with:
-      #    username: ${{ secrets.NEXUS_USERNAME }}
-      # password: ${{ secrets.NEXUS_PASSWORD }}
-      #    repository: https://nexus-jx.apps.serv.run/repository/maven-releases/org.entando%3Aentando-k8s-operator-common
+        run: mvn versions:set -DnewVersion=${{ env.REF_VERSION }}
 
       - name: Release Maven package
         uses: samuelmeuli/action-maven-publish@v1
