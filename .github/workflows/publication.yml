@@ -132,6 +132,7 @@ jobs:
           server_id: nexus-jx
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
+          maven_args: -DaltDeploymentRepository=nexus-jx::default::https://nexus-jx.apps.serv.run/repository/maven-releases/
         
       - name: Docker meta
         id: meta
