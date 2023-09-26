@@ -60,6 +60,11 @@ jobs:
           echo "MAVEN_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
           REF_VERSION=${GITHUB_REF_NAME:1}
           echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
+          echo "Debug 1";
+          echo "${{github.event.number}}"
+          echo "Debug 2";
+          echo "${{github.event.issue.number}}"
+          echo "Debug 3";
 
       - name: Publish to Nexus
         uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
