@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 env:
-  PPL_TEMPLATE_VERSION: "v2.0.0"
+  PPL_TEMPLATE_VERSION: "v2.0.1"
   ENTANDO_BOT_TOKEN: ${{ secrets.ENTANDO_BOT_TOKEN }}
   PR_CHECKER_PATH: ".github/pr-title-checker-config.json"
 
@@ -53,6 +53,27 @@ jobs:
       - name: Build with Maven
         run: ${{ env.BUILD_COMMANDS }}
 
+      - name: Setting up variables
+        run: |
+          echo "MAVEN_GROUP_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -q -DforceStdout)" >> $GITHUB_ENV
+          echo "MAVEN_ARTIFACT_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
+          echo "MAVEN_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          REF_VERSION=${GITHUB_REF_NAME:1}
+          REF_VERSION=${REF_VERSION/+*}
+          echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
+
+      - name: Publish to Nexus
+        uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
+        with:
+          serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
+          username: ${{ secrets.NEXUS_USERNAME }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
+          format: maven2
+          repository: maven-releases
+          coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
+          assets: extension=jar
+          filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}.jar
+        
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
