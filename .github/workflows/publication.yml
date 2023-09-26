@@ -113,11 +113,18 @@ jobs:
       #     server-username: ${{ secrets.NEXUS_USERNAME }}
       #     server-password: ${{ secrets.NEXUS_PASSWORD }}
           
-      - name: Publish package
-        run: mvn --batch-mode deploy -DaltDeploymentRepository=nexus-jx::default::https://nexus-jx.apps.serv.run/repository/maven-releases/
-        env:
-          MAVEN_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      # - name: Publish package
+      #   run: mvn --batch-mode deploy -DaltDeploymentRepository=nexus-jx::default::https://nexus-jx.apps.serv.run/repository/maven-releases/
+      #   env:
+      #     MAVEN_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      #     MAVEN_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+
+      - name: Deploy to Entando Nexus
+        uses: simontunnat/action-maven-deploy@v1.1
+        with:
+          username: ${{ secrets.NEXUS_USERNAME }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
+          repository: https://nexus-jx.apps.serv.run/repository/maven-releases/        
         
       - name: Docker meta
         id: meta
