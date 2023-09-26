@@ -50,29 +50,26 @@ jobs:
           key: ${{ runner.os }}-m2
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build with Maven
-        run: ${{ env.BUILD_COMMANDS }}
-
       - name: Setting up variables
         run: |
-          echo "MAVEN_GROUP_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -q -DforceStdout)" >> $GITHUB_ENV
-          echo "MAVEN_ARTIFACT_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
-          echo "MAVEN_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
           REF_VERSION=${GITHUB_REF_NAME:1}
           REF_VERSION=${REF_VERSION/+*}
           echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
 
-      - name: Publish to Nexus
-        uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
+      - name: Build with Maven
+        run: ${{ env.BUILD_COMMANDS }}
+
+      - name: Updating pom.xml version
+        run: mvn versions:set -DnewVersion=${{ env.REF_VERSION }}
+
+      - name: Release Maven package
+        uses: samuelmeuli/action-maven-publish@v1
         with:
-          serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
-          username: ${{ secrets.NEXUS_USERNAME }}
-          password: ${{ secrets.NEXUS_PASSWORD }}
-          format: maven2
-          repository: maven-releases
-          coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
-          assets: extension=jar
-          filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}.jar
+          server_id: ${{ vars.NEXUS_SERVER_ID }}
+          nexus_username: ${{ secrets.NEXUS_USERNAME }}
+          nexus_password: ${{ secrets.NEXUS_PASSWORD }}
+          maven_args: -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }}
+          maven_goals_phases: deploy
         
       - name: Docker meta
         id: meta
