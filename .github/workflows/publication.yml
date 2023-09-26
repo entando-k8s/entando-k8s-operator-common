@@ -65,43 +65,43 @@ jobs:
           ls ./target/
           echo "Debug2"
 
-      - name: Publish to Nexus
-        uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
-        with:
-          serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
-          username: ${{ secrets.NEXUS_USERNAME }}
-          password: ${{ secrets.NEXUS_PASSWORD }}
-          format: maven2
-          repository: maven-releases
-          coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
-          assets: extension=jar
-          filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}.jar
+      # - name: Publish to Nexus
+      #   uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
+      #   with:
+      #     serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
+      #     username: ${{ secrets.NEXUS_USERNAME }}
+      #     password: ${{ secrets.NEXUS_PASSWORD }}
+      #     format: maven2
+      #     repository: maven-releases
+      #     coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
+      #     assets: extension=jar
+      #     filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}.jar
 
-      - name: Publish tests to Nexus
-        if: always()
-        uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
-        with:
-          serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
-          username: ${{ secrets.NEXUS_USERNAME }}
-          password: ${{ secrets.NEXUS_PASSWORD }}
-          format: maven2
-          repository: maven-releases
-          coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
-          assets: extension=jar
-          filename: ./target/entando-k8s-operator-common-*
+      # - name: Publish tests to Nexus
+      #   if: always()
+      #   uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
+      #   with:
+      #     serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
+      #     username: ${{ secrets.NEXUS_USERNAME }}
+      #     password: ${{ secrets.NEXUS_PASSWORD }}
+      #     format: maven2
+      #     repository: maven-releases
+      #     coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
+      #     assets: extension=jar
+      #     filename: ./target/entando-k8s-operator-common-*
 
-      - name: Publish tests to Nexus 2
-        if: always()
-        uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
-        with:
-          serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
-          username: ${{ secrets.NEXUS_USERNAME }}
-          password: ${{ secrets.NEXUS_PASSWORD }}
-          format: maven2
-          repository: maven-releases
-          coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
-          assets: extension=jar
-          filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}-tests.jar
+      # - name: Publish tests to Nexus 2
+      #   if: always()
+      #   uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
+      #   with:
+      #     serverUrl: ${{ vars.NEXUS_INSTANCE_URI }}
+      #     username: ${{ secrets.NEXUS_USERNAME }}
+      #     password: ${{ secrets.NEXUS_PASSWORD }}
+      #     format: maven2
+      #     repository: maven-releases
+      #     coordinates: groupId=${{ env.MAVEN_GROUP_ID }} artifactId=${{ env.MAVEN_ARTIFACT_ID }} version=${{ env.REF_VERSION }}
+      #     assets: extension=jar
+      #     filename: ./target/entando-k8s-operator-common-${{ env.MAVEN_VERSION }}-tests.jar
 
       - name: Set up Maven Central Repository
         if: always()
