@@ -58,15 +58,9 @@ jobs:
           echo "MAVEN_GROUP_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -q -DforceStdout)" >> $GITHUB_ENV
           echo "MAVEN_ARTIFACT_ID=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
           echo "MAVEN_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-          echo "Debug 1"
           REF_VERSION=${GITHUB_REF_NAME:1}
-          echo "Debug 2"
-          echo "$REF_VERSION"
           REF_VERSION=${REF_VERSION/+*}
-          echo "Debug 3"
-          echo "$REF_VERSION"
           echo "REF_VERSION=$REF_VERSION" >> $GITHUB_ENV
-          echo "Debug 4"
 
       - name: Publish to Nexus
         uses: sonatype-nexus-community/nexus-repo-github-action@1.0.0
