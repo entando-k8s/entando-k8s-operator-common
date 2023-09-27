@@ -59,6 +59,9 @@ jobs:
       - name: Build with Maven
         run: ${{ env.BUILD_COMMANDS }}
 
+      - name: LS target 1
+        run: ls /target
+
       - name: Updating pom.xml version
         run: mvn versions:set -DnewVersion=${{ env.REF_VERSION }}
 
@@ -70,6 +73,9 @@ jobs:
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
           maven_args: -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }}
           maven_goals_phases: deploy
+
+      - name: LS target 2
+        run: ls /target
         
       - name: Docker meta
         id: meta
@@ -101,6 +107,9 @@ jobs:
         with:
           username: ${{ secrets.ENTANDO_OPT_DOCKER_USERNAME }}
           password: ${{ secrets.ENTANDO_OPT_DOCKER_PASSWORD }}
+
+      - name: LS target 3
+        run: ls /target
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
