@@ -60,7 +60,7 @@ jobs:
         run: ${{ env.BUILD_COMMANDS }}
 
       - name: LS target 1
-        run: ls /target
+        run: ls ./target
 
       - name: Updating pom.xml version
         run: mvn versions:set -DnewVersion=${{ env.REF_VERSION }}
@@ -75,7 +75,7 @@ jobs:
           maven_goals_phases: deploy
 
       - name: LS target 2
-        run: ls /target
+        run: ls ./target
         
       - name: Docker meta
         id: meta
@@ -109,7 +109,7 @@ jobs:
           password: ${{ secrets.ENTANDO_OPT_DOCKER_PASSWORD }}
 
       - name: LS target 3
-        run: ls /target
+        run: ls ./target
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
