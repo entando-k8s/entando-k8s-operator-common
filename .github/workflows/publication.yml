@@ -11,7 +11,7 @@ env:
   PR_CHECKER_PATH: ".github/pr-title-checker-config.json"
 
   JDK_VERSION: 11
-  BUILD_COMMANDS: mvn package;
+  BUILD_COMMANDS: mvn package -Pprepare-for-nexus;
   DOCKER_IMAGE_BASE_NAME: entando/entando-k8s-operator-common
   DOCKER_IMAGE_ARCHITECTURE: linux/amd64,linux/arm64
   DOCKER_IMAGE_CONTEXT: .
