@@ -11,7 +11,7 @@ env:
   PR_CHECKER_PATH: ".github/pr-title-checker-config.json"
 
   JDK_VERSION: 11
-  BUILD_COMMANDS: mvn package -Pprepare-for-nexus;
+  BUILD_COMMANDS: mvn package -Pjvm;
   DOCKER_IMAGE_BASE_NAME: entando/entando-k8s-operator-common
   DOCKER_IMAGE_ARCHITECTURE: linux/amd64,linux/arm64
   DOCKER_IMAGE_CONTEXT: .
@@ -71,7 +71,7 @@ jobs:
           server_id: ${{ vars.NEXUS_SERVER_ID }}
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
-          maven_args: -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }}
+          maven_args: -B javadoc:jar source:jar source:test-jar -DskipTests=true -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }} -Pprepare-for-nexus -DskipPreDeploymentTests=true -DskipPostDeploymentTests=true -Ddependency-check.skip=true
           maven_goals_phases: deploy
 
       - name: LS target 2
