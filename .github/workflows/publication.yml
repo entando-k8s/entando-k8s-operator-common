@@ -9,9 +9,9 @@ env:
   PPL_TEMPLATE_VERSION: "v2.0.1"
   ENTANDO_BOT_TOKEN: ${{ secrets.ENTANDO_BOT_TOKEN }}
   PR_CHECKER_PATH: ".github/pr-title-checker-config.json"
-
   JDK_VERSION: 11
   BUILD_COMMANDS: mvn package -Pjvm;
+  DEPLOY_COMMANDS: -B javadoc:jar source:jar source:test-jar -DskipTests=true -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }} -Pprepare-for-nexus -DskipPreDeploymentTests=true -DskipPostDeploymentTests=true -Ddependency-check.skip=true
   DOCKER_IMAGE_BASE_NAME: entando/entando-k8s-operator-common
   DOCKER_IMAGE_ARCHITECTURE: linux/amd64,linux/arm64
   DOCKER_IMAGE_CONTEXT: .
@@ -59,9 +59,6 @@ jobs:
       - name: Build with Maven
         run: ${{ env.BUILD_COMMANDS }}
 
-      - name: LS target 1
-        run: ls ./target
-
       - name: Updating pom.xml version
         run: mvn versions:set -DnewVersion=${{ env.REF_VERSION }}
 
@@ -71,14 +68,11 @@ jobs:
           server_id: ${{ vars.NEXUS_SERVER_ID }}
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
-          maven_args: -B javadoc:jar source:jar source:test-jar -DskipTests=true -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }} -Pprepare-for-nexus -DskipPreDeploymentTests=true -DskipPostDeploymentTests=true -Ddependency-check.skip=true
+          maven_args: ${{ env.DEPLOY_COMMANDS }}
           maven_goals_phases: deploy
           gpg_private_key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg_passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
-      - name: LS target 2
-        run: ls ./target
-        
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
@@ -109,9 +103,6 @@ jobs:
         with:
           username: ${{ secrets.ENTANDO_OPT_DOCKER_USERNAME }}
           password: ${{ secrets.ENTANDO_OPT_DOCKER_PASSWORD }}
-
-      - name: LS target 3
-        run: ls ./target
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
