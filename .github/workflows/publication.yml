@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 env:
-  PPL_TEMPLATE_VERSION: "v2.0.1"
+  PPL_TEMPLATE_VERSION: "v2.0.2"
   ENTANDO_BOT_TOKEN: ${{ secrets.ENTANDO_BOT_TOKEN }}
   PR_CHECKER_PATH: ".github/pr-title-checker-config.json"
   JDK_VERSION: 11
