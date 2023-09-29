@@ -6,12 +6,12 @@ on:
       - 'v*'
 
 env:
-  PPL_TEMPLATE_VERSION: "v2.0.1"
+  PPL_TEMPLATE_VERSION: "v2.0.2"
   ENTANDO_BOT_TOKEN: ${{ secrets.ENTANDO_BOT_TOKEN }}
   PR_CHECKER_PATH: ".github/pr-title-checker-config.json"
-
   JDK_VERSION: 11
   BUILD_COMMANDS: mvn package -Pjvm;
+  DEPLOY_COMMANDS: -B javadoc:jar source:jar source:test-jar -DskipTests=true -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }} -Pprepare-for-nexus -DskipPreDeploymentTests=true -DskipPostDeploymentTests=true -Ddependency-check.skip=true
   DOCKER_IMAGE_BASE_NAME: entando/entando-k8s-operator-common
   DOCKER_IMAGE_ARCHITECTURE: linux/amd64,linux/arm64
   DOCKER_IMAGE_CONTEXT: .
@@ -68,9 +68,11 @@ jobs:
           server_id: ${{ vars.NEXUS_SERVER_ID }}
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
-          maven_args: -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }}
+          maven_args: ${{ env.DEPLOY_COMMANDS }}
           maven_goals_phases: deploy
-        
+          gpg_private_key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg_passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
