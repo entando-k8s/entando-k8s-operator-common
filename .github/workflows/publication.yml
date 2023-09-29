@@ -73,6 +73,8 @@ jobs:
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
           maven_args: -B javadoc:jar source:jar source:test-jar -DskipTests=true -DaltDeploymentRepository=${{ vars.NEXUS_SERVER_ID }}::default::${{ vars.NEXUS_INSTANCE_URI }} -Pprepare-for-nexus -DskipPreDeploymentTests=true -DskipPostDeploymentTests=true -Ddependency-check.skip=true
           maven_goals_phases: deploy
+          gpg_private_key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg_passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: LS target 2
         run: ls ./target
