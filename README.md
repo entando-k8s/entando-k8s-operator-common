@@ -1,3 +1,5 @@
+.
+
 [![Build Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fstatusbadge-jx.apps.serv.run%2Fentando-k8s%2Fentando-k8s-operator-common)](https://github.com/entando-k8s/devops-results/tree/logs/jenkins-x/logs/entando-k8s/entando-k8s-operator-common/master)
 [Behavioural Scenarios](https://entando-k8s.github.io/devops-results/entando-k8s-operator-common/PR-60/allure-maven-plugin/index.html#behaviors)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=entando-k8s_entando-k8s-operator-common&metric=alert_status)](https://sonarcloud.io/dashboard?id=entando-k8s_entando-k8s-operator-common)
