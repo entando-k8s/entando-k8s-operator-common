@@ -1,9 +1,9 @@
-FROM entando/entando-java-base:11.1.0-ENG-5117-PR-11
+FROM entando/entando-java-base:11.0.3
 ARG VERSION
 LABEL name="Entando K8S Operator Common" \
       vendor="Entando" \
       version="v${VERSION}" \
-      release="7.3" \
+      release="7.4" \
       summary="This Docker image contains all the common libraries used by Entando controllers." \
       description="This Docker image contains all the common libraries used by Entando controllers."
 COPY target/generated-resources/licenses /licenses
