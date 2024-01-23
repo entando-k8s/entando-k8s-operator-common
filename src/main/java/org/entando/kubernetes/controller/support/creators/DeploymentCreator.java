@@ -171,6 +171,7 @@ public class DeploymentCreator extends AbstractK8SResourceCreator {
                 .withImage(imageResolver.determineImageUri(deployableContainer.getDockerImageInfo()))
                 .withImagePullPolicy(EntandoOperatorConfig.getPullPolicyOverride().orElse("IfNotPresent"))
                 .withPorts(buildPorts(deployableContainer))
+                .withArgs(deployableContainer.getArgs())
                 .withReadinessProbe(buildReadinessProbe(deployableContainer, supportStartupProbes))
                 .withLivenessProbe(buildLivenessProbe(deployableContainer, supportStartupProbes))
                 .withStartupProbe(buildStartupProbe(deployableContainer, supportStartupProbes))
