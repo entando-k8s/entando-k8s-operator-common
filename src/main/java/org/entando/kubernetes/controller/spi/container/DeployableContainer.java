@@ -65,6 +65,10 @@ public interface DeployableContainer {
         return Collections.emptyList();
     }
 
+    default List<String> getArgs() {
+        return Collections.emptyList();
+    }
+    
     default List<SecretToMount> getSecretsToMount() {
         return getNamesOfSecretsToMount().stream().map(s -> new SecretToMount(s, ENTANDO_SECRET_MOUNTS_ROOT + "/" + s))
                 .collect(Collectors.toList());
