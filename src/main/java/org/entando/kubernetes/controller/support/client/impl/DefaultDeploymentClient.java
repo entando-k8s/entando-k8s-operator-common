@@ -22,15 +22,19 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.VersionInfo;
-import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultDeploymentClient implements DeploymentClient {
+
+    Logger logger = LoggerFactory.getLogger(DefaultDeploymentClient.class.getName());
 
     private final KubernetesClient client;
 
@@ -71,13 +75,47 @@ public class DefaultDeploymentClient implements DeploymentClient {
             return client.apps().deployments().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(deployment);
         } else {
             //Don't wait because the polling in Fabric8 is dodge
+
+            var depNamespace = existingDeployment.getMetadata().getNamespace();
+            var depSelector = existingDeployment.getSpec().getSelector();
+            var depName = existingDeployment.getMetadata().getName();
+
             getDeploymenResourceFor(peerInNamespace, deployment).scale(0, true);
-            FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
-                    .inNamespace(existingDeployment.getMetadata().getNamespace())
-                    .withLabelSelector(existingDeployment.getSpec().getSelector());
-            interruptionSafe(() -> podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
+
+            var podResource = client.pods()
+                    .inNamespace(depNamespace).withLabelSelector(depSelector);
+
+            interruptionSafe(() -> {
+                try {
+                    return podResource.waitUntilCondition(
+                            pod -> podResource.list().getItems().isEmpty(),
                     timeoutSeconds,
-                    TimeUnit.SECONDS));
+                            TimeUnit.SECONDS
+                    );
+                } catch (KubernetesClientException ex) {
+                    Throwable cause = ex.getCause();
+                    if (cause != null && cause.getMessage().contains("too old")) {
+                        // DESYNC DETECTED => REFRESH RESOURCES
+                        logger.warn("Refreshing resources due to sync problems "
+                                        + "while observing pods of deployment \"{}\" (ERROR {})",
+                                depName,
+                                cause.getMessage()
+                        );
+
+                        var refreshedPodList = client.pods()
+                                .inNamespace(depNamespace).withLabelSelector(depSelector);
+
+                        return refreshedPodList.waitUntilCondition(
+                                pod -> refreshedPodList.list().getItems().isEmpty(),
+                                timeoutSeconds,
+                                TimeUnit.SECONDS
+                        );
+                    } else {
+                        logger.warn("Detected error while observing pods of deployment \"{}\"", depName);
+                        throw ex;
+                    }
+                }
+            });
             //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod
             return getDeploymenResourceFor(peerInNamespace, deployment).patch(deployment);
         }

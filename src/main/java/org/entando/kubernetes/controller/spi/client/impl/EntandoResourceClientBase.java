@@ -96,7 +96,10 @@ public class EntandoResourceClientBase {
 
                             @Override
                             public void onClose(WatcherException cause) {
-                                if (cause.getMessage().contains("resourceVersion") && cause.getMessage().contains("too old")) {
+                                String msg = cause.getMessage();
+                                if ((msg.contains("resourceVersion") || msg.contains("resource version"))
+                                        && msg.contains("too old")
+                                ) {
                                     //reconnect - resource went out of sync. happens on occasion.
                                     ioSafe(() -> client.customResource(definition)
                                             .watch(customResource.getMetadata().getNamespace(),
