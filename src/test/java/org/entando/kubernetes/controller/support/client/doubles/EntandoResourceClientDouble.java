@@ -78,7 +78,7 @@ public class EntandoResourceClientDouble extends EntandoResourceClientDoubleBase
     public ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands)
             throws TimeoutException {
         if (pod != null) {
-            PodResource<Pod> podResource = new PodResourceDouble();
+            PodResource<Pod> podResource = new PodResourceDouble(getNamespace());
             return executeAndWait(podResource, containerName, timeoutSeconds, commands);
         }
         return null;

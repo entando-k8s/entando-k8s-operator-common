@@ -41,7 +41,7 @@ public class ExecutionResult implements ExecListener {
     }
 
     @Override
-    public void onOpen(Response response) {
+    public void onOpen() {
         //no implementation required
     }
 

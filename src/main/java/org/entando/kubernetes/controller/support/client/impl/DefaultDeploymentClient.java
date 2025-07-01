@@ -75,9 +75,12 @@ public class DefaultDeploymentClient implements DeploymentClient {
             FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
-            interruptionSafe(() -> podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
+            interruptionSafe(() -> DefaultPodClient.waitUntilCondition(
+                    podResource,
+                    pod -> podResource.list().getItems().isEmpty(),
                     timeoutSeconds,
-                    TimeUnit.SECONDS));
+                    TimeUnit.SECONDS)
+            );
             //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod
             return getDeploymenResourceFor(peerInNamespace, deployment).patch(deployment);
         }

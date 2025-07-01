@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.entando</groupId>
         <artifactId>entando-quarkus-parent</artifactId>
-        <version>7.3.0</version>
+        <version>7.3.1-ENG-5551-PR-60</version>
         <relativePath/>
     </parent>
     <artifactId>entando-k8s-operator-common</artifactId>
@@ -140,6 +140,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
+            <version>3.19.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -160,11 +161,6 @@
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

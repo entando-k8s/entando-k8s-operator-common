@@ -24,11 +24,15 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.utils.Utils;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
@@ -57,9 +61,12 @@ public class DefaultPodClient implements PodClient {
         interruptionSafe(() -> {
             FilterWatchListDeletable<Pod, PodList> podResource = client.pods().inNamespace(namespace).withLabels(labels);
             podResource.delete();
-            return podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
+            return waitUntilCondition(
+                    podResource,
+                    pod -> podResource.list().getItems().isEmpty(),
                     timeoutSeconds,
-                    TimeUnit.SECONDS);
+                    TimeUnit.SECONDS
+            );
         });
     }
 
@@ -96,13 +103,18 @@ public class DefaultPodClient implements PodClient {
     @Override
     public Pod waitForPod(String namespace, String labelName, String labelValue, int timeoutSeconds) throws TimeoutException {
         String shortLabelValue = NameUtils.shortenLabelToMaxLength(labelValue);
-        return interruptionSafe(() ->
-                client.pods().inNamespace(namespace).withLabel(labelName, shortLabelValue).waitUntilCondition(
-                        got -> got != null && got.getStatus() != null && (PodResult.of(got).getState() == State.READY
-                                || PodResult.of(got).getState() == State.COMPLETED),
-                        EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds(),
-                        TimeUnit.SECONDS));
+        return interruptionSafe(() -> waitUntilCondition(
+                client.pods().inNamespace(namespace).withLabel(labelName, shortLabelValue),
+                isPodUpAndRunning(),
+                EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds(),
+                TimeUnit.SECONDS
+        ));
 
+    }
+
+    private Predicate<Pod> isPodUpAndRunning() {
+        return got -> got != null && got.getStatus() != null && (PodResult.of(got).getState() == State.READY
+                || PodResult.of(got).getState() == State.COMPLETED);
     }
 
     @Override
@@ -110,5 +122,25 @@ public class DefaultPodClient implements PodClient {
         return client.pods().inNamespace(namespace).withLabels(labels).list().getItems().stream().findFirst().orElse(null);
     }
 
+    public static Pod waitUntilCondition(
+            FilterWatchListDeletable<Pod, PodList> informable,
+            Predicate<Pod> condition, long amount, TimeUnit timeUnit
+    ) {
+        CompletableFuture<List<Pod>> futureCondition = informable.informOnCondition(l -> {
+            if (l.isEmpty()) {
+                return condition.test(null);
+            }
+            return condition.test(l.get(0));
+        });
+
+        if (!Utils.waitUntilReady(futureCondition, amount, timeUnit)) {
+            futureCondition.cancel(true);
+            List<Pod> list = informable.list().getItems();
+            if (list.isEmpty()) {
+                return null;
+            }
+        }
+        return futureCondition.thenApply(l -> l.isEmpty() ? null : l.get(0)).getNow(null);
+    }
 }
 

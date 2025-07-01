@@ -18,17 +18,21 @@ package org.entando.kubernetes.controller.spi.client.impl;
 
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind.*;
 import static org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.Event;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.AppsAPIGroupDSL;
@@ -37,10 +41,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.dsl.internal.apps.v1.DeploymentOperationsImpl;
-import io.fabric8.kubernetes.client.dsl.internal.core.v1.PersistentVolumeClaimOperationsImpl;
-import io.fabric8.kubernetes.client.dsl.internal.core.v1.SecretOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.ServiceOperationsImpl;
-import io.fabric8.kubernetes.client.dsl.internal.networking.v1.IngressOperationsImpl;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import java.io.IOException;
@@ -59,6 +60,7 @@ import org.entando.kubernetes.controller.spi.common.PodResult;
 import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.doubles.PodResourceDouble;
 import org.entando.kubernetes.controller.support.client.impl.AbstractK8SIntegrationTest;
+import org.entando.kubernetes.controller.support.client.impl.DefaultPodClient;
 import org.entando.kubernetes.fluentspi.BasicDeploymentSpecBuilder;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.model.common.EntandoDeploymentPhase;
@@ -313,13 +315,11 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         });
         step("Then it is found", () -> assertThat(pod.get()).isNotNull());
         step("And the same applies for Deployments, Services, Ingresses, Secrets and PersistentVolumeClaims", () -> {
-            assertThat(SupportedStandardResourceKind.DEPLOYMENT.getOperation(getFabric8Client()))
-                    .isInstanceOf(DeploymentOperationsImpl.class);
-            assertThat(SupportedStandardResourceKind.SERVICE.getOperation(getFabric8Client())).isInstanceOf(ServiceOperationsImpl.class);
-            assertThat(SupportedStandardResourceKind.SECRET.getOperation(getFabric8Client())).isInstanceOf(SecretOperationsImpl.class);
-            assertThat(SupportedStandardResourceKind.INGRESS.getOperation(getFabric8Client())).isInstanceOf(IngressOperationsImpl.class);
-            assertThat(SupportedStandardResourceKind.PERSISTENT_VOLUME_CLAIM.getOperation(getFabric8Client())).isInstanceOf(
-                    PersistentVolumeClaimOperationsImpl.class);
+            assertThat(DEPLOYMENT.getOperation(getFabric8Client())).isInstanceOf(DeploymentOperationsImpl.class);
+            assertThat(SERVICE.getOperation(getFabric8Client())).isInstanceOf(ServiceOperationsImpl.class);
+            assertThat(SECRET.getOperation(getFabric8Client())).isInstanceOf(MixedOperation.class);
+            assertThat(INGRESS.getOperation(getFabric8Client())).isInstanceOf(MixedOperation.class);
+            assertThat(PERSISTENT_VOLUME_CLAIM.getOperation(getFabric8Client())).isInstanceOf(MixedOperation.class);
         });
         step("And should throw exception for unknown kind or ns or name", () -> {
             DefaultKubernetesClientForControllers ctrl = getKubernetesClientForControllers();
@@ -391,17 +391,21 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
     void test_findDeployment_And_Pod_And_Secret() throws InterruptedException {
         String ns = MY_APP_NAMESPACE_1;
         var deployment = startNewDeployment(ns);
-        getFabric8Client().pods().inNamespace(ns).waitUntilCondition(
+        DefaultPodClient.waitUntilCondition(
+                getFabric8Client().pods().inNamespace(ns),
                 pod -> !getFabric8Client().pods().inNamespace(ns).list().getItems().isEmpty(),
-                30, TimeUnit.SECONDS);
+                30, TimeUnit.SECONDS
+        );
         var firstPod = getFabric8Client().pods().inNamespace(ns).list().getItems().get(0);
         var erc = getKubernetesClientForControllers();
         var foundPod = erc.getPodByName(firstPod.getMetadata().getName(), ns);
         Assertions.assertThat(foundPod.get()).isNotNull();
         erc.getDeploymentByName(deployment.getMetadata().getName(), ns).scale(0);
-        getFabric8Client().pods().inNamespace(ns).waitUntilCondition(
+        DefaultPodClient.waitUntilCondition(
+                getFabric8Client().pods().inNamespace(ns),
                 pod -> erc.getPodByName(firstPod.getMetadata().getName(), ns).get() == null,
-                30, TimeUnit.SECONDS);
+                30, TimeUnit.SECONDS
+        );
         Assertions.assertThat(foundPod.get()).isNull();
     }
 
@@ -429,7 +433,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
 
     @Test
     void test_findDeployment_And_Pod_Mocked() {
-        var resPod = spy(PodResourceDouble.class);
+        var resPod = spy(new PodResourceDouble(MY_APP_NAMESPACE_1));
         var resDeployment = spy(RollableScalableResource.class);
 
         var mockedClient = spy(getFabric8Client());

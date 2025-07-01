@@ -16,6 +16,8 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
+import io.fabric8.kubernetes.client.ClientContext;
+import io.fabric8.kubernetes.client.SimpleClientContext;
 import io.fabric8.kubernetes.client.dsl.ContainerResource;
 import io.fabric8.kubernetes.client.dsl.ExecListenable;
 import io.fabric8.kubernetes.client.dsl.ExecListener;
@@ -26,6 +28,7 @@ import io.fabric8.kubernetes.client.dsl.TtyExecErrorChannelable;
 import io.fabric8.kubernetes.client.dsl.TtyExecErrorable;
 import io.fabric8.kubernetes.client.dsl.TtyExecOutputErrorable;
 import io.fabric8.kubernetes.client.dsl.TtyExecable;
+import io.fabric8.kubernetes.client.dsl.internal.HasMetadataOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.PodOperationContext;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.PodOperationsImpl;
 import java.io.ByteArrayInputStream;
@@ -40,54 +43,57 @@ import java.util.List;
 
 public class PodResourceDouble extends PodOperationsImpl {
 
-    public PodResourceDouble() {
-        this(new PodOperationContext());
+    private final ClientContext clientContext;
+
+    public PodResourceDouble(String namespace) {
+        this(new PodOperationContext(), new SimpleClientContext(), namespace);
     }
 
-    public PodResourceDouble(PodOperationContext podOperationContext) {
-        super(podOperationContext);
+    public PodResourceDouble(PodOperationContext podOperationContext, ClientContext clientContext, String namespace) {
+        super(podOperationContext, HasMetadataOperationsImpl.defaultContext(clientContext).withNamespace(namespace));
+        this.clientContext=clientContext;
     }
 
     @Override
     public ContainerResource<LogWatch, InputStream, PipedOutputStream, OutputStream, PipedInputStream, String, ExecWatch, Boolean,
             InputStream, Boolean> inContainer(
             String containerId) {
-        return new PodResourceDouble(getContext().withContainerId(containerId));
+        return new PodResourceDouble(getContext().withContainerId(containerId), clientContext, namespace);
     }
 
     @Override
     public TtyExecOutputErrorable<String, OutputStream, PipedInputStream, ExecWatch> readingInput(InputStream in) {
-        return new PodResourceDouble(getContext().withIn(in));
+        return new PodResourceDouble(getContext().withIn(in), clientContext, namespace);
     }
 
     @Override
     public TtyExecErrorable<String, OutputStream, PipedInputStream, ExecWatch> writingOutput(OutputStream out) {
-        return new PodResourceDouble(getContext().withOut(out));
+        return new PodResourceDouble(getContext().withOut(out), clientContext, namespace);
     }
 
     @Override
     public TtyExecErrorChannelable<String, OutputStream, PipedInputStream, ExecWatch> writingError(OutputStream err) {
-        return new PodResourceDouble(getContext().withErr(err));
+        return new PodResourceDouble(getContext().withErr(err), clientContext, namespace);
     }
 
     @Override
     public TtyExecErrorChannelable<String, OutputStream, PipedInputStream, ExecWatch> redirectingError() {
-        return new PodResourceDouble(getContext().withErrPipe(new PipedInputStream()));
+        return new PodResourceDouble(getContext().withErrPipe(new PipedInputStream()), clientContext, namespace);
     }
 
     @Override
     public TtyExecable<String, ExecWatch> writingErrorChannel(OutputStream errChannel) {
-        return new PodResourceDouble(getContext().withErrChannel(errChannel));
+        return new PodResourceDouble(getContext().withErrChannel(errChannel), clientContext, namespace);
     }
 
     @Override
     public Execable<String, ExecWatch> usingListener(ExecListener execListener) {
-        return new PodResourceDouble(getContext().withExecListener(execListener));
+        return new PodResourceDouble(getContext().withExecListener(execListener), clientContext, namespace);
     }
 
     @Override
     public ExecListenable<String, ExecWatch> withTTY() {
-        return new PodResourceDouble(getContext().withTty(true));
+        return new PodResourceDouble(getContext().withTty(true), clientContext, namespace);
     }
 
     @Override
