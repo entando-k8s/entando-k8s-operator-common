@@ -35,10 +35,16 @@ public final class LabeledArgumentCaptor<T extends HasMetadata> {
     private LabeledArgumentCaptor(Class<? extends T> clazz, String labelName, String labelValue) {
         this.clazz = clazz;
         andWithLabel(labelName, labelValue);
-        capturingMatcher = initCaptureMatcher();
+        capturingMatcher = initCaptureMatcher(clazz);
     }
 
-    private CapturingMatcher<T> initCaptureMatcher() {
+    public LabeledArgumentCaptor(Class<? extends T> clazz, Map<String, String> labels) {
+        this.clazz = clazz;
+        this.labelsToMatch.putAll(labels);
+        capturingMatcher = initCaptureMatcher(clazz);
+    }
+
+    private CapturingMatcher<T> initCaptureMatcher(Class<? extends T> clazz) {
         return new CapturingMatcher(clazz) {
             @Override
             public boolean matches(Object argument) {
