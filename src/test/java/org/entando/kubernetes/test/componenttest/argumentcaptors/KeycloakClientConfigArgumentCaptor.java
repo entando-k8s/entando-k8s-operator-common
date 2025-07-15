@@ -23,12 +23,11 @@ import org.mockito.internal.matchers.CapturingMatcher;
 import org.mockito.internal.util.Primitives;
 
 public final class KeycloakClientConfigArgumentCaptor {
-    private final Class<? extends SsoClientConfig> clazz;
     private final CapturingMatcher<SsoClientConfig> capturingMatcher;
 
     @SuppressWarnings("unchecked")
     private KeycloakClientConfigArgumentCaptor(String clientid) {
-        capturingMatcher = new MyCapturingMatcher(clientid);
+        capturingMatcher = new MyCapturingMatcher(SsoClientConfig.class, clientid);
     }
 
     public static KeycloakClientConfigArgumentCaptor forClientId(String clientid) {
@@ -52,7 +51,7 @@ public final class KeycloakClientConfigArgumentCaptor {
 
         private final String clientid;
 
-        public MyCapturingMatcher(String clientid) {
+        public MyCapturingMatcher(Class<?> clazz, String clientid) {
             super(clazz);
             this.clientid = clientid;
         }

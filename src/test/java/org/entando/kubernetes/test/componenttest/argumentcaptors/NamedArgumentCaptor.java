@@ -30,7 +30,7 @@ public final class NamedArgumentCaptor<T extends HasMetadata> {
     @SuppressWarnings("unchecked")
     private NamedArgumentCaptor(Class<? extends T> clazz, String name) {
         this.clazz = clazz;
-        capturingMatcher = new MyCapturingMatcher(name);
+        capturingMatcher = new MyCapturingMatcher(clazz, name);
     }
 
     @SuppressWarnings("unchecked")
@@ -56,8 +56,8 @@ public final class NamedArgumentCaptor<T extends HasMetadata> {
 
         private final String name;
 
-        public MyCapturingMatcher(String name) {
-            super();
+        public MyCapturingMatcher(Class<? extends T> clazz, String name) {
+            super(clazz);
             this.name = name;
         }
 
