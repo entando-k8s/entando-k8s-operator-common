@@ -30,27 +30,28 @@ public final class LabeledArgumentCaptor<T extends HasMetadata> {
     private final Class<? extends T> clazz;
     private final Map<String, String> labelsToMatch = new ConcurrentHashMap<>();
     @SuppressWarnings("unchecked")
-    private final CapturingMatcher<T> capturingMatcher = new CapturingMatcher() {
-        @Override
-        public boolean matches(Object argument) {
-            return labelsToMatch.entrySet().stream().allMatch(getIsPresentMapPredicate((HasMetadata) argument));
-        }
-
-        protected Predicate<Map.Entry<String, String>> getIsPresentMapPredicate(HasMetadata argument) {
-            return entry -> argument.getMetadata().getLabels().containsKey(entry.getKey()) && argument.getMetadata()
-                    .getLabels().get(entry.getKey()).equals(entry.getValue());
-        }
-    };
+    private final CapturingMatcher<T> capturingMatcher;
 
     private LabeledArgumentCaptor(Class<? extends T> clazz, String labelName, String labelValue) {
         this.clazz = clazz;
         andWithLabel(labelName, labelValue);
+        capturingMatcher = initCaptureMatcher();
     }
 
-    public LabeledArgumentCaptor(Class<? extends T> clazz, Map<String, String> labels) {
-        this.clazz = clazz;
-        this.labelsToMatch.putAll(labels);
+    private CapturingMatcher<T> initCaptureMatcher() {
+        return new CapturingMatcher(clazz) {
+            @Override
+            public boolean matches(Object argument) {
+                return labelsToMatch.entrySet().stream().allMatch(getIsPresentMapPredicate((HasMetadata) argument));
+            }
+
+            protected Predicate<Map.Entry<String, String>> getIsPresentMapPredicate(HasMetadata argument) {
+                return entry -> argument.getMetadata().getLabels().containsKey(entry.getKey()) && argument.getMetadata()
+                        .getLabels().get(entry.getKey()).equals(entry.getValue());
+            }
+        };
     }
+
 
     @SuppressWarnings("unchecked")
     public static <U extends HasMetadata, S extends U> LabeledArgumentCaptor<U> forResourceWithLabel(Class<S> clazz,

@@ -17,7 +17,7 @@
 package org.entando.kubernetes.fluentspi;
 
 import java.util.Arrays;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import org.entando.kubernetes.controller.spi.client.KubernetesClientForControllers;
 import org.entando.kubernetes.controller.spi.command.DeploymentProcessor;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;

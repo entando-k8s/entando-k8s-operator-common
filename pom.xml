@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.entando</groupId>
         <artifactId>entando-quarkus-parent</artifactId>
-        <version>7.3.1-ENG-5551-PR-60</version>
+        <version>7.3.1-ENG-5551</version>
         <relativePath/>
     </parent>
     <artifactId>entando-k8s-operator-common</artifactId>
@@ -68,6 +68,16 @@
     </properties>
 
     <!-- DEPENDENCIES -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.james</groupId>
+                <artifactId>apache-mime4j</artifactId>
+                <version>0.6.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>com.sun.org.apache</groupId>
@@ -116,9 +126,16 @@
             <artifactId>quarkus-picocli</artifactId>
         </dependency>
         <!--NB!!! Leave this in. For some weird reason the Quarkus build fails when it is not here-->
+<!--
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+-->
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.1.0</version>
         </dependency>
 
         <!-- Test-scoped dependencies. -->
