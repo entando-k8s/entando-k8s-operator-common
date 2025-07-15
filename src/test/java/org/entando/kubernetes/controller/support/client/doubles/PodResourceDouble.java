@@ -51,7 +51,7 @@ public class PodResourceDouble extends PodOperationsImpl {
 
     public PodResourceDouble(PodOperationContext podOperationContext, ClientContext clientContext, String namespace) {
         super(podOperationContext, HasMetadataOperationsImpl.defaultContext(clientContext).withNamespace(namespace));
-        this.clientContext=clientContext;
+        this.clientContext = clientContext;
     }
 
     @Override
