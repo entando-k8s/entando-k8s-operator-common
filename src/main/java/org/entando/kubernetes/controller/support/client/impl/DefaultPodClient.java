@@ -22,8 +22,12 @@ import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinitionList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.utils.Utils;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.List;
@@ -142,5 +146,27 @@ public class DefaultPodClient implements PodClient {
         }
         return futureCondition.thenApply(l -> l.isEmpty() ? null : l.get(0)).getNow(null);
     }
+
+    public static CustomResourceDefinition waitUntilCondition(
+            NonNamespaceOperation<CustomResourceDefinition, CustomResourceDefinitionList, Resource<CustomResourceDefinition>> informable,
+            Predicate<CustomResourceDefinition> condition, long amount, TimeUnit timeUnit
+    ) {
+        CompletableFuture<List<CustomResourceDefinition>> futureCondition = informable.informOnCondition(l -> {
+            if (l.isEmpty()) {
+                return condition.test(null);
+            }
+            return condition.test(l.get(0));
+        });
+
+        if (!Utils.waitUntilReady(futureCondition, amount, timeUnit)) {
+            futureCondition.cancel(true);
+            List<CustomResourceDefinition> list = informable.list().getItems();
+            if (list.isEmpty()) {
+                return null;
+            }
+        }
+        return futureCondition.thenApply(l -> l.isEmpty() ? null : l.get(0)).getNow(null);
+    }
+
 }
 
