@@ -28,15 +28,12 @@ import io.fabric8.kubernetes.api.model.SecretList;
 import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.utils.HttpClientUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map.Entry;
-import okhttp3.OkHttpClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfigProperty;
 import org.entando.kubernetes.controller.support.creators.IngressCreator;
@@ -72,27 +69,6 @@ public final class TestFixturePreparation {
         System.setProperty(EntandoOperatorConfigProperty.ENTANDO_DISABLE_KEYCLOAK_SSL_REQUIREMENT.getJvmSystemProperty(),
                 String.valueOf(HttpTestHelper.getDefaultProtocol().equals("http")));
     }
-
-//    private static AutoAdaptableKubernetesClient buildKubernetesClient() {
-//        ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withConnectionTimeout(30000).withRequestTimeout(30000);
-//        EntandoOperatorTestConfig.getKubernetesMasterUrl().ifPresent(configBuilder::withMasterUrl);
-//        EntandoOperatorTestConfig.getKubernetesUsername().ifPresent(configBuilder::withUsername);
-//        EntandoOperatorTestConfig.getKubernetesPassword().ifPresent(configBuilder::withPassword);
-//        Config config = configBuilder.build();
-//        HttpClient httpClient = HttpClientUtils.createHttpClient(config);
-//        AutoAdaptableKubernetesClient result = new AutoAdaptableKubernetesClient(httpClient, config);
-//        if (result.namespaces().withName(ENTANDO_CONTROLLERS_NAMESPACE).get() == null) {
-//            createNamespace(result, ENTANDO_CONTROLLERS_NAMESPACE);
-//        }
-//        //Has to be in entando-controllers
-//        if (!ENTANDO_CONTROLLERS_NAMESPACE.equals(result.getNamespace())) {
-//            result.close();
-//            config.setNamespace(ENTANDO_CONTROLLERS_NAMESPACE);
-//            result = new AutoAdaptableKubernetesClient(HttpClientUtils.createHttpClient(config), config);
-//        }
-//        ensureRedHatRegistryCredentials(result);
-//        return result;
-//    }
 
     private static AutoAdaptableKubernetesClient buildKubernetesClient() {
         ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withConnectionTimeout(30000).withRequestTimeout(30000);

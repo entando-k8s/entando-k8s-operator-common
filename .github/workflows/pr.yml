@@ -22,7 +22,9 @@ env:
   ENTANDO_OPT_CUSTOM_ENV: "${{ secrets.ENTANDO_OPT_CUSTOM_ENV }}"
   PPL_CONTEXT: ${{ toJson(github) }}
   LOCAL_CLONE_DIR: "local-checkout"
-
+  ENTANDO_TEST_KEYCLOAK_BASE_URL:  "${{ secrets.TEST_KEYCLOAK24_URL }}"
+  ENTANDO_TEST_KEYCLOAK_ADMIN_USER: "${{ secrets.TEST_KEYCLOAK24_USERNAME }}"
+  ENTANDO_TEST_KEYCLOAK_ADMIN_PASSWORD: "${{ secrets.TEST_KEYCLOAK24_PASSWORD }}"
 
 jobs:
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

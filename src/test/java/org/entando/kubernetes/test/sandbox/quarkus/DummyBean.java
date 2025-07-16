@@ -27,13 +27,13 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.ClientErrorException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.ws.rs.ClientErrorException;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.IngressingContainer;
 import org.entando.kubernetes.controller.spi.container.KeycloakName;
@@ -236,8 +236,8 @@ public class DummyBean {
                 .registerProviderInstance(new org.jboss.resteasy.client.jaxrs.internal.CompletionStageRxInvokerProvider());
         instance
                 .registerProviderInstance(new org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider());
-        instance
-                .registerProviderInstance(new org.jboss.resteasy.plugins.providers.jackson.UnrecognizedPropertyExceptionHandler());
+        //instance
+        //        .registerProviderInstance(new org.jboss.resteasy.plugins.providers.jackson.UnrecognizedPropertyExceptionHandler());
         instance
                 .registerProviderInstance(new org.jboss.resteasy.plugins.providers.jackson.PatchMethodFilter());
         instance.registerProviderInstance(new org.jboss.resteasy.plugins.providers.DataSourceProvider());
@@ -259,11 +259,11 @@ public class DummyBean {
         instance.registerProviderInstance(new org.jboss.resteasy.plugins.providers.StreamingOutputProvider());
         instance.registerProviderInstance(new org.jboss.resteasy.plugins.interceptors.CacheControlFeature());
         instance
-                .registerProviderInstance(new org.jboss.resteasy.plugins.interceptors.encoding.ClientContentEncodingAnnotationFeature());
+                .registerProviderInstance(new org.jboss.resteasy.plugins.interceptors.ClientContentEncodingAnnotationFeature());
         instance
-                .registerProviderInstance(new org.jboss.resteasy.plugins.interceptors.encoding.ServerContentEncodingAnnotationFeature());
+                .registerProviderInstance(new org.jboss.resteasy.plugins.interceptors.ServerContentEncodingAnnotationFeature());
         instance
-                .registerProviderInstance(new org.jboss.resteasy.plugins.interceptors.encoding.MessageSanitizerContainerResponseFilter());
+                .registerProviderInstance(new org.jboss.resteasy.plugins.interceptors.MessageSanitizerContainerResponseFilter());
         instance.registerProviderInstance(new org.jboss.resteasy.plugins.providers.sse.SseEventProvider());
         instance
                 .registerProviderInstance(new org.jboss.resteasy.plugins.providers.sse.SseEventProvider());

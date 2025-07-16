@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
+import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -38,14 +39,19 @@ class DefaultServiceAccountClientTest extends AbstractSupportK8SIntegrationTest 
     @Test
     void shouldFindPreviouslyCreatedServiceAccount() {
         //Given I have an existing serviceAccount with the annotation "test: 123"
-        getSimpleK8SClient().serviceAccounts().findOrCreateServiceAccount(testResource, "my-serviceaccount")
-                .editMetadata()
+        DoneableServiceAccount sa = getSimpleK8SClient().serviceAccounts()
+                .findOrCreateServiceAccount(testResource, "my-serviceaccount");
+
+        sa.editMetadata()
                 .addToAnnotations("test", "123")
                 .endMetadata()
                 .done();
+
         //When I attempt to findOrCreate a service account with the same name
-        final ServiceAccount done = getSimpleK8SClient().serviceAccounts().findOrCreateServiceAccount(testResource, "my-serviceaccount")
+        final ServiceAccount done = getSimpleK8SClient().serviceAccounts()
+                .findOrCreateServiceAccount(testResource, "my-serviceaccount")
                 .done();
+
         //Then it has the previously created annotation
         assertThat(done.getMetadata().getAnnotations().get("test"), is("123"));
     }

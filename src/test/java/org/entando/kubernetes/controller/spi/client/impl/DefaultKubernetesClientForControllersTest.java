@@ -18,21 +18,22 @@ package org.entando.kubernetes.controller.spi.client.impl;
 
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind.*;
+import static org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind.DEPLOYMENT;
+import static org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind.INGRESS;
+import static org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind.PERSISTENT_VOLUME_CLAIM;
+import static org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind.SECRET;
+import static org.entando.kubernetes.controller.spi.client.impl.SupportedStandardResourceKind.SERVICE;
 import static org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.Event;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
-import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.AppsAPIGroupDSL;
