@@ -16,10 +16,40 @@
 
 package org.entando.kubernetes.controller.support.client;
 
+/*
+ * FABRIC8 6.x MIGRATION NOTE:
+ * ===========================
+ * This class has been REMOVED in Fabric8 6.x migration.
+ * The "Doneable" pattern no longer exists in Fabric8 6.x.
+ *
+ * OLD PATTERN (Fabric8 5.x):
+ * --------------------------
+ * DoneableIngress ingress = new DoneableIngress(ingressInstance, action);
+ * ingress.editSpec().addToRules(rule).endSpec();
+ * Ingress result = ingress.done();
+ *
+ * NEW PATTERN (Fabric8 6.x):
+ * --------------------------
+ * Ingress ingress = new IngressBuilder(existingIngress)
+ *     .editOrNewSpec()
+ *         .addToRules(rule)
+ *     .endSpec()
+ *     .build();
+ *
+ * Files that need updating:
+ * - IngressCreator.java
+ * - DefaultIngressClient.java
+ * - Any other files using DoneableIngress
+ */
+
+// COMMENTED OUT - OLD FABRIC8 5.x CODE
+// Keeping for reference during migration
+
+/*
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
-import io.fabric8.kubernetes.api.model.networking.v1.IngressFluentImpl;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressFluentImpl;  // REMOVED in Fabric8 6.x
 import java.util.function.UnaryOperator;
 
 public class DoneableIngress extends IngressFluentImpl<DoneableIngress> {
@@ -47,3 +77,4 @@ public class DoneableIngress extends IngressFluentImpl<DoneableIngress> {
         return hashCode.hashCode();
     }
 }
+*/

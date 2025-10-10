@@ -20,7 +20,8 @@ import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.controller.support.client.DoneableIngress;
+// FABRIC8 6.x: DoneableIngress removed
+// import org.entando.kubernetes.controller.support.client.DoneableIngress;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -40,6 +41,9 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
         return ingress;
     }
 
+    // FABRIC8 6.x MIGRATION:
+    // OLD CODE (returned DoneableIngress):
+    /*
     @Override
     public DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
         return new DoneableIngress(getNamespace(peerInNamespace).getIngress(name), item -> {
@@ -47,6 +51,20 @@ public class IngressClientDouble extends AbstractK8SClientDouble implements Ingr
             getNamespace(peerInNamespace).putIngress(item);
             return item;
         });
+    }
+    */
+
+    // NEW CODE (returns Ingress directly):
+    @Override
+    public Ingress editIngress(EntandoCustomResource peerInNamespace, String name) {
+        return getNamespace(peerInNamespace).getIngress(name);
+    }
+
+    // FABRIC8 6.x MIGRATION: New method to update Ingress (replaces Doneable.done())
+    @Override
+    public Ingress updateIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
+        getNamespace(peerInNamespace).putIngress(ingress);
+        return ingress;
     }
 
     @Override

@@ -25,13 +25,18 @@ public interface IngressClient {
 
     Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress);
 
-    DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name);
+    // FABRIC8 6.x MIGRATION: Changed return type from DoneableIngress to Ingress
+    // OLD: DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name);
+    Ingress editIngress(EntandoCustomResource peerInNamespace, String name);
 
     Ingress loadIngress(String namespace, String name);
 
     Ingress addHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath, Map<String, String> annotations);
 
     Ingress removeHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath);
+
+    // FABRIC8 6.x MIGRATION: New method to update Ingress (replaces Doneable.done())
+    Ingress updateIngress(EntandoCustomResource peerInNamespace, Ingress ingress);
 
     String getMasterUrlHost();
 }

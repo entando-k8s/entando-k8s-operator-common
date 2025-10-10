@@ -112,6 +112,9 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                 this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress),
                         () -> newIngress);
             } else {
+                // FABRIC8 6.x MIGRATION:
+                // OLD CODE (with DoneableIngress):
+                /*
                 if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
                     final String host = determineIngressHost(ingressClient, ingressingDeployable);
                     final List<IngressTLS> tls = maybeBuildTls(ingressClient, ingressingDeployable);
@@ -119,6 +122,22 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                                     ingressingDeployable.getIngressName())
                             .editSpec().editFirstRule().withHost(host).endRule()
                             .withTls(tls).endSpec().done();
+                }
+                */
+
+                // NEW CODE (with IngressBuilder):
+                if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
+                    final String host = determineIngressHost(ingressClient, ingressingDeployable);
+                    final List<IngressTLS> tls = maybeBuildTls(ingressClient, ingressingDeployable);
+                    Ingress existing = ingressClient.editIngress(entandoCustomResource,
+                            ingressingDeployable.getIngressName());
+
+                    Ingress updated = new IngressBuilder(existing)
+                            .editSpec().editFirstRule().withHost(host).endRule()
+                            .withTls(tls).endSpec()
+                            .build();
+
+                    this.ingress = ingressClient.updateIngress(entandoCustomResource, updated);
                 }
                 List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
                         .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)

@@ -22,6 +22,7 @@ import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.ListOptions;
 import io.fabric8.kubernetes.client.CustomResource;
@@ -78,6 +79,8 @@ public class EntandoResourceClientBase {
         } else {
             definition = CustomResourceDefinitionContext.fromCustomResourceType(((CustomResource<?, ?>) customResource).getClass());
         }
+        // FABRIC8 6.x MIGRATION: OLD CODE (using customResource):
+        /*
         try (Watch ignore = ioSafe(() -> client.customResource(definition)
                 .watch(customResource.getMetadata().getNamespace(), customResource.getMetadata().getName(), null,
                         (ListOptions) null, new Watcher<>() {
@@ -110,8 +113,48 @@ public class EntandoResourceClientBase {
                         }))) {
             return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
         }
+        */
+
+        // NEW CODE (using genericKubernetesResources):
+        // The Watcher interface expects GenericKubernetesResource when using genericKubernetesResources()
+        try (Watch ignore = ioSafe(() -> client.genericKubernetesResources(definition)
+                .inNamespace(customResource.getMetadata().getNamespace())
+                .withName(customResource.getMetadata().getName())
+                .watch(new Watcher<GenericKubernetesResource>() {
+                            final ObjectMapper objectMapper = new ObjectMapper();
+
+                            @Override
+                            public void eventReceived(Action action, GenericKubernetesResource genericResource) {
+                                final T resource = ioSafe(() -> objectMapper.readValue(
+                                        objectMapper.writeValueAsString(genericResource),
+                                        (Class<T>) customResource.getClass()));
+                                if (resource instanceof SerializedEntandoResource) {
+                                    ((SerializedEntandoResource) resource).setDefinition(definition);
+                                }
+                                if (predicate.test(resource)) {
+                                    future.complete(resource);
+                                }
+                            }
+
+                            @Override
+                            public void onClose(WatcherException cause) {
+                                if (cause.getMessage().contains("resourceVersion") && cause.getMessage().contains("too old")) {
+                                    //reconnect - resource went out of sync. happens on occasion.
+                                    ioSafe(() -> client.genericKubernetesResources(definition)
+                                            .inNamespace(customResource.getMetadata().getNamespace())
+                                            .withName(customResource.getMetadata().getName())
+                                            .watch(this));
+                                } else {
+                                    future.completeExceptionally(cause);
+                                }
+                            }
+                        }))) {
+            return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
+        }
     }
 
+    // FABRIC8 6.x MIGRATION: OLD CODE (using customResource):
+    /*
     protected SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
         return ioSafe(() -> {
             final CustomResourceDefinitionContext context = resolveDefinitionContext(kind, apiVersion);
@@ -123,14 +166,40 @@ public class EntandoResourceClientBase {
             return serializedEntandoResource;
         });
     }
+    */
+
+    // NEW CODE (using genericKubernetesResources):
+    protected SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
+        return ioSafe(() -> {
+            final CustomResourceDefinitionContext context = resolveDefinitionContext(kind, apiVersion);
+            final var resource = client.genericKubernetesResources(context)
+                    .inNamespace(namespace)
+                    .withName(name)
+                    .get();
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SerializedEntandoResource serializedEntandoResource = objectMapper
+                    .readValue(objectMapper.writeValueAsString(resource), SerializedEntandoResource.class);
+            serializedEntandoResource.setDefinition(context);
+            return serializedEntandoResource;
+        });
+    }
 
     protected <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName) {
         return getOperations(clzz).inNamespace(resourceNamespace).withName(resourceName).fromServer().get();
     }
 
+    // FABRIC8 6.x MIGRATION: OLD CODE (using customResources):
+    /*
     @SuppressWarnings("unchecked")
     protected <T extends EntandoCustomResource> MixedOperation<T, KubernetesResourceList<T>, Resource<T>> getOperations(Class<T> c) {
         return client.customResources((Class) c);
+    }
+    */
+
+    // NEW CODE (using resources):
+    @SuppressWarnings("unchecked")
+    protected <T extends EntandoCustomResource> MixedOperation<T, KubernetesResourceList<T>, Resource<T>> getOperations(Class<T> c) {
+        return client.resources((Class) c);
     }
 
     @SuppressWarnings({"unchecked"})

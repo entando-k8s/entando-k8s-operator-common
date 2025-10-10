@@ -16,11 +16,41 @@
 
 package org.entando.kubernetes.controller.support.client;
 
+/*
+ * FABRIC8 6.x MIGRATION NOTE:
+ * ===========================
+ * This class has been REMOVED in Fabric8 6.x migration.
+ * The "Doneable" pattern no longer exists in Fabric8 6.x.
+ *
+ * OLD PATTERN (Fabric8 5.x):
+ * --------------------------
+ * DoneableServiceAccount sa = new DoneableServiceAccount(action);
+ * sa.editMetadata().withName("name").endMetadata();
+ * ServiceAccount result = sa.done();
+ *
+ * NEW PATTERN (Fabric8 6.x):
+ * --------------------------
+ * ServiceAccount sa = new ServiceAccountBuilder()
+ *     .withNewMetadata()
+ *         .withName("name")
+ *     .endMetadata()
+ *     .build();
+ *
+ * Files that need updating:
+ * - ServiceAccountCreator.java
+ * - DefaultServiceAccountClient.java
+ * - Any other files using DoneableServiceAccount
+ */
+
+// COMMENTED OUT - OLD FABRIC8 5.x CODE
+// Keeping for reference during migration
+
+/*
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
-import io.fabric8.kubernetes.api.model.ServiceAccountFluentImpl;
+import io.fabric8.kubernetes.api.model.ServiceAccountFluentImpl;  // REMOVED in Fabric8 6.x
 import java.util.function.UnaryOperator;
 
 public class DoneableServiceAccount extends ServiceAccountFluentImpl<DoneableServiceAccount> {
@@ -56,3 +86,4 @@ public class DoneableServiceAccount extends ServiceAccountFluentImpl<DoneableSer
     }
 
 }
+*/

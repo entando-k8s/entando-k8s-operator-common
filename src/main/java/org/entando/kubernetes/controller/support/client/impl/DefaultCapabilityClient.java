@@ -42,6 +42,8 @@ public class DefaultCapabilityClient extends EntandoResourceClientBase implement
         super(client);
     }
 
+    // FABRIC8 6.x MIGRATION: OLD CODE (using customResources):
+    /*
     @Override
     public Optional<ProvidedCapability> providedCapabilityByName(String namespace, String name) {
         return ofNullable(client.customResources(ProvidedCapability.class).inNamespace(namespace).withName(name).fromServer().get());
@@ -76,6 +78,45 @@ public class DefaultCapabilityClient extends EntandoResourceClientBase implement
     @Override
     public Optional<ProvidedCapability> providedCapabilityByLabels(String namespace, Map<String, String> labels) {
         return client.customResources(ProvidedCapability.class).inNamespace(namespace).withLabels(labels).list().getItems().stream()
+                .findFirst();
+    }
+    */
+
+    // NEW CODE (using resources):
+    @Override
+    public Optional<ProvidedCapability> providedCapabilityByName(String namespace, String name) {
+        return ofNullable(client.resources(ProvidedCapability.class).inNamespace(namespace).withName(name).fromServer().get());
+    }
+
+    @Override
+    public Optional<ProvidedCapability> providedCapabilityByLabels(Map<String, String> labels) {
+        if (EntandoOperatorConfig.isClusterScopedDeployment()) {
+            return client.resources(ProvidedCapability.class).inAnyNamespace().withLabels(labels).list().getItems().stream()
+                    .findFirst();
+        } else {
+            for (String namespace : EntandoOperatorConfig.getAllAccessibleNamespaces()) {
+                try {
+                    final Optional<ProvidedCapability> providedCapability = client.resources(ProvidedCapability.class)
+                            .inNamespace(namespace)
+                            .withLabels(labels).list().getItems().stream()
+                            .findFirst();
+                    if (providedCapability.isPresent()) {
+                        return providedCapability;
+                    }
+                } catch (KubernetesClientException e) {
+                    if (e.getCode() != HttpURLConnection.HTTP_FORBIDDEN) {
+                        throw e;
+                    }
+                }
+            }
+
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<ProvidedCapability> providedCapabilityByLabels(String namespace, Map<String, String> labels) {
+        return client.resources(ProvidedCapability.class).inNamespace(namespace).withLabels(labels).list().getItems().stream()
                 .findFirst();
     }
 

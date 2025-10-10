@@ -21,7 +21,8 @@ import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
+// FABRIC8 6.x: DoneableServiceAccount removed
+// import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -54,8 +55,10 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
     }
 
     @Override
-    public DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace,
-            String name) {
+    public ServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name) {
+        // FABRIC8 6.x MIGRATION:
+        // OLD CODE (returned DoneableServiceAccount):
+        /*
         ServiceAccount serviceAccount = getNamespace(peerInNamespace).getServiceAccount(name);
         if (serviceAccount == null) {
             serviceAccount = new ServiceAccountBuilder().withNewMetadata().withName(name)
@@ -66,8 +69,28 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
         return new DoneableServiceAccount(serviceAccount, sa -> {
             getNamespace(peerInNamespace).putServiceAccount(sa);
             return sa;
-
         });
+        */
+
+        // NEW CODE (returns ServiceAccount directly):
+        ServiceAccount serviceAccount = getNamespace(peerInNamespace).getServiceAccount(name);
+        if (serviceAccount == null) {
+            serviceAccount = new ServiceAccountBuilder()
+                    .withNewMetadata()
+                        .withName(name)
+                        .withNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .endMetadata()
+                    .build();
+            getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
+        }
+        return serviceAccount;
+    }
+
+    @Override
+    public ServiceAccount updateServiceAccount(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
+        // FABRIC8 6.x MIGRATION: New method to replace Doneable.done()
+        getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
+        return serviceAccount;
     }
 
     @Override

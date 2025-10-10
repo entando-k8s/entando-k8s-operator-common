@@ -32,7 +32,12 @@ public interface ServiceAccountClient {
 
     Role loadRole(EntandoCustomResource peerInNamespace, String name);
 
-    DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name);
+    // FABRIC8 6.x MIGRATION: Changed return type from DoneableServiceAccount to ServiceAccount
+    // OLD: DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name);
+    ServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name);
 
     ServiceAccount findServiceAccount(EntandoCustomResource peerInNamespace, String name);
+
+    // FABRIC8 6.x MIGRATION: New method to update ServiceAccount (replaces Doneable.done())
+    ServiceAccount updateServiceAccount(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount);
 }

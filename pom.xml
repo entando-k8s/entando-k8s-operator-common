@@ -21,7 +21,8 @@
     <parent>
         <groupId>org.entando</groupId>
         <artifactId>entando-quarkus-parent</artifactId>
-        <version>7.3.1-ENG-5551-PR-60</version>
+        <version>7.3.0-fix.1</version>
+<!--        <version>7.3.1-ENG-5551-PR-60</version>-->
         <relativePath/>
     </parent>
     <artifactId>entando-k8s-operator-common</artifactId>
@@ -202,6 +203,20 @@
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client</artifactId>
+        </dependency>
+        <!-- OkHttp client for Fabric8 6.x (needed for OkHttp customizations) -->
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-httpclient-okhttp</artifactId>
         </dependency>
     </dependencies>
     <repositories>

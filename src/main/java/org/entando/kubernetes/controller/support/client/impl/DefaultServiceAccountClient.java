@@ -28,7 +28,8 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.net.HttpURLConnection;
 import java.sql.Timestamp;
-import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
+// FABRIC8 6.x: DoneableServiceAccount removed
+// import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -61,8 +62,10 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @Override
-    public DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace,
-            String name) {
+    public ServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name) {
+        // FABRIC8 6.x MIGRATION:
+        // OLD CODE (Fabric8 5.x with DoneableServiceAccount):
+        /*
         final Resource<ServiceAccount> as = client.serviceAccounts()
                 .inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name);
         try {
@@ -80,6 +83,51 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
         } catch (KubernetesClientException e) {
             throw KubernetesExceptionProcessor
                     .processExceptionOnLoad(peerInNamespace, e, "ServiceAccount", name);
+        }
+        */
+
+        // NEW CODE (Fabric8 6.x):
+        try {
+            createIfAbsent(peerInNamespace, new ServiceAccountBuilder()
+                    .withNewMetadata()
+                    .withNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .withName(name)
+                    // Add timestamp annotation to ensure state change
+                    .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+                    .endMetadata()
+                    .build(), client.serviceAccounts());
+
+            // Return the service account from server
+            return client.serviceAccounts()
+                    .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .withName(name)
+                    .get();
+
+        } catch (KubernetesClientException e) {
+            throw KubernetesExceptionProcessor
+                    .processExceptionOnLoad(peerInNamespace, e, "ServiceAccount", name);
+        }
+    }
+
+    @Override
+    public ServiceAccount updateServiceAccount(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
+        try {
+            // Add timestamp annotation to ensure state change (avoid HTTP 400)
+            ServiceAccount updated = new ServiceAccountBuilder(serviceAccount)
+                    .editOrNewMetadata()
+                        .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+                    .endMetadata()
+                    .build();
+
+            return client.serviceAccounts()
+                    .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .resource(updated)
+                    .update();
+
+        } catch (KubernetesClientException e) {
+            throw KubernetesExceptionProcessor
+                    .processExceptionOnLoad(peerInNamespace, e, "ServiceAccount",
+                            serviceAccount.getMetadata().getName());
         }
     }
 
@@ -110,12 +158,23 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
         return load(peerInNamespace, name, client.rbac().roles());
     }
 
+    // FABRIC8 6.x MIGRATION:
+    // OLD TYPE SIGNATURE (Fabric8 5.x):
+    // private <R extends HasMetadata> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
+    //         MixedOperation<R, ?, Resource<R>> operation)
+
+    // NEW TYPE SIGNATURE (Fabric8 6.x):
+    // The third type parameter is no longer Resource<R>, it's now a specific resource type (e.g., ServiceAccountResource)
+    // So we use a bounded wildcard
     @SuppressWarnings("unchecked")
     private <R extends HasMetadata> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
-            MixedOperation<R, ?, Resource<R>> operation) {
+            MixedOperation<R, ?, ?> operation) {
         try {
-            return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).create(resource).getMetadata()
-                    .getName();
+            // FABRIC8 6.x: Use resource() method instead of create(resource) directly
+            R created = (R) operation.inNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .resource(resource)
+                    .create();
+            return created.getMetadata().getName();
         } catch (KubernetesClientException e) {
             if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
                 throw e;
@@ -124,10 +183,17 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
         return resource.getMetadata().getName();
     }
 
+    // FABRIC8 6.x MIGRATION:
+    // OLD TYPE SIGNATURE (Fabric8 5.x):
+    // private <R extends HasMetadata> R load(EntandoCustomResource peerInNamespace, String name,
+    //         MixedOperation<R, ?, Resource<R>> operation)
+
+    // NEW TYPE SIGNATURE (Fabric8 6.x):
+    @SuppressWarnings("unchecked")
     private <R extends HasMetadata> R load(EntandoCustomResource peerInNamespace, String name,
-            MixedOperation<R, ?, Resource<R>> operation) {
+            MixedOperation<R, ?, ?> operation) {
         try {
-            return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
+            return (R) operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
         } catch (KubernetesClientException e) {
             throw KubernetesExceptionProcessor
                     .processExceptionOnLoad(peerInNamespace, e, ((OperationInfo) operation).getKind(), name);

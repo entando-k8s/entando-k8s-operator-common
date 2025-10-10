@@ -19,6 +19,8 @@ package org.entando.kubernetes.controller.support.creators;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.withDiagnostics;
 
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.PolicyRule;
 import io.fabric8.kubernetes.api.model.rbac.PolicyRuleBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Role;
@@ -32,7 +34,8 @@ import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
-import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
+// FABRIC8 6.x: DoneableServiceAccount removed - using ServiceAccount + ServiceAccountBuilder
+// import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.SecurityMode;
@@ -62,12 +65,38 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
     }
 
     private void prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?> deployable) {
+        // FABRIC8 6.x MIGRATION:
+        // OLD CODE (Fabric8 5.x with DoneableServiceAccount):
+        /*
         DoneableServiceAccount serviceAccount = serviceAccountClient
                 .findOrCreateServiceAccount(entandoCustomResource, deployable.getServiceAccountToUse());
         List<LocalObjectReference> pullSecrets = serviceAccount.buildImagePullSecrets();
         serviceAccount.addAllToImagePullSecrets(EntandoOperatorConfig.getImagePullSecrets().stream()
                 .filter(s -> pullSecrets.stream().noneMatch(pullSecret -> pullSecret.getName().equals(s))).map(LocalObjectReference::new)
                 .collect(Collectors.toList())).done();
+        */
+
+        // NEW CODE (Fabric8 6.x with ServiceAccount + ServiceAccountBuilder):
+        ServiceAccount serviceAccount = serviceAccountClient
+                .findOrCreateServiceAccount(entandoCustomResource, deployable.getServiceAccountToUse());
+
+        List<LocalObjectReference> existingPullSecrets = serviceAccount.getImagePullSecrets();
+        if (existingPullSecrets == null) {
+            existingPullSecrets = java.util.Collections.emptyList();
+        }
+
+        List<LocalObjectReference> newPullSecrets = EntandoOperatorConfig.getImagePullSecrets().stream()
+                .filter(s -> existingPullSecrets.stream().noneMatch(pullSecret -> pullSecret.getName().equals(s)))
+                .map(LocalObjectReference::new)
+                .collect(Collectors.toList());
+
+        if (!newPullSecrets.isEmpty()) {
+            // Need to update the ServiceAccount with new pull secrets
+            ServiceAccount updatedServiceAccount = new ServiceAccountBuilder(serviceAccount)
+                    .addAllToImagePullSecrets(newPullSecrets)
+                    .build();
+            serviceAccountClient.updateServiceAccount(entandoCustomResource, updatedServiceAccount);
+        }
     }
 
     private Role newRole(Deployable<?> deployable) {
