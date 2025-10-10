@@ -81,9 +81,6 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
                 .findOrCreateServiceAccount(entandoCustomResource, deployable.getServiceAccountToUse());
 
         List<LocalObjectReference> existingPullSecrets = serviceAccount.getImagePullSecrets();
-        if (existingPullSecrets == null) {
-            existingPullSecrets = java.util.Collections.emptyList();
-        }
 
         List<LocalObjectReference> newPullSecrets = EntandoOperatorConfig.getImagePullSecrets().stream()
                 .filter(s -> existingPullSecrets.stream().noneMatch(pullSecret -> pullSecret.getName().equals(s)))

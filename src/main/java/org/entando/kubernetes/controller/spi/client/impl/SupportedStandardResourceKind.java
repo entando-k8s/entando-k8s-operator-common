@@ -68,7 +68,7 @@ public enum SupportedStandardResourceKind {
         public MixedOperation<
                 Pod,
                 PodList,
-                PodResource<Pod>
+                PodResource
                 > getOperation(KubernetesClient client) {
             return client.pods();
         }

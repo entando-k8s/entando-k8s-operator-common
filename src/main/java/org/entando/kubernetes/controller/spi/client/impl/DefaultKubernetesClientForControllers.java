@@ -19,13 +19,7 @@ package org.entando.kubernetes.controller.spi.client.impl;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.Event;
-import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.KubernetesResourceList;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -98,12 +92,12 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
 
     @Override
     public ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) throws TimeoutException {
-        PodResource<Pod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
+        PodResource podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName());
         return executeAndWait(podResource, containerName, timeoutSeconds, commands);
     }
 
-    public PodResource<Pod> getPodByName(String name, String namespace) {
+    public PodResource getPodByName(String name, String namespace) {
         var pod = (namespace != null) ? client.pods().inNamespace(namespace) : client.pods();
         return pod.withName(name);
     }
@@ -209,7 +203,7 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
                 T latest = (T) ser;
                 consumer.accept(latest);
 
-                var updated = resource.updateStatus(objectMapper.readValue(objectMapper.writeValueAsString(latest), Map.class));
+                var updated = resource.updateStatus((GenericKubernetesResource) objectMapper.readValue(objectMapper.writeValueAsString(latest), Map.class));
                 return (T) objectMapper.readValue(
                         objectMapper.writeValueAsString(updated),
                         SerializedEntandoResource.class);

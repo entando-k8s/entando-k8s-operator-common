@@ -43,7 +43,7 @@ import org.entando.kubernetes.model.common.EntandoCustomResourceStatus;
         getterVisibility = Visibility.NONE,
         setterVisibility = Visibility.NONE
 )
-@RegisterForReflection
+@RegisterForReflection(ignoreNested = true)
 @JsonIgnoreProperties(
         ignoreUnknown = true
 )

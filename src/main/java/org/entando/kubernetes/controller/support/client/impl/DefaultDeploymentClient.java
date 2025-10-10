@@ -24,6 +24,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -72,7 +73,7 @@ public class DefaultDeploymentClient implements DeploymentClient {
         } else {
             //Don't wait because the polling in Fabric8 is dodge
             getDeploymenResourceFor(peerInNamespace, deployment).scale(0, true);
-            FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
+            FilterWatchListDeletable<Pod, PodList, PodResource> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
             interruptionSafe(() -> DefaultPodClient.waitUntilCondition(

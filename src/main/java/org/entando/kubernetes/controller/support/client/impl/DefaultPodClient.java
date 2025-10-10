@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.utils.Utils;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
@@ -50,7 +51,9 @@ public class DefaultPodClient implements PodClient {
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;
         //HACK for GraalVM
-        KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
+//        KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
+        KubernetesDeserializer deserializer = new KubernetesDeserializer();
+        deserializer.registerCustomKind("v1", "Pod", Pod.class);
     }
 
     @Override
@@ -63,7 +66,7 @@ public class DefaultPodClient implements PodClient {
     @Override
     public void removeAndWait(String namespace, Map<String, String> labels, int timeoutSeconds) throws TimeoutException {
         interruptionSafe(() -> {
-            FilterWatchListDeletable<Pod, PodList> podResource = client.pods().inNamespace(namespace).withLabels(labels);
+            FilterWatchListDeletable<Pod, PodList, PodResource> podResource = client.pods().inNamespace(namespace).withLabels(labels);
             podResource.delete();
             return waitUntilCondition(
                     podResource,
@@ -127,7 +130,7 @@ public class DefaultPodClient implements PodClient {
     }
 
     public static Pod waitUntilCondition(
-            FilterWatchListDeletable<Pod, PodList> informable,
+            FilterWatchListDeletable<Pod, PodList, PodResource> informable,
             Predicate<Pod> condition, long amount, TimeUnit timeUnit
     ) {
         CompletableFuture<List<Pod>> futureCondition = informable.informOnCondition(l -> {
