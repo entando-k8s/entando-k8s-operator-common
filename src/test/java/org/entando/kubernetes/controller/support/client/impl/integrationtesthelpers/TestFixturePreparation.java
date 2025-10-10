@@ -25,7 +25,7 @@ import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.SecretList;
-import io.fabric8.kubernetes.client.AutoAdaptableKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -50,9 +50,9 @@ public final class TestFixturePreparation {
 
     }
 
-    public static AutoAdaptableKubernetesClient newClient() {
+    public static KubernetesClient newClient() {
         try {
-            AutoAdaptableKubernetesClient result = buildKubernetesClient();
+            KubernetesClient result = buildKubernetesClient();
             initializeTls(result);
             return result;
         } catch (IOException e) {
@@ -60,7 +60,7 @@ public final class TestFixturePreparation {
         }
     }
 
-    private static void initializeTls(AutoAdaptableKubernetesClient result) throws IOException {
+    private static void initializeTls(KubernetesClient result) throws IOException {
         String domainSuffix = IngressCreator.determineRoutingSuffix(result.getMasterUrl().getHost());
         Path certRoot = Paths.get(EntandoOperatorTestConfig.getTestsCertRoot());
         Path tlsPath = certRoot.resolve(domainSuffix);
@@ -70,14 +70,15 @@ public final class TestFixturePreparation {
                 String.valueOf(HttpTestHelper.getDefaultProtocol().equals("http")));
     }
 
-    private static AutoAdaptableKubernetesClient buildKubernetesClient() {
+    private static KubernetesClient buildKubernetesClient() {
         ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withConnectionTimeout(30000).withRequestTimeout(30000);
         EntandoOperatorTestConfig.getKubernetesMasterUrl().ifPresent(configBuilder::withMasterUrl);
         EntandoOperatorTestConfig.getKubernetesUsername().ifPresent(configBuilder::withUsername);
         EntandoOperatorTestConfig.getKubernetesPassword().ifPresent(configBuilder::withPassword);
         Config config = configBuilder.build();
         //OkHttpClient httpClient = HttpClientUtils.createHttpClient(config);
-        AutoAdaptableKubernetesClient result = new AutoAdaptableKubernetesClient(config);
+
+        KubernetesClient result = new KubernetesClientBuilder().withConfig(config).build();;
         if (result.namespaces().withName(ENTANDO_CONTROLLERS_NAMESPACE).get() == null) {
             createNamespace(result, ENTANDO_CONTROLLERS_NAMESPACE);
         }
@@ -85,13 +86,13 @@ public final class TestFixturePreparation {
         if (!ENTANDO_CONTROLLERS_NAMESPACE.equals(result.getNamespace())) {
             result.close();
             config.setNamespace(ENTANDO_CONTROLLERS_NAMESPACE);
-            result = new AutoAdaptableKubernetesClient(config);
+            result = new KubernetesClientBuilder().withConfig(config).build();;
         }
         ensureRedHatRegistryCredentials(result);
         return result;
     }
 
-    private static void ensureRedHatRegistryCredentials(AutoAdaptableKubernetesClient result) {
+    private static void ensureRedHatRegistryCredentials(KubernetesClient result) {
         if (result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).withName("redhat-registry").get() == null) {
             EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s ->
                     result.secrets().inNamespace(ENTANDO_CONTROLLERS_NAMESPACE).create(new SecretBuilder().withNewMetadata()
