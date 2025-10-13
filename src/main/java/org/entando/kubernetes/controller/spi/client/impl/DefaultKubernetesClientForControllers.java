@@ -203,7 +203,7 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
                 T latest = (T) ser;
                 consumer.accept(latest);
 
-                var updated = resource.updateStatus((GenericKubernetesResource) objectMapper.readValue(objectMapper.writeValueAsString(latest), Map.class));
+                var updated = resource.updateStatus((GenericKubernetesResource) objectMapper.readValue(objectMapper.writeValueAsString(latest), GenericKubernetesResource.class));
                 return (T) objectMapper.readValue(
                         objectMapper.writeValueAsString(updated),
                         SerializedEntandoResource.class);

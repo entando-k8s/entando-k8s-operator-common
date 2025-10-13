@@ -65,7 +65,9 @@ public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extend
 
     default void attachKubernetesResource(String name, Object resource) {
         try {
-            Allure.attachment(name, new ObjectMapper(new YAMLFactory()).writeValueAsString(resource));
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jdk8.Jdk8Module());
+            Allure.attachment(name, mapper.writeValueAsString(resource));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
