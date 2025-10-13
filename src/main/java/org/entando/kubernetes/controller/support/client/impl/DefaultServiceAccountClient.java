@@ -92,8 +92,6 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
                     .withNewMetadata()
                     .withNamespace(peerInNamespace.getMetadata().getNamespace())
                     .withName(name)
-                    // Add timestamp annotation to ensure state change
-                    .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
                     .endMetadata()
                     .build(), client.serviceAccounts());
 
@@ -112,11 +110,34 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     @Override
     public ServiceAccount updateServiceAccount(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
         try {
+            // FABRIC8 6.x MIGRATION:
+            // OLD CODE
             // Add timestamp annotation to ensure state change (avoid HTTP 400)
-            ServiceAccount updated = new ServiceAccountBuilder(serviceAccount)
+//            ServiceAccount updated = new ServiceAccountBuilder(serviceAccount)
+//                    .editOrNewMetadata()
+//                    .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+//                    .endMetadata()
+//                    .build();
+
+            // Get the latest version from the server to avoid resourceVersion conflicts
+            ServiceAccount latest = client.serviceAccounts()
+                    .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .withName(serviceAccount.getMetadata().getName())
+                    .get();
+
+            // Apply desired changes from serviceAccount parameter to the latest version
+            ServiceAccount updated = new ServiceAccountBuilder(latest)
                     .editOrNewMetadata()
+                        // Add timestamp annotation to ensure state change (avoid HTTP 400)
                         .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+                        // Merge annotations from the desired serviceAccount
+                        .addToAnnotations(serviceAccount.getMetadata().getAnnotations() != null
+                                ? serviceAccount.getMetadata().getAnnotations()
+                                : java.util.Collections.emptyMap())
                     .endMetadata()
+                    // Apply other changes if needed (secrets, imagePullSecrets, etc.)
+                    .withSecrets(serviceAccount.getSecrets())
+                    .withImagePullSecrets(serviceAccount.getImagePullSecrets())
                     .build();
 
             return client.serviceAccounts()
