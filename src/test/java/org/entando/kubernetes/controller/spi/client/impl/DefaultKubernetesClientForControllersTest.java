@@ -356,7 +356,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                             .endMetadata()
                             .withNewSpec()
                             .addNewContainer()
-                            .withImage("centos/nginx-116-centos7")
+                            .withImage(REGISTRY_HUB_DOCKER + "centos/nginx-116-centos7")
                             .withName("nginx")
                             .withCommand("/usr/libexec/s2i/run")
                             .endContainer()
@@ -394,7 +394,10 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         var deployment = startNewDeployment(ns);
         DefaultPodClient.waitUntilCondition(
                 getFabric8Client().pods().inNamespace(ns),
-                pod -> !getFabric8Client().pods().inNamespace(ns).list().getItems().isEmpty(),
+                // FABRIC8 6.x MIGRATION:
+                // OLD CODE
+//                pod -> !getFabric8Client().pods().inNamespace(ns).list().getItems().isEmpty(),
+                Objects::nonNull,
                 30, TimeUnit.SECONDS
         );
         var firstPod = getFabric8Client().pods().inNamespace(ns).list().getItems().get(0);
@@ -404,7 +407,10 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
         erc.getDeploymentByName(deployment.getMetadata().getName(), ns).scale(0);
         DefaultPodClient.waitUntilCondition(
                 getFabric8Client().pods().inNamespace(ns),
-                pod -> erc.getPodByName(firstPod.getMetadata().getName(), ns).get() == null,
+                // FABRIC8 6.x MIGRATION:
+                // OLD CODE
+//                pod -> erc.getPodByName(firstPod.getMetadata().getName(), ns).get() == null,
+                Objects::isNull,
                 30, TimeUnit.SECONDS
         );
         Assertions.assertThat(foundPod.get()).isNull();

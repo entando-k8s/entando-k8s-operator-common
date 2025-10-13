@@ -34,6 +34,7 @@ import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -70,7 +71,10 @@ public class DefaultPodClient implements PodClient {
             podResource.delete();
             return waitUntilCondition(
                     podResource,
-                    pod -> podResource.list().getItems().isEmpty(),
+                    // FABRIC8 6.x MIGRATION:
+                    // OLD CODE
+                    //pod -> podResource.list().getItems().isEmpty(),
+                    Objects::isNull,  // null means the list is empty
                     timeoutSeconds,
                     TimeUnit.SECONDS
             );
