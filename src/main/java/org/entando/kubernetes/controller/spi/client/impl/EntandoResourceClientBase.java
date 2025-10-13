@@ -192,7 +192,7 @@ public class EntandoResourceClientBase {
     /*
     @SuppressWarnings("unchecked")
     protected <T extends EntandoCustomResource> MixedOperation<T, KubernetesResourceList<T>, Resource<T>> getOperations(Class<T> c) {
-        return client.customResources((Class) c);
+        return client.resources((Class) c);
     }
     */
 

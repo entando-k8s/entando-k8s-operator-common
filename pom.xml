@@ -65,6 +65,7 @@
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <sonar.projectKey>${github.organization}_${project.artifactId}</sonar.projectKey>
         <entando-k8s-custom-model.version>7.3.0-fix.1</entando-k8s-custom-model.version>
+        <assertj.version>3.19.0</assertj.version>
         <owaspSuppressionFileLocation>${project.basedir}/owasp-dependency-check-suppression.xml</owaspSuppressionFileLocation>
     </properties>
 
@@ -179,7 +180,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.19.0</version>
+            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

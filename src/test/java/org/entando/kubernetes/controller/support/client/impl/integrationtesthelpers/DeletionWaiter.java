@@ -103,15 +103,10 @@ public class DeletionWaiter<
                 .until(() -> {
                     try {
                         // Scale to zero if the resource supports it (e.g., Deployments, StatefulSets)
-                        try {
-                            O resource = this.operation.inNamespace(namespace).withName(name);
-                            // Try to scale to 0 using reflection to handle scalable resources
-                            resource.getClass().getMethod("scale", int.class, boolean.class).invoke(resource, 0, true);
-                            LOGGER.log(Level.WARNING,
-                                    (format("Scaled %s  %s/%s to zero", ((OperationSupport) operation).getResourceT(), namespace, name)));
-                        } catch (NoSuchMethodException e) {
-                            // Resource doesn't support scaling, skip
-                        }
+                        O resource = this.operation.inNamespace(namespace).withName(name);
+                        LOGGER.log(Level.WARNING,
+                                (format("Scaled %s  %s/%s to zero", ((OperationSupport) operation).getResourceT(), namespace, name)));
+                        resource.scale(0, true);// Deprecated
                         LOGGER.log(Level.WARNING,
                                 (format("Deleting %s  %s/%s", ((OperationSupport) operation).getResourceT(), namespace, name)));
                         this.operation.inNamespace(namespace).withName(name).withGracePeriod(0).delete();

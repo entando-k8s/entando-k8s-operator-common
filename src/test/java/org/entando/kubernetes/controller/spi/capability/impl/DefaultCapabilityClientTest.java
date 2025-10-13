@@ -61,7 +61,7 @@
 //
 //    @BeforeEach
 //    void deleteCapabilities() {
-//        deleteAll(getFabric8Client().customResources(ProvidedCapability.class));
+//        deleteAll(getFabric8Client().resources(ProvidedCapability.class));
 //        deleteAll(getFabric8Client().services());
 //        deleteAll(getFabric8Client().extensions().ingresses());
 //    }
