@@ -18,28 +18,30 @@ package org.entando.kubernetes.controller.support.client.impl.integrationtesthel
 
 import static org.awaitility.Awaitility.await;
 
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
-import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CustomResourceDeletionWaiter {
 
-    private final RawCustomResourceOperationsImpl operation;
+    private final MixedOperation<GenericKubernetesResource, GenericKubernetesResourceList, Resource<GenericKubernetesResource>> operation;
     private String name;
     private String namespace;
 
     public CustomResourceDeletionWaiter(KubernetesClient client, String kind) {
-        this.operation = client.customResource(new CustomResourceDefinitionContext.Builder()
+        CustomResourceDefinitionContext context = new CustomResourceDefinitionContext.Builder()
                 .withPlural(kind.toLowerCase() + "s")
                 .withVersion(TestFixturePreparation.CURRENT_ENTANDO_RESOURCE_VERSION)
                 .withGroup("entando.org")
                 .withScope("Namespaced")
                 .withName(kind)
-                .build());
+                .build();
+        this.operation = client.genericKubernetesResources(context);
     }
 
     public CustomResourceDeletionWaiter named(String name) {
@@ -58,22 +60,20 @@ public class CustomResourceDeletionWaiter {
 
     public void waitingAtMost(long duration, TimeUnit timeUnit) {
         if (name == null) {
-            if (((List) this.operation.list(namespace).get("items")).size() > 0) {
-                this.operation.delete(namespace);
+            // Delete all resources in the namespace
+            if (!this.operation.inNamespace(namespace).list().getItems().isEmpty()) {
+                this.operation.inNamespace(namespace).delete();
                 await().atMost(duration, timeUnit)
                         .ignoreExceptions()
-                        .until(() -> ((List) this.operation.list(namespace).get("items")).isEmpty());
+                        .until(() -> this.operation.inNamespace(namespace).list().getItems().isEmpty());
             }
         } else {
-            if (this.operation.get(namespace, name) != null) {
-                try {
-                    this.operation.delete(namespace, name);
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);
-                }
+            // Delete a specific named resource
+            if (this.operation.inNamespace(namespace).withName(name).get() != null) {
+                this.operation.inNamespace(namespace).withName(name).delete();
                 await().atMost(duration, timeUnit)
                         .ignoreExceptions()
-                        .until(() -> this.operation.get(namespace, name) == null);
+                        .until(() -> this.operation.inNamespace(namespace).withName(name).get() == null);
             }
         }
     }

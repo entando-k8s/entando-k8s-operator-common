@@ -16,18 +16,10 @@
 
 package org.entando.kubernetes.controller.support.client.doubles;
 
-import io.fabric8.kubernetes.client.ClientContext;
-import io.fabric8.kubernetes.client.SimpleClientContext;
-import io.fabric8.kubernetes.client.dsl.ContainerResource;
-import io.fabric8.kubernetes.client.dsl.ExecListenable;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import io.fabric8.kubernetes.client.dsl.ExecListener;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
-import io.fabric8.kubernetes.client.dsl.Execable;
-import io.fabric8.kubernetes.client.dsl.LogWatch;
-import io.fabric8.kubernetes.client.dsl.TtyExecErrorChannelable;
-import io.fabric8.kubernetes.client.dsl.TtyExecErrorable;
-import io.fabric8.kubernetes.client.dsl.TtyExecOutputErrorable;
-import io.fabric8.kubernetes.client.dsl.TtyExecable;
 import io.fabric8.kubernetes.client.dsl.internal.HasMetadataOperationsImpl;
 import io.fabric8.kubernetes.client.dsl.internal.PodOperationContext;
 import io.fabric8.kubernetes.client.dsl.internal.core.v1.PodOperationsImpl;
@@ -43,57 +35,65 @@ import java.util.List;
 
 public class PodResourceDouble extends PodOperationsImpl {
 
-    private final ClientContext clientContext;
+    private final KubernetesClient client;
 
     public PodResourceDouble(String namespace) {
-        this(new PodOperationContext(), new SimpleClientContext(), namespace);
+        this(new PodOperationContext(), HasMetadataOperationsImpl.defaultContext(new KubernetesClientBuilder().build()).withNamespace(namespace));
     }
 
-    public PodResourceDouble(PodOperationContext podOperationContext, ClientContext clientContext, String namespace) {
-        super(podOperationContext, HasMetadataOperationsImpl.defaultContext(clientContext).withNamespace(namespace));
-        this.clientContext = clientContext;
-    }
-
-    @Override
-    public ContainerResource<LogWatch, InputStream, PipedOutputStream, OutputStream, PipedInputStream, String, ExecWatch, Boolean,
-            InputStream, Boolean> inContainer(
-            String containerId) {
-        return new PodResourceDouble(getContext().withContainerId(containerId), clientContext, namespace);
+    public PodResourceDouble(PodOperationContext podOperationContext, io.fabric8.kubernetes.client.dsl.internal.OperationContext operationContext) {
+        super(podOperationContext, operationContext);
+        this.client = (KubernetesClient) operationContext.getClient();
     }
 
     @Override
-    public TtyExecOutputErrorable<String, OutputStream, PipedInputStream, ExecWatch> readingInput(InputStream in) {
-        return new PodResourceDouble(getContext().withIn(in), clientContext, namespace);
+    public PodOperationsImpl inContainer(String containerId) {
+        return new PodResourceDouble(getContext().withContainerId(containerId), context);
     }
 
     @Override
-    public TtyExecErrorable<String, OutputStream, PipedInputStream, ExecWatch> writingOutput(OutputStream out) {
-        return new PodResourceDouble(getContext().withOut(out), clientContext, namespace);
+    public PodOperationsImpl readingInput(InputStream in) {
+        return new PodResourceDouble(getContext().withIn(in), context);
     }
 
     @Override
-    public TtyExecErrorChannelable<String, OutputStream, PipedInputStream, ExecWatch> writingError(OutputStream err) {
-        return new PodResourceDouble(getContext().withErr(err), clientContext, namespace);
+    public PodOperationsImpl writingOutput(OutputStream out) {
+        return new PodResourceDouble(getContext().toBuilder().output(new PodOperationContext.StreamContext(out)).build(), context);
     }
 
     @Override
-    public TtyExecErrorChannelable<String, OutputStream, PipedInputStream, ExecWatch> redirectingError() {
-        return new PodResourceDouble(getContext().withErrPipe(new PipedInputStream()), clientContext, namespace);
+    public PodOperationsImpl redirectingOutput() {
+        return new PodResourceDouble(getContext().toBuilder().output(new PodOperationContext.StreamContext()).build(), context);
     }
 
     @Override
-    public TtyExecable<String, ExecWatch> writingErrorChannel(OutputStream errChannel) {
-        return new PodResourceDouble(getContext().withErrChannel(errChannel), clientContext, namespace);
+    public PodOperationsImpl writingError(OutputStream err) {
+        return new PodResourceDouble(getContext().toBuilder().error(new PodOperationContext.StreamContext(err)).build(), context);
     }
 
     @Override
-    public Execable<String, ExecWatch> usingListener(ExecListener execListener) {
-        return new PodResourceDouble(getContext().withExecListener(execListener), clientContext, namespace);
+    public PodOperationsImpl redirectingError() {
+        return new PodResourceDouble(getContext().toBuilder().error(new PodOperationContext.StreamContext()).build(), context);
     }
 
     @Override
-    public ExecListenable<String, ExecWatch> withTTY() {
-        return new PodResourceDouble(getContext().withTty(true), clientContext, namespace);
+    public PodOperationsImpl writingErrorChannel(OutputStream errChannel) {
+        return new PodResourceDouble(getContext().toBuilder().errorChannel(new PodOperationContext.StreamContext(errChannel)).build(), context);
+    }
+
+    @Override
+    public PodOperationsImpl redirectingErrorChannel() {
+        return new PodResourceDouble(getContext().toBuilder().errorChannel(new PodOperationContext.StreamContext()).build(), context);
+    }
+
+    @Override
+    public PodOperationsImpl usingListener(ExecListener execListener) {
+        return new PodResourceDouble(getContext().withExecListener(execListener), context);
+    }
+
+    @Override
+    public PodOperationsImpl withTTY() {
+        return new PodResourceDouble(getContext().withTty(true), context);
     }
 
     @Override
@@ -113,14 +113,9 @@ public class PodResourceDouble extends PodOperationsImpl {
     public class ExecWatchDouble implements ExecWatch {
 
         private final List<String> commands;
-        private PodResourceDouble podResourceDouble = PodResourceDouble.this;
 
         public ExecWatchDouble(List<String> asList) {
             this.commands = asList;
-        }
-
-        public PodResourceDouble getPodResourceDouble() {
-            return podResourceDouble;
         }
 
         @Override
@@ -151,6 +146,11 @@ public class PodResourceDouble extends PodOperationsImpl {
         @Override
         public void resize(int cols, int rows) {
 
+        }
+
+        @Override
+        public java.util.concurrent.CompletableFuture<Integer> exitCode() {
+            return java.util.concurrent.CompletableFuture.completedFuture(0);
         }
     }
 }

@@ -87,7 +87,7 @@ public class DummyBean {
         this.kubernetesClient = kubernetesClient;
         this.simpleK8SClient = new DefaultSimpleK8SClient(kubernetesClient);
         this.domainSuffix = IngressCreator.determineRoutingSuffix(DefaultIngressClient.resolveMasterHostname(kubernetesClient));
-        this.operations = kubernetesClient.customResources(EntandoKeycloakServer.class);
+        this.operations = kubernetesClient.resources(EntandoKeycloakServer.class);
         this.keycloakServer = new EntandoKeycloakServerBuilder().editMetadata()
                 .withName("test-kc")
                 .withNamespace(KC_TEST_NAMESPACE)

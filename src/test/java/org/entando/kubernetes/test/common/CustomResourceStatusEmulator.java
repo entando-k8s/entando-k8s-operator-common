@@ -128,7 +128,7 @@ public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extend
                     .endHttp()
                     .endRule()
                     .addNewTl()
-                    .addNewHost(host)
+                    .addToHosts(host)
                     .endTl()
                     .endSpec()
                     .build());

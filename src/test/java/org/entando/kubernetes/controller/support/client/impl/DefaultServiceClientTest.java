@@ -213,7 +213,7 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
                     .withPort(new ServiceBackendPortBuilder().withNumber(8080).build())
                     .endService()
                     .endBackend()
-                    .withNewPath("/")
+                    .withPath("/")
                     .withPathType("Prefix")
                     .endPath()
                     .endHttp()
