@@ -43,8 +43,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.entando.kubernetes.controller.spi.capability.CapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
@@ -80,32 +78,14 @@ public interface KubernetesClientForControllers {
     <T extends EntandoCustomResource> T load(Class<T> clzz, String resourceNamespace, String resourceName);
 
     default EntandoCustomResource resolveCustomResourceToProcess(Collection<Class<? extends EntandoCustomResource>> supportedTypes) {
-        java.util.logging.Logger logger = Logger.getLogger("KubernetesClientForControllers");
         prepareConfig();
         String resourceName = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME);
-        logger.logp(Level.SEVERE, this.getClass().getName(), "resolveCustomResourceToProcess", () -> "resourceName: " + resourceName);
         String resourceNamespace = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE);
-        logger.logp(Level.SEVERE, this.getClass().getName(), "resolveCustomResourceToProcess", () -> "resourceNamespace: " + resourceNamespace);
         String kind = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND);
-        logger.logp(Level.SEVERE, this.getClass().getName(), "resolveCustomResourceToProcess", () -> "kind: " + kind);
-        EntandoCustomResource resource = load(supportedTypes.stream().filter(c -> c.getSimpleName().equals(kind)).findAny().orElseThrow(() ->
+        return load(supportedTypes.stream().filter(c -> c.getSimpleName().equals(kind)).findAny().orElseThrow(() ->
                         new IllegalArgumentException(format("The resourceKind %s was not found in the list of supported types", kind))),
                 resourceNamespace, resourceName);
-        logger.logp(Level.SEVERE, this.getClass().getName(), "resolveCustomResourceToProcess", () -> "resource: " + resource.getDefinitionName());
-        return resource;
     }
-
-
-
-//    default EntandoCustomResource resolveCustomResourceToProcess(Collection<Class<? extends EntandoCustomResource>> supportedTypes) {
-//        prepareConfig();
-//        String resourceName = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAME);
-//        String resourceNamespace = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_NAMESPACE);
-//        String kind = resolveProperty(EntandoOperatorSpiConfigProperty.ENTANDO_RESOURCE_KIND);
-//        return load(supportedTypes.stream().filter(c -> c.getSimpleName().equals(kind)).findAny().orElseThrow(() ->
-//                        new IllegalArgumentException(format("The resourceKind %s was not found in the list of supported types", kind))),
-//                resourceNamespace, resourceName);
-//    }
 
     private String resolveProperty(EntandoOperatorSpiConfigProperty name) {
         return EntandoOperatorConfigBase.lookupProperty(name)
