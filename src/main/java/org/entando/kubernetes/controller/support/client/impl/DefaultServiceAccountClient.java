@@ -113,11 +113,11 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
             // FABRIC8 6.x MIGRATION:
             // OLD CODE
             // Add timestamp annotation to ensure state change (avoid HTTP 400)
-//            ServiceAccount updated = new ServiceAccountBuilder(serviceAccount)
-//                    .editOrNewMetadata()
-//                    .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
-//                    .endMetadata()
-//                    .build();
+            //ServiceAccount updated = new ServiceAccountBuilder(serviceAccount)
+            //        .editOrNewMetadata()
+            //        .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+            //        .endMetadata()
+            //        .build();
 
             // Get the latest version from the server to avoid resourceVersion conflicts
             ServiceAccount latest = client.serviceAccounts()

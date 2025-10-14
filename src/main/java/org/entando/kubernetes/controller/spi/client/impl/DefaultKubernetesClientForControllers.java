@@ -19,7 +19,14 @@ package org.entando.kubernetes.controller.spi.client.impl;
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.Event;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -203,7 +210,9 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
                 T latest = (T) ser;
                 consumer.accept(latest);
 
-                var updated = resource.updateStatus((GenericKubernetesResource) objectMapper.readValue(objectMapper.writeValueAsString(latest), GenericKubernetesResource.class));
+                GenericKubernetesResource updatedResource = (GenericKubernetesResource) objectMapper.readValue(
+                        objectMapper.writeValueAsString(latest), GenericKubernetesResource.class);
+                var updated = resource.updateStatus(updatedResource);
                 return (T) objectMapper.readValue(
                         objectMapper.writeValueAsString(updated),
                         SerializedEntandoResource.class);

@@ -41,7 +41,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
@@ -57,7 +56,7 @@ public class DefaultPodClient implements PodClient {
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;
         //HACK for GraalVM
-//        KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
+        //KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
         KubernetesDeserializer deserializer = new KubernetesDeserializer();
         deserializer.registerCustomKind("v1", "Pod", Pod.class);
     }

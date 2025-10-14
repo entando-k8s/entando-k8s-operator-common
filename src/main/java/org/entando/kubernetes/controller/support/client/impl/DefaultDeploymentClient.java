@@ -26,7 +26,6 @@ import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
-
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -80,8 +79,8 @@ public class DefaultDeploymentClient implements DeploymentClient {
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
             interruptionSafe(() -> DefaultPodClient.waitUntilCondition(
                     podResource,
-//                    pod -> podResource.list().getItems().isEmpty(),
-                      Objects::isNull,
+                    //pod -> podResource.list().getItems().isEmpty(),
+                    Objects::isNull,
                     timeoutSeconds,
                     TimeUnit.SECONDS)
             );

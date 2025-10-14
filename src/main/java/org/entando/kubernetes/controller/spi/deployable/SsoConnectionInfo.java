@@ -22,7 +22,6 @@ import io.fabric8.kubernetes.api.model.Secret;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
-
 import org.apache.commons.lang3.StringUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 

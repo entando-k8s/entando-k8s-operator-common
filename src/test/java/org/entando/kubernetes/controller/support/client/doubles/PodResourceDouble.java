@@ -38,10 +38,12 @@ public class PodResourceDouble extends PodOperationsImpl {
     private final KubernetesClient client;
 
     public PodResourceDouble(String namespace) {
-        this(new PodOperationContext(), HasMetadataOperationsImpl.defaultContext(new KubernetesClientBuilder().build()).withNamespace(namespace));
+        this(new PodOperationContext(),
+                HasMetadataOperationsImpl.defaultContext(new KubernetesClientBuilder().build()).withNamespace(namespace));
     }
 
-    public PodResourceDouble(PodOperationContext podOperationContext, io.fabric8.kubernetes.client.dsl.internal.OperationContext operationContext) {
+    public PodResourceDouble(PodOperationContext podOperationContext,
+            io.fabric8.kubernetes.client.dsl.internal.OperationContext operationContext) {
         super(podOperationContext, operationContext);
         this.client = (KubernetesClient) operationContext.getClient();
     }
@@ -78,7 +80,8 @@ public class PodResourceDouble extends PodOperationsImpl {
 
     @Override
     public PodOperationsImpl writingErrorChannel(OutputStream errChannel) {
-        return new PodResourceDouble(getContext().toBuilder().errorChannel(new PodOperationContext.StreamContext(errChannel)).build(), context);
+        return new PodResourceDouble(
+                getContext().toBuilder().errorChannel(new PodOperationContext.StreamContext(errChannel)).build(), context);
     }
 
     @Override

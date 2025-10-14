@@ -396,7 +396,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                 getFabric8Client().pods().inNamespace(ns),
                 // FABRIC8 6.x MIGRATION:
                 // OLD CODE
-//                pod -> !getFabric8Client().pods().inNamespace(ns).list().getItems().isEmpty(),
+                //pod -> !getFabric8Client().pods().inNamespace(ns).list().getItems().isEmpty(),
                 Objects::nonNull,
                 30, TimeUnit.SECONDS
         );
@@ -409,7 +409,7 @@ class DefaultKubernetesClientForControllersTest extends AbstractK8SIntegrationTe
                 getFabric8Client().pods().inNamespace(ns),
                 // FABRIC8 6.x MIGRATION:
                 // OLD CODE
-//                pod -> erc.getPodByName(firstPod.getMetadata().getName(), ns).get() == null,
+                //pod -> erc.getPodByName(firstPod.getMetadata().getName(), ns).get() == null,
                 Objects::isNull,
                 30, TimeUnit.SECONDS
         );
