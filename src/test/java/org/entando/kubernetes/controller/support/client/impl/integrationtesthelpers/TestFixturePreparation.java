@@ -78,7 +78,7 @@ public final class TestFixturePreparation {
         Config config = configBuilder.build();
         //OkHttpClient httpClient = HttpClientUtils.createHttpClient(config);
 
-        KubernetesClient result = new KubernetesClientBuilder().withConfig(config).build();;
+        KubernetesClient result = new KubernetesClientBuilder().withConfig(config).build();
         if (result.namespaces().withName(ENTANDO_CONTROLLERS_NAMESPACE).get() == null) {
             createNamespace(result, ENTANDO_CONTROLLERS_NAMESPACE);
         }

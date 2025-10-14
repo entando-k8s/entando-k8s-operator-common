@@ -39,6 +39,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.NameUtils;
 import org.entando.kubernetes.controller.spi.common.PodResult;
@@ -46,6 +49,8 @@ import org.entando.kubernetes.controller.spi.common.PodResult.State;
 import org.entando.kubernetes.controller.support.client.PodClient;
 
 public class DefaultPodClient implements PodClient {
+
+    private static final Logger LOGGER = Logger.getLogger(DefaultPodClient.class.getName());
 
     private final KubernetesClient client;
 
@@ -133,6 +138,25 @@ public class DefaultPodClient implements PodClient {
         return client.pods().inNamespace(namespace).withLabels(labels).list().getItems().stream().findFirst().orElse(null);
     }
 
+    /**
+     * Handle timeout for a CompletableFuture by canceling it and logging a warning.
+     * This avoids blocking calls on the event loop.
+     *
+     * @param futureCondition the future to check for timeout
+     * @param amount timeout amount
+     * @param timeUnit timeout unit
+     * @return true if the future completed successfully, false if it timed out
+     */
+    private static boolean handleTimeout(CompletableFuture<?> futureCondition, long amount, TimeUnit timeUnit) {
+        if (!Utils.waitUntilReady(futureCondition, amount, timeUnit)) {
+            futureCondition.cancel(true);
+            // Don't make blocking call to list() - the informer's cache was already checked via informOnCondition
+            LOGGER.log(Level.WARNING, () -> "Timed out waiting for resource condition");
+            return false;
+        }
+        return true;
+    }
+
     public static Pod waitUntilCondition(
             FilterWatchListDeletable<Pod, PodList, PodResource> informable,
             Predicate<Pod> condition, long amount, TimeUnit timeUnit
@@ -144,12 +168,8 @@ public class DefaultPodClient implements PodClient {
             return condition.test(l.get(0));
         });
 
-        if (!Utils.waitUntilReady(futureCondition, amount, timeUnit)) {
-            futureCondition.cancel(true);
-            List<Pod> list = informable.list().getItems();
-            if (list.isEmpty()) {
-                return null;
-            }
+        if (!handleTimeout(futureCondition, amount, timeUnit)) {
+            return null;
         }
         return futureCondition.thenApply(l -> l.isEmpty() ? null : l.get(0)).getNow(null);
     }
@@ -165,14 +185,28 @@ public class DefaultPodClient implements PodClient {
             return condition.test(l.get(0));
         });
 
-        if (!Utils.waitUntilReady(futureCondition, amount, timeUnit)) {
-            futureCondition.cancel(true);
-            List<CustomResourceDefinition> list = informable.list().getItems();
-            if (list.isEmpty()) {
-                return null;
-            }
+        if (!handleTimeout(futureCondition, amount, timeUnit)) {
+            return null;
         }
         return futureCondition.thenApply(l -> l.isEmpty() ? null : l.get(0)).getNow(null);
+    }
+
+    /**
+     * Wait until a condition on the entire pod list is met, without blocking the event loop.
+     * This method uses informOnCondition to watch the informer's cache and avoids blocking calls.
+     *
+     * @param informable the pod resource to watch
+     * @param listCondition predicate that tests the entire list of pods
+     * @param amount timeout amount
+     * @param timeUnit timeout unit
+     * @return true if condition was met, false if timed out
+     */
+    public static boolean waitUntilConditionOnList(
+            FilterWatchListDeletable<Pod, PodList, PodResource> informable,
+            Predicate<List<Pod>> listCondition, long amount, TimeUnit timeUnit
+    ) {
+        CompletableFuture<List<Pod>> futureCondition = informable.informOnCondition(listCondition);
+        return handleTimeout(futureCondition, amount, timeUnit);
     }
 
 }
