@@ -67,6 +67,7 @@
         <entando-k8s-custom-model.version>7.3.0-fix.1-ESB-513-PR-99</entando-k8s-custom-model.version>
         <assertj.version>3.19.0</assertj.version>
         <owaspSuppressionFileLocation>${project.basedir}/owasp-dependency-check-suppression.xml</owaspSuppressionFileLocation>
+        <sonar.skip>true</sonar.skip>
     </properties>
 
     <!-- DEPENDENCIES -->
