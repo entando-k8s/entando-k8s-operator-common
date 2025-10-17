@@ -39,15 +39,14 @@ public interface SsoConnectionInfo {
 
     default String decodeSecretValue(String key) {
         Secret adminSecret = this.getAdminSecret();
-        Optional<String> value = Optional.ofNullable(adminSecret.getData())
-                .map(data -> Optional.ofNullable(data.get(key))
-                        .filter(StringUtils::isNotEmpty)
-                        .map(s -> new String(Base64.getDecoder().decode(s), StandardCharsets.UTF_8)))
-                .filter(Optional::isPresent)
+        return Optional.ofNullable(adminSecret.getData())
+                .map(data -> data.get(key))
+                .filter(StringUtils::isNotEmpty)
+                .map(s -> new String(Base64.getDecoder().decode(s), StandardCharsets.UTF_8))
                 .orElseGet(() -> Optional.ofNullable(adminSecret.getStringData())
                         .map(data -> data.get(key))
+                        .orElse(null)
                 );
-        return value.orElse(null);
     }
 
     Secret getAdminSecret();
