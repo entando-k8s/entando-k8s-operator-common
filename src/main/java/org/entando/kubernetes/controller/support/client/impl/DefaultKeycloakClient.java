@@ -51,17 +51,20 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.ClientResource;
 import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserProfileResource;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.representations.userprofile.config.UPConfig;
 
 public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
     public static final String MASTER_REALM = "master";
     public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
+    public static final List<String> PROFILE_PARAMS_TO_SET_OPTIONAL = List.of("email", "firstName", "lastName");
     private static final Logger LOGGER = Logger.getLogger(DefaultKeycloakClient.class.getName());
     private Keycloak keycloak;
     private boolean isHttps = false;
@@ -144,6 +147,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             try {
                 keycloak.realms().create(newRealm);
                 createFirstUser(realmResource);
+                disableUpdateProfileRequiredAction(realmResource);
             } catch (ClientErrorException e) {
                 //Another thread could be creating  the realm
                 if (e.getResponse().getStatus() != HttpURLConnection.HTTP_CONFLICT) {
@@ -216,6 +220,27 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             final String[] segments = response.getLocation().getPath().split("\\/");
             String userId = segments[segments.length - 1];
             realmResource.users().get(userId).resetPassword(credentials);
+        }
+    }
+
+    private void disableUpdateProfileRequiredAction(RealmResource realmResource) {
+        try {
+            // Retry mechanism to wait for Keycloak to initialize required actions after realm creation
+            retry(() -> {
+                UserProfileResource userProfileResource = realmResource.users().userProfile();
+                UPConfig userProfileConfig = userProfileResource.getConfiguration();
+                // Make first name, last name, and email fields optional in UserProfile RealmSettings
+                userProfileConfig.getAttributes().stream()
+                        .filter(p -> PROFILE_PARAMS_TO_SET_OPTIONAL.contains(p.getName()))
+                        .forEach(p -> p.setRequired(null));
+
+                realmResource.users().userProfile().update(userProfileConfig);
+                LOGGER.info(String.format("Disabled 'Update Profile' required action for realm: %s",
+                        realmResource.toRepresentation().getRealm()));
+                return null;
+            }, IllegalStateException.class::isInstance, 8);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to disable Update Profile required action", e);
         }
     }
 

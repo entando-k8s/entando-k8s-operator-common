@@ -31,8 +31,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.idm.RequiredActionProviderRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.userprofile.config.UPAttribute;
 
 @Tags({@Tag("adapter"), @Tag("pre-deployment"), @Tag("integration")})
 class DefaultKeycloakClientTest implements FluentIntegrationTesting, KeycloakTestHelper {
@@ -144,6 +147,22 @@ class DefaultKeycloakClientTest implements FluentIntegrationTesting, KeycloakTes
         //With correct permissions
         List<RoleRepresentation> roleRepresentations = this.retrieveServiceAccountRolesInRealm(MY_REALM, MY_CLIENT, EXISTING_CLIENT);
         assertThat(roleRepresentations.get(0).getName(), is(EXISTING_ROLE));
+    }
+
+    @Test
+    void testUpdateProfileRequiredActionIsDisabledWhenRealmIsCreated() {
+        //Given a Keycloak Server is available and I have logged in
+        DefaultKeycloakClient kc = prepareKeycloak();
+        //When I ensure that a specific realm is available
+        kc.ensureRealm(MY_REALM);
+        //Then the 'Update Profile' required action should be disabled
+        RealmResource realm = getKeycloak().realm(MY_REALM);
+        UPAttribute wrongRequired = realm.users().userProfile().getConfiguration().getAttributes().stream()
+                .filter(p -> !"username".equals(p.getName()))
+                .filter(p -> p.getRequired() != null)
+                .findFirst()
+                .orElse(null);
+        assertThat(wrongRequired, org.hamcrest.Matchers.nullValue());
     }
 
     private DefaultKeycloakClient prepareKeycloak() {
