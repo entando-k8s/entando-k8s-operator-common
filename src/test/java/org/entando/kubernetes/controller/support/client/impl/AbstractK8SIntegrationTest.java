@@ -160,23 +160,7 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
     protected abstract String[] getNamespacesToUse();
 
-    // FABRIC8 6.x MIGRATION:
-    // OLD CODE (with DoneableServiceAccount):
-    /*
-    public ServiceAccount prepareTestServiceAccount(DefaultSimpleK8SClient client, EntandoCustomResource peer,
-            String name) {
-        ServiceAccountClient serviceAccountClient = client.serviceAccounts();
-        final var tmpServiceAccount = serviceAccountClient
-                .findOrCreateServiceAccount(peer, name);
-        await().atMost(10, TimeUnit.SECONDS).until(() ->
-                client.serviceAccounts().findServiceAccount(peer, name) != null
-        );
-        final var serviceAccount = tmpServiceAccount.done();
-        return serviceAccount;
-    }
-    */
 
-    // NEW CODE (with ServiceAccount directly):
     public ServiceAccount prepareTestServiceAccount(DefaultSimpleK8SClient client, EntandoCustomResource peer,
             String name) {
         ServiceAccountClient serviceAccountClient = client.serviceAccounts();

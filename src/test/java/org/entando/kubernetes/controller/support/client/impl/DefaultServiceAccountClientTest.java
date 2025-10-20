@@ -24,8 +24,6 @@ import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
 import org.entando.kubernetes.controller.spi.client.AbstractSupportK8SIntegrationTest;
-// FABRIC8 6.x: DoneableServiceAccount removed
-// import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
@@ -40,23 +38,6 @@ class DefaultServiceAccountClientTest extends AbstractSupportK8SIntegrationTest 
 
     @Test
     void shouldFindPreviouslyCreatedServiceAccount() {
-        // FABRIC8 6.x MIGRATION:
-        // OLD CODE (with DoneableServiceAccount):
-        /*
-        DoneableServiceAccount sa = getSimpleK8SClient().serviceAccounts()
-                .findOrCreateServiceAccount(testResource, "my-serviceaccount");
-
-        sa.editMetadata()
-                .addToAnnotations("test", "123")
-                .endMetadata()
-                .done();
-
-        final ServiceAccount done = getSimpleK8SClient().serviceAccounts()
-                .findOrCreateServiceAccount(testResource, "my-serviceaccount")
-                .done();
-        */
-
-        // NEW CODE (with ServiceAccount + ServiceAccountBuilder):
         //Given I have an existing serviceAccount with the annotation "test: 123"
         ServiceAccount sa = getSimpleK8SClient().serviceAccounts()
                 .findOrCreateServiceAccount(testResource, "my-serviceaccount");

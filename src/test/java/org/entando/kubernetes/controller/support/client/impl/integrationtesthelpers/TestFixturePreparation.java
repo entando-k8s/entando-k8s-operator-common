@@ -55,12 +55,12 @@ public final class TestFixturePreparation {
             KubernetesClient result = buildKubernetesClient();
             initializeTls(result);
             return result;
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private static void initializeTls(KubernetesClient result) throws IOException {
+    private static void initializeTls(KubernetesClient result) {
         String domainSuffix = IngressCreator.determineRoutingSuffix(result.getMasterUrl().getHost());
         Path certRoot = Paths.get(EntandoOperatorTestConfig.getTestsCertRoot());
         Path tlsPath = certRoot.resolve(domainSuffix);

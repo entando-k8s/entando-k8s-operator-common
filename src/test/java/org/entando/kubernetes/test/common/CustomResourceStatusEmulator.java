@@ -135,30 +135,6 @@ public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extend
                     .endSpec()
                     .build());
         } else {
-            // FABRIC8 6.x MIGRATION:
-            // OLD CODE (with DoneableIngress):
-            /*
-            ingress = getClient().ingresses().editIngress(customResource, NameUtils.standardIngressName(customResource))
-                    .editSpec()
-                    .editFirstRule()
-                    .editHttp()
-                    .addNewPath()
-                    .withNewBackend()
-                    .withNewService()
-                    .withName(NameUtils.standardServiceName(customResource, status.getQualifier()))
-                    .withPort(new ServiceBackendPortBuilder().withNumber(port).build())
-                    .endService()
-                    .endBackend()
-                    .withPath(path)
-                    .withPathType("Prefix")
-                    .endPath()
-                    .endHttp()
-                    .endRule()
-                    .endSpec()
-                    .done();
-            */
-
-            // NEW CODE (with IngressBuilder):
             Ingress existing = getClient().ingresses().editIngress(customResource, NameUtils.standardIngressName(customResource));
             Ingress updated = new IngressBuilder(existing)
                     .editSpec()

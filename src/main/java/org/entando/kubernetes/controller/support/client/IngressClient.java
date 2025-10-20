@@ -25,8 +25,6 @@ public interface IngressClient {
 
     Ingress createIngress(EntandoCustomResource peerInNamespace, Ingress ingress);
 
-    // FABRIC8 6.x MIGRATION: Changed return type from DoneableIngress to Ingress
-    // OLD: DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name);
     Ingress editIngress(EntandoCustomResource peerInNamespace, String name);
 
     Ingress loadIngress(String namespace, String name);
@@ -35,7 +33,6 @@ public interface IngressClient {
 
     Ingress removeHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath);
 
-    // FABRIC8 6.x MIGRATION: New method to update Ingress (replaces Doneable.done())
     Ingress updateIngress(EntandoCustomResource peerInNamespace, Ingress ingress);
 
     String getMasterUrlHost();

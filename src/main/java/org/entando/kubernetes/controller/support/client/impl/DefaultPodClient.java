@@ -56,7 +56,6 @@ public class DefaultPodClient implements PodClient {
     public DefaultPodClient(KubernetesClient client) {
         this.client = client;
         //HACK for GraalVM
-        //KubernetesDeserializer.registerCustomKind("v1", "Pod", Pod.class);
         KubernetesDeserializer deserializer = new KubernetesDeserializer();
         deserializer.registerCustomKind("v1", "Pod", Pod.class);
     }
@@ -75,10 +74,7 @@ public class DefaultPodClient implements PodClient {
             podResource.delete();
             return waitUntilCondition(
                     podResource,
-                    // FABRIC8 6.x MIGRATION:
-                    // OLD CODE
-                    //pod -> podResource.list().getItems().isEmpty(),
-                    Objects::isNull,  // null means the list is empty
+                    Objects::isNull,
                     timeoutSeconds,
                     TimeUnit.SECONDS
             );

@@ -84,11 +84,6 @@ public class DefaultDeploymentClient implements DeploymentClient {
                     timeoutSeconds,
                     TimeUnit.SECONDS)
             );
-            // FABRIC8 6.x MIGRATION:
-            // OLD CODE
-            //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod
-            //return getDeploymenResourceFor(peerInNamespace, deployment).patch(deployment);
-
 
             //Get the latest version after scaling to avoid resourceVersion conflict
             Deployment latest = getDeploymenResourceFor(peerInNamespace, deployment).get();

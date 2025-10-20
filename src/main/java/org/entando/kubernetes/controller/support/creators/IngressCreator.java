@@ -112,20 +112,6 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                 this.ingress = withDiagnostics(() -> ingressClient.createIngress(entandoCustomResource, newIngress),
                         () -> newIngress);
             } else {
-                // FABRIC8 6.x MIGRATION:
-                // OLD CODE (with DoneableIngress):
-                /*
-                if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
-                    final String host = determineIngressHost(ingressClient, ingressingDeployable);
-                    final List<IngressTLS> tls = maybeBuildTls(ingressClient, ingressingDeployable);
-                    this.ingress = ingressClient.editIngress(entandoCustomResource,
-                                    ingressingDeployable.getIngressName())
-                            .editSpec().editFirstRule().withHost(host).endRule()
-                            .withTls(tls).endSpec().done();
-                }
-                */
-
-                // NEW CODE (with IngressBuilder):
                 if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
                     final String host = determineIngressHost(ingressClient, ingressingDeployable);
                     final List<IngressTLS> tls = maybeBuildTls(ingressClient, ingressingDeployable);

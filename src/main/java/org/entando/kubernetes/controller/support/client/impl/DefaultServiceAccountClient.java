@@ -28,8 +28,6 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.net.HttpURLConnection;
 import java.sql.Timestamp;
-// FABRIC8 6.x: DoneableServiceAccount removed
-// import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -63,30 +61,6 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
 
     @Override
     public ServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name) {
-        // FABRIC8 6.x MIGRATION:
-        // OLD CODE (Fabric8 5.x with DoneableServiceAccount):
-        /*
-        final Resource<ServiceAccount> as = client.serviceAccounts()
-                .inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name);
-        try {
-            createIfAbsent(peerInNamespace, new ServiceAccountBuilder()
-                    .withNewMetadata()
-                    .withNamespace(peerInNamespace.getMetadata().getNamespace())
-                    .withName(name)
-                    .endMetadata()
-                    .build(), client.serviceAccounts());
-            return new DoneableServiceAccount(as.fromServer().get(), as::patch).editMetadata()
-                    //to ensure there is a state change so that the patch request does not get rejected
-                    .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
-                    .endMetadata();
-
-        } catch (KubernetesClientException e) {
-            throw KubernetesExceptionProcessor
-                    .processExceptionOnLoad(peerInNamespace, e, "ServiceAccount", name);
-        }
-        */
-
-        // NEW CODE (Fabric8 6.x):
         try {
             createIfAbsent(peerInNamespace, new ServiceAccountBuilder()
                     .withNewMetadata()
@@ -110,15 +84,6 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     @Override
     public ServiceAccount updateServiceAccount(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
         try {
-            // FABRIC8 6.x MIGRATION:
-            // OLD CODE
-            // Add timestamp annotation to ensure state change (avoid HTTP 400)
-            //ServiceAccount updated = new ServiceAccountBuilder(serviceAccount)
-            //        .editOrNewMetadata()
-            //        .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
-            //        .endMetadata()
-            //        .build();
-
             // Get the latest version from the server to avoid resourceVersion conflicts
             ServiceAccount latest = client.serviceAccounts()
                     .inNamespace(peerInNamespace.getMetadata().getNamespace())
@@ -179,20 +144,11 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
         return load(peerInNamespace, name, client.rbac().roles());
     }
 
-    // FABRIC8 6.x MIGRATION:
-    // OLD TYPE SIGNATURE (Fabric8 5.x):
-    // private <R extends HasMetadata> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
-    //         MixedOperation<R, ?, Resource<R>> operation)
-
-    // NEW TYPE SIGNATURE (Fabric8 6.x):
-    // The third type parameter is no longer Resource<R>, it's now a specific resource type (e.g., ServiceAccountResource)
-    // So we use a bounded wildcard
     @SuppressWarnings("unchecked")
     private <R extends HasMetadata> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
             MixedOperation<R, ?, ?> operation) {
         try {
-            // FABRIC8 6.x: Use resource() method instead of create(resource) directly
-            R created = (R) operation.inNamespace(peerInNamespace.getMetadata().getNamespace())
+            R created = operation.inNamespace(peerInNamespace.getMetadata().getNamespace())
                     .resource(resource)
                     .create();
             return created.getMetadata().getName();
@@ -204,17 +160,11 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
         return resource.getMetadata().getName();
     }
 
-    // FABRIC8 6.x MIGRATION:
-    // OLD TYPE SIGNATURE (Fabric8 5.x):
-    // private <R extends HasMetadata> R load(EntandoCustomResource peerInNamespace, String name,
-    //         MixedOperation<R, ?, Resource<R>> operation)
-
-    // NEW TYPE SIGNATURE (Fabric8 6.x):
     @SuppressWarnings("unchecked")
     private <R extends HasMetadata> R load(EntandoCustomResource peerInNamespace, String name,
             MixedOperation<R, ?, ?> operation) {
         try {
-            return (R) operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
+            return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
         } catch (KubernetesClientException e) {
             throw KubernetesExceptionProcessor
                     .processExceptionOnLoad(peerInNamespace, e, ((OperationInfo) operation).getKind(), name);

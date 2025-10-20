@@ -40,18 +40,6 @@ public class SupportProducer {
     @Produces
     public KubernetesClient getKubernetesClient() {
         if (kubernetesClient == null) {
-            /*
-            ConfigBuilder configBuilder = new ConfigBuilder().withTrustCerts(true).withRequestTimeout(30000).withConnectionTimeout(30000);
-            kubernetesClient = new DefaultKubernetesClient(configBuilder.build());
-            //Somehow when using the default JBoss Logging config in Quarkus HttpLoggingInterceptor ends up logging at trace level.
-            //Rather fix this programmatically than try to figure out how to control logging in all the different dev and runtime
-            // environments
-            ((HttpClientAware) kubernetesClient).getHttpClient().networkInterceptors().stream()
-                    .filter(HttpLoggingInterceptor.class::isInstance)
-                    .map(HttpLoggingInterceptor.class::cast)
-                    .findFirst()
-                    .ifPresent(interceptor -> interceptor.setLevel(Level.NONE));
-            */
             java.util.logging.Logger.getLogger(okhttp3.logging.HttpLoggingInterceptor.class.getName())
                     .setLevel(java.util.logging.Level.WARNING); // Or Level.OFF to silence it completely
 
@@ -61,7 +49,6 @@ public class SupportProducer {
                     .withConnectionTimeout(30000);
 
             kubernetesClient = new DefaultKubernetesClient(configBuilder.build());
-
         }
         return kubernetesClient;
     }

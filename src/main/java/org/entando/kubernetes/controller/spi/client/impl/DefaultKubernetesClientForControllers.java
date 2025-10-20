@@ -34,11 +34,7 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-// FABRIC8 6.x: RawCustomResourceOperationsImpl removed
-// import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
-import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -147,46 +143,6 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
                 .create(event);
     }
 
-    // FABRIC8 6.x MIGRATION:
-    // OLD CODE (using RawCustomResourceOperationsImpl):
-    /*
-    @SuppressWarnings({"unchecked", "java:S1905", "java:S1874"})
-    //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
-    //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
-    @Override
-    public <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer) {
-        if (customResource instanceof SerializedEntandoResource) {
-            return ioSafe(() -> {
-                SerializedEntandoResource ser = (SerializedEntandoResource) customResource;
-                CustomResourceDefinitionContext definition = Optional.ofNullable(ser.getDefinition()).orElse(
-                        resolveDefinitionContext(ser.getKind(), ser.getApiVersion()));
-                ser.setDefinition(definition);
-                RawCustomResourceOperationsImpl resource = client.customResource(definition)
-                        .inNamespace(customResource.getMetadata().getNamespace())
-                        .withName(customResource.getMetadata().getName());
-                final ObjectMapper objectMapper = new ObjectMapper();
-                ser = objectMapper.readValue(objectMapper.writeValueAsString(resource.get()), SerializedEntandoResource.class);
-                ser.setDefinition(definition);
-                T latest = (T) ser;
-                consumer.accept(latest);
-                return (T) objectMapper.readValue(
-                        objectMapper.writeValueAsString(resource.updateStatus(objectMapper.writeValueAsString(latest))),
-                        SerializedEntandoResource.class);
-            });
-        } else {
-            MixedOperation<T, KubernetesResourceList<T>, Resource<T>> operations = getOperations(
-                    (Class<T>) customResource.getClass());
-            Resource<T> resource = operations
-                    .inNamespace(customResource.getMetadata().getNamespace())
-                    .withName(customResource.getMetadata().getName());
-            T latest = resource.fromServer().get();
-            consumer.accept(latest);
-            return resource.updateStatus(latest);
-        }
-    }
-    */
-
-    // NEW CODE (using genericKubernetesResources):
     @SuppressWarnings({"unchecked", "java:S1905"})
     //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
     @Override
@@ -223,7 +179,7 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
             Resource<T> resource = operations
                     .inNamespace(customResource.getMetadata().getNamespace())
                     .withName(customResource.getMetadata().getName());
-            T latest = resource.fromServer().get();
+            T latest = resource.get();
             consumer.accept(latest);
             return resource.updateStatus(latest);
         }

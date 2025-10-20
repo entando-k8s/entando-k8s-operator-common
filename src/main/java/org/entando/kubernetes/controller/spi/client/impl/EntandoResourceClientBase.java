@@ -79,43 +79,6 @@ public class EntandoResourceClientBase {
         } else {
             definition = CustomResourceDefinitionContext.fromCustomResourceType(((CustomResource<?, ?>) customResource).getClass());
         }
-        // FABRIC8 6.x MIGRATION: OLD CODE (using customResource):
-        /*
-        try (Watch ignore = ioSafe(() -> client.customResource(definition)
-                .watch(customResource.getMetadata().getNamespace(), customResource.getMetadata().getName(), null,
-                        (ListOptions) null, new Watcher<>() {
-                            final ObjectMapper objectMapper = new ObjectMapper();
-
-                            @Override
-                            public void eventReceived(Action action, String s) {
-                                final T resource = ioSafe(() -> objectMapper.readValue(s, (Class<T>) customResource.getClass()));
-                                if (resource instanceof SerializedEntandoResource) {
-                                    ((SerializedEntandoResource) resource).setDefinition(definition);
-                                }
-                                if (predicate.test(resource)) {
-                                    future.complete(resource);
-                                }
-                            }
-
-                            @Override
-                            public void onClose(WatcherException cause) {
-                                if (cause.getMessage().contains("resourceVersion") && cause.getMessage().contains("too old")) {
-                                    //reconnect - resource went out of sync. happens on occasion.
-                                    ioSafe(() -> client.customResource(definition)
-                                            .watch(customResource.getMetadata().getNamespace(),
-                                                    customResource.getMetadata().getName(),
-                                                    null,
-                                                    (ListOptions) null, this));
-                                } else {
-                                    future.completeExceptionally(cause);
-                                }
-                            }
-                        }))) {
-            return interruptionSafe(() -> future.get(timeoutSeconds, TimeUnit.SECONDS));
-        }
-        */
-
-        // NEW CODE (using genericKubernetesResources):
         // The Watcher interface expects GenericKubernetesResource when using genericKubernetesResources()
         try (Watch ignore = ioSafe(() -> client.genericKubernetesResources(definition)
                 .inNamespace(customResource.getMetadata().getNamespace())
@@ -153,22 +116,6 @@ public class EntandoResourceClientBase {
         }
     }
 
-    // FABRIC8 6.x MIGRATION: OLD CODE (using customResource):
-    /*
-    protected SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
-        return ioSafe(() -> {
-            final CustomResourceDefinitionContext context = resolveDefinitionContext(kind, apiVersion);
-            final Map<String, Object> crMap = client.customResource(context).get(namespace, name);
-            final ObjectMapper objectMapper = new ObjectMapper();
-            final SerializedEntandoResource serializedEntandoResource = objectMapper
-                    .readValue(objectMapper.writeValueAsString(crMap), SerializedEntandoResource.class);
-            serializedEntandoResource.setDefinition(context);
-            return serializedEntandoResource;
-        });
-    }
-    */
-
-    // NEW CODE (using genericKubernetesResources):
     protected SerializedEntandoResource loadCustomResource(String apiVersion, String kind, String namespace, String name) {
         return ioSafe(() -> {
             final CustomResourceDefinitionContext context = resolveDefinitionContext(kind, apiVersion);
@@ -188,15 +135,6 @@ public class EntandoResourceClientBase {
         return getOperations(clzz).inNamespace(resourceNamespace).withName(resourceName).fromServer().get();
     }
 
-    // FABRIC8 6.x MIGRATION: OLD CODE (using customResources):
-    /*
-    @SuppressWarnings("unchecked")
-    protected <T extends EntandoCustomResource> MixedOperation<T, KubernetesResourceList<T>, Resource<T>> getOperations(Class<T> c) {
-        return client.resources((Class) c);
-    }
-    */
-
-    // NEW CODE (using resources):
     @SuppressWarnings("unchecked")
     protected <T extends EntandoCustomResource> MixedOperation<T, KubernetesResourceList<T>, Resource<T>> getOperations(Class<T> c) {
         return client.resources((Class) c);

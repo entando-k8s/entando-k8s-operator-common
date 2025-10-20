@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 import org.entando.kubernetes.controller.spi.container.DeployableContainer;
 import org.entando.kubernetes.controller.spi.container.KubernetesPermission;
 import org.entando.kubernetes.controller.spi.deployable.Deployable;
-// FABRIC8 6.x: DoneableServiceAccount removed - using ServiceAccount + ServiceAccountBuilder
-// import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.controller.support.common.EntandoOperatorConfig;
 import org.entando.kubernetes.controller.support.common.SecurityMode;
@@ -65,18 +63,6 @@ public class ServiceAccountCreator extends AbstractK8SResourceCreator {
     }
 
     private void prepareServiceAccount(ServiceAccountClient serviceAccountClient, Deployable<?> deployable) {
-        // FABRIC8 6.x MIGRATION:
-        // OLD CODE (Fabric8 5.x with DoneableServiceAccount):
-        /*
-        DoneableServiceAccount serviceAccount = serviceAccountClient
-                .findOrCreateServiceAccount(entandoCustomResource, deployable.getServiceAccountToUse());
-        List<LocalObjectReference> pullSecrets = serviceAccount.buildImagePullSecrets();
-        serviceAccount.addAllToImagePullSecrets(EntandoOperatorConfig.getImagePullSecrets().stream()
-                .filter(s -> pullSecrets.stream().noneMatch(pullSecret -> pullSecret.getName().equals(s))).map(LocalObjectReference::new)
-                .collect(Collectors.toList())).done();
-        */
-
-        // NEW CODE (Fabric8 6.x with ServiceAccount + ServiceAccountBuilder):
         ServiceAccount serviceAccount = serviceAccountClient
                 .findOrCreateServiceAccount(entandoCustomResource, deployable.getServiceAccountToUse());
 
