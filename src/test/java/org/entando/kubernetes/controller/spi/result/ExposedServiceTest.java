@@ -197,7 +197,7 @@ class ExposedServiceTest {
                 new IngressBuilder()
                         .withNewSpec()
                         .addNewTl()
-                        .addNewHost("test." + EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix() + "")
+                        .addToHosts("test." + EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix() + "")
                         .endTl()
                         .addNewRule()
                         .withHost("test." + EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix() + "")

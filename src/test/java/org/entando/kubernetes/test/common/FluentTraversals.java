@@ -51,6 +51,7 @@ import org.hamcrest.Matchers;
 
 public interface FluentTraversals {
 
+    static final String REGISTRY_HUB_DOCKER = "registry.hub.docker.com/";
     String ENTANDO_KEYCLOAK_REALM = KeycloakName.ENTANDO_DEFAULT_KEYCLOAK_REALM;
     String ENTANDO_PUBLIC_CLIENT = KeycloakName.PUBLIC_CLIENT_ID;
     String DATABASE_ADMIN_USER = "DATABASE_ADMIN_USER";

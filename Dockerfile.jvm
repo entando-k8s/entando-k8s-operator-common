@@ -1,4 +1,4 @@
-FROM entando/entando-java-base:11.0.3
+FROM entando/entando-java-base:v17.0.10
 ARG VERSION
 LABEL name="Entando K8S Operator Common" \
       vendor="Entando" \

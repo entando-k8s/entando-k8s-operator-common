@@ -44,18 +44,18 @@ public class DefaultCapabilityClient extends EntandoResourceClientBase implement
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByName(String namespace, String name) {
-        return ofNullable(client.customResources(ProvidedCapability.class).inNamespace(namespace).withName(name).fromServer().get());
+        return ofNullable(client.resources(ProvidedCapability.class).inNamespace(namespace).withName(name).get());
     }
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByLabels(Map<String, String> labels) {
         if (EntandoOperatorConfig.isClusterScopedDeployment()) {
-            return client.customResources(ProvidedCapability.class).inAnyNamespace().withLabels(labels).list().getItems().stream()
+            return client.resources(ProvidedCapability.class).inAnyNamespace().withLabels(labels).list().getItems().stream()
                     .findFirst();
         } else {
             for (String namespace : EntandoOperatorConfig.getAllAccessibleNamespaces()) {
                 try {
-                    final Optional<ProvidedCapability> providedCapability = client.customResources(ProvidedCapability.class)
+                    final Optional<ProvidedCapability> providedCapability = client.resources(ProvidedCapability.class)
                             .inNamespace(namespace)
                             .withLabels(labels).list().getItems().stream()
                             .findFirst();
@@ -75,7 +75,7 @@ public class DefaultCapabilityClient extends EntandoResourceClientBase implement
 
     @Override
     public Optional<ProvidedCapability> providedCapabilityByLabels(String namespace, Map<String, String> labels) {
-        return client.customResources(ProvidedCapability.class).inNamespace(namespace).withLabels(labels).list().getItems().stream()
+        return client.resources(ProvidedCapability.class).inNamespace(namespace).withLabels(labels).list().getItems().stream()
                 .findFirst();
     }
 

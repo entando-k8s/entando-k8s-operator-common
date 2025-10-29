@@ -24,7 +24,9 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
@@ -72,14 +74,23 @@ public class DefaultDeploymentClient implements DeploymentClient {
         } else {
             //Don't wait because the polling in Fabric8 is dodge
             getDeploymenResourceFor(peerInNamespace, deployment).scale(0, true);
-            FilterWatchListDeletable<Pod, PodList> podResource = client.pods()
+            FilterWatchListDeletable<Pod, PodList, PodResource> podResource = client.pods()
                     .inNamespace(existingDeployment.getMetadata().getNamespace())
                     .withLabelSelector(existingDeployment.getSpec().getSelector());
-            interruptionSafe(() -> podResource.waitUntilCondition(pod -> podResource.list().getItems().isEmpty(),
+            interruptionSafe(() -> DefaultPodClient.waitUntilCondition(
+                    podResource,
+                    //pod -> podResource.list().getItems().isEmpty(),
+                    Objects::isNull,
                     timeoutSeconds,
-                    TimeUnit.SECONDS));
+                    TimeUnit.SECONDS)
+            );
+
+            //Get the latest version after scaling to avoid resourceVersion conflict
+            Deployment latest = getDeploymenResourceFor(peerInNamespace, deployment).get();
+            //Apply our desired spec to the latest version
+            latest.setSpec(deployment.getSpec());
             //Create the deployment with the correct replicas now. We don't support 0 because we will be waiting for the pod
-            return getDeploymenResourceFor(peerInNamespace, deployment).patch(deployment);
+            return getDeploymenResourceFor(peerInNamespace, deployment).patch(latest);
         }
     }
 

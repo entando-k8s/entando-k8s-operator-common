@@ -20,13 +20,13 @@ import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import jakarta.ws.rs.NotFoundException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
-import javax.ws.rs.NotFoundException;
 import org.entando.kubernetes.controller.spi.capability.SerializedCapabilityProvisioningResult;
 import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.spi.common.LabelNames;

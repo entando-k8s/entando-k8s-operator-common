@@ -18,6 +18,15 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.retry;
 
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.ServiceUnavailableException;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.List;
@@ -29,15 +38,6 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.ServiceUnavailableException;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 import org.entando.kubernetes.controller.spi.deployable.SsoClientConfig;
 import org.entando.kubernetes.controller.support.client.SimpleKeycloakClient;
@@ -51,17 +51,20 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.ClientResource;
 import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserProfileResource;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.representations.userprofile.config.UPConfig;
 
 public class DefaultKeycloakClient implements SimpleKeycloakClient {
 
     public static final String MASTER_REALM = "master";
     public static final String EXCEPTION_RESOLVING_MASTER_REALM_ON_KEYCLOAK = "Exception resolving master realm on Keycloak";
+    public static final List<String> PROFILE_PARAMS_TO_SET_OPTIONAL = List.of("email", "firstName", "lastName");
     private static final Logger LOGGER = Logger.getLogger(DefaultKeycloakClient.class.getName());
     private Keycloak keycloak;
     private boolean isHttps = false;
@@ -144,6 +147,7 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             try {
                 keycloak.realms().create(newRealm);
                 createFirstUser(realmResource);
+                disableUpdateProfileRequiredAction(realmResource);
             } catch (ClientErrorException e) {
                 //Another thread could be creating  the realm
                 if (e.getResponse().getStatus() != HttpURLConnection.HTTP_CONFLICT) {
@@ -216,6 +220,27 @@ public class DefaultKeycloakClient implements SimpleKeycloakClient {
             final String[] segments = response.getLocation().getPath().split("\\/");
             String userId = segments[segments.length - 1];
             realmResource.users().get(userId).resetPassword(credentials);
+        }
+    }
+
+    private void disableUpdateProfileRequiredAction(RealmResource realmResource) {
+        try {
+            // Retry mechanism to wait for Keycloak to initialize required actions after realm creation
+            retry(() -> {
+                UserProfileResource userProfileResource = realmResource.users().userProfile();
+                UPConfig userProfileConfig = userProfileResource.getConfiguration();
+                // Make first name, last name, and email fields optional in UserProfile RealmSettings
+                userProfileConfig.getAttributes().stream()
+                        .filter(p -> PROFILE_PARAMS_TO_SET_OPTIONAL.contains(p.getName()))
+                        .forEach(p -> p.setRequired(null));
+
+                realmResource.users().userProfile().update(userProfileConfig);
+                LOGGER.info(String.format("Disabled 'Update Profile' required action for realm: %s",
+                        realmResource.toRepresentation().getRealm()));
+                return null;
+            }, IllegalStateException.class::isInstance, 8);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to disable Update Profile required action", e);
         }
     }
 

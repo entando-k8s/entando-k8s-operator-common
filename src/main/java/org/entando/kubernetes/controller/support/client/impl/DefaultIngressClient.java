@@ -18,15 +18,14 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.NodeAddress;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.Optional;
-import org.entando.kubernetes.controller.support.client.DoneableIngress;
 import org.entando.kubernetes.controller.support.client.IngressClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -54,30 +53,43 @@ public class DefaultIngressClient implements IngressClient {
 
     @Override
     public Ingress addHttpPath(Ingress ingress, HTTPIngressPath httpIngressPath, Map<String, String> annotations) {
-        return edit(ingress.getMetadata(), ingress.getMetadata().getName())
+        Ingress existing = client.network().v1().ingresses()
+                .inNamespace(ingress.getMetadata().getNamespace())
+                .withName(ingress.getMetadata().getName())
+                .get();
+
+        Ingress updated = new IngressBuilder(existing)
                 .editSpec().editFirstRule().editHttp()
                 .addNewPathLike(httpIngressPath).withPathType("Prefix")
                 .endPath().endHttp().endRule().endSpec()
                 .editMetadata().addToAnnotations(annotations).endMetadata()
-                .done();
-    }
+                .build();
 
-    private DoneableIngress edit(ObjectMeta metadata, String name) {
-        return new DoneableIngress(client.network().v1().ingresses().inNamespace(metadata.getNamespace())
-                .withName(name).fromServer().get(), client.network().v1().ingresses().inNamespace(metadata.getNamespace())
-                .withName(name)::patch);
+        return client.network().v1().ingresses()
+                .inNamespace(ingress.getMetadata().getNamespace())
+                .withName(ingress.getMetadata().getName())
+                .patch(updated);
     }
 
     @Override
     public Ingress removeHttpPath(Ingress ingress, HTTPIngressPath path) {
-        return edit(ingress.getMetadata(), ingress.getMetadata().getName())
+        Ingress existing = client.network().v1().ingresses()
+                .inNamespace(ingress.getMetadata().getNamespace())
+                .withName(ingress.getMetadata().getName())
+                .get();
+
+        Ingress updated = new IngressBuilder(existing)
                 .editSpec().editFirstRule().editHttp()
                 .removeFromPaths(path)
                 .endHttp()
                 .endRule()
                 .endSpec()
-                .done();
+                .build();
 
+        return client.network().v1().ingresses()
+                .inNamespace(ingress.getMetadata().getNamespace())
+                .withName(ingress.getMetadata().getName())
+                .patch(updated);
     }
 
     @Override
@@ -106,8 +118,19 @@ public class DefaultIngressClient implements IngressClient {
     }
 
     @Override
-    public DoneableIngress editIngress(EntandoCustomResource peerInNamespace, String name) {
-        return edit(peerInNamespace.getMetadata(), name);
+    public Ingress editIngress(EntandoCustomResource peerInNamespace, String name) {
+        return client.network().v1().ingresses()
+                .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                .withName(name)
+                .get();
+    }
+
+    @Override
+    public Ingress updateIngress(EntandoCustomResource peerInNamespace, Ingress ingress) {
+        return client.network().v1().ingresses()
+                .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                .resource(ingress)
+                .update();
     }
 
     @Override

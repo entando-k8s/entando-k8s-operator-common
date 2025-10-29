@@ -22,6 +22,7 @@ import io.fabric8.kubernetes.api.model.Secret;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.entando.kubernetes.controller.spi.common.SecretUtils;
 
 public interface SsoConnectionInfo {
@@ -37,12 +38,15 @@ public interface SsoConnectionInfo {
     }
 
     default String decodeSecretValue(String key) {
-        Optional<String> value = ofNullable(getAdminSecret().getData())
-                .map(data ->
-                        ofNullable(data.get(key)).map(s -> new String(Base64.getDecoder().decode(s), StandardCharsets.UTF_8))
-                )
-                .orElse(ofNullable(getAdminSecret().getStringData()).map(data -> data.get(key)));
-        return value.orElse(null);
+        Secret adminSecret = this.getAdminSecret();
+        return Optional.ofNullable(adminSecret.getData())
+                .map(data -> data.get(key))
+                .filter(StringUtils::isNotEmpty)
+                .map(s -> new String(Base64.getDecoder().decode(s), StandardCharsets.UTF_8))
+                .orElseGet(() -> Optional.ofNullable(adminSecret.getStringData())
+                        .map(data -> data.get(key))
+                        .orElse(null)
+                );
     }
 
     Secret getAdminSecret();

@@ -342,3 +342,8 @@ TBD
 ## Examples
 
 Some examples are available in the test package at the location `org.entando.kubernetes.controller.common.examples`
+
+## Build image
+
+`mvn clean package -DskipTests dependency:copy-dependencies -DoutputDirectory=target/quarkus-app/lib`
+`mvn license:aggregate-download-licenses`

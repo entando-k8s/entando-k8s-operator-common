@@ -98,7 +98,7 @@ public interface KubernetesClientForControllers {
     HasMetadata loadStandardResource(String kind, String namespace, String name);
 
     @SuppressWarnings({"java:S106"})
-    default ExecutionResult executeAndWait(PodResource<Pod> podResource, String containerName, int timeoutSeconds,
+    default ExecutionResult executeAndWait(PodResource podResource, String containerName, int timeoutSeconds,
             String... script) throws TimeoutException {
         StringBuilder sb = new StringBuilder();
         for (String s : script) {
@@ -275,11 +275,11 @@ public interface KubernetesClientForControllers {
     ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands)
             throws TimeoutException;
 
-    default PodResource<Pod> getPodByName(String name) {
+    default PodResource getPodByName(String name) {
         return getPodByName(name, null);
     }
 
-    PodResource<Pod> getPodByName(String name, String namespace);
+    PodResource getPodByName(String name, String namespace);
 
     default Resource<Secret> getSecretByName(String name) {
         return getSecretByName(name, null);

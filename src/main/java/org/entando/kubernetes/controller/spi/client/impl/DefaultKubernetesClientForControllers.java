@@ -21,6 +21,7 @@ import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.ioSafe
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Event;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -33,7 +34,6 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -95,12 +95,12 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
 
     @Override
     public ExecutionResult executeOnPod(Pod pod, String containerName, int timeoutSeconds, String... commands) throws TimeoutException {
-        PodResource<Pod> podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
+        PodResource podResource = this.client.pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName());
         return executeAndWait(podResource, containerName, timeoutSeconds, commands);
     }
 
-    public PodResource<Pod> getPodByName(String name, String namespace) {
+    public PodResource getPodByName(String name, String namespace) {
         var pod = (namespace != null) ? client.pods().inNamespace(namespace) : client.pods();
         return pod.withName(name);
     }
@@ -143,9 +143,8 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
                 .create(event);
     }
 
-    @SuppressWarnings({"unchecked", "java:S1905", "java:S1874"})
+    @SuppressWarnings({"unchecked", "java:S1905"})
     //These casts are necessary to circumvent our "inaccurate" use of type parameters for our generic Serializable resources
-    //We have to use the deprecated methods in question to "generically" resolve our Serializable resources
     @Override
     public <T extends EntandoCustomResource> T performStatusUpdate(T customResource, Consumer<T> consumer) {
         if (customResource instanceof SerializedEntandoResource) {
@@ -154,16 +153,24 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
                 CustomResourceDefinitionContext definition = Optional.ofNullable(ser.getDefinition()).orElse(
                         resolveDefinitionContext(ser.getKind(), ser.getApiVersion()));
                 ser.setDefinition(definition);
-                RawCustomResourceOperationsImpl resource = client.customResource(definition)
+
+                // Use genericKubernetesResources instead of customResource
+                var resource = client.genericKubernetesResources(definition)
                         .inNamespace(customResource.getMetadata().getNamespace())
                         .withName(customResource.getMetadata().getName());
+
                 final ObjectMapper objectMapper = new ObjectMapper();
-                ser = objectMapper.readValue(objectMapper.writeValueAsString(resource.get()), SerializedEntandoResource.class);
+                var current = resource.get();
+                ser = objectMapper.readValue(objectMapper.writeValueAsString(current), SerializedEntandoResource.class);
                 ser.setDefinition(definition);
                 T latest = (T) ser;
                 consumer.accept(latest);
+
+                GenericKubernetesResource updatedResource = (GenericKubernetesResource) objectMapper.readValue(
+                        objectMapper.writeValueAsString(latest), GenericKubernetesResource.class);
+                var updated = resource.updateStatus(updatedResource);
                 return (T) objectMapper.readValue(
-                        objectMapper.writeValueAsString(resource.updateStatus(objectMapper.writeValueAsString(latest))),
+                        objectMapper.writeValueAsString(updated),
                         SerializedEntandoResource.class);
             });
         } else {
@@ -172,7 +179,7 @@ public class DefaultKubernetesClientForControllers extends EntandoResourceClient
             Resource<T> resource = operations
                     .inNamespace(customResource.getMetadata().getNamespace())
                     .withName(customResource.getMetadata().getName());
-            T latest = resource.fromServer().get();
+            T latest = resource.get();
             consumer.accept(latest);
             return resource.updateStatus(latest);
         }

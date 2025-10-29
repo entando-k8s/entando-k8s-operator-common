@@ -32,7 +32,9 @@ public interface ServiceAccountClient {
 
     Role loadRole(EntandoCustomResource peerInNamespace, String name);
 
-    DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name);
+    ServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name);
 
     ServiceAccount findServiceAccount(EntandoCustomResource peerInNamespace, String name);
+
+    ServiceAccount updateServiceAccount(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount);
 }

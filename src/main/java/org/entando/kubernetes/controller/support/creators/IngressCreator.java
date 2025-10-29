@@ -115,10 +115,15 @@ public class IngressCreator extends AbstractK8SResourceCreator {
                 if (ResourceUtils.customResourceOwns(entandoCustomResource, ingress)) {
                     final String host = determineIngressHost(ingressClient, ingressingDeployable);
                     final List<IngressTLS> tls = maybeBuildTls(ingressClient, ingressingDeployable);
-                    this.ingress = ingressClient.editIngress(entandoCustomResource,
-                                    ingressingDeployable.getIngressName())
+                    Ingress existing = ingressClient.editIngress(entandoCustomResource,
+                            ingressingDeployable.getIngressName());
+
+                    Ingress updated = new IngressBuilder(existing)
                             .editSpec().editFirstRule().withHost(host).endRule()
-                            .withTls(tls).endSpec().done();
+                            .withTls(tls).endSpec()
+                            .build();
+
+                    this.ingress = ingressClient.updateIngress(entandoCustomResource, updated);
                 }
                 List<IngressingPathOnPort> ingressingContainers = ingressingDeployable.getContainers().stream()
                         .filter(IngressingContainer.class::isInstance).map(IngressingContainer.class::cast)

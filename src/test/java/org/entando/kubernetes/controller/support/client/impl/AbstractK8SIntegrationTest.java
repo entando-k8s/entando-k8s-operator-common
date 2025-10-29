@@ -160,15 +160,15 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
 
     protected abstract String[] getNamespacesToUse();
 
+
     public ServiceAccount prepareTestServiceAccount(DefaultSimpleK8SClient client, EntandoCustomResource peer,
             String name) {
         ServiceAccountClient serviceAccountClient = client.serviceAccounts();
-        final var tmpServiceAccount = serviceAccountClient
+        final var serviceAccount = serviceAccountClient
                 .findOrCreateServiceAccount(peer, name);
         await().atMost(10, TimeUnit.SECONDS).until(() ->
                 client.serviceAccounts().findServiceAccount(peer, name) != null
         );
-        final var serviceAccount = tmpServiceAccount.done();
         return serviceAccount;
     }
 }

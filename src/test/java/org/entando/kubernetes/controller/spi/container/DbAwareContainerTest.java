@@ -11,7 +11,7 @@ import static org.mockito.Mockito.when;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Map;
 import java.util.regex.Pattern;
-import org.bouncycastle.util.encoders.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.entando.kubernetes.controller.spi.common.DbmsVendorConfig;
 import org.entando.kubernetes.controller.support.client.SecretClient;
 import org.junit.jupiter.api.Tag;
@@ -66,7 +66,7 @@ class DbAwareContainerTest {
         String secretName = "my-secret";
         String schemaName = "my-schema";
         String expected = "my-username";
-        String encoded = new String(Base64.encode(expected.getBytes()));
+        String encoded = new String(Base64.encodeBase64(expected.getBytes()));
 
         Secret secret = mock(Secret.class, Mockito.RETURNS_DEEP_STUBS);
         when(secret.getData().get("username")).thenReturn(encoded);

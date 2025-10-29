@@ -41,6 +41,7 @@ import org.entando.kubernetes.controller.spi.common.EntandoOperatorSpiConfig;
 import org.entando.kubernetes.controller.support.client.impl.integrationtesthelpers.HttpTestHelper;
 import org.entando.kubernetes.fluentspi.TestResource;
 import org.entando.kubernetes.test.common.ValueHolder;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
@@ -114,6 +115,7 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
         });
     }
 
+    @Disabled("This is not supported anymore in modern openshift versions")
     @Test
     @Description("Should create a delegate Service/Endpoints pair that delegate to a service in another namespace to be exposed on an "
             + "Ingress in this namespace. (Required for Openshift)")
@@ -122,9 +124,10 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
         this.fabric8Client.pods().inNamespace(newTestResource().getMetadata().getNamespace()).withName("my-pod")
                 .waitUntilCondition(Objects::isNull, mkTimeoutSec(80L), TimeUnit.SECONDS);
         TestResource testResource1 = newTestResource();
-        TestResource testResource2 = newTestResource()
-                .withNames(companionResourceOf(testResource1.getMetadata().getNamespace()),
-                        companionResourceOf(testResource1.getMetadata().getName()));
+        TestResource testResource2 = newTestResource().withNames(
+                companionResourceOf(testResource1.getMetadata().getNamespace()),
+                companionResourceOf(testResource1.getMetadata().getName())
+        );
         ValueHolder<Service> firstService = new ValueHolder<>();
         step("Given I have started a new NGINX Pod with the label 'pod-label: 123'", () -> {
             final Pod startedPod = getSimpleK8SClient().pods().start(new PodBuilder()
@@ -144,8 +147,10 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
                     .endContainer()
                     .endSpec()
                     .build());
-            final Pod pod = getSimpleK8SClient().pods().waitForPod(testResource1.getMetadata().getNamespace(), "pod-label", "123",
-                    EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds());
+            final Pod pod = getSimpleK8SClient().pods().waitForPod(
+                    testResource1.getMetadata().getNamespace(), "pod-label", "123",
+                    EntandoOperatorSpiConfig.getPodReadinessTimeoutSeconds()
+            );
             attachResource("Pod", pod);
         });
         step("And I have created a service to expose it internally", () -> {
@@ -189,9 +194,9 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
                             .endSubset()
                             .build()));
         });
-        final String hostname =
-                testResource2.getMetadata().getName() + "." + getDefaultRoutingSuffix().orElse(
-                        EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix());
+        final String hostname = testResource2.getMetadata().getName() + "." + getDefaultRoutingSuffix().orElse(
+                EntandoOperatorTestConfig.mustGetDefaultRoutingSuffix()
+        );
         step("Then I can successfully expose the delegate service on an ingress in the second namespace", () -> {
             getSimpleK8SClient().ingresses().createIngress(testResource2, new IngressBuilder()
                     .withNewMetadata()
@@ -208,7 +213,7 @@ class DefaultServiceClientTest extends AbstractSupportK8SIntegrationTest {
                     .withPort(new ServiceBackendPortBuilder().withNumber(8080).build())
                     .endService()
                     .endBackend()
-                    .withNewPath("/")
+                    .withPath("/")
                     .withPathType("Prefix")
                     .endPath()
                     .endHttp()

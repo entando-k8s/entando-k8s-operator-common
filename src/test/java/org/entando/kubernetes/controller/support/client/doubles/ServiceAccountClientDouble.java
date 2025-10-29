@@ -21,7 +21,6 @@ import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
 import java.util.concurrent.ConcurrentHashMap;
-import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -54,20 +53,24 @@ public class ServiceAccountClientDouble extends AbstractK8SClientDouble implemen
     }
 
     @Override
-    public DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace,
-            String name) {
+    public ServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name) {
         ServiceAccount serviceAccount = getNamespace(peerInNamespace).getServiceAccount(name);
         if (serviceAccount == null) {
-            serviceAccount = new ServiceAccountBuilder().withNewMetadata().withName(name)
-                    .withNamespace(peerInNamespace.getMetadata().getNamespace())
-                    .endMetadata().build();
+            serviceAccount = new ServiceAccountBuilder()
+                    .withNewMetadata()
+                        .withName(name)
+                        .withNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .endMetadata()
+                    .build();
             getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
         }
-        return new DoneableServiceAccount(serviceAccount, sa -> {
-            getNamespace(peerInNamespace).putServiceAccount(sa);
-            return sa;
+        return serviceAccount;
+    }
 
-        });
+    @Override
+    public ServiceAccount updateServiceAccount(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
+        getNamespace(peerInNamespace).putServiceAccount(serviceAccount);
+        return serviceAccount;
     }
 
     @Override

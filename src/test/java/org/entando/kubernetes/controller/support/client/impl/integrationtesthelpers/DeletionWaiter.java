@@ -24,8 +24,7 @@ import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.Scaleable;
-import io.fabric8.kubernetes.client.dsl.base.OperationSupport;
+import io.fabric8.kubernetes.client.dsl.internal.OperationSupport;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -98,24 +97,25 @@ public class DeletionWaiter<
         }
     }
 
-    @SuppressWarnings("unchecked")
     protected void deleteSingleItem(long duration, TimeUnit timeUnit) {
         await().atMost(duration, timeUnit)
                 .ignoreExceptions()
                 .until(() -> {
                     try {
-                        if (operation instanceof Scaleable) {
-                            LOGGER.log(Level.WARNING,
-                                    (format("Deleting %s  %s/%s to zero", ((OperationSupport) operation).getResourceT(), namespace, name)));
-                            ((Scaleable<R>) operation.inNamespace(namespace).withName(name)).scale(0, true);
-                        }
+                        // Scale to zero if the resource supports it (e.g., Deployments, StatefulSets)
+                        O resource = this.operation.inNamespace(namespace).withName(name);
+                        LOGGER.log(Level.WARNING,
+                                (format("Scaled %s  %s/%s to zero", ((OperationSupport) operation).getResourceT(), namespace, name)));
+                        resource.scale(0, true);// Deprecated
                         LOGGER.log(Level.WARNING,
                                 (format("Deleting %s  %s/%s", ((OperationSupport) operation).getResourceT(), namespace, name)));
                         this.operation.inNamespace(namespace).withName(name).withGracePeriod(0).delete();
                     } catch (KubernetesClientException e) {
                         LOGGER.log(Level.WARNING, format("Deletion of %s/%s failed.", namespace, name), e);
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, format("Error during deletion of %s/%s.", namespace, name), e);
                     }
-                    return this.operation.inNamespace(namespace).withName(name).fromServer().get() == null;
+                    return this.operation.inNamespace(namespace).withName(name).get() == null;
                 });
     }
 

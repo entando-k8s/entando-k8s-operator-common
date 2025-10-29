@@ -65,7 +65,9 @@ public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extend
 
     default void attachKubernetesResource(String name, Object resource) {
         try {
-            Allure.attachment(name, new ObjectMapper(new YAMLFactory()).writeValueAsString(resource));
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jdk8.Jdk8Module());
+            Allure.attachment(name, mapper.writeValueAsString(resource));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -128,12 +130,13 @@ public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extend
                     .endHttp()
                     .endRule()
                     .addNewTl()
-                    .addNewHost(host)
+                    .addToHosts(host)
                     .endTl()
                     .endSpec()
                     .build());
         } else {
-            ingress = getClient().ingresses().editIngress(customResource, NameUtils.standardIngressName(customResource))
+            Ingress existing = getClient().ingresses().editIngress(customResource, NameUtils.standardIngressName(customResource));
+            Ingress updated = new IngressBuilder(existing)
                     .editSpec()
                     .editFirstRule()
                     .editHttp()
@@ -150,7 +153,8 @@ public interface CustomResourceStatusEmulator<T extends SimpleK8SClient<? extend
                     .endHttp()
                     .endRule()
                     .endSpec()
-                    .done();
+                    .build();
+            ingress = getClient().ingresses().updateIngress(customResource, updated);
         }
         status.setIngressName(ingress.getMetadata().getName());
         final T updatedCapability = putStatus(customResource, port, derivedParameters, status);

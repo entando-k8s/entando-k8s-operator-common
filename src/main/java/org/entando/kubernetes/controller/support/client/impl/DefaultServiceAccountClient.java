@@ -28,7 +28,6 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.net.HttpURLConnection;
 import java.sql.Timestamp;
-import org.entando.kubernetes.controller.support.client.DoneableServiceAccount;
 import org.entando.kubernetes.controller.support.client.ServiceAccountClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
@@ -61,10 +60,7 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
     }
 
     @Override
-    public DoneableServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace,
-            String name) {
-        final Resource<ServiceAccount> as = client.serviceAccounts()
-                .inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name);
+    public ServiceAccount findOrCreateServiceAccount(EntandoCustomResource peerInNamespace, String name) {
         try {
             createIfAbsent(peerInNamespace, new ServiceAccountBuilder()
                     .withNewMetadata()
@@ -72,14 +68,52 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
                     .withName(name)
                     .endMetadata()
                     .build(), client.serviceAccounts());
-            return new DoneableServiceAccount(as.fromServer().get(), as::patch).editMetadata()
-                    //to ensure there is a state change so that the patch request does not get rejected
-                    .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
-                    .endMetadata();
+
+            // Return the service account from server
+            return client.serviceAccounts()
+                    .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .withName(name)
+                    .get();
 
         } catch (KubernetesClientException e) {
             throw KubernetesExceptionProcessor
                     .processExceptionOnLoad(peerInNamespace, e, "ServiceAccount", name);
+        }
+    }
+
+    @Override
+    public ServiceAccount updateServiceAccount(EntandoCustomResource peerInNamespace, ServiceAccount serviceAccount) {
+        try {
+            // Get the latest version from the server to avoid resourceVersion conflicts
+            ServiceAccount latest = client.serviceAccounts()
+                    .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .withName(serviceAccount.getMetadata().getName())
+                    .get();
+
+            // Apply desired changes from serviceAccount parameter to the latest version
+            ServiceAccount updated = new ServiceAccountBuilder(latest)
+                    .editOrNewMetadata()
+                        // Add timestamp annotation to ensure state change (avoid HTTP 400)
+                        .addToAnnotations(UPDATED_ANNOTATION_NAME, new Timestamp(System.currentTimeMillis()).toString())
+                        // Merge annotations from the desired serviceAccount
+                        .addToAnnotations(serviceAccount.getMetadata().getAnnotations() != null
+                                ? serviceAccount.getMetadata().getAnnotations()
+                                : java.util.Collections.emptyMap())
+                    .endMetadata()
+                    // Apply other changes if needed (secrets, imagePullSecrets, etc.)
+                    .withSecrets(serviceAccount.getSecrets())
+                    .withImagePullSecrets(serviceAccount.getImagePullSecrets())
+                    .build();
+
+            return client.serviceAccounts()
+                    .inNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .resource(updated)
+                    .update();
+
+        } catch (KubernetesClientException e) {
+            throw KubernetesExceptionProcessor
+                    .processExceptionOnLoad(peerInNamespace, e, "ServiceAccount",
+                            serviceAccount.getMetadata().getName());
         }
     }
 
@@ -112,10 +146,12 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
 
     @SuppressWarnings("unchecked")
     private <R extends HasMetadata> String createIfAbsent(EntandoCustomResource peerInNamespace, R resource,
-            MixedOperation<R, ?, Resource<R>> operation) {
+            MixedOperation<R, ?, ?> operation) {
         try {
-            return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).create(resource).getMetadata()
-                    .getName();
+            R created = operation.inNamespace(peerInNamespace.getMetadata().getNamespace())
+                    .resource(resource)
+                    .create();
+            return created.getMetadata().getName();
         } catch (KubernetesClientException e) {
             if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
                 throw e;
@@ -124,8 +160,9 @@ public class DefaultServiceAccountClient implements ServiceAccountClient {
         return resource.getMetadata().getName();
     }
 
+    @SuppressWarnings("unchecked")
     private <R extends HasMetadata> R load(EntandoCustomResource peerInNamespace, String name,
-            MixedOperation<R, ?, Resource<R>> operation) {
+            MixedOperation<R, ?, ?> operation) {
         try {
             return operation.inNamespace(peerInNamespace.getMetadata().getNamespace()).withName(name).get();
         } catch (KubernetesClientException e) {

@@ -73,7 +73,7 @@ public class DefaultSecretClient implements SecretClient {
     @Override
     public void createConfigMapIfAbsent(EntandoCustomResource peerInNamespace, ConfigMap configMap) {
         try {
-            client.configMaps().inNamespace(peerInNamespace.getMetadata().getNamespace()).create(configMap);
+            client.configMaps().inNamespace(peerInNamespace.getMetadata().getNamespace()).resource(configMap).create();
         } catch (KubernetesClientException e) {
             KubernetesExceptionProcessor.squashDuplicateExceptionOnCreate(peerInNamespace, configMap, e);
         }

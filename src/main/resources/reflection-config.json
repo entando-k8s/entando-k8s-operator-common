@@ -200,7 +200,7 @@
     "allDeclaredConstructors": true
   },
   {
-    "name": "org.jboss.resteasy.plugins.interceptors.encoding.ClientContentEncodingAnnotationFeature",
+    "name": "org.jboss.resteasy.plugins.interceptors.ClientContentEncodingAnnotationFeature",
     "allDeclaredMethods": true,
     "allPublicMethods": true,
     "allDeclaredClasses": true,
@@ -208,7 +208,7 @@
     "allDeclaredConstructors": true
   },
   {
-    "name": "org.jboss.resteasy.plugins.interceptors.encoding.ServerContentEncodingAnnotationFeature",
+    "name": "org.jboss.resteasy.plugins.interceptors.ServerContentEncodingAnnotationFeature",
     "allDeclaredMethods": true,
     "allPublicMethods": true,
     "allDeclaredClasses": true,
@@ -216,7 +216,7 @@
     "allDeclaredConstructors": true
   },
   {
-    "name": "org.jboss.resteasy.plugins.interceptors.encoding.MessageSanitizerContainerResponseFilter",
+    "name": "org.jboss.resteasy.plugins.interceptors.MessageSanitizerContainerResponseFilter",
     "allDeclaredMethods": true,
     "allPublicMethods": true,
     "allDeclaredClasses": true,

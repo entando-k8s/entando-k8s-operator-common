@@ -75,7 +75,7 @@ class ServiceAcountCreatorTest implements InProcessTestData {
         //When the operator prepares the service account
         new ServiceAccountCreator(entandoApp).prepareServiceAccountAccess(client.serviceAccounts(), deployable);
         //then the custom image pull secret must be propagated to the new serviceAccount
-        assertThat(client.serviceAccounts().findOrCreateServiceAccount(entandoApp, MY_SERVICE_ACCOUNT).buildImagePullSecrets().get(0)
+        assertThat(client.serviceAccounts().findOrCreateServiceAccount(entandoApp, MY_SERVICE_ACCOUNT).getImagePullSecrets().get(0)
                 .getName(), is(MY_IMAGE_PULL_SECRET));
     }
 

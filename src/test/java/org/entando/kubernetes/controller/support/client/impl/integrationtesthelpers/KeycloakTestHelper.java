@@ -19,12 +19,12 @@ package org.entando.kubernetes.controller.support.client.impl.integrationtesthel
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.NotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.NotFoundException;
 import org.entando.kubernetes.controller.spi.common.TrustStoreHelper;
 import org.entando.kubernetes.controller.support.client.impl.DefaultKeycloakClient;
 import org.entando.kubernetes.controller.support.client.impl.EntandoOperatorTestConfig;
