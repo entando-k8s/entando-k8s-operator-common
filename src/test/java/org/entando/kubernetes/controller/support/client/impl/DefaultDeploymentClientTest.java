@@ -38,6 +38,17 @@ class DefaultDeploymentClientTest extends AbstractSupportK8SIntegrationTest {
     private final TestResource customResource = newTestResource();
 
     @Test
+    void shouldSupportStartupProbesOnRealCluster() {
+        // Given a real Kubernetes cluster connection
+        // When we check for startup probe support
+        boolean supportsStartupProbes = getSimpleK8SClient().deployments().supportsStartupProbes();
+
+        // Then it should return true for any modern K8s cluster (>= 1.16)
+        // Most clusters in use today are >= 1.16
+        assertThat(supportsStartupProbes, is(true));
+    }
+
+    @Test
     void shouldReflectChangesThatWerePatchedAfterInitialCreation() throws TimeoutException {
         Deployment firstDeployment = getSimpleK8SClient().deployments().createOrPatchDeployment(
                 customResource, new DeploymentBuilder().withNewMetadata()

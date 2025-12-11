@@ -261,13 +261,42 @@ class DefaultCapabilityClientTest extends AbstractK8SIntegrationTest implements
         for (ProvidedCapability providedCapability : entandoCustomResource) {
             createRoleBindingForClusterRole(providedCapability, serviceAccount);
         }
+
+        String namespace = entandoCustomResource[0].getMetadata().getNamespace();
+
+        // For Kubernetes 1.24+, manually create service account token secret if needed
         await().atMost(mkTimeout(60)).ignoreExceptions()
-                .until(() -> getFabric8Client().secrets()
-                        .inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
-                        .getItems().stream()
-                        .anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "test-account")));
+                .until(() -> {
+                    List<Secret> secrets = getFabric8Client().secrets().inNamespace(namespace).list().getItems();
+                    boolean tokenExists = secrets.stream()
+                            .anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "test-account"));
+
+                    if (!tokenExists) {
+                        // Create token secret manually for K8s 1.24+
+                        try {
+                            getFabric8Client().secrets().inNamespace(namespace).createOrReplace(
+                                    new io.fabric8.kubernetes.api.model.SecretBuilder()
+                                            .withNewMetadata()
+                                            .withName("test-account-token")
+                                            .withNamespace(namespace)
+                                            .addToAnnotations("kubernetes.io/service-account.name", "test-account")
+                                            .endMetadata()
+                                            .withType("kubernetes.io/service-account-token")
+                                            .build()
+                            );
+                            Thread.sleep(2000); // Wait for token to be populated
+                        } catch (Exception e) {
+                            // Ignore if already exists or other errors
+                        }
+                        secrets = getFabric8Client().secrets().inNamespace(namespace).list().getItems();
+                        tokenExists = secrets.stream()
+                                .anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "test-account"));
+                    }
+                    return tokenExists;
+                });
+
         final List<Secret> items = getFabric8Client().secrets()
-                .inNamespace(entandoCustomResource[0].getMetadata().getNamespace()).list()
+                .inNamespace(namespace).list()
                 .getItems();
         final Secret tokenSecret = items.stream()
                 .filter(s -> TestFixturePreparation.isValidTokenSecret(s, "test-account")).findFirst().get();

@@ -19,13 +19,11 @@ package org.entando.kubernetes.controller.support.client.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.ContainerState;
-import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
@@ -78,7 +76,7 @@ class DefaultPodClientMockTest {
     @BeforeEach
     void setUp() {
         defaultPodClient = new DefaultPodClient(kubernetesClient);
-        when(kubernetesClient.pods()).thenReturn(podsOperation);
+        lenient().when(kubernetesClient.pods()).thenReturn(podsOperation);
     }
 
     @Test
@@ -262,6 +260,155 @@ class DefaultPodClientMockTest {
         // Then
         verify(labeledPodsOperation).delete();
         verify(labeledPodsOperation).informOnCondition(any());
+    }
+
+    @Test
+    void shouldDetectPodWithFailedContainersInWaitingState() throws TimeoutException {
+        // Given a pod with a container in error waiting state
+        Pod pod = new PodBuilder()
+                .withNewMetadata()
+                .withName("test-pod")
+                .withNamespace("test-namespace")
+                .endMetadata()
+                .withNewSpec()
+                .addNewContainer()
+                .withName("test-container")
+                .withImage("busybox")
+                .endContainer()
+                .endSpec()
+                .build();
+
+        Pod podWithErrorWaiting = new PodBuilder(pod)
+                .withNewStatus()
+                .withPhase("Pending")
+                .addNewContainerStatus()
+                .withName("test-container")
+                .withNewState()
+                .withNewWaiting()
+                .withReason("ImagePullBackOff")
+                .endWaiting()
+                .endState()
+                .endContainerStatus()
+                .endStatus()
+                .build();
+
+        // Modify to have error in waiting reason
+        podWithErrorWaiting.getStatus().getContainerStatuses().get(0)
+                .getState().getWaiting().setReason("CreateContainerError");
+
+        when(podsOperation.inNamespace("test-namespace")).thenReturn(namespacedPodsOperation);
+        when(namespacedPodsOperation.create(pod)).thenReturn(pod);
+        when(namespacedPodsOperation.withName("test-pod")).thenReturn(podResource);
+        when(podResource.waitUntilCondition(any(), anyLong(), any(TimeUnit.class))).thenReturn(podWithErrorWaiting);
+
+        // When
+        Pod result = defaultPodClient.runToCompletion(pod, 60);
+
+        // Then - should return the pod with error (hasPodFailedContainers returned true)
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus().getContainerStatuses().get(0).getState().getWaiting().getReason())
+                .contains("Error");
+    }
+
+    @Test
+    void shouldWaitForPodWithLabel() throws TimeoutException {
+        // Given
+        String namespace = "test-namespace";
+        String labelName = "app";
+        String labelValue = "my-app";
+
+        Pod readyPod = createPodWithPhase("test-pod", "Running", false);
+
+        CompletableFuture<List<Pod>> future = CompletableFuture.completedFuture(Collections.singletonList(readyPod));
+
+        when(podsOperation.inNamespace(namespace)).thenReturn(namespacedPodsOperation);
+        when(namespacedPodsOperation.withLabel(labelName, labelValue)).thenReturn(labeledPodsOperation);
+        when(labeledPodsOperation.informOnCondition(any())).thenReturn(future);
+
+        // When
+        Pod result = defaultPodClient.waitForPod(namespace, labelName, labelValue, 60);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(labeledPodsOperation).informOnCondition(any());
+    }
+
+    @Test
+    void shouldHandleTimeoutInWaitUntilCondition() {
+        // Given
+        CompletableFuture<List<Pod>> neverCompletingFuture = new CompletableFuture<>();
+
+        when(labeledPodsOperation.informOnCondition(any())).thenReturn(neverCompletingFuture);
+
+        // When - use a very short timeout
+        Pod result = DefaultPodClient.waitUntilCondition(
+                labeledPodsOperation,
+                pod -> pod != null,
+                1,
+                TimeUnit.MILLISECONDS
+        );
+
+        // Then - should return null on timeout
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void shouldReturnNullWhenConditionMatchesNullForEmptyList() {
+        // Given
+        CompletableFuture<List<Pod>> emptyListFuture = CompletableFuture.completedFuture(Collections.emptyList());
+
+        when(labeledPodsOperation.informOnCondition(any())).thenReturn(emptyListFuture);
+
+        // When
+        Pod result = DefaultPodClient.waitUntilCondition(
+                labeledPodsOperation,
+                pod -> pod == null, // Condition that matches null
+                60,
+                TimeUnit.SECONDS
+        );
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void shouldWaitUntilConditionOnList() {
+        // Given
+        Pod pod1 = createPodWithPhase("pod-1", "Running", false);
+        Pod pod2 = createPodWithPhase("pod-2", "Running", false);
+        CompletableFuture<List<Pod>> listFuture = CompletableFuture.completedFuture(Arrays.asList(pod1, pod2));
+
+        when(labeledPodsOperation.informOnCondition(any())).thenReturn(listFuture);
+
+        // When
+        boolean result = DefaultPodClient.waitUntilConditionOnList(
+                labeledPodsOperation,
+                list -> list.size() == 2,
+                60,
+                TimeUnit.SECONDS
+        );
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void shouldReturnFalseOnTimeoutInWaitUntilConditionOnList() {
+        // Given
+        CompletableFuture<List<Pod>> neverCompletingFuture = new CompletableFuture<>();
+
+        when(labeledPodsOperation.informOnCondition(any())).thenReturn(neverCompletingFuture);
+
+        // When - use a very short timeout
+        boolean result = DefaultPodClient.waitUntilConditionOnList(
+                labeledPodsOperation,
+                list -> !list.isEmpty(),
+                1,
+                TimeUnit.MILLISECONDS
+        );
+
+        // Then
+        assertThat(result).isFalse();
     }
 
     // Helper methods

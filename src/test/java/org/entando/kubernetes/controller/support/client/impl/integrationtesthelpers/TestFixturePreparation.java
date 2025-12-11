@@ -136,11 +136,10 @@ public final class TestFixturePreparation {
                 .addToLabels("testType", "end-to-end")
                 .endMetadata().build());
 
+        // Wait for the default service account to be created and ready
+        // Note: In Kubernetes 1.24+, service account token secrets are no longer auto-created
         await().atMost(mkTimeout(60)).ignoreExceptions()
-                .until(() -> {
-                    SecretList lst = client.secrets().inNamespace(namespace).list();
-                    return lst.getItems().stream().anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "default"));
-                });
+                .until(() -> client.serviceAccounts().inNamespace(namespace).withName("default").get() != null);
                 
         EntandoOperatorTestConfig.getRedhatRegistryCredentials().ifPresent(s -> {
             client.secrets().inNamespace(namespace).createOrReplace(new SecretBuilder().withNewMetadata()
