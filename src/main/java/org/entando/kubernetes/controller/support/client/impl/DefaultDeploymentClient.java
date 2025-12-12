@@ -18,21 +18,31 @@ package org.entando.kubernetes.controller.support.client.impl;
 
 import static org.entando.kubernetes.controller.spi.common.ExceptionUtils.interruptionSafe;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
+import io.fabric8.kubernetes.client.http.HttpClient;
+import io.fabric8.kubernetes.client.http.HttpRequest;
+import io.fabric8.kubernetes.client.http.HttpResponse;
+import java.net.URI;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.entando.kubernetes.controller.support.client.DeploymentClient;
 import org.entando.kubernetes.model.common.EntandoCustomResource;
 
 public class DefaultDeploymentClient implements DeploymentClient {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final int DEFAULT_MINOR_VERSION = 20;
 
     private final KubernetesClient client;
 
@@ -43,26 +53,89 @@ public class DefaultDeploymentClient implements DeploymentClient {
     @Override
     public boolean supportsStartupProbes() {
         try {
-            final VersionInfo version = client.getVersion();
-            //Is null when using the MockServer. Return true because that is the most common scenario we want to test
-            return version == null || parseVersion(version) >= 16;
-        } catch (NullPointerException e) {
-            //Happens on the mock server
+            K8sVersionInfo version = fetchVersionInfo();
+            // Return true if version is null (mock server)
+            return version == null || parseMinorVersion(version.getMinor()) >= 16;
+        } catch (JsonProcessingException | ExecutionException | InterruptedException | NullPointerException e) {
+            // Fallback: assume modern K8s (>= 1.16) supports startup probes
             return true;
         }
     }
 
-    private int parseVersion(VersionInfo version) {
+    /**
+     * Fetches Kubernetes version info using raw HTTP call to bypass Fabric8's VersionInfo
+     * which doesn't support new fields (emulationMajor, emulationMinor, etc.) added in K8s 1.32+
+     * as part of KEP-4330.
+     */
+    private K8sVersionInfo fetchVersionInfo() throws JsonProcessingException, ExecutionException, InterruptedException {
+        HttpClient httpClient = client.getHttpClient();
+        String masterUrl = client.getConfiguration().getMasterUrl();
+        // Remove trailing slash if present
+        if (masterUrl.endsWith("/")) {
+            masterUrl = masterUrl.substring(0, masterUrl.length() - 1);
+        }
+
+        HttpRequest request = httpClient.newHttpRequestBuilder()
+                .uri(URI.create(masterUrl + "/version"))
+                .build();
+
+        HttpResponse<String> response = httpClient.sendAsync(request, String.class).get();
+
+        if (response.isSuccessful() && response.body() != null) {
+            return OBJECT_MAPPER.readValue(response.body(), K8sVersionInfo.class);
+        }
+        return null;
+    }
+
+    private int parseMinorVersion(String minor) {
+        if (minor == null || minor.isEmpty()) {
+            return DEFAULT_MINOR_VERSION;
+        }
         StringBuilder sb = new StringBuilder();
-        //Some versions have trailing non-digit characters
-        for (char current : version.getMinor().toCharArray()) {
+        // Some versions have trailing non-digit characters (e.g., "16+")
+        for (char current : minor.toCharArray()) {
             if (Character.isDigit(current)) {
                 sb.append(current);
             } else {
                 break;
             }
         }
-        return Integer.parseInt(sb.toString());
+        return sb.length() > 0 ? Integer.parseInt(sb.toString()) : DEFAULT_MINOR_VERSION;
+    }
+
+    /**
+     * Custom version info class that ignores unknown fields like emulationMajor, emulationMinor,
+     * minCompatibilityMajor, minCompatibilityMinor added in Kubernetes 1.32+ (KEP-4330).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class K8sVersionInfo {
+        private String major;
+        private String minor;
+        private String gitVersion;
+
+        public String getMajor() {
+            return major;
+        }
+
+        public void setMajor(String major) {
+            this.major = major;
+        }
+
+        public String getMinor() {
+            return minor;
+        }
+
+        public void setMinor(String minor) {
+            this.minor = minor;
+        }
+
+        public String getGitVersion() {
+            return gitVersion;
+        }
+
+        public void setGitVersion(String gitVersion) {
+            this.gitVersion = gitVersion;
+        }
     }
 
     @Override

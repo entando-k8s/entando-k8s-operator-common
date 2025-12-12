@@ -70,10 +70,11 @@ public abstract class AbstractK8SIntegrationTest implements FluentTraversals {
     }
 
     protected void awaitDefaultToken(String namespace) {
+        // Wait for the default service account to be ready
+        // Note: In Kubernetes 1.24+, service account token secrets are no longer auto-created
         await().atMost(mkTimeout(60)).ignoreExceptions()
-                .until(() -> getFabric8Client().secrets().inNamespace(namespace).list()
-                        .getItems().stream()
-                        .anyMatch(secret -> TestFixturePreparation.isValidTokenSecret(secret, "default")));
+                .until(() -> getFabric8Client().serviceAccounts().inNamespace(namespace)
+                        .withName("default").get() != null);
     }
 
     protected TestResource newTestResource() {

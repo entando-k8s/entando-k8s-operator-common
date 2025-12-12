@@ -60,10 +60,26 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
                 .withName(myIngress.getMetadata().getName()).delete();
         Ingress deployedIngress = this.getSimpleK8SClient().ingresses().createIngress(app, myIngress);
 
-        Assertions.assertTrue(() -> deployedIngress.getSpec().getRules().get(0).getHttp().getPaths().size() == 2);
+        // Wait for the Ingress to stabilize before modifying
+        await().atMost(mkTimeout(10)).pollDelay(500, TimeUnit.MILLISECONDS)
+                .until(() -> {
+                    Ingress current = getFabric8Client().network().v1().ingresses()
+                            .inNamespace(app.getMetadata().getNamespace())
+                            .withName(myIngress.getMetadata().getName())
+                            .get();
+                    return current != null && current.getMetadata().getResourceVersion() != null;
+                });
 
-        HTTPIngressPath ingressPath = deployedIngress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
-        Ingress cleanedIngress = this.getSimpleK8SClient().ingresses().removeHttpPath(deployedIngress, ingressPath);
+        // Fetch the latest version
+        Ingress latestIngress = getFabric8Client().network().v1().ingresses()
+                .inNamespace(app.getMetadata().getNamespace())
+                .withName(myIngress.getMetadata().getName())
+                .get();
+
+        Assertions.assertTrue(() -> latestIngress.getSpec().getRules().get(0).getHttp().getPaths().size() == 2);
+
+        HTTPIngressPath ingressPath = latestIngress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
+        Ingress cleanedIngress = this.getSimpleK8SClient().ingresses().removeHttpPath(latestIngress, ingressPath);
 
         Assertions.assertFalse(() ->
                 cleanedIngress.getSpec().getRules().get(0).getHttp().getPaths().stream()
@@ -134,8 +150,27 @@ class DefaultIngressClientTest extends AbstractSupportK8SIntegrationTest {
         this.getFabric8Client().extensions().ingresses().inNamespace(app.getMetadata().getNamespace())
                 .withName(myIngress.getMetadata().getName()).delete();
         Ingress deployedIngress = this.getSimpleK8SClient().ingresses().createIngress(app, myIngress);
+
+        // Wait for the Ingress to stabilize (ingress controller finishes initial updates)
+        // This prevents 409 conflicts when the controller is still modifying the resource
+        await().atMost(mkTimeout(10)).pollDelay(500, TimeUnit.MILLISECONDS)
+                .until(() -> {
+                    Ingress current = getFabric8Client().network().v1().ingresses()
+                            .inNamespace(app.getMetadata().getNamespace())
+                            .withName(myIngress.getMetadata().getName())
+                            .get();
+                    // Check that ingress exists and has a resourceVersion (is persisted)
+                    return current != null && current.getMetadata().getResourceVersion() != null;
+                });
+
+        // Fetch the latest version before modifying to avoid 409 conflicts
+        Ingress latestIngress = getFabric8Client().network().v1().ingresses()
+                .inNamespace(app.getMetadata().getNamespace())
+                .withName(myIngress.getMetadata().getName())
+                .get();
+
         //When I add the path '/new-path' to it
-        getSimpleK8SClient().ingresses().addHttpPath(deployedIngress, new HTTPIngressPathBuilder()
+        getSimpleK8SClient().ingresses().addHttpPath(latestIngress, new HTTPIngressPathBuilder()
                 .withPath("/new-path")
                 .withNewBackend()
                 .withNewService()
