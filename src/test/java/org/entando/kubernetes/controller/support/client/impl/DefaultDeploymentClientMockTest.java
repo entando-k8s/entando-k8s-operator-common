@@ -154,7 +154,7 @@ class DefaultDeploymentClientMockTest {
     @Test
     void shouldSupportStartupProbesWhenExceptionOccurs() {
         // Given client throws exception
-        when(kubernetesClient.getHttpClient()).thenThrow(new RuntimeException("Connection failed"));
+        when(kubernetesClient.getHttpClient()).thenThrow(new NullPointerException("Connection failed"));
 
         // When
         boolean result = deploymentClient.supportsStartupProbes();
