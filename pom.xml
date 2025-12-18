@@ -21,11 +21,11 @@
     <parent>
         <groupId>org.entando</groupId>
         <artifactId>entando-quarkus-parent</artifactId>
-        <version>7.3.0-fix.1</version>
+        <version>7.3.0-fix.2</version>
         <relativePath/>
     </parent>
     <artifactId>entando-k8s-operator-common</artifactId>
-    <version>7.3.0-fix.1</version>
+    <version>7.3.0-fix.2</version>
     <name>Entando K8S Operator Common Library</name>
     <description>Entando's K8S Operator Common Library</description>
     <url>https://central.entando.com</url>
@@ -250,7 +250,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
+                <version>3.1.1</version>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
