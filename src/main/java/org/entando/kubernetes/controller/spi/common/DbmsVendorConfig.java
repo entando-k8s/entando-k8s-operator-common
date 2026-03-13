@@ -23,7 +23,7 @@ public enum DbmsVendorConfig {
 
     // About the NOSONAR: sonar mistakes "${MYSQL_ROOT_PASSWORD}" with the actual password and reports a hotspot,
     // Therefore the NOSONAR special comment has been used to disable the hotspot
-    MYSQL("org.hibernate.dialect.MySQL5InnoDBDialect", 3306, "root",
+    MYSQL("org.hibernate.dialect.MySQLDialect", 3306, "root",
             "MYSQL_PWD=\"${MYSQL_ROOT_PASSWORD}\" mysql -h 127.0.0.1 -u root -e 'SELECT 1'",   //NOSONAR
              32, 32, true) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
@@ -45,7 +45,7 @@ public enum DbmsVendorConfig {
             };
         }
     },
-    ORACLE("org.hibernate.dialect.Oracle10gDialect", 1521, "sys", "sqlplus sys/Oradoc_db1:${DB_SID}", 128, 128, false) {
+    ORACLE("org.hibernate.dialect.OracleDialect", 1521, "sys", "sqlplus sys/Oradoc_db1:${DB_SID}", 128, 128, false) {
         public JdbcConnectionStringBuilder getConnectionStringBuilder() {
             return new JdbcConnectionStringBuilder() {
                 public String buildConnectionString() {
