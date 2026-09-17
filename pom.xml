@@ -25,7 +25,7 @@
         <relativePath/>
     </parent>
     <artifactId>entando-k8s-operator-common</artifactId>
-    <version>7.5.1-SNAPSHOT</version>
+    <version>7.5.1</version>
     <name>Entando K8S Operator Common Library</name>
     <description>Entando's K8S Operator Common Library</description>
     <url>https://central.entando.com</url>
